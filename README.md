@@ -1,6 +1,9 @@
 Structured Streams Unleashed
 ============================
 
+Currently only buildable as a submodule of mettanode.
+
+
 ssu::host holds information about this host's connection sessions.
 
 ssu::server provides access to services on this ssu::host.
