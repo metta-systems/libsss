@@ -44,15 +44,15 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
         oa << group;// DH group for public keys
         oa << keylen;// AES key length: 16, 24, or 32
         oa << initiator_hashed_nonce;
-        xdr::pad_size(oa, initiator_hashed_nonce.size());
+        msgpack::pad_size(oa, initiator_hashed_nonce.size());//remove
         oa << responder_nonce;
-        xdr::pad_size(oa, responder_nonce.size());
+        msgpack::pad_size(oa, responder_nonce.size());//remove
         oa << initiator_dh_public_key;
-        xdr::pad_size(oa, initiator_dh_public_key.size());
+        msgpack::pad_size(oa, initiator_dh_public_key.size());//remove
         oa << responder_dh_public_key;
-        xdr::pad_size(oa, responder_dh_public_key.size());
+        msgpack::pad_size(oa, responder_dh_public_key.size());//remove
         oa << peer_eid;
-        xdr::pad_size(oa, peer_eid.size());
+        msgpack::pad_size(oa, peer_eid.size());//remove
     }
     assert(data.size() % 4 == 0);
     logger::file_dump dump(data);
@@ -80,11 +80,11 @@ calc_dh_cookie(ssu::negotiation::dh_hostkey_t* hostkey,
         boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Put together the data to hash
 
         oa << hostkey->public_key;
-        xdr::pad_size(oa, hostkey->public_key.size());
+        msgpack::pad_size(oa, hostkey->public_key.size());//remove
         oa << responder_nonce;
-        xdr::pad_size(oa, responder_nonce.size());
+        msgpack::pad_size(oa, responder_nonce.size());//remove
         oa << initiator_hashed_nonce;
-        xdr::pad_size(oa, initiator_hashed_nonce.size());
+        msgpack::pad_size(oa, initiator_hashed_nonce.size());//remove
         // @todo XDR zero-padding...
         auto lval_addr = src.address().to_v4().to_bytes();
         oa << lval_addr;
