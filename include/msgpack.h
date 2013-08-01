@@ -25,6 +25,9 @@
 
 namespace msgpack {
 
+class encode_error : public std::exception
+{};
+
 class decode_error : public std::exception
 {};
 
@@ -78,15 +81,39 @@ inline void decode_vector(Archive& ia, byte_array& ba, uint32_t maxlen)
     ia.load_binary(ba.data(), ba.length());
 }
 
-// Encode msgpack array: variable-size byte array.
+// Encode msgpack bin: variable-size byte array.
 template<class Archive>
 inline void encode_array(Archive& oa, const byte_array& ba, uint32_t maxlen)
 {
     assert(ba.length() <= maxlen);
     uint32_t size = ba.length();
-    // TODO: implement several msgpack array sizes
-    size = boost::endian2::big(size);
-    oa << size;
+    uint8_t flag;
+
+    if (size < 256) // bin8
+    {
+        uint8_t ssize = size & 0xff;
+        flag = 0xc4;
+        oa << flag << ssize;
+    }
+    else if (size < 65536) // bin16
+    {
+        uint16_t ssize = size & 0xffff;
+        ssize = boost::endian2::big(ssize);
+
+        flag = 0xc5;
+        oa << flag << ssize;
+    }
+    else if (size <= 0xffffffff) // bin32
+    {
+        uint32_t ssize = size & 0xffffffff; // for the time when size will be 64 bit
+        ssize = boost::endian2::big(ssize);
+
+        flag = 0xc6;
+        oa << flag << ssize;
+    }
+    else {
+        throw encode_error();
+    }
     oa << ba;
 }
 
@@ -94,9 +121,32 @@ template<class Archive>
 inline void decode_array(Archive& ia, byte_array& ba, uint32_t maxlen)
 {
     uint64_t size;
-    // TODO: implement reading several msgpack array size types
-    ia >> size;
-    size = boost::endian2::big(size);
+    uint8_t flag;
+
+    ia >> flag;
+
+    if (flag == 0xc4) // bin8
+    {
+        uint8_t ssize = size & 0xff;
+        ia >> ssize;
+        size = ssize;
+    }
+    else if (flag == 0xc5) // bin16
+    {
+        uint16_t ssize;
+        ia >> ssize;
+        size = boost::endian2::big(ssize);
+    }
+    else if (flag == 0xc6) // bin32
+    {
+        uint32_t ssize;
+        ia >> ssize;
+        size = boost::endian2::big(ssize);
+    }
+    else {
+        throw decode_error();
+    }
+
     if (size > maxlen)
         throw decode_error();
     ba.resize(size);
@@ -106,12 +156,38 @@ inline void decode_array(Archive& ia, byte_array& ba, uint32_t maxlen)
 
 // Encode msgpack list: variable-size array of arbitrary types.
 template<class Archive, typename T>
-inline void encode_list(Archive& oa, const std::vector<T>& ba, uint32_t maxlen)
+inline void
+encode_list(Archive& oa, const std::vector<T>& ba, uint32_t maxlen)
 {
     assert(ba.size() <= maxlen);
     uint32_t size = ba.size();
-    size = boost::endian2::big(size);
-    oa << size;
+    uint8_t flag;
+
+    if (size < 16) // use fixarray
+    {
+        flag = 10010000_b | (size & 0xf);
+        oa << flag;
+    }
+    else if (size < 65536) // array 16
+    {
+        uint16_t ssize = size & 0xffff;
+        ssize = boost::endian2::big(ssize);
+
+        flag = 0xdc;
+        oa << flag << ssize;
+    }
+    else if (size <= 0xffffffff) // array 32
+    {
+        uint32_t ssize = size & 0xffffffff; // for the time when size will be 64 bit
+        ssize = boost::endian2::big(ssize);
+
+        flag = 0xdd;
+        oa << flag << ssize;
+    }
+    else {
+        throw encode_error();
+    }
+
     for (uint32_t index = 0; index < ba.size(); ++index)
         oa << ba[index];
 }
@@ -119,9 +195,31 @@ inline void encode_list(Archive& oa, const std::vector<T>& ba, uint32_t maxlen)
 template<class Archive, typename T>
 inline void decode_list(Archive& ia, std::vector<T>& ba, uint32_t maxlen)
 {
-    uint32_t size; // this is not quite portable and is a limitation of XDR (sizes are 32 bit)
-    ia >> size;
-    size = boost::endian2::big(size);
+    uint64_t size;
+    uint8_t flag;
+
+    ia >> flag;
+
+    if ((flag & 10010000_b) == 10010000_b) // use fixarray
+    {
+        size = flag & 0xf;
+    }
+    else if (flag == 0xdc) // array 16
+    {
+        uint16_t ssize;
+        ia >> ssize;
+        size = boost::endian2::big(ssize);
+    }
+    else if (flag == 0xdd) // array 32
+    {
+        uint32_t ssize;
+        ia >> ssize;
+        size = boost::endian2::big(ssize);
+    }
+    else {
+        throw decode_error();
+    }
+
     if (size > maxlen)
         throw decode_error();
     ba.resize(size);
