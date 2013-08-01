@@ -232,7 +232,6 @@ inline void decode_list(Archive& ia, std::vector<T>& ba, uint32_t maxlen)
 // Length-delimited option type.
 //
 // Store an optional chunk into a substream, then feed it and its size into the archive.
-// It only works with XDR-based binary archives, otherwise this operation makes little sense.
 template<class Archive, typename T>
 inline void encode_option(Archive& oa, const T& t, uint32_t maxlen)
 {
