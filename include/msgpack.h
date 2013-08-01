@@ -245,7 +245,7 @@ inline void encode_option(Archive& oa, const T& t, uint32_t maxlen)
     uint32_t size = arr.size();
     size = boost::endian2::big(size);
 
-    oa << size << arr;
+    oa << size << arr; // TODO: this is not very well thought out... also mismatches description of format below
 }
 
 template<class Archive, typename T>
@@ -255,7 +255,7 @@ inline void decode_option(Archive& ia, T& t, uint32_t maxlen)
     ia >> size;
     size = boost::endian2::big(size);
 
-    if (size > maxlen)
+    if (size > maxlen) // FIXME: not checking for 0 size?
         return;
 
     byte_array arr;
