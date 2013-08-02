@@ -22,6 +22,7 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/range/iterator_range.hpp>
 #include "byte_array.h"
+#include "binary_literal.h"
 
 namespace msgpack {
 
@@ -48,14 +49,16 @@ inline void skip_padding(Archive& ia, size_t size)
 template<class Archive>
 inline void encode_boolean(Archive& oa, const bool flag)
 {
-    oa << (flag ? 0xc3 : 0xc2);
+    uint8_t true_value = 0xc3;
+    uint8_t false_value = 0xc2;
+    oa << (flag ? true_value : false_value);
 }
 
 template<class Archive>
-inline bool decode_boolean(Archive& oa)
+inline bool decode_boolean(Archive& ia)
 {
     uint8_t flag;
-    oa >> flag;
+    ia >> flag;
     if (flag == 0xc3)
         return true;
     if (flag == 0xc2)

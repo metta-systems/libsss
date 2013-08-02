@@ -25,7 +25,7 @@ void save(
     const unsigned int /*version*/
 ){
     const bool tflag = t.is_initialized();
-    encode_boolean(tflag);
+    msgpack::encode_boolean(ar, tflag);
     if (tflag) {
         ar << *t;
     }
@@ -37,7 +37,7 @@ void load(
     boost::optional< T > & t, 
     const unsigned int /*version*/
 ){
-    bool tflag = decode_boolean(ar);
+    bool tflag = msgpack::decode_boolean(ar);
     if (tflag) {
         detail::stack_construct<Archive, T> aux(ar, 0);
         ar >> aux.reference();
