@@ -32,20 +32,6 @@ class encode_error : public std::exception
 class decode_error : public std::exception
 {};
 
-// Write padding bytes after writing an object of size 'size' up to multiple of 4 bytes.
-// Not used for msgpack.
-template<class Archive>
-inline void pad_size(Archive& oa, size_t size)
-{
-}
-
-// Skip padding bytes after reading an object of size 'size'
-// Not used for msgpack.
-template<class Archive>
-inline void skip_padding(Archive& ia, size_t size)
-{
-}
-
 template<class Archive>
 inline void encode_boolean(Archive& oa, const bool flag)
 {
@@ -154,7 +140,6 @@ inline void decode_array(Archive& ia, byte_array& ba, uint32_t maxlen)
         throw decode_error();
     ba.resize(size);
     ia >> ba;
-    skip_padding(ia, size);
 }
 
 // Encode msgpack list: variable-size array of arbitrary types.
