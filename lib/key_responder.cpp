@@ -41,18 +41,13 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
         boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
         boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Key parameter signing block for init2 and response2 messages.
 
-        oa << group;// DH group for public keys
-        oa << keylen;// AES key length: 16, 24, or 32
-        oa << initiator_hashed_nonce;
-        msgpack::pad_size(oa, initiator_hashed_nonce.size());//remove
-        oa << responder_nonce;
-        msgpack::pad_size(oa, responder_nonce.size());//remove
-        oa << initiator_dh_public_key;
-        msgpack::pad_size(oa, initiator_dh_public_key.size());//remove
-        oa << responder_dh_public_key;
-        msgpack::pad_size(oa, responder_dh_public_key.size());//remove
-        oa << peer_eid;
-        msgpack::pad_size(oa, peer_eid.size());//remove
+        oa << group // DH group for public keys
+           << keylen // AES key length: 16, 24, or 32
+           << initiator_hashed_nonce
+           << responder_nonce
+           << initiator_dh_public_key
+           << responder_dh_public_key
+           << peer_eid;
     }
     assert(data.size() % 4 == 0);
     logger::file_dump dump(data);
@@ -79,17 +74,14 @@ calc_dh_cookie(ssu::negotiation::dh_hostkey_t* hostkey,
         boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
         boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Put together the data to hash
 
-        oa << hostkey->public_key;
-        msgpack::pad_size(oa, hostkey->public_key.size());//remove
-        oa << responder_nonce;
-        msgpack::pad_size(oa, responder_nonce.size());//remove
-        oa << initiator_hashed_nonce;
-        msgpack::pad_size(oa, initiator_hashed_nonce.size());//remove
-        // @todo XDR zero-padding...
         auto lval_addr = src.address().to_v4().to_bytes();
-        oa << lval_addr;
         uint16_t port = src.port();
-        oa << port;
+
+        oa << hostkey->public_key
+           << responder_nonce
+           << initiator_hashed_nonce
+           << lval_addr
+           << port;
     }
 
     logger::file_dump dump(data);
