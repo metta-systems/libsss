@@ -13,7 +13,7 @@
 #include "protocol.h"
 #include "byte_array.h"
 #include "custom_optional.h"
-#include "xdr.h"
+#include "msgpack.h"
 #include "negotiation/key_message.h"
 #define BOOST_TEST_MODULE Test_key_message_serialization
 #include <boost/test/unit_test.hpp>
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         boost::archive::binary_iarchive ia(in, boost::archive::no_header);
         ssu::negotiation::key_message m;
 
-        BOOST_CHECK(data.size() == 192);
+        BOOST_CHECK(data.size() == 188);
 
         ia >> m;
 

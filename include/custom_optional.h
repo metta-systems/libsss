@@ -9,6 +9,7 @@
 #pragma once
 
 #include <boost/serialization/detail/stack_constructor.hpp>
+#include "msgpack.h"
 
 BOOST_CLASS_IMPLEMENTATION(optional<uint32_t>, boost::serialization::object_serializable)
 
@@ -24,9 +25,9 @@ void save(
     const unsigned int /*version*/
 ){
     const bool tflag = t.is_initialized();
-    ar << boost::serialization::make_nvp("initialized", tflag);
-    if (tflag){
-        ar << boost::serialization::make_nvp("value", *t);
+    msgpack::encode_boolean(ar, tflag);
+    if (tflag) {
+        ar << *t;
     }
 }
 
@@ -36,11 +37,10 @@ void load(
     boost::optional< T > & t, 
     const unsigned int /*version*/
 ){
-    bool tflag;
-    ar >> boost::serialization::make_nvp("initialized", tflag);
-    if (tflag){
+    bool tflag = msgpack::decode_boolean(ar);
+    if (tflag) {
         detail::stack_construct<Archive, T> aux(ar, 0);
-        ar >> boost::serialization::make_nvp("value", aux.reference());
+        ar >> aux.reference();
         t.reset(aux.reference());
     }
     else {

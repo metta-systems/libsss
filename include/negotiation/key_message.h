@@ -11,7 +11,7 @@
 #include <boost/endian/conversion.hpp>
 #include <boost/optional/optional.hpp>
 #include "logging.h"
-#include "xdr.h"
+#include "msgpack.h"
 #include "protocol.h" // for to_underlying XXX
 
 namespace ssu {
@@ -138,9 +138,9 @@ class dh_init1_chunk
         group = dh_group_type(grp);
         ar >> key_min_length;
         boost::endian::big_to_native(key_min_length);
-        xdr::decode_vector(ar, initiator_hashed_nonce, 32);
-        xdr::decode_array(ar, initiator_dh_public_key, 384);
-        xdr::decode_array(ar, responder_eid, 256);
+        msgpack::decode_vector(ar, initiator_hashed_nonce, 32);
+        msgpack::decode_array(ar, initiator_dh_public_key, 384);
+        msgpack::decode_array(ar, responder_eid, 256);
     }
 
     friend class boost::serialization::access;
@@ -152,9 +152,9 @@ class dh_init1_chunk
         uint32_t kml = key_min_length;
         boost::endian::native_to_big(kml);
         ar << kml;
-        xdr::encode_vector(ar, initiator_hashed_nonce, 32);
-        xdr::encode_array(ar, initiator_dh_public_key, 384);
-        xdr::encode_array(ar, responder_eid, 256);
+        msgpack::encode_vector(ar, initiator_hashed_nonce, 32);
+        msgpack::encode_array(ar, initiator_dh_public_key, 384);
+        msgpack::encode_array(ar, responder_eid, 256);
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -178,25 +178,25 @@ class dh_response1_chunk
     void load(Archive &ar, const unsigned int) {
         ar & group;
         ar & key_min_length;
-        xdr::decode_vector(ar, initiator_hashed_nonce, 32);
-        xdr::decode_vector(ar, responder_nonce, 32);
-        xdr::decode_array(ar, responder_dh_public_key, 384);
-        xdr::decode_array(ar, responder_challenge_cookie, 256);
-        xdr::decode_array(ar, responder_eid, 256);
-        xdr::decode_array(ar, responder_public_key, ~0);
-        xdr::decode_array(ar, responder_signature, ~0);
+        msgpack::decode_vector(ar, initiator_hashed_nonce, 32);
+        msgpack::decode_vector(ar, responder_nonce, 32);
+        msgpack::decode_array(ar, responder_dh_public_key, 384);
+        msgpack::decode_array(ar, responder_challenge_cookie, 256);
+        msgpack::decode_array(ar, responder_eid, 256);
+        msgpack::decode_array(ar, responder_public_key, ~0);
+        msgpack::decode_array(ar, responder_signature, ~0);
     }
     template<class Archive>
     void save(Archive &ar, const unsigned int) const {
         ar & group;
         ar & key_min_length;
-        xdr::encode_vector(ar, initiator_hashed_nonce, 32);
-        xdr::encode_vector(ar, responder_nonce, 32);
-        xdr::encode_array(ar, responder_dh_public_key, 384);
-        xdr::encode_array(ar, responder_challenge_cookie, 256);
-        xdr::encode_array(ar, responder_eid, 256);
-        xdr::encode_array(ar, responder_public_key, ~0);
-        xdr::encode_array(ar, responder_signature, ~0);
+        msgpack::encode_vector(ar, initiator_hashed_nonce, 32);
+        msgpack::encode_vector(ar, responder_nonce, 32);
+        msgpack::encode_array(ar, responder_dh_public_key, 384);
+        msgpack::encode_array(ar, responder_challenge_cookie, 256);
+        msgpack::encode_array(ar, responder_eid, 256);
+        msgpack::encode_array(ar, responder_public_key, ~0);
+        msgpack::encode_array(ar, responder_signature, ~0);
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
@@ -218,23 +218,23 @@ class dh_init2_chunk
     void load(Archive &ar, const unsigned int version) {
         ar & group;
         ar & key_min_length;
-        xdr::decode_vector(ar, initiator_nonce, 32);
-        xdr::decode_vector(ar, responder_nonce, 32);
-        xdr::decode_array(ar, initiator_dh_public_key, 384);
-        xdr::decode_array(ar, responder_dh_public_key, 384);
-        xdr::decode_array(ar, responder_challenge_cookie, 256);
-        xdr::decode_array(ar, initiator_id, ~0);
+        msgpack::decode_vector(ar, initiator_nonce, 32);
+        msgpack::decode_vector(ar, responder_nonce, 32);
+        msgpack::decode_array(ar, initiator_dh_public_key, 384);
+        msgpack::decode_array(ar, responder_dh_public_key, 384);
+        msgpack::decode_array(ar, responder_challenge_cookie, 256);
+        msgpack::decode_array(ar, initiator_id, ~0);
     }
     template<class Archive>
     void save(Archive &ar, const unsigned int version) const {
         ar & group;
         ar & key_min_length;
-        xdr::encode_vector(ar, initiator_nonce, 32);
-        xdr::encode_vector(ar, responder_nonce, 32);
-        xdr::encode_array(ar, initiator_dh_public_key, 384);
-        xdr::encode_array(ar, responder_dh_public_key, 384);
-        xdr::encode_array(ar, responder_challenge_cookie, 256);
-        xdr::encode_array(ar, initiator_id, ~0);
+        msgpack::encode_vector(ar, initiator_nonce, 32);
+        msgpack::encode_vector(ar, responder_nonce, 32);
+        msgpack::encode_array(ar, initiator_dh_public_key, 384);
+        msgpack::encode_array(ar, responder_dh_public_key, 384);
+        msgpack::encode_array(ar, responder_challenge_cookie, 256);
+        msgpack::encode_array(ar, initiator_id, ~0);
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
@@ -247,13 +247,13 @@ class dh_response2_chunk
     friend class boost::serialization::access;
     template<class Archive>
     void load(Archive &ar, const unsigned int version) {
-        xdr::decode_vector(ar, initiator_hashed_nonce, 32);
-        xdr::decode_array(ar, responder_id, ~0);
+        msgpack::decode_vector(ar, initiator_hashed_nonce, 32);
+        msgpack::decode_array(ar, responder_id, ~0);
     }
     template<class Archive>
     void save(Archive &ar, const unsigned int version) const {
-        xdr::encode_vector(ar, initiator_hashed_nonce, 32);
-        xdr::encode_array(ar, responder_id, ~0);
+        msgpack::encode_vector(ar, initiator_hashed_nonce, 32);
+        msgpack::encode_array(ar, responder_id, ~0);
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
@@ -380,7 +380,7 @@ class key_message
         for (uint32_t i = 0; i < count; ++i) // Hmm, potential DOS possibility - send a very big list?
         {
             key_chunk c;
-            xdr::decode_option(ar, c, ~0);
+            msgpack::decode_option(ar, c, ~0);
             chunks.push_back(c);
         }
     }
@@ -392,7 +392,7 @@ class key_message
         ar << m;
         ar << count;
         for (auto t : chunks) {
-            xdr::encode_option(ar, t, ~0);
+            msgpack::encode_option(ar, t, ~0);
         }
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER()
