@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         boost::archive::binary_iarchive ia(in, boost::archive::no_header);
         ssu::negotiation::key_message m;
 
-        BOOST_CHECK(data.size() == 192);
+        BOOST_CHECK(data.size() == 188);
 
         ia >> m;
 
