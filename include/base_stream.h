@@ -15,13 +15,14 @@ namespace ssu {
 /**
  * @internal
  * Basic internal implementation of the abstract stream.
- * The separation between the internal stream control object and the application-visible stream
- * object is primarily needed so that ssu can hold onto a stream's state and gracefully shut it down
- * after the application deletes its stream object representing it.
- * This separation also keeps the internal stream control variables out of the public C++ API
- * header files and thus able to change without breaking binary compatibility, and makes it easy
- * to implement service/protocol negotiation for top-level application streams by 
- * extending base_stream.
+ * The separation between the internal stream control object and the
+ * application-visible stream object is primarily needed so that SSU can
+ * hold onto a stream's state and gracefully shut it down after the
+ * application deletes its stream object representing it.
+ * This separation also keeps the internal stream control variables out of the
+ * public C++ API header files and thus able to change without breaking binary
+ * compatibility, and makes it easy to implement service/protocol negotiation
+ * for top-level application streams by extending this class.
  */
 class base_stream : public abstract_stream
 {
@@ -35,16 +36,16 @@ class base_stream : public abstract_stream
 
     /**
      * @internal
-     * Unit of data transmission on ssu stream.
+     * Unit of data transmission on SSU stream.
      */
     struct packet
     {
-        base_stream* owner;
-        uint64_t tsn;     ///< Logical byte position. XXX tx_byte_pos
-        byte_array buf;   ///< Packet buffer including headers.
-        int hdrlen;       ///< Size of channel and stream headers.
-        packet_type type; ///< Type of this packet.
-        bool late;        ///< Possibly lost packet.
+        base_stream* owner{nullptr};
+        uint64_t tsn{0};     ///< Logical byte position. XXX tx_byte_pos
+        byte_array buf;      ///< Packet buffer including headers.
+        int hdrlen{0};       ///< Size of channel and stream headers.
+        packet_type type{packet_type::invalid}; ///< Type of this packet.
+        bool late{false};                       ///< Possibly lost packet.
 
         inline packet()
             : owner(nullptr)

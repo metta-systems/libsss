@@ -7,6 +7,11 @@ namespace async {
 
 class timer;
 
+/**
+ * Timer engine provides a substitutable interface to create and arm timers.
+ * A custom timer engine subclass is used for simulation purposes, allowing whole
+ * protocol to run on simulated time.
+ */
 class timer_engine
 {
 	timer* origin_{0};

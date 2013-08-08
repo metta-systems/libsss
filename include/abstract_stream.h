@@ -22,29 +22,30 @@ class stream;
  * @internal
  * Abstract base class for internal stream control objects.
  * 
- * The separation between the internal stream control object
- * and the application-visible stream object is primarily needed
- * so that ssu can hold onto a stream's state and gracefully shut it down
- * after the application deletes its stream object representing it.
- * This separation also keeps the internal stream control variables
- * out of the public C++ API header files and thus able to change
- * without breaking binary compatibility,
- * and makes it easy to implement service/protocol negotiation
- * for top-level application streams by extending this class
- * (e.g., see ConnectStream).
+ * The separation between the internal stream control object and the
+ * application-visible stream object is primarily needed so that ssu can
+ * hold onto a stream's state and gracefully shut it down after the
+ * application deletes its stream object representing it.
+ * This separation also keeps the internal stream control variables out of the
+ * public C++ API header files and thus able to change without breaking binary
+ * compatibility, and makes it easy to implement service/protocol negotiation
+ * for top-level application streams by extending this class.
  *
  * @see base_stream, connect_stream
  */
 class abstract_stream : public stream_protocol
 {
+    friend class stream;
+
 protected:
-    std::weak_ptr<host> host_;                  ///< Per-host state.
-    std::weak_ptr<stream> owner;        ///< Back-pointer to stream object, or nullptr if stream has been deleted.
-    peer_id peerid;                     ///< EID of peer we're connected to.
+    std::weak_ptr<host> host_;      ///< Per-host state.
+    std::weak_ptr<stream> owner;    ///< Back-pointer to stream object, 
+                                    ///< or nullptr if stream has been deleted.
+    peer_id peerid;                 ///< EID of peer we're connected to.
 
 private:
-    int                 priority_;      ///< Current priority level
-    stream::listen_mode listen_mode_;   ///< Listen for substreams.
+    int                 priority_;    ///< Current priority level
+    stream::listen_mode listen_mode_; ///< Listen for substreams.
 
 public:
     /**
@@ -127,6 +128,7 @@ public:
      * Return number of complete records currently available for reading.
      */
     virtual int pending_records() const = 0;
+
     /**
      * Return true if at least one complete record is currently available for reading.
      */
@@ -152,10 +154,10 @@ public:
      * and the client application can use the new substream immediately
      * to send data to the remote host via the new substream.
      * If the remote host is not yet ready to accept the new substream,
-     * ssu queues the new substream and any data written to it locally
+     * SSU queues the new substream and any data written to it locally
      * until the remote host is ready to accept the new substream.
      *
-     * @return a stream object representing the new substream.
+     * @return A stream object representing the new substream.
      */
     virtual abstract_stream* open_substream() = 0;
     /**
@@ -182,6 +184,3 @@ public:
 };
 
 } // namespace ssu
-
-
-

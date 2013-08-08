@@ -48,7 +48,11 @@ public:
 
 	/**
 	 * Signaled when the timer expires.
-	 * Bool argument 'failed' is true if the hard failure deadline has been reached.
+	 *
+	 * timeout signal handler signature is
+	 * void timeout(bool failed)
+	 * 
+	 * Argument 'failed' is true if the hard failure deadline has been reached.
 	 */
     typedef boost::signals2::signal<void (bool)> on_timeout;
     on_timeout timeout;
