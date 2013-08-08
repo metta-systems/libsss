@@ -111,8 +111,8 @@ public:
     //===============================================================
     // Byte-oriented data transfer.
     //===============================================================
-    virtual int read_data(char* data, size_t max_size) = 0;
-    virtual int write_data(const char* data, size_t size, uint8_t endflags) = 0;
+    virtual ssize_t read_data(char* data, size_t max_size) = 0;
+    virtual ssize_t write_data(const char* data, size_t size, uint8_t endflags) = 0;
 
     virtual int read_record(char* data, size_t max_size) = 0;
     virtual byte_array read_record(size_t max_size) = 0;
