@@ -47,10 +47,7 @@ class base_stream : public abstract_stream
         packet_type type{packet_type::invalid}; ///< Type of this packet.
         bool late{false};                       ///< Possibly lost packet.
 
-        inline packet()
-            : owner(nullptr)
-            , type(packet_type::invalid)
-        {}
+        inline packet() = default;
         inline packet(base_stream* o, packet_type t)
             : owner(o)
             , type(t)
