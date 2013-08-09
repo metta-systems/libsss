@@ -21,7 +21,7 @@ stream::stream(abstract_stream* other_stream)
     , host_(other_stream->host_)
 {
     assert(other_stream->owner.lock() == nullptr);
-    other_stream->owner = this;
+    other_stream->owner = shared_from_this();
 }
 
 stream::~stream()

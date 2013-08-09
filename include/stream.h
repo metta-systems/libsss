@@ -57,7 +57,7 @@ class abstract_stream;
  *
  * @see server
  */
-class stream
+class stream : public std::enable_shared_from_this<stream>
 {
     abstract_stream* stream_{nullptr};
     std::weak_ptr<host> host_;
