@@ -20,7 +20,8 @@ StreamTxRec        |                    | base.h         |
 BaseStream         | base_stream        | base.h         | base_stream.h
 StreamFlow         |                    | sflow.h        |
 StreamPeer         |                    | peer.h         |
-StreamResponder    | stream_responder   | stream.h       |
+StreamServer       | server             | stream.h       | server.h
+StreamResponder    | stream_responder   | stream.h       | stream_responder.h
 KeyResponder       | key_responder      | key.h          | key_responder.h
 KeyInitiator       | key_initiator      | key.h          | key_responder.h
 KeyHostState       | key_host_state     | key.h          | key_responder.h
