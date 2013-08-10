@@ -53,24 +53,122 @@ public:
      */
     abstract_stream(std::shared_ptr<host>& h);
 
+    //===============================================================
+    // Byte-oriented data transfer.
+    // Reading data.
+    //===============================================================
+
+    virtual size_t bytes_available() const = 0;
+    inline bool has_bytes_available() const {
+        return bytes_available() > 0;
+    }
+
+    virtual bool at_end() const = 0; //XXX QIODevice relic
+
+    virtual ssize_t read_data(char* data, size_t max_size) = 0;
+
+    /**
+     * Return number of complete records currently available for reading.
+     */
+    virtual int pending_records() const = 0;
+
+    /**
+     * Return true if at least one complete record is currently available for reading.
+     */
+    inline bool has_pending_records() const {
+        return pending_records() > 0;
+    }
+
+    virtual ssize_t read_record(char* data, size_t max_size) = 0;
+    virtual byte_array read_record(size_t max_size) = 0;
+
+    //===============================================================
+    // Byte-oriented data transfer.
+    // Writing data.
+    //===============================================================
+
+    virtual ssize_t write_data(const char* data, size_t size, uint8_t endflags) = 0;
+
+    virtual ssize_t write_record(const char* data, size_t size) {
+        return write_data(data, size, to_underlying(flags::data_message));
+    }
+
+    virtual ssize_t write_record(const byte_array& rec) {
+        return write_record(rec.data(), rec.size());
+    }
+
+    //===============================================================
+    // Datagram protocol.
+    // Send and receive unordered, unreliable datagrams on this stream.
+    //===============================================================
+    virtual ssize_t read_datagram(char* data, size_t max_size) = 0;
+    virtual ssize_t write_datagram(const char* data, size_t size, stream::datagram_type is_reliable) = 0;
+    virtual byte_array read_datagram(size_t max_size) = 0;
+
+    //===============================================================
+    // Substreams management.
+    //===============================================================
+
+    /**
+     * Initiate a new substream as a child of this stream.
+     * This method completes without synchronizing with the remote host,
+     * and the client application can use the new substream immediately
+     * to send data to the remote host via the new substream.
+     * If the remote host is not yet ready to accept the new substream,
+     * SSU queues the new substream and any data written to it locally
+     * until the remote host is ready to accept the new substream.
+     *
+     * @return A stream object representing the new substream.
+     */
+    virtual abstract_stream* open_substream() = 0;
+
+    /**
+     * Listen for incoming substreams on this stream.
+     */
+    inline void listen(stream::listen_mode mode) {
+        listen_mode_ = mode;
+    }
+
+    inline stream::listen_mode listen_mode() const {
+        return listen_mode_;
+    }
+
+    /**
+     * Returns true if this stream is set to accept incoming substreams.
+     */
+    inline bool is_listening() const {
+        return listen_mode_ != stream::listen_mode::reject;
+    }
+
+    /**
+     * Accept a waiting incoming substream.
+     *
+     * @return NULL if no incoming substreams are waiting.
+     */
+    virtual abstract_stream* accept_substream() = 0;
+
+    //===============================================================
+    // Stream control.
+    //===============================================================
+
     /**
      * Returns the endpoint identifier of the local host
      * as used in connecting the current stream.
      * Only valid if the stream is connected.
      */
-    peer_id local_host_id();
+    peer_id local_host_id() const;
 
     /**
      * Returns the endpoint identifier of the remote host
      * to which this stream is connected.
      */
-    peer_id remote_host_id();
+    peer_id remote_host_id() const;
 
     /**
      * Returns true if the underlying link is currently connected
      * and usable for data transfer.
      */
-    virtual bool is_link_up() = 0;
+    virtual bool is_link_up() const = 0;
 
     /** 
      * Set the stream's transmit priority level.
@@ -90,7 +188,7 @@ public:
     /**
      * Returns the stream's current priority level.
      */
-    virtual int priority();
+    virtual int priority() const;
 
     /**
      * Begin graceful or forceful shutdown of the stream.
@@ -103,84 +201,13 @@ public:
      */
     virtual void shutdown(stream::shutdown_mode mode) = 0;
 
+    virtual void set_receive_buffer_size(size_t size) = 0;
+    virtual void set_child_receive_buffer_size(size_t size) = 0;
+
     /**
      * Dump the state of this stream, for debugging purposes.
      */
     virtual void dump() = 0;
-
-    //===============================================================
-    // Byte-oriented data transfer.
-    //===============================================================
-    virtual ssize_t read_data(char* data, size_t max_size) = 0;
-    virtual ssize_t write_data(const char* data, size_t size, uint8_t endflags) = 0;
-
-    virtual int read_record(char* data, size_t max_size) = 0;
-    virtual byte_array read_record(size_t max_size) = 0;
-
-    virtual int write_record(const char* data, size_t size) {
-        return write_data(data, size, to_underlying(flags::data_message));
-    }
-    virtual int write_record(const byte_array& rec) {
-        return write_record(rec.data(), rec.size());
-    }
-
-    /**
-     * Return number of complete records currently available for reading.
-     */
-    virtual int pending_records() const = 0;
-
-    /**
-     * Return true if at least one complete record is currently available for reading.
-     */
-    inline bool has_pending_records() const {
-        return pending_records() > 0;
-    }
-
-    //===============================================================
-    // Datagrams.
-    // Send and receive unordered, unreliable datagrams on this stream.
-    //===============================================================
-    virtual int write_datagram(const char* data, size_t size, bool rel) = 0;
-    virtual int read_datagram(char* data, size_t max_size) = 0;
-    virtual byte_array read_datagram(size_t max_size) = 0;
-
-    //===============================================================
-    // Substreams.
-    //===============================================================
-
-    /**
-     * Initiate a new substream as a child of this stream.
-     * This method completes without synchronizing with the remote host,
-     * and the client application can use the new substream immediately
-     * to send data to the remote host via the new substream.
-     * If the remote host is not yet ready to accept the new substream,
-     * SSU queues the new substream and any data written to it locally
-     * until the remote host is ready to accept the new substream.
-     *
-     * @return A stream object representing the new substream.
-     */
-    virtual abstract_stream* open_substream() = 0;
-    /**
-     * Accept a waiting incoming substream.
-     *
-     * @return NULL if no incoming substreams are waiting.
-     */
-    virtual abstract_stream* accept_substream() = 0;
-    /**
-     * Listen for incoming substreams on this stream.
-     */
-    inline void listen(stream::listen_mode mode) {
-        listen_mode_ = mode;
-    }
-    inline stream::listen_mode listen_mode() {
-        return listen_mode_;
-    }
-    /**
-     * Returns true if this stream is set to accept incoming substreams.
-     */
-    inline bool is_listening() {
-        return listen_mode_ != stream::listen_mode::reject;
-    }
 };
 
 } // namespace ssu
