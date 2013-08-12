@@ -65,6 +65,16 @@ class base_stream : public abstract_stream
     static const size_t default_rx_buffer_size = 65536;
 
 public:
+    /**
+     * Create a base_stream instance.
+     * @param host parent host
+     * @param peer the endpoint identifier (EID) of the remote host with which this stream
+     *        will be used to communicate. The destination may be either a cryptographic EID
+     *        or a non-cryptographic legacy address as defined by the Ident class.
+     * @param parent the parent stream, or NULL if none (yet).
+     */
+    base_stream(std::shared_ptr<host>& h, const peer_id& peer, std::shared_ptr<base_stream> parent);
+    virtual ~base_stream();
 };
 
 } // namespace ssu
