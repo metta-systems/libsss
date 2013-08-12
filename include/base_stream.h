@@ -43,7 +43,7 @@ class base_stream : public abstract_stream
         base_stream* owner{nullptr};
         uint64_t tsn{0};     ///< Logical byte position. XXX tx_byte_pos
         byte_array buf;      ///< Packet buffer including headers.
-        int hdrlen{0};       ///< Size of channel and stream headers.
+        int header_len{0};       ///< Size of channel and stream headers.
         packet_type type{packet_type::invalid}; ///< Type of this packet.
         bool late{false};                       ///< Possibly lost packet.
 
@@ -56,7 +56,7 @@ class base_stream : public abstract_stream
             return owner == nullptr;
         }
         inline int payload_size() const {
-            return buf.size() - hdrlen;
+            return buf.size() - header_len;
         }
     };
 
