@@ -70,9 +70,6 @@ class stream : public std::enable_shared_from_this<stream>
     stream(abstract_stream* other_stream);
 
 public:
-    typedef uint16_t id_t;      ///< Stream ID within channel.
-    typedef uint32_t byteseq_t; ///< Stream byte sequence number.
-
     /**
      * Flag bits used as arguments to the listen() method, indicating when and
      * how to accept incoming substreams.

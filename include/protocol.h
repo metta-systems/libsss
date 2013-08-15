@@ -36,6 +36,8 @@ public:
     static const uint32_t magic;
 
     typedef uint64_t counter_t; ///< Counter for SID assignment.
+    typedef uint16_t id_t;      ///< Stream ID within channel.
+    typedef uint32_t byteseq_t; ///< Stream byte sequence number.
 
     enum class packet_type : uint8_t {
     	invalid  = 0x0,
