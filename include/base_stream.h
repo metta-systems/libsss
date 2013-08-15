@@ -27,7 +27,7 @@ namespace ssu {
 class base_stream : public abstract_stream
 {
     enum class state {
-        fresh = 0,     ///< Newly created.
+        created = 0,   ///< Newly created.
         wait_service,  ///< Initiating, waiting for service reply.
         accepting,     ///< Accepting, waiting for service request.
         connected,     ///< Connection established.
