@@ -70,7 +70,6 @@ class stream : public std::enable_shared_from_this<stream>
 public:
     typedef uint16_t id_t;      ///< Stream ID within channel.
     typedef uint32_t byteseq_t; ///< Stream byte sequence number.
-    typedef uint64_t counter_t; ///< Counter for SID assignment.
 
     /**
      * Flag bits used as arguments to the listen() method, indicating when and
@@ -94,18 +93,6 @@ public:
         write   = 2,    ///< Write (outgoing data) direction.
         close   = 3,    ///< Both directions (Read|Write).
         reset   = 4,    ///< Forceful reset.
-    };
-
-    /**
-     * Type for identifying streams uniquely across channels.
-     *
-     * XXX should contain a "keying method identifier" of some kind?
-     */
-    struct unique_stream_id_t
-    {
-        counter_t counter; ///< Stream counter in channel
-        byte_array half_channel_id; ///< Unique channel+direction ID 
-                                    ///< ("half-channel id")
     };
 
     stream(std::shared_ptr<host>& h);

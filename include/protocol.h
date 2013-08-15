@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include "byte_array.h"
 
 // Slightly silly enum-class-to-underlying-type converter.
 // TODO: move to support lib.
@@ -32,6 +33,8 @@ public:
     // Control chunk magic value for the structured streams.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
     static const uint32_t magic;
+
+    typedef uint64_t counter_t; ///< Counter for SID assignment.
 
     enum class packet_type : uint8_t {
     	invalid  = 0x0,
@@ -86,6 +89,18 @@ public:
 
         // Flag bits for Reset packets
         reset_remote      = 0x1,  ///< SID orientation (set: sent LSID is in remote space)
+    };
+
+    /**
+     * Type for identifying streams uniquely across channels.
+     *
+     * XXX should contain a "keying method identifier" of some kind?
+     */
+    struct unique_stream_id_t
+    {
+        counter_t counter; ///< Stream counter in channel
+        byte_array half_channel_id; ///< Unique channel+direction ID 
+                                    ///< ("half-channel id")
     };
 };
 
