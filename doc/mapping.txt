@@ -5,7 +5,7 @@ UniqueStreamId     | unique_stream_id_t | proto.h        | stream.h
 AbstractStream     | abstract_stream    | abs.h          | abstract_stream.h
 Stream             | stream             | stream.h       | stream.h
 Flow               | channel            | flow.h         | channel.h
-FlowArmor          | channel_armor      | flow.h         | channel.h
+FlowArmor          | channel_armor      | flow.h         | channel_armor.h
 FlowResponder      |                    | seg.h          | Unused
 Socket             | link               | sock.h         | link.h
 SocketEndpoint     | link_endpoint      | sock.h         | link.h
@@ -18,8 +18,8 @@ StreamTxAttachment |                    | base.h         |
 StreamRxAttachment |                    | base.h         |
 StreamTxRec        |                    | base.h         |
 BaseStream         | base_stream        | base.h         | base_stream.h
-StreamFlow         |                    | sflow.h        |
-StreamPeer         |                    | peer.h         |
+StreamFlow         | stream_channel     | sflow.h        |
+StreamPeer         | stream_peer        | peer.h         | private/stream_peer.h
 StreamServer       | server             | stream.h       | server.h
 StreamResponder    | stream_responder   | stream.h       | stream_responder.h
 KeyResponder       | key_responder      | key.h          | key_responder.h
