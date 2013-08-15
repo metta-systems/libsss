@@ -464,21 +464,21 @@ public:
     // Signals.
     //===============================================================
 
-    typedef boost::signals2::signal<void(void)> ready_signal;
+    typedef boost::signals2::signal<void (void)> ready_signal;
     ready_signal ready_read_message;
     ready_signal ready_read_datagram;
     ready_signal ready_write;
     ready_signal receive_blocked;
 
-    typedef boost::signals2::signal<void(void)> link_status_change_signal;
+    typedef boost::signals2::signal<void (void)> link_status_change_signal;
     link_status_change_signal link_up;
     link_status_change_signal link_stalled;
     link_status_change_signal link_down;
 
-    typedef boost::signals2::signal<void(void)> substream_notify_signal;
+    typedef boost::signals2::signal<void (void)> substream_notify_signal;
     substream_notify_signal new_substream;
 
-    typedef boost::signals2::signal<void(const std::string&)> error_signal;
+    typedef boost::signals2::signal<void (const std::string&)> error_signal;
     error_signal error_notify;
     error_signal reset_notify;
 };
