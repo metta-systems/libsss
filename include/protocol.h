@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <type_traits>
 #include "byte_array.h"
+#include "opaque_endian.h"
 
 // Slightly silly enum-class-to-underlying-type converter.
 // TODO: move to support lib.
@@ -50,20 +51,20 @@ public:
 
     struct stream_header
     {
-        uint16_t     stream_id;
+        big_uint16_t stream_id;
         packet_type  type;
         uint8_t      window;
     };
 
     struct init_header : public stream_header
     {
-    	uint16_t new_stream_id;
-    	uint16_t tx_seq_no;
+    	big_uint16_t new_stream_id;
+    	big_uint16_t tx_seq_no;
     };
     typedef init_header reply_header;
     struct data_header : public stream_header
     {
-    	uint32_t tx_seq_no;
+    	big_uint32_t tx_seq_no;
     };
     typedef stream_header datagram_header;
     typedef stream_header ack_header;
