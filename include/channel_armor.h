@@ -13,18 +13,17 @@
 
 namespace ssu {
 
-class channel_armor;
-
 /**
- * Abstract base class representing a channel between a local Socket and a remote endpoint.
+ * Abstract base class for channel encryption and authentication schemes.
  */
-class channel : public link_channel
+class channel_armor
 {
-public:
-    static const int hdrlen = 8/*XXX*/;
+    friend class channel;
 
-	virtual void start(bool initiate);
-	virtual void stop();
+protected:
+    virtual byte_array transmit_encode(uint64_t pktseq, const byte_array& pkt) = 0;
+    virtual bool receive_decode(uint64_t pktseq, byte_array& pkt) = 0;
+    virtual ~channel_armor();
 };
 
-} // namespace ssu
+} // ssu namespace
