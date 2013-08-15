@@ -12,6 +12,64 @@
 
 namespace ssu {
 
+class base_stream;
+class stream_channel;
+
+/**
+ * Helper representing an attachment point on a stream where the stream attaches to a channel.
+ */
+class stream_attachment : public stream_protocol
+{
+protected:
+    base_stream*     stream_;       ///< Our stream.
+    stream_channel*  channel_{0};   ///< Channel our stream is attached to.
+    id_t             stream_id_;    ///< Our stream ID in this channel.
+    uint64_t         sid_seq_;      ///< Reference packet sequence for stream ID.
+};
+
+class stream_tx_attachment : public stream_attachment
+{
+    bool active_{false};     ///< Currently active and usable.
+    bool deprecated_{false}; ///< Opening a replacement channel.
+
+public:
+    inline bool is_in_use()       const { return channel_ != nullptr; }
+    inline bool is_acknowledged() const { return sid_seq_ != -1; }// todo fixme magic value
+    inline bool is_active()       const { return active_; }
+    inline bool is_deprecated()   const { return deprecated_; }
+
+    /**
+     * Transition from Unused to Attaching -
+     * this happens when we send a first Init, Reply, or Attach packet.
+     */
+    void set_attaching(stream_channel* channel, id_t sid);
+
+    /**
+     * Transition from Attaching to Active -
+     * this happens when we get an Ack to our Init, Reply, or Attach.
+     */
+    inline void set_active(uint64_t rxseq) {
+        assert(is_in_use() && !is_acknowledged());
+        sid_seq_ = rxseq;
+        active_ = true;
+    }
+
+    // Transition to the unused state.
+    void clear();
+};
+
+class stream_rx_attachment : public stream_attachment
+{
+public:
+    inline bool is_active() const { return channel_ != nullptr; }
+
+    // Transition from unused to active.
+    void set_active(stream_channel* channel, id_t sid, uint64_t rxseq);
+
+    // Transition to the unused state.
+    void clear();
+};
+
 /**
  * @internal
  * Basic internal implementation of the abstract stream.
