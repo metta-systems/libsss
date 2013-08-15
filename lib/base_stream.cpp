@@ -14,8 +14,8 @@ base_stream::~base_stream()
 //txenqflow()
 void base_stream::tx_enqueue_channel(bool tx_immediately)
 {
-    // if (!attached())
-    //     return tx_attach();
+    if (!attached())
+        return tx_attach();
 
     // stream_channel* channel = tx_current_attachment->channel;
     // assert(channel && channel->is_active());
