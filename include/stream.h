@@ -62,6 +62,8 @@ class abstract_stream;
  */
 class stream : public std::enable_shared_from_this<stream>
 {
+    friend class abstract_stream;
+
     abstract_stream* stream_{nullptr};
     std::weak_ptr<host> host_;
 
@@ -481,6 +483,10 @@ public:
     typedef boost::signals2::signal<void (const std::string&)> error_signal;
     error_signal error_notify;
     error_signal reset_notify;
+
+protected:
+    // Set an error condition on this stream and emit the error_notify signal.
+    void set_error(const std::string& error);
 };
 
 } // namespace ssu

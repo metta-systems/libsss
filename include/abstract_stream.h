@@ -208,6 +208,13 @@ public:
      * Dump the state of this stream, for debugging purposes.
      */
     virtual void dump() = 0;
+
+protected:
+    void set_error(const std::string& error) {
+        if (std::shared_ptr<stream> strm = owner.lock()) {
+            strm->set_error(error);
+        }
+    }
 };
 
 } // namespace ssu
