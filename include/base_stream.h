@@ -64,6 +64,19 @@ class base_stream : public abstract_stream
 
     static const size_t default_rx_buffer_size = 65536;
 
+    void recalculate_receive_window();
+    void recalculate_transmit_window();
+
+    void tx_enqueue_channel(bool tx_immediately);
+
+    bool attached();
+
+    //====================================
+    // Transmit various types of packets.
+    //====================================
+
+    void tx_attach();
+
 public:
     /**
      * Create a base_stream instance.
