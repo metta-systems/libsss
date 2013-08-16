@@ -15,6 +15,9 @@
 
 namespace ssu {
 
+typedef big_uint32_t magic_t; ///< Protocol magic marker, must have 0x00 as the highest byte (channel number).
+typedef uint8_t channel_number;
+
 /**
  * @internal
  * SSU stream protocol definitions.

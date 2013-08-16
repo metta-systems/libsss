@@ -24,8 +24,6 @@ namespace ssu {
 class link;
 class link_channel;
 
-typedef uint32_t magic_t; ///< Protocol magic marker, must have 0x00 as the highest byte (channel number).
-typedef uint8_t channel_number;
 /**
  * Currently only UDP endpoints/sockets are supported.
  * System implementation might also have to work over
