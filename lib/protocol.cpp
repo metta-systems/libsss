@@ -9,5 +9,5 @@
 #include "protocol.h"
 
 namespace ssu {
-const uint32_t stream_protocol::magic = 0x00535355;
+const magic_t stream_protocol::magic = 0x00535355;
 }
