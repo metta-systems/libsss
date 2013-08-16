@@ -32,7 +32,7 @@ public:
     virtual void stop();
 
     inline bool is_active()       const { return active_; }
-    inline bool is_bound()        const { return link_ != nullptr; }
+    inline bool is_bound()        const { return link_.lock() != nullptr; }
 
     /**
      * Set up for communication with specified remote endpoint,
@@ -41,7 +41,7 @@ public:
      */
     channel_number bind(std::shared_ptr<link> link, const endpoint& remote_ep);
     inline channel_number bind(const link_endpoint& remote_ep) {
-        return bind(remote_ep.link, remote_ep);
+        return bind(remote_ep.link(), remote_ep);
     }
 
     /**
@@ -64,9 +64,14 @@ public:
     ready_transmit_signal on_ready_transmit;
 
 protected:
+    friend class link;
+
     inline bool send(const byte_array& pkt) const {
-        assert(active);
-        return link_->send(remote_ep_, pkt);
+        assert(active_);
+        if (auto l = link_.lock()) {
+            return l->send(remote_ep_, pkt);
+        }
+        return false;
     }
 
     virtual void receive(const byte_array& /*msg*/, const link_endpoint& /*src*/) {}

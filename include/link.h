@@ -37,17 +37,21 @@ typedef boost::asio::ip::udp::endpoint endpoint;
  */
 class link_endpoint : public endpoint
 {
-    /*std::weak_ptr<link>*/link* link_; ///< Associated link, if any.
+    std::weak_ptr<link> link_; ///< Associated link, if any.
 public:
     link_endpoint() {}
     link_endpoint(const link_endpoint& other) : endpoint(other), link_(other.link_) {}
-    link_endpoint(const endpoint& other, /*std::shared_ptr<link>*/ link* l) : endpoint(other), link_(l) {}
+    link_endpoint(const endpoint& other, std::shared_ptr<link> l) : endpoint(other), link_(l) {}
 
     // Send a message to this endpoint on this socket
     bool send(const char *data, int size) const;
     inline bool send(const byte_array& msg) const {
         return send(msg.const_data(), msg.size());
     }
+
+    // Obtain a shared pointer to this endpoint's link.
+    // ??? FIXME
+    std::shared_ptr<link> link() const { return link_.lock(); }
 };
 
 /**
@@ -82,7 +86,7 @@ public:
  * For connected links there may be a number of channels established using their own keying schemes.
  * Link orchestrates initiation of key exchanges and scheme setup.
  */
-class link //: public boost::enable_shared_from_this<link>
+class link : public std::enable_shared_from_this<link>
 {
     link_host_state& host;
     std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels;
@@ -133,10 +137,21 @@ public:
     udp_link(const endpoint& ep, link_host_state& h);
 
     // bool bind(const endpoint& ep);
-    /// Send a packet on this UDP socket.
-    virtual bool send(const endpoint& ep, const char *data, size_t size) override;
 
-    /// Return all known local endpoints referring to this link.
+    /**
+     * Send a packet on this UDP socket.
+     * @param  ep   Target endpoint - intended receiver of the packet.
+     * @param  data Packet data.
+     * @param  size Packet size.
+     * @return      If send was successful, i.e. the packet has been sent. It does not say anything
+     *              about the reception of the packet on the other side, if it was ever delivered
+     *              or accepted.
+     */
+    bool send(const endpoint& ep, const char *data, size_t size) override;
+
+    /**
+     * Return all known local endpoints referring to this link.
+     */
     std::vector<endpoint> local_endpoints();
 
 private:
@@ -144,4 +159,4 @@ private:
     void udp_ready_read(const boost::system::error_code& error, std::size_t bytes_transferred);
 };
 
-} // namespace ssu
+} // ssu namespace

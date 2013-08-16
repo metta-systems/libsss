@@ -10,6 +10,8 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include "link.h"
+#include "link_channel.h"
+#include "link_receiver.h"
 #include "logging.h"
 
 namespace ssu {
@@ -27,7 +29,7 @@ link_receiver* link_host_state::receiver(magic_t magic)
 
 bool link_endpoint::send(const char *data, int size) const
 {
-    if (auto l = link_/*.lock()*/)
+    if (auto l = link_.lock())
     {
         return l->send(*this, data, size);
     }
@@ -107,7 +109,7 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
 udp_link::udp_link(const endpoint& ep, link_host_state& h)
     : link(h)
     , udp_socket(h.get_io_service(), ep)
-    , received_from(ep, this)
+    , received_from(ep, shared_from_this())
 {
     prepare_async_receive();
 }
