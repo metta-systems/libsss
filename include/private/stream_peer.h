@@ -58,7 +58,7 @@ class stream_peer : public stream_protocol
     /**
      * Initiate a connection attempt to target host by any means possible,
      * hopefully at some point resulting in an active primary channel.
-     * Eventually emits a channel_connected or a channel_failed signal.
+     * Eventually emits a on_channel_connected or on_channel_failed signal.
      */
     void connect_channel();
 
@@ -78,8 +78,8 @@ public:
     void add_location_hint(const endpoint& hint);
 
     typedef boost::signals2::signal<void (void)> channel_state_signal;
-    channel_state_signal channel_connected; ///< Primary flow connection attempt succeeded.
-    channel_state_signal channel_failed; ///< Connection attempt or the primary flow failed.
+    channel_state_signal on_channel_connected; ///< Primary flow connection attempt succeeded.
+    channel_state_signal on_channel_failed; ///< Connection attempt or the primary flow failed.
 
 
 };
