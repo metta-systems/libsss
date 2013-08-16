@@ -13,13 +13,6 @@
 #include "byte_array.h"
 #include "opaque_endian.h"
 
-// Slightly silly enum-class-to-underlying-type converter.
-// TODO: move to support lib.
-template <typename E>
-typename std::underlying_type<E>::type to_underlying(E e) {
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
-
 namespace ssu {
 
 /**

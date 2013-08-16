@@ -12,7 +12,7 @@
 #include <boost/optional/optional.hpp>
 #include "logging.h"
 #include "msgpack.h"
-#include "protocol.h" // for to_underlying XXX
+#include "underlying.h"
 
 namespace ssu {
 namespace negotiation {
