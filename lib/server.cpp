@@ -15,5 +15,20 @@ server::server(std::shared_ptr<host>& h)
 {
 }
 
+bool server::listen(std::string const& service_name, std::string const& service_desc,
+                    std::string const& protocol_name, std::string const& protocol_desc)
+{
+    return false;
+}
+
+bool server::is_listening() const
+{
+    return false;
+}
+
+stream* server::accept()
+{
+    return 0;
+}
 
 } // ssu namespace
