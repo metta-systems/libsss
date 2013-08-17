@@ -18,3 +18,10 @@ BOOST_AUTO_TEST_CASE(created_server)
     std::shared_ptr<host> h(new host);
     server s(h);
 }
+
+BOOST_AUTO_TEST_CASE(server_listen)
+{
+    std::shared_ptr<host> h(new host);
+    server s(h);
+    BOOST_CHECK(s.listen("test", "Testing", "test", "Test protocol") == true);
+}
