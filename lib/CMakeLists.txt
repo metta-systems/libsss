@@ -4,6 +4,7 @@ add_library(ssu STATIC
     abstract_stream.cpp
     base_stream.cpp
     stream.cpp
+    server.cpp
     link.cpp
     protocol.cpp
     key_responder.cpp

@@ -15,6 +15,8 @@
 
 namespace ssu {
 
+class stream;
+
 /**
  * This class represents a server that can accept incoming SSU connections.
  * 
@@ -36,30 +38,26 @@ public:
      * The application must call listen()
      * before the StreamServer will actually accept incoming connections.
      */
-    server(shared_ptr<host>& host);
+    server(std::shared_ptr<host>& host);
 
     /** Listen for incoming connections to a particular service
      * using a particular application protocol.
-     * This method may only be called once on a StreamServer instance.
-     * An error occurs if another StreamServer object is already listening
+     * This method may only be called once on a server instance.
+     * An error occurs if another server object is already listening
      * on the specified service/protocol name pair on this host.
-     * @param serviceName the service name on which to listen.
-     *      Clients must specify the same service name
-     *      via connectTo() to connect to this server.
-     * @param serviceDesc a short human-readable service description
-     *      for use for example by utilities that
-     *      browse or control the set of services running
+     * @param service_name the service name on which to listen.
+     *      Clients must specify the same service name via connect_to() to connect to this server.
+     * @param service_desc a short human-readable service description
+     *      for use for example by utilities that browse or control the set of services running
      *      on a particular host.
-     * @param protocolName the protocol name on which to listen.
-     *      Clients must specify the same protocol name
-     *      via connectTo() to connect to this server.
-     * @param protocolDesc a short human-readable description
-     *      of the protocol, useful for browsing
-     *      the set of protocols a particular service supports.
+     * @param protocol_name the protocol name on which to listen.
+     *      Clients must specify the same protocol name via connect_to() to connect to this server.
+     * @param protocol_desc a short human-readable description
+     *      of the protocol, useful for browsing the set of protocols a particular service supports.
      * @return true if successful, false if an error occurred.
      */
-    bool listen(const QString &serviceName, const QString &serviceDesc,
-        const QString &protocolName, const QString &protocolDesc);
+    bool listen(std::string const& service_name, std::string const& service_desc,
+                std::string const& protocol_name, std::string const& protocol_desc);
 
     bool is_listening() const;
 
