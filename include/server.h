@@ -81,7 +81,7 @@ public:
     stream* accept();
 
     typedef boost::signals2::signal<void(void)> connection_notify_signal;
-    connection_notify_signal new_connection;
+    connection_notify_signal on_new_connection;
 };
 
 } // namespace ssu

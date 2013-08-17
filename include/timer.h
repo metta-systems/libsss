@@ -54,8 +54,8 @@ public:
 	 * 
 	 * Argument 'failed' is true if the hard failure deadline has been reached.
 	 */
-    typedef boost::signals2::signal<void (bool)> on_timeout;
-    on_timeout timeout;
+    typedef boost::signals2::signal<void (bool)> timeout_signal;
+    timeout_signal on_timeout;
 };
 
 } // namespace async

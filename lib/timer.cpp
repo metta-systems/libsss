@@ -86,7 +86,7 @@ void default_timer_engine::stop()
 
 void timer_engine::timeout()
 {
-	origin_->timeout(false);
+	origin_->on_timeout(false);
 }
 
 } // namespace async
