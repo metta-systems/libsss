@@ -91,6 +91,11 @@ void timer_engine::timeout()
 
 } // namespace async
 
+boost::posix_time::ptime timer_host_state::current_time()
+{
+	return boost::posix_time::microsec_clock::local_time();
+}
+
 async::timer_engine* timer_host_state::create_timer_engine_for(async::timer* t)
 {
 	return new async::default_timer_engine(t, io_service);
