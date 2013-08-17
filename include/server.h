@@ -34,13 +34,14 @@ class server : public stream_protocol
 
 public:
     /**
-     * Create a StreamServer instance.
+     * Create a server instance.
      * The application must call listen()
-     * before the StreamServer will actually accept incoming connections.
+     * before the server will actually accept incoming connections.
      */
     server(std::shared_ptr<host>& host);
 
-    /** Listen for incoming connections to a particular service
+    /** 
+     * Listen for incoming connections to a particular service
      * using a particular application protocol.
      * This method may only be called once on a server instance.
      * An error occurs if another server object is already listening
@@ -62,19 +63,19 @@ public:
     bool is_listening() const;
 
     /**
-     * Accept an incoming connection as a top-level Stream.
-     * Upon receiving a newConnection() signal,
-     * the application must call accept() in a loop
+     * Accept an incoming connection as a top-level stream.
+     * Upon receiving the on_new_connection signal, the application must call accept() in a loop
      * until there are no more incoming connections to accept.
      *
+     * @todo
      * Stream objects returned from this method
      * initially have the StreamServer as their Qt parent,
      * so they are automatically deleted if the StreamServer is deleted.
      * The application may re-parent these Stream objects if desired,
      * in which case the Stream may outlive the StreamServer object.
      *
-     * @return a new Stream representing ths incoming connection,
-     *      or NULL if no connections are currently waiting.
+     * @return a new stream representing ths incoming connection,
+     *         or NULL if no connections are currently waiting.
      */
     stream* accept();
 
