@@ -37,7 +37,7 @@ public:
 	 * Client must establish a host identity via set_host_ident()
 	 * and activate one or more network links before using ssu.
 	 */
-	host();
+	host() {}
 };
 
 }
