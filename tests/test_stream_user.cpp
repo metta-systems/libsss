@@ -11,6 +11,10 @@
 
 #include "stream.h"
 
+using namespace ssu;
+
 BOOST_AUTO_TEST_CASE(created_stream)
 {
+    std::shared_ptr<host> h(new host);
+    stream s(h);
 }
