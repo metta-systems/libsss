@@ -74,7 +74,9 @@ protected:
         return false;
     }
 
-    virtual void receive(const byte_array& /*msg*/, const link_endpoint& /*src*/) {}
+    virtual void receive(byte_array const& msg, link_endpoint const& src) {
+        on_received(msg, src);
+    }
 
 private:
     std::weak_ptr<link> link_;      ///< Link we're currently bound to, if any.
