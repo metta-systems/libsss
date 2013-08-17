@@ -56,7 +56,7 @@ public:
     void unbind();
 
     // Provide access to signal types for clients
-    typedef boost::signals2::signal<void (byte_array&, const link_endpoint&)> received_signal;
+    typedef boost::signals2::signal<void (byte_array const&, link_endpoint const&)> received_signal;
     typedef boost::signals2::signal<void ()> ready_transmit_signal;
 
     received_signal on_received;
