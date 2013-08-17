@@ -11,6 +11,9 @@
 
 #include "host.h"
 
+using namespace ssu;
+
 BOOST_AUTO_TEST_CASE(created_host)
 {
+    std::shared_ptr<host> h(new host);
 }
