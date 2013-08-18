@@ -146,6 +146,15 @@ public:
      */
     base_stream(std::shared_ptr<host>& h, const peer_id& peer, std::shared_ptr<base_stream> parent);
     virtual ~base_stream();
+
+    /**
+     * Connect to a given service on a remote host.
+     * @param service the service name to connect to on the remote host.
+     *      This parameter replaces the port number
+     *      that TCP traditionally uses to differentiate services.
+     * @param protocol the application protocol name to connect to.
+     */
+    void connect_to(std::string const& service, std::string const& protocol);
 };
 
 } // namespace ssu
