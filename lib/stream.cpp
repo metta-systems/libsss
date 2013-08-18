@@ -8,6 +8,7 @@
 //
 #include "stream.h"
 #include "base_stream.h"
+#include "identity.h"
 
 namespace ssu {
 
@@ -32,13 +33,33 @@ stream::~stream()
 
 bool stream::connect_to(peer_id& destination, 
     std::string service, std::string protocol,
-    const endpoint& destination_endpoint_hint)
+    endpoint const& destination_endpoint_hint)
 {
-    return false;
+    // Determine a suitable target EID.
+    // If the caller didn't specify one (doesn't know the target's EID),
+    // then use the location hint as a surrogate peer identity.
+    byte_array eid = destination.id();
+    if (eid.is_empty()) {
+        eid = identity::from_endpoint(destination_endpoint_hint).id();
+        assert(!eid.is_empty());
+    }
+
+    disconnect();
+
+    stream_ = new base_stream(host_, eid, nullptr);
+
+    // Start the actual network connection process
+    stream_->connect_to(service, protocol);
+
+    if (destination_endpoint_hint != endpoint())
+        connect_at(destination_endpoint_hint);
+
+    return true;
 }
 
 void stream::disconnect()
 {
+    stream_->shutdown(shutdown_mode::close);
 }
 
 bool stream::is_connected() const
