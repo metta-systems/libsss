@@ -67,4 +67,7 @@ bool stream::is_connected() const
     return stream_ != nullptr;
 }
 
+void stream::connect_at(endpoint const& ep)
+{}
+
 }
