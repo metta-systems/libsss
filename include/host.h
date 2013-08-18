@@ -12,6 +12,7 @@
 #include "link.h"
 #include "timer.h"
 #include "negotiation/key_responder.h"
+#include <boost/enable_shared_from_this.hpp>
 
 namespace ssu {
 
@@ -23,9 +24,13 @@ namespace ssu {
  * 
  * It is the client's responsibility to ensure that a host object
  * is not destroyed while any ssu objects still refer to it.
+ *
+ * Example: it is customary to create a shared_ptr to host.
+ * shared_ptr<host> my_host(make_shared<host>());
  */
 class host
-    : public link_host_state
+    : public std::enable_shared_from_this<host>
+    , public link_host_state
     , public dh_host_state
     , public key_host_state
     , public virtual asio_host_state

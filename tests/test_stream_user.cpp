@@ -15,14 +15,14 @@ using namespace ssu;
 
 BOOST_AUTO_TEST_CASE(created_stream)
 {
-    std::shared_ptr<host> h(new host);
+    std::shared_ptr<host> h(std::make_shared<host>());
     stream s(h);
 }
 
 BOOST_AUTO_TEST_CASE(connect_to)
 {
     peer_id eid;
-    std::shared_ptr<host> h(new host);
+    std::shared_ptr<host> h(std::make_shared<host>());
     stream s(h);
     s.connect_to(eid, "test", "test");
 }
