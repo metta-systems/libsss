@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "stream.h"
-#include "abstract_stream.h"
+#include "base_stream.h"
 
 namespace ssu {
 
@@ -16,7 +16,7 @@ stream::stream(std::shared_ptr<host>& h)
 {
 }
 
-stream::stream(abstract_stream* other_stream)
+stream::stream(base_stream* other_stream)
     : stream_(other_stream)
     , host_(other_stream->host_)
 {

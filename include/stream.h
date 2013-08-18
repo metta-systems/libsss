@@ -15,7 +15,7 @@
 
 namespace ssu {
 
-class abstract_stream;
+class base_stream;
 
 /**
  * User-space interface to the stream.
@@ -62,12 +62,13 @@ class abstract_stream;
  */
 class stream : public std::enable_shared_from_this<stream>
 {
-    friend class abstract_stream;
+    friend class abstract_stream; // @todo get rid of this. only used for set_error()
+    friend class base_stream; // @todo get rid of this.
 
-    abstract_stream* stream_{nullptr};
     std::weak_ptr<host> host_;
+    std::shared_ptr<base_stream> stream_{nullptr};
 
-    stream(abstract_stream* other_stream);
+    stream(base_stream* other_stream);
 
 public:
     /**
