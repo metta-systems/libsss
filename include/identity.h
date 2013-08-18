@@ -1,5 +1,8 @@
 #pragma once
 
+#include "link.h"
+#include "byte_array.h"
+
 namespace ssu {
 
 /** 
@@ -18,6 +21,7 @@ namespace ssu {
  */
 class identity
 {
+    identity() {}
 public:
     static identity from_endpoint(endpoint const& ep);
 
