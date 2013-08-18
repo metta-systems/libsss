@@ -11,7 +11,7 @@
 
 namespace ssu {
 
-stream::stream(std::shared_ptr<host>& h)
+stream::stream(std::shared_ptr<host> h)
     : host_(h)
 {
 }

@@ -65,8 +65,8 @@ class stream : public std::enable_shared_from_this<stream>
     friend class abstract_stream; // @todo get rid of this. only used for set_error()
     friend class base_stream; // @todo get rid of this.
 
-    std::weak_ptr<host> host_;
-    std::shared_ptr<base_stream> stream_{nullptr};
+    std::shared_ptr<host> host_;
+    base_stream* stream_{nullptr};
 
     stream(base_stream* other_stream);
 
@@ -95,7 +95,7 @@ public:
         reset   = 4,    ///< Forceful reset.
     };
 
-    stream(std::shared_ptr<host>& h);
+    stream(std::shared_ptr<host> h);
     virtual ~stream();
 
     //===============================================================

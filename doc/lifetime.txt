@@ -1,0 +1,8 @@
+Lifetimes of the objects in the SSU library
+
+host - outlives all the objects. they all keep a shared_ptr to the host object, effectively making
+it live as long as there are any objects using it. (@todo watch out for reference cycles!)
+
+base_stream::parent - streams may outlive their parents, that's why the parent pointer is a weak_ptr
+at some point the parent stream may be gone.
+
