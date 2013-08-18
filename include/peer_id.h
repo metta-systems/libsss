@@ -19,6 +19,8 @@ namespace ssu {
  *
  * Peer ID is a cryptographic identifier for the peer endpoint, it contains the type and keying method
  * as well as public key fingerprint of the peer.
+ *
+ * @todo maybe merge this with identity somehow?
  */
 class peer_id
 {
