@@ -6,3 +6,7 @@ it live as long as there are any objects using it. (@todo watch out for referenc
 base_stream::parent - streams may outlive their parents, that's why the parent pointer is a weak_ptr
 at some point the parent stream may be gone.
 
+
+http://programmers.stackexchange.com/questions/133302/stdshared-ptr-as-a-last-resort
+
+Use std::make_shared<T>()
