@@ -11,7 +11,7 @@ server->listen(service, service_desc, protocol, protocol_desc);
 and server->accept() in the on_new_connection signals.
 (bind server to the signal handler, as it is not provided)
 
-server->on_new_connection.connect(bind1st(server, handle_connection));
+server->on_new_connection.connect(boost::bind(&handle_connection, server));
 
 void handle_connection(server* s)
 {
