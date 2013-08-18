@@ -8,5 +8,7 @@ at some point the parent stream may be gone.
 
 
 http://programmers.stackexchange.com/questions/133302/stdshared-ptr-as-a-last-resort
+http://msdn.microsoft.com/en-us/library/vstudio/hh279669.aspx
+http://www.umich.edu/~eecs381/handouts/C++11_smart_ptrs.pdf
 
 Use std::make_shared<T>()
