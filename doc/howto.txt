@@ -30,8 +30,9 @@ stream->send
 Receive works like this:
 
 udp_link
-+--link_channel->receive for non-0 channel
-   emit on_received
-or
-+--link_receiver->receive for 0 init channel
-   key_responder->receive
++---link->receive
+    +---link_channel->receive for non-0 channel
+        emit on_received
+    or
+    +---link_receiver->receive for 0 init channel
+        key_responder->receive
