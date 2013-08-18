@@ -183,7 +183,7 @@ public:
      * to give SST a hint at where it might find the target
      * in order to re-establish connectivity.
      */
-    void connect_at(const endpoint& ep);
+    void connect_at(endpoint const& ep);
 
     //===============================================================
     // Byte-oriented data transfer.
