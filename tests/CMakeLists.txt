@@ -10,3 +10,5 @@ create_test(run_udp_receiver "ssu;support")
 
 create_test(optional "ssu;support")
 create_test(serialization "ssu;support")
+
+#create_test(crypto "ssu;support;${OPENSSL_LIBRARIES}")
