@@ -11,18 +11,19 @@
 
 #include "stream.h"
 
+using namespace std;
 using namespace ssu;
 
 BOOST_AUTO_TEST_CASE(created_stream)
 {
-    std::shared_ptr<host> h(std::make_shared<host>());
+    shared_ptr<host> h(make_shared<host>());
     stream s(h);
 }
 
 BOOST_AUTO_TEST_CASE(connect_to)
 {
     peer_id eid;
-    std::shared_ptr<host> h(std::make_shared<host>());
+    shared_ptr<host> h(make_shared<host>());
     stream s(h);
     s.connect_to(eid, "test", "test");
 }

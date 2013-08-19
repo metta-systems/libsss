@@ -11,17 +11,18 @@
 
 #include "server.h"
 
+using namespace std;
 using namespace ssu;
 
 BOOST_AUTO_TEST_CASE(created_server)
 {
-    std::shared_ptr<host> h(std::make_shared<host>());
+    shared_ptr<host> h(make_shared<host>());
     server s(h);
 }
 
 BOOST_AUTO_TEST_CASE(server_listen)
 {
-    std::shared_ptr<host> h(std::make_shared<host>());
+    shared_ptr<host> h(make_shared<host>());
     server s(h);
     BOOST_CHECK(s.listen("test", "Testing", "test", "Test protocol") == true);
 }

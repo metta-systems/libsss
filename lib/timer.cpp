@@ -17,9 +17,9 @@ static timer::duration_type backoff(timer::duration_type interval, timer::durati
 	return std::min(interval * 3 / 2, max_interval);
 }
 
-timer::timer(ssu::timer_host_state* host)
+timer::timer(ssu::timer_host_state& host)
 {
-	engine_ = host->create_timer_engine_for(this);
+	engine_ = host.create_timer_engine_for(this);
 }
 
 void timer::start(duration_type interval)
@@ -96,9 +96,10 @@ boost::posix_time::ptime timer_host_state::current_time()
 	return boost::posix_time::microsec_clock::local_time();
 }
 
-async::timer_engine* timer_host_state::create_timer_engine_for(async::timer* t)
+std::unique_ptr<async::timer_engine> timer_host_state::create_timer_engine_for(async::timer* t)
 {
-	return new async::default_timer_engine(t, io_service);
+	//@todo std::make_unique since c++14
+	return std::unique_ptr<async::timer_engine>(new async::default_timer_engine(t, io_service));
 }
 
 } // namespace ssu

@@ -23,6 +23,8 @@ class channel_armor
 protected:
     virtual byte_array transmit_encode(uint64_t pktseq, const byte_array& pkt) = 0;
     virtual bool receive_decode(uint64_t pktseq, byte_array& pkt) = 0;
+
+public: // for unique_ptr
     virtual ~channel_armor();
 };
 

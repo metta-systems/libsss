@@ -11,19 +11,19 @@
 #include "byte_array.h"
 #include "link.h"
 #include "link_channel.h"
+#include "channel_armor.h"
 
 namespace ssu {
 
 class host;
-class channel_armor;
 
 /**
  * Abstract base class representing a channel between a local Socket and a remote endpoint.
  */
 class channel : public link_channel
 {
-    std::weak_ptr<host> host_;
-    channel_armor* armor_;
+    std::shared_ptr<host> host_;
+    std::unique_ptr<channel_armor> armor_; // armors cannot be shared.
 
 public:
     static const int hdrlen = 8/*XXX*/;
@@ -35,12 +35,12 @@ public:
      * Set the encryption/authentication method for this channel.
      * This MUST be set before a new channel can be activated.
      */
-    inline void set_armor(channel_armor *armor) {
-        armor_ = armor;
+    inline void set_armor(std::unique_ptr<channel_armor>& armor) {
+        armor_ = std::move(armor);
     }
-    inline channel_armor* armor() {
-        return armor_;
-    }
+    // inline channel_armor* armor() { // huh, what for?
+        // return armor_;
+    // }
 
 protected:
     /**

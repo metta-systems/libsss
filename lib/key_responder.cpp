@@ -64,7 +64,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
  * Compute HMAC challenge cookie for DH.
  */
 byte_array
-calc_dh_cookie(ssu::negotiation::dh_hostkey_t* hostkey,
+calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
     const byte_array& responder_nonce,
     const byte_array& initiator_hashed_nonce,
     const ssu::link_endpoint& src)
@@ -188,9 +188,7 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
     if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
         return warning("invalid minimum AES key length");
 
-    dh_hostkey_t* hostkey = host_.lock()->get_dh_key(data.group); // get or generate a host key
-    // Problem: once we've got the hostkey here, the timeout timer may fire and cause host's dh key to expire.
-    // @todo Need to protect against this race here... (e.g. return hostkey in shared_ptr)
+    std::shared_ptr<dh_hostkey_t> hostkey(host_->get_dh_key(data.group)); // get or generate a host key
     if (!hostkey)
         return warning("unrecognized DH key group");
     // if (i1.dhi.size() > DH_size(hk->dh))
@@ -238,7 +236,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
  */
 void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src)
 {
-    key_initiator* initiator = host_.lock()->get_initiator(data.initiator_hashed_nonce).get();
+    key_initiator* initiator = host_->get_initiator(data.initiator_hashed_nonce).get();
     if (!initiator or initiator->group() != data.group)
         return warning("Got dh_response1 for unknown dh_init1");
     if (initiator->is_done())
@@ -255,7 +253,7 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
 
 key_initiator::key_initiator(const link_endpoint& target)
     : to(target)
-    , transmit_timer(host_.lock().get())
+    , transmit_timer(*host_.get())
 {
 }
 
@@ -268,7 +266,7 @@ void key_initiator::send_dh_init1()
     // .... TODO ....
 
     // Construct dh_init1 frame from the current state.
-    dh_hostkey_t* hostkey = host_.lock()->get_dh_key(dh_group); // get or generate a host key
+    std::shared_ptr<dh_hostkey_t> hostkey = host_->get_dh_key(dh_group); // get or generate a host key
 
     dh_init1_chunk init;
     init.group = dh_group;
@@ -298,7 +296,7 @@ std::shared_ptr<ssu::negotiation::key_initiator> key_host_state::get_initiator(b
     if (it == dh_initiators_.end()) {
         return 0;
     }
-    return it->second.lock();
+    return it->second;
 }
 
 } // namespace ssu

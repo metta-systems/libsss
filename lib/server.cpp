@@ -10,7 +10,7 @@
 
 namespace ssu {
 
-server::server(std::shared_ptr<host>& h)
+server::server(std::shared_ptr<host> h)
     : host_(h)
 {
 }

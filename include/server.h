@@ -27,7 +27,7 @@ class stream;
  */
 class server : public stream_protocol
 {
-    std::weak_ptr<host> host_;
+    std::shared_ptr<host> host_;
     std::string service_name, service_description;
     std::string protocol_name, protocol_description;
     std::string error_string;
@@ -38,7 +38,7 @@ public:
      * The application must call listen()
      * before the server will actually accept incoming connections.
      */
-    server(std::shared_ptr<host>& host);
+    server(std::shared_ptr<host> host);
 
     /** 
      * Listen for incoming connections to a particular service

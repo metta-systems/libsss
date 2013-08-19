@@ -21,7 +21,9 @@ public:
 class dh_host_state
 {
 public:
-    negotiation::dh_hostkey_t* get_dh_key(negotiation::dh_group_type group) { return new negotiation::dh_hostkey_t; }
+    std::shared_ptr<negotiation::dh_hostkey_t> get_dh_key(negotiation::dh_group_type group) {
+        return std::make_shared<negotiation::dh_hostkey_t>(); //@fixme temporary
+    }
 };
 
 } // namespace ssu

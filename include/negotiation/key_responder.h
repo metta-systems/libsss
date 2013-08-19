@@ -30,7 +30,7 @@ namespace negotiation {
  */
 class key_responder : public link_receiver
 {
-    std::weak_ptr<host> host_;
+    std::shared_ptr<host> host_;
 
     void got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src);
     void got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src);
@@ -47,7 +47,7 @@ public:
  */
 class key_initiator
 {
-    std::weak_ptr<host> host_;
+    std::shared_ptr<host> host_;
     const link_endpoint& to;
     enum class state {
         init1, init2, done
@@ -85,12 +85,12 @@ public:
  */
 class key_host_state
 {
-    //std::unordered_map<chk_ep, std::weak_ptr<key_initiator>> chk_initiators;
-    std::unordered_map<byte_array, std::weak_ptr<negotiation::key_initiator>> dh_initiators_;
-    // std::unordered_multimap<endpoint, std::weak_ptr<key_initiator>> ep_initiators;
+    //std::unordered_map<chk_ep, std::shared_ptr<key_initiator>> chk_initiators;
+    std::unordered_map<byte_array, std::shared_ptr<negotiation::key_initiator>> dh_initiators_;
+    // std::unordered_multimap<endpoint, std::shared_ptr<key_initiator>> ep_initiators;
 
 public:
-    std::shared_ptr<ssu::negotiation::key_initiator> get_initiator(byte_array nonce);
+    std::shared_ptr<negotiation::key_initiator> get_initiator(byte_array nonce);
 };
 
 } // namespace ssu
