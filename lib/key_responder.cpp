@@ -200,7 +200,8 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
     crypto::fill_random(responder_nonce);
 
     // Compute the hash challenge
-    byte_array challenge_cookie = calc_dh_cookie(hostkey, responder_nonce, data.initiator_hashed_nonce, src);
+    byte_array challenge_cookie =
+        calc_dh_cookie(hostkey, responder_nonce, data.initiator_hashed_nonce, src);
 
     // Build and send the response
     dh_response1_chunk response;

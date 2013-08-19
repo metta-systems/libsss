@@ -12,7 +12,8 @@ const timer::duration_type timer::fail_max  = boost::posix_time::seconds(20);
 // timer
 //=========================================================
 
-static timer::duration_type backoff(timer::duration_type interval, timer::duration_type max_interval = timer::fail_max)
+static timer::duration_type backoff(timer::duration_type interval,
+									timer::duration_type max_interval = timer::fail_max)
 {
 	return std::min(interval * 3 / 2, max_interval);
 }
