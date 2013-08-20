@@ -113,9 +113,10 @@ class checksum_response_chunk
 };
 
 enum class dh_group_type : uint32_t {
-    dh_group_1024 = 0x01, // 1024-bit DH group
-    dh_group_2048 = 0x02, // 2048-bit DH group
-    dh_group_3072 = 0x03  // 3072-bit DH group
+    dh_group_1024 = 0, // 1024-bit DH group
+    dh_group_2048 = 1, // 2048-bit DH group
+    dh_group_3072 = 2, // 3072-bit DH group
+    dh_group_max  = 3
 };
 
 // DH/JFK negotiation chunks
