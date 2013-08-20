@@ -60,45 +60,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
     return sha256hash;
 }
 
-/**
- * Compute HMAC challenge cookie for DH.
- */
-byte_array
-calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
-    const byte_array& responder_nonce,
-    const byte_array& initiator_hashed_nonce,
-    const ssu::link_endpoint& src)
-{
-    byte_array data;
-    {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Put together the data to hash
-
-        auto lval_addr = src.address().to_v4().to_bytes();
-        uint16_t port = src.port();
-
-        oa << hostkey->public_key
-           << responder_nonce
-           << initiator_hashed_nonce
-           << lval_addr
-           << port;
-    }
-
-    logger::file_dump dump(data);
-
-    // Compute the keyed hash
-    assert(hostkey->hkr.size() == HMACKEYLEN);
-
-    crypto::hash kmd(hostkey->hkr.as_vector());
-    crypto::hash::value mac;
-    // assert(mac.size() == HMACLEN);//mmmhm, expected HMACLEN is 16 but we generate 32 bytes HMACs... incompat?
-    kmd.update(data.as_vector());
-    kmd.finalize(mac);
-
-    return mac;
-}
-
-}
+} // anonymous namespace
 
 //===========================================================================================================
 // key_responder
@@ -246,6 +208,44 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
     logger::debug() << "Got dh_response1";
 
     initiator->send_dh_init2();
+}
+
+/**
+ * Compute HMAC challenge cookie for DH.
+ */
+byte_array
+key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
+    const byte_array& responder_nonce,
+    const byte_array& initiator_hashed_nonce,
+    const ssu::link_endpoint& src)
+{
+    byte_array data;
+    {
+        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
+        boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Put together the data to hash
+
+        auto lval_addr = src.address().to_v4().to_bytes();
+        uint16_t port = src.port();
+
+        oa << hostkey->public_key_
+           << responder_nonce
+           << initiator_hashed_nonce
+           << lval_addr
+           << port;
+    }
+
+    logger::file_dump dump(data);
+
+    // Compute the keyed hash
+    assert(hostkey->hmac_secret_key_.size() == crypto::HMACKEYLEN);
+
+    crypto::hash kmd(hostkey->hmac_secret_key_.as_vector());
+    crypto::hash::value mac;
+    assert(mac.size() == crypto::HMACLEN);//mmmhm, expected HMACLEN is 16 but we generate 32 bytes HMACs... incompat?
+    kmd.update(data.as_vector());
+    kmd.finalize(mac);
+
+    return mac;
 }
 
 //===========================================================================================================

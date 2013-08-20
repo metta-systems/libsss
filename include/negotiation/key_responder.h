@@ -20,6 +20,8 @@ class host;
 
 namespace negotiation {
 
+class dh_hostkey_t;
+
 /**
  * This abstract base class manages the responder side of the key exchange.
  * It uses link_receiver interface as base to receive negotiation protocol control messages
@@ -36,6 +38,12 @@ class key_responder : public link_receiver
     void got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src);
     void got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src);
     void got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src);
+
+    byte_array
+    calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
+        const byte_array& responder_nonce,
+        const byte_array& initiator_hashed_nonce,
+        const ssu::link_endpoint& src);
 
 public:
     virtual void receive(const byte_array& msg, const link_endpoint& src);
