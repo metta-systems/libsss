@@ -31,7 +31,7 @@ private:
 	bool active_{false};
 
 public:
-	timer(ssu::timer_host_state& host);
+	timer(ssu::timer_host_state* host);
 
 	void start(duration_type interval); // @todo: support deadline timers too
 	void stop();

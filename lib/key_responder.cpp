@@ -254,7 +254,7 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 
 key_initiator::key_initiator(const link_endpoint& target)
     : to(target)
-    , transmit_timer(*host_.get())
+    , transmit_timer(host_.get())
 {
 }
 
