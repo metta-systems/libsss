@@ -164,7 +164,7 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
     response.key_min_length = data.key_min_length;
     response.initiator_hashed_nonce = data.initiator_hashed_nonce;
     response.responder_nonce = responder_nonce;
-    response.responder_dh_public_key = hostkey->public_key;
+    response.responder_dh_public_key = hostkey->public_key_;
     response.responder_challenge_cookie = challenge_cookie;
     // Don't offer responder's identity (eid, public key and signature) for now.
     send(magic(), response, src);
@@ -266,7 +266,7 @@ void key_initiator::send_dh_init1()
     init.group = dh_group;
     init.key_min_length = key_min_length;//?
     init.initiator_hashed_nonce = initiator_hashed_nonce;
-    init.initiator_dh_public_key = hostkey->public_key;
+    init.initiator_dh_public_key = hostkey->public_key_;
     init.responder_eid.clear();
 
     send(magic(), init, to);
