@@ -26,6 +26,7 @@ bool server::is_listening() const
     return false;
 }
 
+//todo: unique_ptr<stream>?
 stream* server::accept()
 {
     return 0;
