@@ -11,13 +11,6 @@
 #include "crypto.h"
 #include "host.h"
 
-// some temporary stuff to get things compile
-// Length of symmetric key material for HMAC-SHA-256-128
-#define HMACKEYLEN  (256/8)
-// We use SHA-256 hashes truncated to 128 bits for HMAC generation
-#define HMACLEN     (128/8)
-//end temp junk
-
 //===========================================================================================================
 // Supplemental functions.
 //===========================================================================================================
