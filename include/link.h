@@ -115,6 +115,8 @@ public:
         return send(ep, msg.const_data(), msg.size());
     }
 
+    virtual std::vector<endpoint> local_endpoints() = 0;
+
 protected:
     /**
      * Implementation subclass calls this method with received packets.
@@ -154,7 +156,7 @@ public:
     /**
      * Return all known local endpoints referring to this link.
      */
-    std::vector<endpoint> local_endpoints();
+    std::vector<endpoint> local_endpoints() override;
 
 private:
     void prepare_async_receive();
