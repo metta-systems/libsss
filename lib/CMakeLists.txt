@@ -1,5 +1,13 @@
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 
+set(simulator_SOURCES
+    simulation/sim_connection.cpp
+    simulation/sim_host.cpp
+    simulation/sim_link.cpp
+    simulation/sim_packet.cpp
+    simulation/sim_timer_engine.cpp
+    simulation/simulator.cpp)
+
 add_library(ssu STATIC 
     abstract_stream.cpp
     base_stream.cpp
@@ -10,4 +18,5 @@ add_library(ssu STATIC
     protocol.cpp
     server.cpp
     stream.cpp
-    timer.cpp)
+    timer.cpp
+    ${simulator_SOURCES})
