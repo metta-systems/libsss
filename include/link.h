@@ -62,7 +62,8 @@ class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
 {
     std::unordered_map<magic_t, link_receiver*> receivers;
 
-    virtual link* create_link() { return 0; }
+    virtual std::unique_ptr<link> create_link() { return nullptr; }
+
 public:
     /**
      * Create a receiver and bind it to control channel magic.
