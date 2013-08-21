@@ -59,8 +59,8 @@ public:
 	default_timer_engine(timer* t, boost::asio::io_service& io_service);
 	~default_timer_engine();
 
-	virtual void start(duration_type interval) override;
-	virtual void stop() override;
+	void start(duration_type interval) override;
+	void stop() override;
 };
 
 default_timer_engine::default_timer_engine(timer* t, boost::asio::io_service& io_service)
