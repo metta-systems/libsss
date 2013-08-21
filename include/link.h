@@ -89,8 +89,8 @@ public:
  */
 class link : public std::enable_shared_from_this<link>
 {
-    link_host_state& host;
-    std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels;
+    link_host_state& host_;
+    std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels_;
     bool active_{false};
 
     link_channel* channel(const endpoint& src, channel_number cn) { return 0; }
@@ -106,7 +106,7 @@ public:
         up
     };
 
-    link(link_host_state& h) : host(h) {}
+    link(link_host_state& h) : host_(h) {}
     ~link();
 
     virtual bool send(const endpoint&ep, const char* data, size_t size) { return false; }

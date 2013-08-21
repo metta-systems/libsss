@@ -96,7 +96,7 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
     magic_t magic;
     ia >> magic;
     // magic = boost::endian2::big(magic);
-    link_receiver* recv = host.receiver(magic);
+    link_receiver* recv = host_.receiver(magic);
     if (recv)
     {
         return recv->receive(msg, src);
