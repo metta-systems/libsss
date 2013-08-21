@@ -31,6 +31,7 @@ class link_channel;
  * architectural change.
  */
 typedef boost::asio::ip::udp::endpoint endpoint;
+// See below for the implementation of hash function for endpoint.
 
 /**
  * Add an association with particular link to the endpoint.
@@ -160,3 +161,18 @@ private:
 };
 
 } // ssu namespace
+
+// Hash specialization for endpoint
+namespace std {
+
+template<> 
+struct hash<ssu::endpoint> : public std::unary_function<ssu::endpoint, size_t>
+{
+    inline size_t operator()(ssu::endpoint const& /*a*/) const noexcept
+    {
+        size_t seed = 0;
+        return seed;
+    }
+};
+
+} // std namespace
