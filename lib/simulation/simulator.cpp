@@ -6,27 +6,21 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#pragma once
-
-#include <queue>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include "simulation/simulator.h"
 
 namespace ssu {
 namespace simulation {
 
-class sim_timer_engine;
-
-class simulator
+void simulator::enqueue_timer(sim_timer_engine* timer)
 {
-    // All timers sorted by wake time.
-    std::priority_queue<sim_timer_engine*> timers;
+    timers.push(timer);
+}
 
-public:
-    boost::posix_time::ptime current_time();
-
-    void enqueue_timer(sim_timer_engine* timer);
-    void dequeue_timer(sim_timer_engine* timer);
-};
+void simulator::dequeue_timer(sim_timer_engine* timer)
+{
+    // timers.remove(timer);
+    // removing from a priority_queue is non-trivial
+}
 
 } // simulation namespace
 } // ssu namespace
