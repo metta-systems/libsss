@@ -19,25 +19,25 @@ using namespace ssu;
 
 BOOST_AUTO_TEST_CASE(receive_too_small_packet)
 {
-    std::shared_ptr<host> host(new class host);
-    ssu::endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    ssu::udp_link l(local_ep, *host);
+    shared_ptr<host> host(make_shared<host>());
+    endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+    shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
 
     byte_array msg({'a', 'b', 'c'});
-    ssu::link_endpoint le;
+    link_endpoint le;
 
-    l.receive(msg, le);
+    link->receive(msg, le);
 }
 
 BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 {
-    std::shared_ptr<host> host(new class host);
-    ssu::endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    ssu::udp_link l(local_ep, *host);
+    shared_ptr<host> host(make_shared<host>());
+    endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+    shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
 
     // Add key responder to link.
-    ssu::negotiation::key_responder receiver;
-    host->bind_receiver(ssu::stream_protocol::magic, &receiver);
+    negotiation::key_responder receiver;
+    host->bind_receiver(stream_protocol::magic, &receiver);
 
     // Render key message to buffer.
     byte_array msg;
@@ -45,11 +45,11 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     {
         boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(msg.as_vector()));
         boost::archive::binary_oarchive oa(out, boost::archive::no_header);
-        ssu::negotiation::key_message m;
-        ssu::negotiation::key_chunk k;
-        ssu::negotiation::dh_init1_chunk dh;
+        negotiation::key_message m;
+        negotiation::key_chunk k;
+        negotiation::dh_init1_chunk dh;
 
-        dh.group = ssu::negotiation::dh_group_type::dh_group_1024;
+        dh.group = negotiation::dh_group_type::dh_group_1024;
         dh.key_min_length = 0x10;
 
         dh.initiator_hashed_nonce.resize(32);
@@ -59,17 +59,17 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
         for (int i = 0; i < 128; ++i)
             dh.initiator_dh_public_key[i] = 255 - i;
 
-        k.type = ssu::negotiation::key_chunk_type::dh_init1;
+        k.type = negotiation::key_chunk_type::dh_init1;
         k.dh_init1 = dh;
 
-        m.magic = ssu::stream_protocol::magic;
+        m.magic = stream_protocol::magic;
         m.chunks.push_back(k);
 
         oa << m;
     }
 
     // and send it to ourselves.
-    l.send(local_ep, msg);
+    link->send(local_ep, msg);
 
     host->run_io_service();
 }
