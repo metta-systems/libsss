@@ -10,14 +10,18 @@
 #include <boost/test/unit_test.hpp>
 
 #include "link.h"
+#include "host.h"
 #include "negotiation/key_message.h"
 #include "negotiation/key_responder.h"
 
+using namespace std;
+using namespace ssu;
+
 BOOST_AUTO_TEST_CASE(receive_too_small_packet)
 {
-    ssu::link_host_state host;
+    std::shared_ptr<host> host(new class host);
     ssu::endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    ssu::udp_link l(local_ep, host);
+    ssu::udp_link l(local_ep, *host);
 
     byte_array msg({'a', 'b', 'c'});
     ssu::link_endpoint le;
@@ -27,13 +31,13 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
 
 BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 {
-	ssu::link_host_state host;
+    std::shared_ptr<host> host(new class host);
     ssu::endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    ssu::udp_link l(local_ep, host);
+    ssu::udp_link l(local_ep, *host);
 
     // Add key responder to link.
     ssu::negotiation::key_responder receiver;
-    host.bind_receiver(ssu::stream_protocol::magic, &receiver);
+    host->bind_receiver(ssu::stream_protocol::magic, &receiver);
 
     // Render key message to buffer.
     byte_array msg;
@@ -67,5 +71,5 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     // and send it to ourselves.
     l.send(local_ep, msg);
 
-    host.run_io_service();
+    host->run_io_service();
 }
