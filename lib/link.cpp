@@ -125,6 +125,12 @@ void udp_link::prepare_async_receive()
           boost::asio::placeholders::bytes_transferred));
 }
 
+std::vector<endpoint>
+udp_link::local_endpoints()
+{
+    return {udp_socket.local_endpoint()};
+}
+
 // bool udp_link::bind(const endpoint& ep)
 // {
 //  // once bound, can start receiving datagrams.

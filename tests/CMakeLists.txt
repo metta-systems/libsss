@@ -1,4 +1,3 @@
-create_test(link "ssu;support")
 create_test(udp_link "ssu;support;${OPENSSL_LIBRARIES}")
 create_test(host "ssu;support;${OPENSSL_LIBRARIES}")
 create_test(channel "ssu;support")

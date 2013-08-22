@@ -13,6 +13,18 @@
 #include "negotiation/key_message.h"
 #include "negotiation/key_responder.h"
 
+BOOST_AUTO_TEST_CASE(receive_too_small_packet)
+{
+    ssu::link_host_state host;
+    ssu::endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+    ssu::udp_link l(local_ep, host);
+
+    byte_array msg({'a', 'b', 'c'});
+    ssu::link_endpoint le;
+
+    // l.receive(msg, le);
+}
+
 BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 {
 	ssu::link_host_state host;
