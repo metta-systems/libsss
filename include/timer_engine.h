@@ -31,7 +31,6 @@ public:
 	virtual void start(duration_type interval) = 0;
 	virtual void stop() = 0;
 
-protected:
 	/**
 	 * Signal timeout on the origin timer.
 	 * Subclasses of timer_engine call this method when requested time interval expires.
