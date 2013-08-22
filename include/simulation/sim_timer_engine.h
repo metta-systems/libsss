@@ -26,6 +26,9 @@ public:
 
     void start(duration_type interval) override;
     void stop() override;
+
+    inline boost::posix_time::ptime wake_time() const { return wake_; }
+    inline void clear_wake_time() { wake_ = boost::date_time::not_a_date_time; }
 };
 
 } // simulation namespace
