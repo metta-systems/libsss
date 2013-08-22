@@ -38,7 +38,7 @@ void sim_timer_engine::stop()
         return;
     }
     simulator_->dequeue_timer(this);
-    wake_ = boost::date_time::not_a_date_time;
+    clear_wake_time();
 }
 
 } // simulation namespace
