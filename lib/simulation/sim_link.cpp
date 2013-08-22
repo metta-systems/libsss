@@ -5,7 +5,7 @@
 namespace ssu {
 namespace simulation {
 
-sim_link::sim_link(std::shared_ptr<host> host)
+sim_link::sim_link(std::shared_ptr<sim_host> host)
     : link(*host)
     , host_(host)
     , simulator_(host->get_simulator())

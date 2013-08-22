@@ -26,7 +26,7 @@ std::unique_ptr<async::timer_engine> sim_host::create_timer_engine_for(async::ti
 
 std::unique_ptr<link> sim_host::create_link()
 {
-    return new sim_link(shared_from_this());
+    return std::unique_ptr<link>(new sim_link(std::static_pointer_cast<sim_host>(shared_from_this())));
 }
 
 void sim_host::enqueue_packet(sim_packet* packet)

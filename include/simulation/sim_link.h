@@ -26,7 +26,7 @@ class sim_link : public link
     uint16_t port_{0};
 
 public:
-    sim_link(std::shared_ptr<host> host);
+    sim_link(std::shared_ptr<sim_host> host);
     ~sim_link();
 
     bool send(const endpoint& ep, const char *data, size_t size) override;
