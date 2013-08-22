@@ -68,22 +68,24 @@ const int cable_up_qlen[] = {100,800,1800,2200,2500,3000,4000};
 #define CABLE_DN_QLEN   130 // Very common among many ISPs
 #define CABLE_UP_QLEN   2200
 
-// Typical residential broadband DSL link
-const sim_connection::params dsl15_dn =
-    { DSL_DN_BW*1024/8, DSL_RTDELAY*1000/2, DSL_DN_QLEN*1000, 0.0 };
-const sim_connection::params dsl15_up =
-    { DSL_UP_BW*1024/8, DSL_RTDELAY*1000/2, DSL_UP_QLEN*1000, 0.0 };
-
-// Typical residential cable modem link
-const sim_connection::params cable5_dn =
-    { CABLE_DN_BW*1024/8, CABLE_RTDELAY*1000/2, CABLE_DN_QLEN*1000, 0.0 };
-const sim_connection::params cable5_up =
-    { CABLE_UP_BW*1024/8, CABLE_RTDELAY*1000/2, CABLE_UP_QLEN*1000, 0.0 };
-
+// Convert integer delay in microseconds to boost time interval
+#define txdelay(value)      boost::posix_time::microseconds(value)
 
 // Calculate transmission time of one packet in microseconds,
 // given a packet size in bytes and transmission rate in bytes per second
-#define txtime(bytes,rate)  ((int64_t)(bytes) * 1000000 / (rate))
+#define txtime(bytes,rate)  boost::posix_time::microseconds((int64_t)(bytes) * 1000000 / (rate))
+
+// Typical residential broadband DSL link
+const sim_connection::params dsl15_dn =
+    { DSL_DN_BW*1024/8, txdelay(DSL_RTDELAY*1000/2), txdelay(DSL_DN_QLEN*1000), 0.0 };
+const sim_connection::params dsl15_up =
+    { DSL_UP_BW*1024/8, txdelay(DSL_RTDELAY*1000/2), txdelay(DSL_UP_QLEN*1000), 0.0 };
+
+// Typical residential cable modem link
+const sim_connection::params cable5_dn =
+    { CABLE_DN_BW*1024/8, txdelay(CABLE_RTDELAY*1000/2), txdelay(CABLE_DN_QLEN*1000), 0.0 };
+const sim_connection::params cable5_up =
+    { CABLE_UP_BW*1024/8, txdelay(CABLE_RTDELAY*1000/2), txdelay(CABLE_UP_QLEN*1000), 0.0 };
 
 #define ETH10_RATE  (10*1024*1024/8)
 #define ETH100_RATE (100*1024*1024/8)
@@ -99,15 +101,15 @@ const sim_connection::params cable5_up =
 
 // Ethernet link parameters (XXX are queue length realistic?)
 const sim_connection::params eth10 =
-    { ETH10_RATE, ETH10_DELAY/2, txtime(ETH_QBYTES,ETH10_RATE), 0.0 };
+    { ETH10_RATE, txdelay(ETH10_DELAY/2), txtime(ETH_QBYTES,ETH10_RATE), 0.0 };
 const sim_connection::params eth100 =
-    { ETH100_RATE, ETH100_DELAY/2, txtime(ETH_QBYTES,ETH100_RATE), 0.0 };
+    { ETH100_RATE, txdelay(ETH100_DELAY/2), txtime(ETH_QBYTES,ETH100_RATE), 0.0 };
 const sim_connection::params eth1000 =
-    { ETH1000_RATE, ETH1000_DELAY/2, txtime(ETH_QBYTES,ETH1000_RATE), 0.0 };
+    { ETH1000_RATE, txdelay(ETH1000_DELAY/2), txtime(ETH_QBYTES,ETH1000_RATE), 0.0 };
 
 // Satellite link parameters (XXX need to check)
 const sim_connection::params sat10 =
-    { ETH10_RATE, 500000, 1024*1024, 0.0 };
+    { ETH10_RATE, txdelay(500000), txdelay(1024*1024), 0.0 };
 
 //=================================================================================================
 // sim_connection::params
@@ -119,10 +121,10 @@ sim_connection::params::to_string() const
     std::string speed = boost::str(rate < 1024*1024
                                     ? boost::format("%fKbps") % (float(rate*8)/1024)
                                     : boost::format("%fMbps") % (float(rate*8)/(1024*1024)));
-    return boost::str(boost::format("%s, delay %fms, qlen %fms (%f loss)")
+    return boost::str(boost::format("%s, delay %sms, qlen %sms (%.3f loss)")
         % speed
-        % (float(delay)/1000)
-        % (float(queue) / 1000)
+        % boost::posix_time::to_simple_string(delay)
+        % boost::posix_time::to_simple_string(queue)
         % loss);
 }
 

@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "link.h"
+#include "timer.h"
 
 namespace ssu {
 namespace simulation {
@@ -20,8 +21,8 @@ class sim_connection
 public:
     struct params {
         int rate;  ///< Bandwidth in bytes per second.
-        int delay; ///< Connection delay in microseconds (usecs).
-        int queue; ///< Router queue length in microseconds.
+        async::timer::duration_type delay; ///< Connection delay.
+        async::timer::duration_type queue; ///< Router queue delay.
         float loss; ///< Loss rate from 0.0 (100% reliable) to 1.0 (not delivering anything).
 
         std::string to_string() const;
