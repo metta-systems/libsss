@@ -55,6 +55,9 @@ public:
 
     std::shared_ptr<sim_host> find_uplink(std::shared_ptr<sim_host> downlink) const;
 
+    params const& params_for(std::shared_ptr<sim_host> host) const;
+    boost::posix_time::ptime& arrival_time_for(std::shared_ptr<sim_host> host);
+
 private:
     std::shared_ptr<simulator> simulator_;
     std::shared_ptr<sim_host> uplink_, downlink_;
