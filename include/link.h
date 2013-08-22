@@ -44,7 +44,7 @@ public:
     link_endpoint(const link_endpoint& other) : endpoint(other), link_(other.link_) {}
     link_endpoint(const endpoint& other, std::shared_ptr<link> l) : endpoint(other), link_(l) {}
 
-    // Send a message to this endpoint on this socket
+    // Send a message to this endpoint on this link
     bool send(const char *data, int size) const;
     inline bool send(const byte_array& msg) const {
         return send(msg.const_data(), msg.size());
