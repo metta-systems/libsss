@@ -11,6 +11,7 @@
 #include "simulation/simulator.h"
 #include "simulation/sim_packet.h"
 #include "simulation/sim_host.h"
+#include "simulation/sim_link.h"
 #include "simulation/sim_connection.h"
 #include "logging.h"
 
@@ -92,7 +93,31 @@ sim_packet::~sim_packet()
 }
 
 void sim_packet::arrive()
-{}
+{
+    // Make sure we're still on the destination host's queue
+    if (!target_host_ or !target_host_->packet_on_queue(this))
+    {
+        logger::info() << "No longer queued to destination " << to_;
+        return; // @todo - this packet should clean up itself somehow
+    }
+
+    timer_.stop();
+
+    std::shared_ptr<sim_link> link = target_host_->link_for(to_.port());
+    if (!link)
+    {
+        logger::info() << "No listener registered on port " << to_.port() << " in target host";
+        return; // @todo - this packet should clean up itself somehow
+    }
+
+    target_host_->dequeue_packet(this);
+    target_host_.reset();
+
+    link_endpoint src_ep(from_, link);
+    link->receive(data_, src_ep);
+
+    // @todo - this packet should clean up itself somehow
+}
 
 } // simulation namespace
 } // ssu namespace

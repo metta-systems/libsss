@@ -47,12 +47,15 @@ public:
 
     void enqueue_packet(sim_packet* packet);
     void dequeue_packet(sim_packet* packet);
+    bool packet_on_queue(sim_packet* packet) const;
 
     void register_connection_at(endpoint const& address, sim_connection* conn);
     void unregister_connection_at(endpoint const& address, sim_connection* conn);
 
     std::shared_ptr<sim_connection> connection_at(endpoint const& ep);
     std::shared_ptr<sim_host> neighbor_at(endpoint const& ep, endpoint& src);
+
+    std::shared_ptr<sim_link> link_for(uint16_t port);
 };
 
 } // simulation namespace
