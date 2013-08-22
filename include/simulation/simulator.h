@@ -10,6 +10,7 @@
 
 #include <queue>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/signals2/signal.hpp>
 
 namespace ssu {
 namespace simulation {
@@ -20,12 +21,27 @@ class simulator
 {
     // All timers sorted by wake time.
     std::priority_queue<sim_timer_engine*> timers;
+    boost::posix_time::ptime current_clock;
 
 public:
-    boost::posix_time::ptime current_time();
+    /**
+     * Run simulation to the end.
+     */
+    void run();
+    /**
+     * Run just one simulation step.
+     */
+    void run_step();
+
+    boost::posix_time::ptime current_time() const { return current_clock; }
 
     void enqueue_timer(sim_timer_engine* timer);
     void dequeue_timer(sim_timer_engine* timer);
+
+    virtual void os_event_processing() {}
+
+    typedef boost::signals2::signal<void (void)> step_event_signal;
+    step_event_signal on_step_event;
 };
 
 } // simulation namespace
