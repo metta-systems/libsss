@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
     byte_array msg({'a', 'b', 'c'});
     ssu::link_endpoint le;
 
-    // l.receive(msg, le);
+    l.receive(msg, le);
 }
 
 BOOST_AUTO_TEST_CASE(receive_and_log_key_message)

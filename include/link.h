@@ -117,7 +117,6 @@ public:
 
     virtual std::vector<endpoint> local_endpoints() = 0;
 
-protected:
     /**
      * Implementation subclass calls this method with received packets.
      * @param msg the packet received.
