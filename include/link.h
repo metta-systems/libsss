@@ -110,8 +110,8 @@ public:
     link(link_host_state& h) : host_(h) {}
     ~link();
 
-    virtual bool send(const endpoint&ep, const char* data, size_t size) { return false; }
-    inline bool send(const endpoint& ep, const byte_array& msg) {
+    virtual bool send(endpoint const& ep, const char* data, size_t size) { return false; }
+    inline bool send(endpoint const& ep, byte_array const& msg) {
         return send(ep, msg.const_data(), msg.size());
     }
 
@@ -151,7 +151,12 @@ public:
      *              about the reception of the packet on the other side, if it was ever delivered
      *              or accepted.
      */
-    bool send(const endpoint& ep, const char *data, size_t size) override;
+    bool send(endpoint const& ep, char const* data, size_t size) override;
+
+    // Need to duplicate it here for some reason, otherwise clients cannot use this overload. WHY?
+    inline bool send(endpoint const& ep, byte_array const& msg) {
+        return send(ep, msg.const_data(), msg.size());
+    }
 
     /**
      * Return all known local endpoints referring to this link.

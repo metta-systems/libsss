@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     }
 
     // and send it to ourselves.
-    l.send(local_ep, msg.data(), msg.size());//hmmm, send(ep, byte_array) doesn't work, why??
+    l.send(local_ep, msg);
 
     host.run_io_service();
 }
