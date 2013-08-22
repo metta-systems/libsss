@@ -32,14 +32,14 @@ public:
     virtual void stop();
 
     inline bool is_active()       const { return active_; }
-    inline bool is_bound()        const { return link_.lock() != nullptr; }
+    inline bool is_bound()        const { return link_ != nullptr; }
 
     /**
      * Set up for communication with specified remote endpoint,
      * allocating and binding a local channel number in the process.
      * @returns 0 if no channels are available for specified endpoint.
      */
-    channel_number bind(std::shared_ptr<link> link, const endpoint& remote_ep);
+    channel_number bind(link* link, const endpoint& remote_ep);
     inline channel_number bind(const link_endpoint& remote_ep) {
         return bind(remote_ep.link(), remote_ep);
     }
@@ -48,7 +48,7 @@ public:
      * Bind to a particular channel number.
      * @returns false if the channel is already in use.
      */
-    bool bind(std::shared_ptr<link> link, const endpoint& remote_ep, channel_number chan);
+    bool bind(link* link, const endpoint& remote_ep, channel_number chan);
 
     /**
      * Stop channel and unbind from any currently bound remote endpoint.
@@ -68,7 +68,7 @@ protected:
 
     inline bool send(const byte_array& pkt) const {
         assert(active_);
-        if (auto l = link_.lock()) {
+        if (auto l = link_) {
             return l->send(remote_ep_, pkt);
         }
         return false;
@@ -79,7 +79,7 @@ protected:
     }
 
 private:
-    std::weak_ptr<link> link_;      ///< Link we're currently bound to, if any.
+    link*               link_;      ///< Link we're currently bound to, if any.
     endpoint            remote_ep_; ///< Endpoint of the remote side.
     bool                active_;    ///< True if we're sending and accepting packets.
 };

@@ -38,11 +38,17 @@ typedef boost::asio::ip::udp::endpoint endpoint;
  */
 class link_endpoint : public endpoint
 {
-    std::weak_ptr<link> link_; ///< Associated link, if any.
+    link* link_{nullptr}; ///< Associated link, if any.
 public:
     link_endpoint() {}
     link_endpoint(const link_endpoint& other) : endpoint(other), link_(other.link_) {}
-    link_endpoint(const endpoint& other, std::shared_ptr<link> l) : endpoint(other), link_(l) {}
+    /**
+     * This here should technically use shared_ptr and let link_endpoint maintain a weak_ptr,
+     * but practically, as the only factory creating link_endpoints in the udp_link,
+     * it will outlive them and a simple pointer suffices.
+     * @todo Make it nicer once the usage pattern is more clear here.
+     */
+    link_endpoint(const endpoint& other, link* l) : endpoint(other), link_(l) {}
 
     // Send a message to this endpoint on this link
     bool send(const char *data, int size) const;
@@ -50,9 +56,9 @@ public:
         return send(msg.const_data(), msg.size());
     }
 
-    // Obtain a shared pointer to this endpoint's link.
+    // Obtain a pointer to this endpoint's link.
     // ??? FIXME
-    std::shared_ptr<link> link() const { return link_.lock(); }
+    link* link() const { return link_; }
 };
 
 /**
@@ -88,7 +94,7 @@ public:
  * For connected links there may be a number of channels established using their own keying schemes.
  * Link orchestrates initiation of key exchanges and scheme setup.
  */
-class link : public std::enable_shared_from_this<link>
+class link //: public std::enable_shared_from_this<link>
 {
     link_host_state& host_;
     std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels_;

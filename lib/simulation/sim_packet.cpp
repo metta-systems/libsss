@@ -113,7 +113,7 @@ void sim_packet::arrive()
     target_host_->dequeue_packet(this);
     target_host_.reset();
 
-    link_endpoint src_ep(from_, link);
+    link_endpoint src_ep(from_, link.get());
     link->receive(data_, src_ep);
 
     // @todo - this packet should clean up itself somehow
