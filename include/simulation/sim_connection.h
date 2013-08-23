@@ -16,7 +16,7 @@ class simulator;
 class sim_host;
 
 // SimLink
-class sim_connection
+class sim_connection : public std::enable_shared_from_this<sim_connection>
 {
 public:
     struct params {
@@ -54,6 +54,7 @@ public:
     }
 
     std::shared_ptr<sim_host> uplink_for(std::shared_ptr<sim_host> downlink) const;
+    endpoint address_for(std::shared_ptr<sim_host> link) const;
 
     params const& params_for(std::shared_ptr<sim_host> host) const;
     boost::posix_time::ptime& arrival_time_for(std::shared_ptr<sim_host> host);

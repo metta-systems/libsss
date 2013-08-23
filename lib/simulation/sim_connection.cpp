@@ -159,14 +159,14 @@ void sim_connection::connect(std::shared_ptr<sim_host> downlink, endpoint downli
     downlink_address_ = downlink_address;
     uplink_address_ = uplink_address;
 
-    downlink_->register_connection_at(downlink_address_, this);
-    uplink_->register_connection_at(uplink_address_, this);
+    downlink_->register_connection_at(downlink_address_, shared_from_this());
+    uplink_->register_connection_at(uplink_address_, shared_from_this());
 }
 
 void sim_connection::disconnect()
 {
-    downlink_->unregister_connection_at(downlink_address_, this);
-    uplink_->unregister_connection_at(uplink_address_, this);
+    downlink_->unregister_connection_at(downlink_address_, shared_from_this());
+    uplink_->unregister_connection_at(uplink_address_, shared_from_this());
 }
 
 void sim_connection::set_preset(preset p)
@@ -195,6 +195,14 @@ sim_connection::uplink_for(std::shared_ptr<sim_host> downlink) const
     if (downlink == downlink_) return uplink_;
     if (downlink == uplink_) return downlink_;
     return nullptr;
+}
+
+endpoint
+sim_connection::address_for(std::shared_ptr<sim_host> link) const
+{
+    if (link == downlink_) return downlink_address_;
+    if (link == uplink_) return uplink_address_;
+    return endpoint();
 }
 
 sim_connection::params const&
