@@ -11,3 +11,5 @@ create_test(optional "ssu;support")
 create_test(serialization "ssu;support")
 
 #create_test(crypto "ssu;support;${OPENSSL_LIBRARIES}")
+
+create_test(sim_host "ssu;support;${OPENSSL_LIBRARIES}")
