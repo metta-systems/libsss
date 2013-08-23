@@ -190,7 +190,7 @@ void sim_connection::set_preset(preset p)
 }
 
 std::shared_ptr<sim_host>
-sim_connection::find_uplink(std::shared_ptr<sim_host> downlink) const
+sim_connection::uplink_for(std::shared_ptr<sim_host> downlink) const
 {
     if (downlink == downlink_) return uplink_;
     if (downlink == uplink_) return downlink_;

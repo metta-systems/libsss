@@ -30,7 +30,7 @@ sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& sr
     , target_host_(nullptr)
     , timer_(source_host.get())
 {
-    target_host_ = pipe->find_uplink(source_host);
+    target_host_ = pipe->uplink_for(source_host);
     if (!target_host_) {
         logger::warning() << "Destination host " << dst << " not found on link " << pipe;
         return; // @todo - this packet should clean up itself somehow
