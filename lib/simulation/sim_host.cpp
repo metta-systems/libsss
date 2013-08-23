@@ -10,9 +10,18 @@
 #include "simulation/sim_timer_engine.h"
 #include "simulation/simulator.h"
 #include "simulation/sim_link.h"
+#include "simulation/sim_packet.h"
+#include "simulation/sim_connection.h"
 
 namespace ssu {
 namespace simulation {
+
+sim_host::sim_host(std::shared_ptr<simulator> sim)
+    : simulator_(sim)
+{}
+
+sim_host::~sim_host()
+{}
 
 boost::posix_time::ptime sim_host::current_time()
 {
@@ -31,26 +40,61 @@ std::unique_ptr<link> sim_host::create_link()
 
 void sim_host::enqueue_packet(sim_packet* packet)
 {
-    packet_queue.push(packet);
+    packet_queue_.push(packet);
 }
 
 void sim_host::dequeue_packet(sim_packet* packet)
 {
-    // packet_queue.erase(packet);
+    // packet_queue_.erase(packet);
     // removing from a priority_queue is non-trivial
+    delete packet;
 }
 
-void sim_host::register_connection_at(endpoint const& address, sim_connection* conn)
+bool sim_host::packet_on_queue(sim_packet* packet) const
 {
-    assert(connections.find(address) == connections.end());
-    connections.insert(std::make_pair(address, conn));
+    return false;
 }
 
-void sim_host::unregister_connection_at(endpoint const& address, sim_connection* conn)
+void
+sim_host::register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn)
 {
-    assert(connections.find(address) != connections.end());
-    assert(connections.find(address)->second == conn);
-    connections.erase(address);
+    assert(connections_.find(address) == connections_.end());
+    connections_.insert(std::make_pair(address, conn));
+}
+
+void
+sim_host::unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn)
+{
+    assert(connections_.find(address) != connections_.end());
+    assert(connections_.find(address)->second == conn);
+    connections_.erase(address);
+}
+
+std::shared_ptr<sim_connection>
+sim_host::connection_at(endpoint const& ep)
+{
+    return connections_[ep];
+}
+
+std::shared_ptr<sim_host>
+sim_host::neighbor_at(endpoint const& dst, endpoint& src)
+{
+    for (auto conn : connections_)
+    {
+        std::shared_ptr<sim_host> uplink = conn.second->uplink_for(std::static_pointer_cast<sim_host>(shared_from_this()));
+        if (conn.second->address_for(uplink) == dst)
+        {
+            src = conn.first;
+            return uplink;
+        }
+    }
+    return nullptr;
+}
+
+std::shared_ptr<sim_link>
+sim_host::link_for(uint16_t port)
+{
+    return links_[port];
 }
 
 } // simulation namespace

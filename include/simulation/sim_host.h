@@ -25,14 +25,16 @@ class sim_host : public host
     std::shared_ptr<simulator> simulator_;
 
     /// Virtual network connections of this host.
-    std::unordered_map<endpoint, sim_connection*> connections;
+    std::unordered_map<endpoint, std::shared_ptr<sim_connection>> connections_;
 
     /// Links bound on this host by port.
     typedef uint16_t port_t;
-    std::unordered_map<port_t, sim_link*> links;
+    std::unordered_map<port_t, std::shared_ptr<sim_link>> links_;
 
     /// Queue of packets to be delivered on this host.
-    std::queue<sim_packet*> packet_queue;
+    // If the packet drops itself from this queue it's likely to be deleted as
+    // this queue owns them usually.
+    std::queue<sim_packet*> packet_queue_;
 
 public:
     std::shared_ptr<simulator> get_simulator() const { return simulator_; }
@@ -45,12 +47,14 @@ public:
 
     std::unique_ptr<link> create_link() override;
 
+    /* Enqueue packet, assume ownership of the packet. */
     void enqueue_packet(sim_packet* packet);
+    /* Dequeue the packet, dequeued packet will be deleted upon return. */
     void dequeue_packet(sim_packet* packet);
     bool packet_on_queue(sim_packet* packet) const;
 
-    void register_connection_at(endpoint const& address, sim_connection* conn);
-    void unregister_connection_at(endpoint const& address, sim_connection* conn);
+    void register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
+    void unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
 
     std::shared_ptr<sim_connection> connection_at(endpoint const& ep);
     std::shared_ptr<sim_host> neighbor_at(endpoint const& ep, endpoint& src);
