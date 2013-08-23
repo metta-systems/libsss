@@ -47,10 +47,11 @@ public:
 
     std::unique_ptr<link> create_link() override;
 
-    /* Enqueue packet, assume ownership of the packet. */
+    /** Enqueue packet, assume ownership of the packet. */
     void enqueue_packet(sim_packet* packet);
-    /* Dequeue the packet, dequeued packet will be deleted upon return. */
+    /** Dequeue the packet, dequeued packet will be deleted upon return. */
     void dequeue_packet(sim_packet* packet);
+    /** Check if this packet is still on this host's receive queue. */
     bool packet_on_queue(sim_packet* packet) const;
 
     void register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
