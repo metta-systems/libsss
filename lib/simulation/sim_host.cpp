@@ -97,5 +97,16 @@ sim_host::link_for(uint16_t port)
     return links_[port];
 }
 
+std::vector<endpoint>
+sim_host::local_endpoints()
+{
+    std::vector<endpoint> eps;
+    for (auto v : connections_)
+    {
+        eps.push_back(v.first);
+    }
+    return eps;
+}
+
 } // simulation namespace
 } // ssu namespace

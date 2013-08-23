@@ -40,7 +40,7 @@ bool sim_link::send(const endpoint& ep, const char *data, size_t size)
 std::vector<endpoint>
 sim_link::local_endpoints()
 {
-    return std::vector<endpoint>();
+    return host_->local_endpoints();
 }
 
 } // simulation namespace

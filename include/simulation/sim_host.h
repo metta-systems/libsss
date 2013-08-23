@@ -61,6 +61,9 @@ public:
     std::shared_ptr<sim_host> neighbor_at(endpoint const& ep, endpoint& src);
 
     std::shared_ptr<sim_link> link_for(uint16_t port);
+
+    // Helper for sim_link local_endpoints().
+    std::vector<endpoint> local_endpoints();
 };
 
 } // simulation namespace
