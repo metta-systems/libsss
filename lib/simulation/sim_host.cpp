@@ -101,8 +101,7 @@ std::vector<endpoint>
 sim_host::local_endpoints()
 {
     std::vector<endpoint> eps;
-    for (auto v : connections_)
-    {
+    for (auto v : connections_) {
         eps.push_back(v.first);
     }
     return eps;
