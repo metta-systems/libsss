@@ -116,6 +116,12 @@ public:
     link(link_host_state& h) : host_(h) {}
     ~link();
 
+    inline bool is_active() const { return active_; }
+    inline void set_active(bool active) { active_ = active; }
+
+    virtual bool bind(endpoint const& ep) = 0;
+    virtual void unbind() = 0;
+
     virtual bool send(endpoint const& ep, const char* data, size_t size) { return false; }
     inline bool send(endpoint const& ep, byte_array const& msg) {
         return send(ep, msg.const_data(), msg.size());
@@ -145,7 +151,8 @@ class udp_link : public link
 public:
     udp_link(const endpoint& ep, link_host_state& h);
 
-    // bool bind(const endpoint& ep);
+    bool bind(endpoint const& ep) override;
+    void unbind() override;
 
     /**
      * Send a packet on this UDP socket.

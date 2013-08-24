@@ -13,7 +13,20 @@ sim_link::sim_link(std::shared_ptr<sim_host> host)
 
 sim_link::~sim_link()
 {
-    // unbind();
+    unbind();
+}
+
+bool
+sim_link::bind(endpoint const& ep)
+{
+    set_active(true);
+    return true;
+}
+
+void
+sim_link::unbind()
+{
+    set_active(false);
 }
 
 // Target address must be routable to in order to send.

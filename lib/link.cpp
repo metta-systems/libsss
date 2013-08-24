@@ -116,7 +116,6 @@ udp_link::udp_link(const endpoint& ep, link_host_state& h)
     , udp_socket(h.get_io_service(), ep)
     , received_from(ep, this)
 {
-    prepare_async_receive();
 }
 
 void udp_link::prepare_async_receive()
@@ -136,12 +135,25 @@ udp_link::local_endpoints()
     return {udp_socket.local_endpoint()};
 }
 
-// bool udp_link::bind(const endpoint& ep)
-// {
-//  // once bound, can start receiving datagrams.
-//  prepare_async_receive();
-//  return true;
-// }
+bool udp_link::bind(endpoint const& ep)
+{
+    boost::system::error_code ec;
+    udp_socket.bind(ep, ec);
+    if (ec) {
+        logger::warning() << ec;
+        return false;
+    }
+    // once bound, can start receiving datagrams.
+    prepare_async_receive();
+    set_active(true);
+    return true;
+}
+
+void udp_link::unbind()
+{
+    // @todo cancel async_receive
+    set_active(false);
+}
 
 bool udp_link::send(const endpoint& ep, const char *data, size_t size)
 {

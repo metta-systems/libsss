@@ -29,6 +29,9 @@ public:
     sim_link(std::shared_ptr<sim_host> host);
     ~sim_link();
 
+    bool bind(endpoint const& ep) override;
+    void unbind() override;
+
     bool send(const endpoint& ep, const char *data, size_t size) override;
 
     // void bind() override;
