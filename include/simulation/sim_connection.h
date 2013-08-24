@@ -60,7 +60,6 @@ public:
     boost::posix_time::ptime& arrival_time_for(std::shared_ptr<sim_host> host);
 
 private:
-    std::shared_ptr<simulator> simulator_;
     std::shared_ptr<sim_host> uplink_, downlink_;
     endpoint uplink_address_, downlink_address_;
     params uplink_params_, downlink_params_;
