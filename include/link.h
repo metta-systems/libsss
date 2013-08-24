@@ -100,7 +100,10 @@ class link //: public std::enable_shared_from_this<link>
     std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels_;
     bool active_{false};
 
-    link_channel* channel(const endpoint& src, channel_number cn) { return 0; }
+    link_channel* channel(const endpoint& src, channel_number cn) {
+        // return channels_[std::make_pair(src, cn)];
+        return 0;
+    }
 
 public:
     // ssu expresses current link status as one of three states:
