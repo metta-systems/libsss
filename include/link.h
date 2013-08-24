@@ -97,7 +97,12 @@ public:
 class link //: public std::enable_shared_from_this<link>
 {
     link_host_state& host_;
+
+    /**
+     * Channels working through this link at the moment.
+     */
     std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels_;
+
     bool active_{false};
 
     link_channel* channel(const endpoint& src, channel_number cn) {
