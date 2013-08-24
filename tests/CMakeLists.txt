@@ -16,3 +16,4 @@ create_test(serialization "ssu;support")
 
 create_test(sim_host "ssu;support;${OPENSSL_LIBRARIES}")
 create_test(sim_link "ssu;support;${OPENSSL_LIBRARIES}")
+create_test(sim_connection "ssu;support;${OPENSSL_LIBRARIES}")
