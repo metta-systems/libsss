@@ -56,11 +56,13 @@ public:
 
     void register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
     void unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
-
     std::shared_ptr<sim_connection> connection_at(endpoint const& ep);
-    std::shared_ptr<sim_host> neighbor_at(endpoint const& ep, endpoint& src);
 
+    void register_link_at(uint16_t port, std::shared_ptr<sim_link> link);
+    void unregister_link_at(uint16_t port, std::shared_ptr<sim_link> link);
     std::shared_ptr<sim_link> link_for(uint16_t port);
+
+    std::shared_ptr<sim_host> neighbor_at(endpoint const& ep, endpoint& src);
 
     // Helper for sim_link local_endpoints().
     std::vector<endpoint> local_endpoints();

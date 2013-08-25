@@ -91,6 +91,20 @@ sim_host::neighbor_at(endpoint const& dst, endpoint& src)
     return nullptr;
 }
 
+void
+sim_host::register_link_at(uint16_t port, std::shared_ptr<sim_link> link)
+{
+    assert(links_[port] == nullptr);
+    links_[port] = link;
+}
+
+void
+sim_host::unregister_link_at(uint16_t port, std::shared_ptr<sim_link> link)
+{
+    assert(links_[port] == link);
+    links_.erase(port);
+}
+
 std::shared_ptr<sim_link>
 sim_host::link_for(uint16_t port)
 {
