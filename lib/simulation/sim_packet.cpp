@@ -27,20 +27,28 @@ sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& sr
     , from_(src)
     , to_(dst)
     , data_(data)
-    , target_host_(nullptr)
+    , target_host_(pipe->uplink_for(source_host))
+    , pipe_(pipe)
     , timer_(source_host.get())
 {
-    target_host_ = pipe->uplink_for(source_host);
     if (!target_host_) {
         logger::warning() << "Destination host " << dst << " not found on link " << pipe;
-        return; // @todo - this packet should clean up itself somehow
+        // @todo - this packet should clean up itself somehow
     }
+}
 
+sim_packet::~sim_packet()
+{
+    timer_.stop();
+}
+
+void sim_packet::send()
+{
     boost::posix_time::ptime now = simulator_->current_time();
 
     // Get other side's params
-    sim_connection::params param = pipe->params_for(target_host_);
-    boost::posix_time::ptime& arrival_time = pipe->arrival_time_for(target_host_);
+    sim_connection::params param = pipe_->params_for(target_host_);
+    boost::posix_time::ptime& arrival_time = pipe_->arrival_time_for(target_host_);
 
     static boost::random::mt19937 rng;
     boost::uniform_real<> uni_dist(0,1);
@@ -48,7 +56,7 @@ sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& sr
     // Simulate random loss
     if (param.loss > 0.0 and uni_dist(rng) <= param.loss)
     {
-        logger::info() << "Packet DROPPED";
+        logger::info() << "Packet randomly DROPPED";
         return; // @todo - this packet should clean up itself somehow
     }
 
@@ -60,42 +68,34 @@ sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& sr
     boost::posix_time::ptime actual_arrival = std::max(nominal_arrival, arrival_time);
 
     // If the computed arrival time is too late, drop this packet.
-    // Implement a standard, basic drop-tail policy.
-    bool drop = actual_arrival > nominal_arrival + param.queue;
-
-    // Compute the amount of wire time this packet takes to transmit,
-    // including some per-packet link/inet overhead
-    int64_t packet_size = data.size() + packet_overhead;
-    async::timer::duration_type packet_time =
-        boost::posix_time::microseconds(packet_size * 1000000 / param.rate);
-
-    if (drop)
+    // Implements a standard, basic drop-tail policy.
+    if (actual_arrival > nominal_arrival + param.queue)
     {
         logger::info() << "Packet DROPPED";
         return; // @todo - this packet should clean up itself somehow
     }
 
+    // Compute the amount of wire time this packet takes to transmit,
+    // including some per-packet link/inet overhead
+    int64_t packet_size = data_.size() + packet_overhead;
+    async::timer::duration_type packet_time =
+        boost::posix_time::microseconds(packet_size * 1000000 / param.rate);
+
     // Finally, record the time the packet will finish arriving,
     // and schedule the packet to arrive at that time.
     arrival_time = actual_arrival + packet_time; // Updates connection's actual arrival time.
+    arrival_time_ = arrival_time;
 
-    target_host_->enqueue_packet(this);
+    target_host_->enqueue_packet(shared_from_this());
 
     timer_.on_timeout.connect(boost::bind(&sim_packet::arrive, this));
     timer_.start(arrival_time - now);
 }
 
-sim_packet::~sim_packet()
-{
-    if (target_host_) {
-        target_host_->dequeue_packet(this);
-    }
-}
-
 void sim_packet::arrive()
 {
     // Make sure we're still on the destination host's queue
-    if (!target_host_ or !target_host_->packet_on_queue(this))
+    if (!target_host_ or !target_host_->packet_on_queue(shared_from_this()))
     {
         logger::info() << "No longer queued to destination " << to_;
         return; // @todo - this packet should clean up itself somehow
@@ -110,13 +110,15 @@ void sim_packet::arrive()
         return; // @todo - this packet should clean up itself somehow
     }
 
-    target_host_->dequeue_packet(this);
-    target_host_.reset();
+    // Get hold of a shared pointer to self, which is needed to keep ourselves alive a little bit more.
+    std::shared_ptr<sim_packet> self = shared_from_this();
+
+    target_host_->dequeue_packet(shared_from_this());
 
     link_endpoint src_ep(from_, link.get());
     link->receive(data_, src_ep);
 
-    // @todo - this packet should clean up itself somehow
+    self.reset(); // We are ought to be deleted now.
 }
 
 } // simulation namespace

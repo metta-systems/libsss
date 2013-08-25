@@ -2,6 +2,8 @@
 #include "simulation/sim_host.h"
 #include "simulation/sim_packet.h"
 
+using namespace std;
+
 namespace ssu {
 namespace simulation {
 
@@ -69,7 +71,8 @@ bool sim_link::send(const endpoint& ep, const char *data, size_t size)
     std::shared_ptr<sim_connection> pipe(host_->connection_at(src));
     assert(pipe);
 
-    new sim_packet(host_, src, pipe, ep, byte_array(data, size)); //@todo keep reference around
+    make_shared<sim_packet>(host_, src, pipe, ep, byte_array(data, size))->send();
+
     return true;
 }
 

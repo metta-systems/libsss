@@ -18,11 +18,13 @@ class simulator;
 class sim_host;
 class sim_connection;
 
-class sim_packet
+class sim_packet : public std::enable_shared_from_this<sim_packet>
 {
+    boost::posix_time::ptime arrival_time_;
     std::shared_ptr<simulator> simulator_;
     endpoint from_, to_;
     std::shared_ptr<sim_host> target_host_;
+    std::shared_ptr<sim_connection> pipe_;
     byte_array data_;
     async::timer timer_;
     bool is_client_{false};
@@ -34,6 +36,10 @@ public:
         std::shared_ptr<sim_connection> pipe, endpoint const& dst,
         byte_array data);
     ~sim_packet();
+
+    void send();
+
+    boost::posix_time::ptime arrival_time() const { return arrival_time_; }
 };
 
 } // simulation namespace
