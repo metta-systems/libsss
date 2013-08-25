@@ -96,18 +96,28 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
         return chan->receive(msg, src);
     }
 
-    boost::iostreams::filtering_istream in(boost::make_iterator_range(msg.as_vector()));
-    boost::archive::binary_iarchive ia(in, boost::archive::no_header);
-    magic_t magic;
-    ia >> magic;
-    link_receiver* recv = host_.receiver(magic);
-    if (recv)
-    {
-        return recv->receive(msg, src);
+    try {
+        boost::iostreams::filtering_istream in(boost::make_iterator_range(msg.as_vector()));
+        boost::archive::binary_iarchive ia(in, boost::archive::no_header);
+        magic_t magic;
+        ia >> magic;
+        link_receiver* recv = host_.receiver(magic);
+        if (recv)
+        {
+            return recv->receive(msg, src);
+        }
+        else
+        {
+            logger::debug() << "Received an invalid message, ignoring unknown channel/receiver "
+                            << hex(magic, 8, true) << " buffer contents " << msg;
+        }
     }
-
-    logger::debug() << "Received an invalid message, ignoring unknown channel/receiver " << hex(magic, 8, true) 
-                    << " buffer contents " << msg;
+    catch (std::exception& e)
+    {
+        logger::debug() << "Error deserializing received message: '" << e.what()
+                        << "' buffer contents " << msg;
+        return;
+    }
 }
 
 udp_link::udp_link(const endpoint& ep, link_host_state& h)
