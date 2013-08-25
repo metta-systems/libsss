@@ -15,29 +15,30 @@ namespace ssu {
 namespace simulation {
 
 simulator::simulator()
-    : current_clock(boost::posix_time::from_iso_string("20000101T000000"))
+    : current_clock_(boost::posix_time::from_iso_string("20000101T000000"))
 {
 }
 
 void simulator::run()
 {
-    while (!timers.empty()) {
+    while (!timers_.empty()) {
         run_step();
     }
+    logger::info() << "Simulation completed. #####";
 }
 
 void simulator::run_step()
 {
-    sim_timer_engine* next = timers.top();
-    timers.pop();
+    sim_timer_engine* next = timers_.front();
+    timers_.erase(timers_.begin());
 
     assert(next->wake_time() >= current_time());
 
     // Move the virtual system clock forward to this event
-    current_clock = next->wake_time();
+    current_clock_ = next->wake_time();
     next->clear_wake_time();
 
-    logger::info() << "## Simulation step: time now " << current_clock << " ##";
+    logger::info() << "Simulation step: time now " << current_clock_ << " #####";
 
     // Dispatch the event
     next->timeout();
@@ -51,13 +52,23 @@ void simulator::run_step()
 
 void simulator::enqueue_timer(sim_timer_engine* timer)
 {
-    timers.push(timer);
+    int i = 0;
+    for (; i < timers_.size(); ++i)
+    {
+        if (timer->wake_time() < timers_[i]->wake_time()) {
+            break;
+        }
+    }
+    timers_.insert(timers_.begin() + i, timer);
 }
 
 void simulator::dequeue_timer(sim_timer_engine* timer)
 {
-    // timers.remove(timer);
-    // removing from a priority_queue is non-trivial
+    for (auto it = find(timers_.begin(), timers_.end(), timer); it != timers_.end();)
+    {
+        timers_.erase(it);
+        it = find(timers_.begin(), timers_.end(), timer);
+    }
 }
 
 } // simulation namespace

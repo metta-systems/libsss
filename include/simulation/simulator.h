@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include <queue>
+#include <vector>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/signals2/signal.hpp>
 
@@ -20,8 +20,8 @@ class sim_timer_engine;
 class simulator
 {
     // All timers sorted by wake time.
-    std::priority_queue<sim_timer_engine*> timers;
-    boost::posix_time::ptime current_clock;
+    std::vector<sim_timer_engine*> timers_;
+    boost::posix_time::ptime current_clock_;
 
 public:
     simulator();
@@ -35,7 +35,7 @@ public:
      */
     void run_step();
 
-    boost::posix_time::ptime current_time() const { return current_clock; }
+    boost::posix_time::ptime current_time() const { return current_clock_; }
 
     void enqueue_timer(sim_timer_engine* timer);
     void dequeue_timer(sim_timer_engine* timer);
