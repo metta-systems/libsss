@@ -19,7 +19,7 @@ namespace simulation {
 class sim_host;
 class simulator;
 
-class sim_link : public link
+class sim_link : public link, public std::enable_shared_from_this<sim_link>
 {
     std::shared_ptr<simulator> simulator_;
     std::shared_ptr<sim_host> host_;

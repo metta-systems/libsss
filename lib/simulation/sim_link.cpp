@@ -19,6 +19,24 @@ sim_link::~sim_link()
 bool
 sim_link::bind(endpoint const& ep)
 {
+    assert(port_ == 0);
+
+    if (ep.port() == 0) {
+        int port = 1;
+        for (; port < 65536 and host_->link_for(port) != nullptr;)
+            ++port;
+
+        assert(port < 65536);
+
+        port_ = port;
+    } else {
+        port_ = ep.port();
+    }
+
+    host_->register_link_at(port_, shared_from_this());
+
+    logger::debug() << "Bound virtual socket on " << ep << " with port " << port_;
+
     set_active(true);
     return true;
 }
@@ -26,6 +44,11 @@ sim_link::bind(endpoint const& ep)
 void
 sim_link::unbind()
 {
+    if (port_ > 0)
+    {
+        host_->unregister_link_at(port_, shared_from_this());
+        port_ = 0;
+    }
     set_active(false);
 }
 
