@@ -13,6 +13,8 @@
 #include "simulation/sim_packet.h"
 #include "simulation/sim_connection.h"
 
+using namespace std;
+
 namespace ssu {
 namespace simulation {
 
@@ -30,12 +32,12 @@ boost::posix_time::ptime sim_host::current_time()
 
 std::unique_ptr<async::timer_engine> sim_host::create_timer_engine_for(async::timer* t)
 {
-    return std::unique_ptr<async::timer_engine>(new sim_timer_engine(t, simulator_));
+    return unique_ptr<async::timer_engine>(new sim_timer_engine(t, simulator_));
 }
 
 std::shared_ptr<link> sim_host::create_link()
 {
-    return std::shared_ptr<link>(new sim_link(std::static_pointer_cast<sim_host>(shared_from_this())));
+    return shared_ptr<link>(make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this())));
 }
 
 void sim_host::enqueue_packet(sim_packet* packet)
