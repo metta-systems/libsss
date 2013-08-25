@@ -37,7 +37,7 @@ sim_link::bind(endpoint const& ep)
 
     host_->register_link_at(port_, shared_from_this());
 
-    logger::debug() << "Bound virtual socket on " << ep << " with port " << port_;
+    logger::debug() << "Bound virtual socket on " << ep;
 
     set_active(true);
     return true;
