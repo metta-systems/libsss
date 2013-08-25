@@ -86,6 +86,8 @@ void sim_packet::send()
     arrival_time = actual_arrival + packet_time; // Updates connection's actual arrival time.
     arrival_time_ = arrival_time;
 
+    logger::info() << "Scheduling packet to arrive at " << arrival_time_;
+
     target_host_->enqueue_packet(shared_from_this());
 
     timer_.on_timeout.connect(boost::bind(&sim_packet::arrive, this));
