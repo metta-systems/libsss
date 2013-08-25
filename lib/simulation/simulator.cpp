@@ -9,6 +9,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "simulation/simulator.h"
 #include "simulation/sim_timer_engine.h"
+#include "logging.h"
 
 namespace ssu {
 namespace simulation {
@@ -35,6 +36,8 @@ void simulator::run_step()
     // Move the virtual system clock forward to this event
     current_clock = next->wake_time();
     next->clear_wake_time();
+
+    logger::info() << "## Simulation step: time now " << current_clock << " ##";
 
     // Dispatch the event
     next->timeout();
