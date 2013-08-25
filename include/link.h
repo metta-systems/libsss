@@ -127,7 +127,15 @@ public:
     inline bool is_active() const { return active_; }
     inline void set_active(bool active) { active_ = active; }
 
+    /**
+     * Open the underlying socket and bind it to given endpoint.
+     * @param  ep Endpoint on the local machine to bind the link to.
+     * @return    True if bind successfull, false otherwise.
+     */
     virtual bool bind(endpoint const& ep) = 0;
+    /**
+     * Unbind and close the underlying socket.
+     */
     virtual void unbind() = 0;
 
     virtual bool send(endpoint const& ep, const char* data, size_t size) { return false; }
