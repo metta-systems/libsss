@@ -24,6 +24,8 @@ class simulator
     boost::posix_time::ptime current_clock;
 
 public:
+    simulator();
+
     /**
      * Run simulation to the end.
      */

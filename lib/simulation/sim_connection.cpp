@@ -176,6 +176,9 @@ void sim_connection::connect(std::shared_ptr<sim_host> downlink, endpoint downli
 
     downlink_->register_connection_at(downlink_address_, shared_from_this());
     uplink_->register_connection_at(uplink_address_, shared_from_this());
+
+    downlink_arrival_time_ = downlink_->current_time();
+    uplink_arrival_time_ = uplink_->current_time();
 }
 
 void sim_connection::disconnect()

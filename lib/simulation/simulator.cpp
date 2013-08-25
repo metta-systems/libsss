@@ -6,11 +6,17 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "simulation/simulator.h"
 #include "simulation/sim_timer_engine.h"
 
 namespace ssu {
 namespace simulation {
+
+simulator::simulator()
+    : current_clock(boost::posix_time::from_iso_string("20000101T000000"))
+{
+}
 
 void simulator::run()
 {
