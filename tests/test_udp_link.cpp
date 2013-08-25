@@ -29,6 +29,14 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
     link->receive(msg, le);
 }
 
+BOOST_AUTO_TEST_CASE(bound_link_is_active)
+{
+    shared_ptr<host> host(make_shared<host>());
+    endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+    shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
+    BOOST_CHECK(link->is_active() == true);
+}
+
 BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 {
     shared_ptr<host> host(make_shared<host>());
@@ -70,6 +78,8 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 
     // and send it to ourselves.
     link->send(local_ep, msg);
+
+    link->unbind(); //XXX should be done in the key_responder's receive method...
 
     host->run_io_service();
 }
