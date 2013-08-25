@@ -113,9 +113,10 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
 
 udp_link::udp_link(const endpoint& ep, link_host_state& h)
     : link(h)
-    , udp_socket(h.get_io_service(), ep)
+    , udp_socket(h.get_io_service())
     , received_from(ep, this)
 {
+    bind(ep); // temporarily maintain old behaviour where creating udp_link binds it
 }
 
 void udp_link::prepare_async_receive()
@@ -138,6 +139,11 @@ udp_link::local_endpoints()
 bool udp_link::bind(endpoint const& ep)
 {
     boost::system::error_code ec;
+    udp_socket.open(ep.protocol(), ec);
+    if (ec) {
+        logger::warning() << ec;
+        return false;
+    }
     udp_socket.bind(ep, ec);
     if (ec) {
         logger::warning() << ec;
@@ -151,7 +157,8 @@ bool udp_link::bind(endpoint const& ep)
 
 void udp_link::unbind()
 {
-    // @todo cancel async_receive
+    udp_socket.shutdown(boost::asio::ip::udp::socket::shutdown_both);
+    udp_socket.close();
     set_active(false);
 }
 
