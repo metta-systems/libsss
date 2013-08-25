@@ -9,6 +9,7 @@
 #define BOOST_TEST_MODULE Test_simulator
 #include <boost/test/unit_test.hpp>
 
+#include "test_data_helper.h"
 #include "simulation/simulator.h"
 #include "simulation/sim_host.h"
 #include "simulation/sim_link.h"
@@ -61,7 +62,7 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     byte_array msg({'a', 'b', 'c', 'd'});
     link->send(other_host_address, msg);
 
-    byte_array msg2({'\0', 'S', 'S', 'U'});
+    byte_array msg2 = generate_dh1_chunk();
     link->send(other_host_address, msg2);
 
     sim->run();
