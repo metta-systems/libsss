@@ -111,6 +111,21 @@ const sim_connection::params eth1000 =
 const sim_connection::params sat10 =
     { ETH10_RATE, txdelay(500000), txdelay(1024*1024), 0.0 };
 
+// All the values below are a wild guess!
+
+#define WIFI_MTU     1500    // Standard Ethernet MTU
+#define WIFI_QPKTS   10      // Typical queue length in packets (???)
+#define WIFI_QBYTES  (WIFI_MTU * WIFI_QPKTS)
+
+#define WIFI54_RATE  (22*1024*1024/8)
+#define WIFI600_RATE (300*1024*1024/8)
+
+const sim_connection::params wifi54 =
+    { WIFI54_RATE, txdelay(500/2), txtime(WIFI_QBYTES,WIFI54_RATE), 0.05 };
+
+const sim_connection::params wifi600 =
+    { WIFI600_RATE, txdelay(100/2), txtime(WIFI_QBYTES,WIFI600_RATE), 0.07 };
+
 //=================================================================================================
 // sim_connection::params
 //=================================================================================================
@@ -185,6 +200,10 @@ void sim_connection::set_preset(preset p)
             return set_link_params(eth100);
         case eth_1000:
             return set_link_params(eth1000);
+        case wifi_54:
+            return set_link_params(wifi54);
+        case wifi_600:
+            return set_link_params(wifi600);
     }
     logger::warning() << "Unknown connection preset " << p;
 }

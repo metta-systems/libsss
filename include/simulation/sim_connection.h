@@ -35,6 +35,8 @@ public:
         eth_10,      ///< 10Mbps Ethernet link
         eth_100,     ///< 100Mbps Ethernet link
         eth_1000,    ///< 1000Mbps Ethernet link
+        wifi_54,     ///< 802.11g-2003 WiFi link
+        wifi_600,    ///< 802.11n hi-speed WiFi link
     };
 
     sim_connection(preset p = eth_100);
