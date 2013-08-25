@@ -36,12 +36,14 @@ sim_host::~sim_host()
     packet_queue_.clear();
 }
 
-boost::posix_time::ptime sim_host::current_time()
+boost::posix_time::ptime
+sim_host::current_time()
 {
     return simulator_->current_time();
 }
 
-std::unique_ptr<async::timer_engine> sim_host::create_timer_engine_for(async::timer* t)
+std::unique_ptr<async::timer_engine>
+sim_host::create_timer_engine_for(async::timer* t)
 {
     return unique_ptr<async::timer_engine>(new sim_timer_engine(t, simulator_));
 }
