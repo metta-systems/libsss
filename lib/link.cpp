@@ -21,7 +21,7 @@ link_receiver* link_host_state::receiver(magic_t magic)
     auto it = receivers.find(magic);
     if (it == receivers.end())
     {
-        logger::debug() << "receiver not found looking for magic " << magic;
+        logger::debug() << "Receiver not found looking for magic " << hex(magic, 8, true);
         return 0;
     }
     return it->second;
