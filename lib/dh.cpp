@@ -185,8 +185,7 @@ dh_hostkey_t::dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_grou
     , group_(group)
     , dh_(dh)
 {
-    assert(host_->dh_keys_[int(group_)] == nullptr);
-    host_->dh_keys_[int(group_)] = shared_from_this();
+    logger::debug() << "Constructing new DH key";
 
     // Generate the random HMAC secret key
     hmac_secret_key_.resize(crypto::HMACKEYLEN);
@@ -202,8 +201,8 @@ dh_hostkey_t::dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_grou
 
 void dh_hostkey_t::timeout()
 {
-    assert(host_->dh_keys_[int(group_)] == shared_from_this());
-    host_->dh_keys_[int(group_)].reset();
+    logger::debug() << "Timing out DH key";
+    host_->clear_dh_key(group_);
 }
 
 byte_array
@@ -242,15 +241,18 @@ dh_host_state::_generate_dh_key(negotiation::dh_group_type group, DH *(*groupfun
     if (!DH_generate_key(dh))
         return NULL;
 
-    return std::shared_ptr<negotiation::dh_hostkey_t>(new negotiation::dh_hostkey_t(get_host(), group, dh));
+    assert(dh_keys_[int(group)] == nullptr);
+    dh_keys_[int(group)] = std::make_shared<negotiation::dh_hostkey_t>(get_host(), group, dh);
+
+    return dh_keys_[int(group)];
 }
 
 std::shared_ptr<negotiation::dh_hostkey_t>
 dh_host_state::get_dh_key(negotiation::dh_group_type group)
 {
     if (group >= negotiation::dh_group_type::dh_group_max)
-        return NULL;
-    if (dh_keys_[int(group)] != NULL)
+        return nullptr;
+    if (dh_keys_[int(group)] != nullptr)
         return dh_keys_[int(group)];
 
     // Try to generate the requested host key
@@ -263,8 +265,15 @@ dh_host_state::get_dh_key(negotiation::dh_group_type group)
         case negotiation::dh_group_type::dh_group_3072:
             return _generate_dh_key(group, get_dh3072);
         default:
-            return NULL;
+            logger::warning() << "Unknown DH host key group " << int(group) << " specified.";
+            return nullptr;
     }
+}
+
+void dh_host_state::clear_dh_key(negotiation::dh_group_type group)
+{
+    assert(dh_keys_[int(group)] != nullptr);
+    dh_keys_[int(group)].reset();
 }
 
 } // ssu namespace
