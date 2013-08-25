@@ -8,7 +8,8 @@
 //
 #pragma once
 
-#include <queue>
+#include <map>
+#include <vector>
 #include "host.h"
 #include "link.h"
 
@@ -31,10 +32,16 @@ class sim_host : public host
     typedef uint16_t port_t;
     std::unordered_map<port_t, std::shared_ptr<sim_link>> links_;
 
-    /// Queue of packets to be delivered on this host.
-    // If the packet drops itself from this queue it's likely to be deleted as
-    // this queue owns them usually.
-    std::queue<sim_packet*> packet_queue_;
+    /**
+     * Queue of packets to be delivered on this host.
+     *
+     * If the packet drops itself from this queue it's likely to be deleted as
+     * this queue owns them usually.
+     *
+     * Standard queueu/priority_queue types are useless because they don't support the API
+     * we need to manipulate the queue.
+     */
+    std::vector<std::shared_ptr<sim_packet>> packet_queue_;
 
 public:
     std::shared_ptr<simulator> get_simulator() const { return simulator_; }
@@ -48,11 +55,15 @@ public:
     std::shared_ptr<link> create_link() override;
 
     /** Enqueue packet, assume ownership of the packet. */
-    void enqueue_packet(sim_packet* packet);
+    void enqueue_packet(std::shared_ptr<sim_packet> packet);
     /** Dequeue the packet, dequeued packet will be deleted upon return. */
-    void dequeue_packet(sim_packet* packet);
-    /** Check if this packet is still on this host's receive queue. */
-    bool packet_on_queue(sim_packet* packet) const;
+    void dequeue_packet(std::shared_ptr<sim_packet> packet);
+    /**
+     * Check if this packet is still on this host's receive queue. O(n) run time.
+     * @param  packet Shared pointer to packet to find.
+     * @return        True if packet is on this host's packet queue, false otherwise.
+     */
+    bool packet_on_queue(std::shared_ptr<sim_packet> packet) const;
 
     void register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
     void unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);

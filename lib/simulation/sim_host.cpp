@@ -23,7 +23,18 @@ sim_host::sim_host(std::shared_ptr<simulator> sim)
 {}
 
 sim_host::~sim_host()
-{}
+{
+    // Close all links.
+    for (auto link : links_)
+        link.second->unbind();
+
+    // Disconnect from other hosts.
+    for (auto conn : connections_)
+        conn.second->disconnect();
+    assert(connections_.empty());
+
+    packet_queue_.clear();
+}
 
 boost::posix_time::ptime sim_host::current_time()
 {
@@ -40,21 +51,33 @@ std::shared_ptr<link> sim_host::create_link()
     return shared_ptr<link>(make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this())));
 }
 
-void sim_host::enqueue_packet(sim_packet* packet)
+void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
 {
-    packet_queue_.push(packet);
+    int i = 0;
+    for (; i < packet_queue_.size(); ++i)
+    {
+        if (packet->arrival_time() > packet_queue_[i]->arrival_time()) {
+            ++i;
+        }
+        else {
+            break;
+        }
+    }
+    packet_queue_.insert(packet_queue_.begin() + i, packet);
 }
 
-void sim_host::dequeue_packet(sim_packet* packet)
+void sim_host::dequeue_packet(shared_ptr<sim_packet> packet)
 {
-    // packet_queue_.erase(packet);
-    // removing from a priority_queue is non-trivial
-    delete packet;
+    for (auto it = find(packet_queue_.begin(), packet_queue_.end(), packet); it != packet_queue_.end();)
+    {
+        packet_queue_.erase(it);
+        it = find(packet_queue_.begin(), packet_queue_.end(), packet);
+    }
 }
 
-bool sim_host::packet_on_queue(sim_packet* packet) const
+bool sim_host::packet_on_queue(shared_ptr<sim_packet> packet) const
 {
-    return false;
+    return find(packet_queue_.begin(), packet_queue_.end(), packet) != packet_queue_.end();
 }
 
 void
