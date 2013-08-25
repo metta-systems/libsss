@@ -32,23 +32,37 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     BOOST_CHECK(sim != nullptr);
 
     shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
+    BOOST_CHECK(my_host != nullptr);
     endpoint my_host_address = endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
     shared_ptr<sim_host> other_host(make_shared<sim_host>(sim));
+    BOOST_CHECK(other_host != nullptr);
     endpoint other_host_address = endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
 
+    negotiation::key_responder receiver;
+    other_host->bind_receiver(stream_protocol::magic, &receiver);
+
+
+
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
+    BOOST_CHECK(conn != nullptr);
     conn->connect(other_host, other_host_address,
                   my_host, my_host_address);
 
     shared_ptr<ssu::link> link = my_host->create_link();
+    BOOST_CHECK(link != nullptr);
     link->bind(my_host_address);
+    BOOST_CHECK(link->is_active());
 
     shared_ptr<ssu::link> other_link = other_host->create_link();
+    BOOST_CHECK(other_link != nullptr);
     other_link->bind(other_host_address);
+    BOOST_CHECK(other_link->is_active());
 
-    byte_array msg({'a', 'b', 'c'});
-
+    byte_array msg({'a', 'b', 'c', 'd'});
     link->send(other_host_address, msg);
+
+    byte_array msg2({'\0', 'S', 'S', 'U'});
+    link->send(other_host_address, msg2);
 
     sim->run();
 }
