@@ -46,7 +46,9 @@ class key_responder : public link_receiver
         const ssu::link_endpoint& src);
 
 public:
-    virtual void receive(const byte_array& msg, const link_endpoint& src);
+    key_responder(std::shared_ptr<host> host);
+
+    void receive(const byte_array& msg, const link_endpoint& src) override;
 };
 
 /**

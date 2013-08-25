@@ -34,15 +34,16 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
 
     shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
     BOOST_CHECK(my_host != nullptr);
-    endpoint my_host_address = endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
+    endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
     shared_ptr<sim_host> other_host(make_shared<sim_host>(sim));
     BOOST_CHECK(other_host != nullptr);
-    endpoint other_host_address = endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
+    endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
 
-    negotiation::key_responder receiver;
-    other_host->bind_receiver(stream_protocol::magic, &receiver);
+    negotiation::key_responder my_receiver(my_host);
+    my_host->bind_receiver(stream_protocol::magic, &my_receiver);
 
-
+    negotiation::key_responder other_receiver(other_host);
+    other_host->bind_receiver(stream_protocol::magic, &other_receiver);
 
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
     BOOST_CHECK(conn != nullptr);

@@ -62,6 +62,11 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
 namespace ssu {
 namespace negotiation {
 
+key_responder::key_responder(std::shared_ptr<host> host)
+    : link_receiver()
+    , host_(host)
+{}
+
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 {
     boost::iostreams::filtering_istream in(boost::make_iterator_range(msg.as_vector()));
