@@ -53,8 +53,8 @@ namespace crypto
     enum {
         // Length of symmetric key material for HMAC-SHA-256-128
         HMACKEYLEN = (256/8),
-        // We use SHA-256 hashes truncated to 128 bits for HMAC generation
-        HMACLEN    = (128/8)
+        // We use SHA-256 hashes for HMAC generation
+        HMACLEN    = (256/8)
     };
 
     namespace internal
