@@ -45,7 +45,7 @@ public:
     boost::posix_time::ptime current_time() override;
     std::unique_ptr<async::timer_engine> create_timer_engine_for(async::timer* t) override;
 
-    std::unique_ptr<link> create_link() override;
+    std::shared_ptr<link> create_link() override;
 
     /** Enqueue packet, assume ownership of the packet. */
     void enqueue_packet(sim_packet* packet);

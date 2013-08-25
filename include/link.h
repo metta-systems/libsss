@@ -68,7 +68,11 @@ class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
 {
     std::unordered_map<magic_t, link_receiver*> receivers;
 
-    virtual std::unique_ptr<link> create_link() { return nullptr; }
+    /**
+     * Initialize and return the link this host instance uses to communicate.
+     * Repeated calls will return already initialized link instance.
+     */
+    virtual std::shared_ptr<link> create_link() { return nullptr; }
 
 public:
     /**
