@@ -34,9 +34,6 @@ public:
 
     bool send(const endpoint& ep, const char *data, size_t size) override;
 
-    // void bind() override;
-    // void unbind() override;
-
     std::vector<endpoint> local_endpoints() override;
 };
 
