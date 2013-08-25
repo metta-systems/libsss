@@ -58,10 +58,7 @@ void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
     int i = 0;
     for (; i < packet_queue_.size(); ++i)
     {
-        if (packet->arrival_time() > packet_queue_[i]->arrival_time()) {
-            ++i;
-        }
-        else {
+        if (packet->arrival_time() < packet_queue_[i]->arrival_time()) {
             break;
         }
     }
