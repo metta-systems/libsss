@@ -32,7 +32,7 @@ class stream_peer : public stream_protocol
     std::weak_ptr<host> host_;         ///< Per-host state.
     const peer_id       remote_id_;    ///< Host ID of target.
     stream_channel*     primary_channel_{0}; ///< Current primary channel.
-    int stall_warnings_{0};
+    int                 stall_warnings_{0};
     // Routing state:
     //lookups_;
     //reconnect_timer_;
@@ -80,8 +80,6 @@ public:
     typedef boost::signals2::signal<void (void)> channel_state_signal;
     channel_state_signal on_channel_connected; ///< Primary flow connection attempt succeeded.
     channel_state_signal on_channel_failed; ///< Connection attempt or the primary flow failed.
-
-
 };
 
 } // private namespace
