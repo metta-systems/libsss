@@ -9,9 +9,11 @@
 #pragma once
 
 #include <memory>
+#include <boost/signals2/signal.hpp>
 #include "link.h"
 #include "timer.h"
 #include "crypto.h"
+#include "peer_id.h"
 #include "negotiation/key_message.h"
 
 namespace ssu {
@@ -55,10 +57,10 @@ public:
  * Key initiator maintains host state with respect to initiated key exchanges.
  * One initiator keeps state about key exchange with one peer.
  */
-class key_initiator
+class key_initiator : public std::enable_shared_from_this<key_initiator>
 {
     std::shared_ptr<host> host_;
-    const link_endpoint&  to_; ///< Remote endpoint we're trying to contact.
+    const link_endpoint&  target_; ///< Remote endpoint we're trying to contact.
     peer_id               remote_id_;
     byte_array            user_info_; ///< Transparent user info block transmitted in init2 phase.
     magic_t               magic_{0};
@@ -107,18 +109,21 @@ protected:
     inline magic_t magic() const { return magic_; }
 
 public:
-    key_initiator(const link_endpoint& target);
+    key_initiator(std::shared_ptr<host> host, link_endpoint const& target, peer_id const& target_peer);
     ~key_initiator();
 
-    void initiate(); // Actually start init1 phase.
+    void exchange_keys(); // Actually start init1 phase.
 
-    inline ssu::negotiation::dh_group_type group() const { return dh_group; }
+    inline ssu::negotiation::dh_group_type group() const { return dh_group_; }
     inline bool is_done() const { return state_ == state::done; }
 
     void send_dh_init1();
     void send_dh_response1();
     void send_dh_init2();
     void send_dh_response2();
+
+    typedef boost::signals2::signal<void (bool)> completion_signal;
+    completion_signal on_completed;
 };
 
 } // namespace negotiation
@@ -130,10 +135,12 @@ class key_host_state
 {
     //std::unordered_map<chk_ep, std::shared_ptr<key_initiator>> chk_initiators;
     std::unordered_map<byte_array, std::shared_ptr<negotiation::key_initiator>> dh_initiators_;
-    // std::unordered_multimap<endpoint, std::shared_ptr<key_initiator>> ep_initiators;
+    std::unordered_multimap<endpoint, std::shared_ptr<negotiation::key_initiator>> ep_initiators_;
 
 public:
     std::shared_ptr<negotiation::key_initiator> get_initiator(byte_array nonce);
+
+    void register_dh_initiator(byte_array const& nonce, endpoint const& ep, std::shared_ptr<ssu::negotiation::key_initiator> ki);
 };
 
 } // namespace ssu

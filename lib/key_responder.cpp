@@ -250,31 +250,33 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 // key_initiator
 //===========================================================================================================
 
-key_initiator::key_initiator(link_endpoint const& target, peer_id const& target_peer)
-    : to_(target)
+key_initiator::key_initiator(std::shared_ptr<host> host,
+                             link_endpoint const& target,
+                             peer_id const& target_peer)
+    : host_(host)
+    , target_(target)
+    , remote_id_(target_peer)
     , retransmit_timer_(host_.get())
     , key_min_length_(128/8)
-    , remote_id_(target_peer)
 {
     allowed_methods_ = key_method_aes;
 
-    crypto::fill_random(initiator_nonce_);
+    crypto::fill_random(initiator_nonce_.as_vector());
     crypto::hash kmd(initiator_nonce_.as_vector());
     kmd.finalize(initiator_hashed_nonce_);
 }
 
-void key_initiator::initiate()
+void key_initiator::exchange_keys()
 {
-    logger::debug() << "Initiating connection to " << target << " peer id " << target_peer;
+    logger::debug() << "Initiating connection to " << target_ << " peer id " << remote_id_;
 
-    host->initiators.insert(nonce, this);
-    host->init_eps.insert(to_, this);
+    host_->register_dh_initiator(initiator_hashed_nonce_, target_, shared_from_this());
 
-    retransmit_timer_.on_timeout.connect(this->retransmit());
+    retransmit_timer_.on_timeout.connect(boost::bind(&key_initiator::retransmit, this, _1));
 
     send_dh_init1();
 
-    retransmit_timer_.start();
+    retransmit_timer_.start(async::timer::retry_min);
 }
 
 void key_initiator::retransmit(bool fail)
@@ -282,15 +284,15 @@ void key_initiator::retransmit(bool fail)
     if (fail)
     {
         logger::debug() << "Key exchange failed";
-        state_ = done;
+        state_ = state::done;
         retransmit_timer_.stop();
         return on_completed(false);
     }
 
-    if (state_ == init1) {
+    if (state_ == state::init1) {
         send_dh_init1();
     }
-    else if (state_ == init2) {
+    else if (state_ == state::init2) {
         send_dh_init2();
     }
     retransmit_timer_.restart();
@@ -298,7 +300,7 @@ void key_initiator::retransmit(bool fail)
 
 void key_initiator::send_dh_init1()
 {
-    logger::debug() << "Send dh_init1 to " << to;
+    logger::debug() << "Send dh_init1 to " << target_;
     state_ = state::init1;
 
     // Clear previous initiator state in case it was after init1, we're restarting the init.
@@ -318,12 +320,12 @@ void key_initiator::send_dh_init1()
     init.initiator_dh_public_key = initiator_public_key_;
     init.responder_eid.clear();
 
-    send(magic(), init, to);
+    send(magic(), init, target_);
 }
 
 void key_initiator::send_dh_init2()
 {
-    logger::debug() << "Send dh_init2 to " << to;
+    logger::debug() << "Send dh_init2 to " << target_;
     state_ = state::init2;
 }
 
@@ -341,6 +343,15 @@ key_host_state::get_initiator(byte_array nonce)
         return 0;
     }
     return it->second;
+}
+
+void
+key_host_state::register_dh_initiator(byte_array const& nonce,
+                                   endpoint const& ep,
+                                   std::shared_ptr<ssu::negotiation::key_initiator> ki)
+{
+    dh_initiators_.insert(make_pair(nonce, ki));
+    ep_initiators_.insert(make_pair(ep, ki));
 }
 
 } // namespace ssu
