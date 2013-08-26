@@ -333,7 +333,8 @@ void key_initiator::send_dh_init2()
 // key_host_state
 //===========================================================================================================
 
-std::shared_ptr<ssu::negotiation::key_initiator> key_host_state::get_initiator(byte_array nonce)
+std::shared_ptr<ssu::negotiation::key_initiator>
+key_host_state::get_initiator(byte_array nonce)
 {
     auto it = dh_initiators_.find(nonce);
     if (it == dh_initiators_.end()) {
