@@ -39,4 +39,9 @@ public:
 inline bool operator == (const peer_id& a, const peer_id& b) { return a.id() == b.id(); }
 inline bool operator != (const peer_id& a, const peer_id& b) { return a.id() != b.id(); }
 
+inline std::ostream& operator << (std::ostream& os, peer_id const& id)
+{
+    return os << id.to_string();
+}
+
 } // namespace ssu
