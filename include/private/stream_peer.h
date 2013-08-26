@@ -29,10 +29,10 @@ class stream_peer : public stream_protocol
     // before we start a new lookup/key exchange phase to try replacing it.
     static const int stall_warnings_max = 3;
 
-    std::weak_ptr<host> host_;         ///< Per-host state.
-    const peer_id       remote_id_;    ///< Host ID of target.
-    stream_channel*     primary_channel_{0}; ///< Current primary channel.
-    int                 stall_warnings_{0};
+    std::shared_ptr<host> host_;         ///< Per-host state.
+    const peer_id         remote_id_;    ///< Host ID of target.
+    stream_channel*       primary_channel_{0}; ///< Current primary channel.
+    int                   stall_warnings_{0};
     // Routing state:
     //lookups_;
     //reconnect_timer_;
