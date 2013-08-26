@@ -92,6 +92,24 @@ class base_stream : public abstract_stream
         disconnected   ///< Connection terminated.
     };
 
+    std::weak_ptr<base_stream> parent; ///< Parent, if it still exists.
+
+    static const size_t default_rx_buffer_size = 65536;
+
+    void recalculate_receive_window();
+    void recalculate_transmit_window();
+
+    void tx_enqueue_channel(bool tx_immediately);
+
+    bool attached();
+
+    //====================================
+    // Transmit various types of packets.
+    //====================================
+
+    void tx_attach();
+
+public:
     /**
      * @internal
      * Unit of data transmission on SSU stream.
@@ -118,24 +136,6 @@ class base_stream : public abstract_stream
         }
     };
 
-    std::weak_ptr<base_stream> parent; ///< Parent, if it still exists.
-
-    static const size_t default_rx_buffer_size = 65536;
-
-    void recalculate_receive_window();
-    void recalculate_transmit_window();
-
-    void tx_enqueue_channel(bool tx_immediately);
-
-    bool attached();
-
-    //====================================
-    // Transmit various types of packets.
-    //====================================
-
-    void tx_attach();
-
-public:
     /**
      * Create a base_stream instance.
      * @param host parent host
