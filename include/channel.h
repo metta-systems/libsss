@@ -25,6 +25,8 @@ class channel : public link_channel
     std::shared_ptr<host> host_;
     std::unique_ptr<channel_armor> armor_; // armors cannot be shared.
 
+    link::status link_status_;
+
 public:
     static const int hdrlen = 8/*XXX*/;
 
@@ -41,6 +43,11 @@ public:
     // inline channel_armor* armor() { // huh, what for?
         // return armor_;
     // }
+
+    /**
+     * Return the current link status as observed by this channel.
+     */
+    inline link::status link_status() const { return link_status_; }
 
 protected:
     /**
