@@ -183,8 +183,12 @@ void sim_connection::connect(std::shared_ptr<sim_host> downlink, endpoint downli
 
 void sim_connection::disconnect()
 {
-    downlink_->unregister_connection_at(downlink_address_, shared_from_this());
-    uplink_->unregister_connection_at(uplink_address_, shared_from_this());
+    if (downlink_) {
+        downlink_->unregister_connection_at(downlink_address_, shared_from_this());
+    }
+    if (uplink_) {
+        uplink_->unregister_connection_at(uplink_address_, shared_from_this());
+    }
 }
 
 void sim_connection::set_preset(preset p)
