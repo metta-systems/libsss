@@ -58,19 +58,50 @@ public:
 class key_initiator
 {
     std::shared_ptr<host> host_;
-    const link_endpoint& to;
+    const link_endpoint&  to_; ///< Remote endpoint we're trying to contact.
+    peer_id               remote_id_;
+    byte_array            user_info_; ///< Transparent user info block transmitted in init2 phase.
+    magic_t               magic_{0};
+    uint32_t              allowed_methods_{0}; ///< Bitwise set of below method flags
+
+    enum methods {
+        key_method_checksum = (1 << 0),
+        key_method_aes      = (1 << 1),
+    };
+
+    /**
+     * Current phase of the protocol negotiation.
+     */
     enum class state {
         init1, init2, done
     } state_;
 
-    // AES-based encryption negotiation state
-    ssu::negotiation::dh_group_type dh_group;
-    int key_min_length{0};
-    boost::array<uint8_t, crypto::hash::size> initiator_hashed_nonce;
+    ssu::async::timer retransmit_timer_;
 
-    magic_t magic_{0};
+    // Weak keyed checksum state
 
-    ssu::async::timer transmit_timer;
+    uint32_t checksum_key_;
+    byte_array responder_cookie_;
+
+    // AES/SHA256 with DH key agreement
+
+    ssu::negotiation::dh_group_type dh_group_;
+    int key_min_length_{0};
+
+    // Protocol state set up before sending init1
+    byte_array                                 initiator_nonce_;
+    boost::array<uint8_t, crypto::hash::size>  initiator_hashed_nonce_;
+    byte_array                                 initiator_public_key_;
+
+    // Set after receiving response1
+    byte_array                                 responder_nonce_;
+    byte_array                                 responder_public_key_;
+    byte_array                                 responder_challenge_cookie_;
+    byte_array                                 shared_master_secret_;
+    // Encrypted and authenticated identity information
+    byte_array                                 encrypted_identity_info_;
+    
+    void retransmit(bool fail);
 
 protected:
     inline magic_t magic() const { return magic_; }
@@ -78,6 +109,8 @@ protected:
 public:
     key_initiator(const link_endpoint& target);
     ~key_initiator();
+
+    void initiate(); // Actually start init1 phase.
 
     inline ssu::negotiation::dh_group_type group() const { return dh_group; }
     inline bool is_done() const { return state_ == state::done; }
