@@ -8,11 +8,20 @@
 //
 #pragma once
 
+#include <map>
+#include <unordered_set>
 #include <boost/signals2/signal.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "protocol.h"
+#include "host.h"
+#include "peer_id.h"
 
 namespace ssu {
-namespace private {
+
+class base_stream;
+class stream_channel;
+
+// namespace private_ {
 
 /**
  * Private helper class to keep information about a peer we are trying to establish connection with.
@@ -23,7 +32,7 @@ namespace private {
 class stream_peer : public stream_protocol
 {
     // Retry connection attempts for persistent streams once every minute.
-    static const posix_time::ptime connect_retry_period = minutes(1);
+    static const async::timer::duration_type connect_retry_period;
 
     // Number of stall warnings we get from our primary stream
     // before we start a new lookup/key exchange phase to try replacing it.
@@ -33,18 +42,20 @@ class stream_peer : public stream_protocol
     const peer_id         remote_id_;    ///< Host ID of target.
     stream_channel*       primary_channel_{0}; ///< Current primary channel.
     int                   stall_warnings_{0};
+
     // Routing state:
     //lookups_;
     //reconnect_timer_;
     //connected_routing_clients_;
-    // Channels under construction:
-    //set<endpoint> locations_; ///< Potential locations known
-    //map<link_endpoint, key_initiator*> key_exchanges_initiated_;
+
+    // For channels under construction:
+    std::unordered_set<endpoint> locations_; ///< Potential locations known
+    std::map<link_endpoint, negotiation::key_initiator*> key_exchanges_initiated_;
 
     // All existing streams involving this peer.
-    set<base_stream*> all_streams_;
+    std::unordered_set<base_stream*> all_streams_;
     // All streams that have USIDs, registered by their USIDs
-    map<unique_stream_id_t, base_stream*> usid_streams_;
+    std::map<unique_stream_id_t, base_stream*> usid_streams_;
 
 
     stream_peer(std::shared_ptr<host>& host, const peer_id& remote_id);
@@ -82,5 +93,5 @@ public:
     channel_state_signal on_channel_failed; ///< Connection attempt or the primary flow failed.
 };
 
-} // private namespace
+// } // private_ namespace
 } // ssu namespace

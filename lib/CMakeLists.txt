@@ -18,5 +18,6 @@ add_library(ssu STATIC
     protocol.cpp
     server.cpp
     stream.cpp
+    stream_peer.cpp
     timer.cpp
     ${simulator_SOURCES})

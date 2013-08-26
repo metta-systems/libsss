@@ -8,9 +8,15 @@
 //
 #pragma once
 
+#include <unordered_map>
 #include "channel.h"
+#include "base_stream.h"
 
 namespace ssu {
+
+// namespace private_ {
+class stream_peer;
+// } // private_ namespace
 
 /**
  * Channel implementation for SSU streams.
@@ -23,10 +29,12 @@ class stream_channel : public channel
      * Streams queued for transmission on this channel.
      * This should be a priority queue for simplicity of enqueueing.
      */
-    priority_queue<base_stream*> tx_streams;
+    // priority_queue<base_stream*> tx_streams;
 
-    std::unordered_map<tx_seq_id, packet*> waiting_ack_;
-    std::unordered_map<tx_seq_id, packet*> waiting_expiry_;
+    typedef uint64_t tx_seq_id;///@fixme
+
+    std::unordered_map<tx_seq_id, base_stream::packet*> waiting_ack_;
+    std::unordered_map<tx_seq_id, base_stream::packet*> waiting_expiry_;
 
 public:
     stream_channel(std::shared_ptr<host> host, stream_peer* peer, const peer_id& id);
@@ -49,9 +57,9 @@ public:
 
     bool transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct) override;
 
-    void acknowledged(quint64 txseq, int npackets, quint64 rxackseq) override;
-    void missed(quint64 txseq, int npackets) override;
-    void expire(quint64 txseq, int npackets) override;
+    void acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq) override;
+    void missed(uint64_t txseq, int npackets) override;
+    void expire(uint64_t txseq, int npackets) override;
 };
 
 } // namespace ssu
