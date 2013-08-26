@@ -250,10 +250,50 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 // key_initiator
 //===========================================================================================================
 
-key_initiator::key_initiator(const link_endpoint& target)
-    : to(target)
-    , transmit_timer(host_.get())
+key_initiator::key_initiator(link_endpoint const& target, peer_id const& target_peer)
+    : to_(target)
+    , retransmit_timer_(host_.get())
+    , key_min_length_(128/8)
+    , remote_id_(target_peer)
 {
+    allowed_methods_ = key_method_aes;
+
+    crypto::fill_random(initiator_nonce_);
+    crypto::hash kmd(initiator_nonce_.as_vector());
+    kmd.finalize(initiator_hashed_nonce_);
+}
+
+void key_initiator::initiate()
+{
+    logger::debug() << "Initiating connection to " << target << " peer id " << target_peer;
+
+    host->initiators.insert(nonce, this);
+    host->init_eps.insert(to_, this);
+
+    retransmit_timer_.on_timeout.connect(this->retransmit());
+
+    send_dh_init1();
+
+    retransmit_timer_.start();
+}
+
+void key_initiator::retransmit(bool fail)
+{
+    if (fail)
+    {
+        logger::debug() << "Key exchange failed";
+        state_ = done;
+        retransmit_timer_.stop();
+        return on_completed(false);
+    }
+
+    if (state_ == init1) {
+        send_dh_init1();
+    }
+    else if (state_ == init2) {
+        send_dh_init2();
+    }
+    retransmit_timer_.restart();
 }
 
 void key_initiator::send_dh_init1()
@@ -262,16 +302,20 @@ void key_initiator::send_dh_init1()
     state_ = state::init1;
 
     // Clear previous initiator state in case it was after init1, we're restarting the init.
-    // .... TODO ....
+    responder_nonce_.clear();
+    responder_public_key_.clear();
+    responder_challenge_cookie_.clear();
+    shared_master_secret_.clear();
 
     // Construct dh_init1 frame from the current state.
-    std::shared_ptr<dh_hostkey_t> hostkey = host_->get_dh_key(dh_group); // get or generate a host key
+    std::shared_ptr<dh_hostkey_t> hostkey = host_->get_dh_key(dh_group_); // get or generate a host key
+    initiator_public_key_ = hostkey->public_key_;
 
     dh_init1_chunk init;
-    init.group = dh_group;
-    init.key_min_length = key_min_length;//?
-    init.initiator_hashed_nonce = initiator_hashed_nonce;
-    init.initiator_dh_public_key = hostkey->public_key_;
+    init.group = dh_group_;
+    init.key_min_length = key_min_length_;//?
+    init.initiator_hashed_nonce = initiator_hashed_nonce_;
+    init.initiator_dh_public_key = initiator_public_key_;
     init.responder_eid.clear();
 
     send(magic(), init, to);
