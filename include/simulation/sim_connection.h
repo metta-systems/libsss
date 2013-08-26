@@ -47,7 +47,7 @@ public:
     void disconnect();
 
     void set_preset(preset p);
-    void set_link_params(params const& downlink, params const& uplink) {
+    inline void set_link_params(params const& downlink, params const& uplink) {
         downlink_params_ = downlink;
         uplink_params_ = uplink;
     }
