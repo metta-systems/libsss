@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/archive/binary_oarchive.hpp>
+#include "msgpack_archive.h"
 #include "byte_array.h"
 #include "protocol.h"
 #include "negotiation/key_message.h"
@@ -24,7 +24,7 @@ generate_dh1_chunk()
     byte_array data;
     {
         boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header);
+        msgpack_oarchive oa(out, boost::archive::no_header);
 
         ssu::negotiation::key_message m;
         ssu::negotiation::key_chunk chu;
