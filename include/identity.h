@@ -60,4 +60,7 @@ public:
     byte_array id() const;
 };
 
+class identity_host_state
+{};
+
 } // ssu namespace
