@@ -1,12 +1,12 @@
 To connect to the other side:
 
-ssu::stream* stream;
+ssu::stream* stream(host);
 stream->connect_to(eid, service, protocol, ep_hint);
 stream->connect_at(additional_ep);...
 
 To accept connections from the other side:
 
-ssu::server* server;
+ssu::server* server(host);
 server->listen(service, service_desc, protocol, protocol_desc);
 and server->accept() in the on_new_connection signals.
 (bind server to the signal handler, as it is not provided)
