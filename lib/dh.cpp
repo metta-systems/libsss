@@ -9,27 +9,9 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "dh.h"
 #include "host.h"
+#include "crypto/utils.h"
 
-namespace {
-// Little helper functions for BIGNUM to byte_array conversions.
-
-BIGNUM* ba2bn(byte_array const& ba)
-{
-    return BN_bin2bn((const unsigned char*)ba.data(), ba.size(), NULL);
-}
-
-byte_array bn2ba(BIGNUM const* bn)
-{
-    assert(bn != NULL);
-    byte_array ba;
-    ba.resize(BN_num_bytes(bn));
-    BN_bn2bin(bn, (unsigned char*)ba.data());
-    return ba;
-}
-
-} // anonymous namespace
-
-/**
+/*
  * The Diffie-Hellman parameter setup has been taken unaltered
  * from SST implementation in Netsteria.
  */
@@ -192,7 +174,7 @@ dh_hostkey_t::dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_grou
     crypto::fill_random(hmac_secret_key_.as_vector());
 
     // Get the public key into a byte_array
-    public_key_ = bn2ba(dh->pub_key);
+    public_key_ = crypto::utils::bn2ba(dh->pub_key);
 
     // Force key refresh every hour.
     expiration_timer_.on_timeout.connect(boost::bind(&dh_hostkey_t::timeout, this));
@@ -208,7 +190,7 @@ void dh_hostkey_t::timeout()
 byte_array
 dh_hostkey_t::calc_key(byte_array const& other_public_key)
 {
-    BIGNUM* other_bn = ba2bn(other_public_key);
+    BIGNUM* other_bn = crypto::utils::ba2bn(other_public_key);
 
     byte_array secret;
     secret.resize(DH_size(dh_));
