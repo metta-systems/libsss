@@ -11,6 +11,7 @@ set(simulator_SOURCES
 add_library(ssu STATIC 
     abstract_stream.cpp
     base_stream.cpp
+    crypto/sign_key.cpp
     dh.cpp
     identity.cpp
     key_responder.cpp
