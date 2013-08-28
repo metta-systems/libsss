@@ -87,7 +87,7 @@ rsa160_key::public_key() const
 
         // Write the public part of the key
         // bool has_private_key = false;
-        oa << crypto::utils::bn2ba(rsa_->n) << rsa_->e << false;
+        // oa << crypto::utils::bn2ba(rsa_->n) << rsa_->e << false;
     }
     return data;
 }

@@ -20,7 +20,7 @@ class msgpack_oarchive
         msgpack::encode_boolean(*this, t);
     }
 
-    void save_override(byte_array& t, int)
+    void save_override(byte_array const& t, int)
     {
         msgpack::encode_array(*this, t, 0xffffffff);
     }
