@@ -13,6 +13,7 @@ add_library(ssu STATIC
     base_stream.cpp
     crypto/sign_key.cpp
     crypto/rsa160_key.cpp
+    crypto/dsa160_key.cpp
     crypto/utils.cpp
     dh.cpp
     identity.cpp
