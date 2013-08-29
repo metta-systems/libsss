@@ -31,6 +31,9 @@
 //
 // Requires OpenSSL 1.0.0 or later, install one from brew on OSX.
 //
+// Some crypto advices:
+// http://security.stackexchange.com/questions/2202/
+//
 #pragma once
 
 #include <stdexcept>
