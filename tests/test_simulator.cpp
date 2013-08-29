@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     other_link->bind(other_host_address);
     BOOST_CHECK(other_link->is_active());
 
-    ssu::stream* my_stream(my_host);
-    my_stream->connect_to(other_host->host_identity().id(), "simulator", "test", other_host_address);
+    // ssu::stream* my_stream(my_host);
+    // my_stream->connect_to(other_host->host_identity().id(), "simulator", "test", other_host_address);
 
     sim->run();
 }
