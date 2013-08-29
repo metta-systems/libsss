@@ -27,6 +27,10 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
     byte_array data = generate_dh1_chunk();
 
     {
+        logger::file_dump out(data);
+    }
+
+    {
         boost::iostreams::filtering_istream in(boost::make_iterator_range(data.as_vector()));
         boost::archive::binary_iarchive ia(in, boost::archive::no_header);
         ssu::negotiation::key_message m;
