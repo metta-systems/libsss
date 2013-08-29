@@ -5,7 +5,7 @@ include(cmake/setup.cmake)
 # Additional unofficial boost libraries
 include_directories(../../mettanode/3rdparty/endian)
 
-include_directories(include ../support/include)
+include_directories(include ../support/include 3rdparty/msgpack/src)
 add_subdirectory(doc)
 add_subdirectory(lib)
 
