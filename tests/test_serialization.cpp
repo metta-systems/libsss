@@ -31,13 +31,12 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
     }
 
     {
-        boost::iostreams::filtering_istream in(boost::make_iterator_range(data.as_vector()));
-        boost::archive::binary_iarchive ia(in, boost::archive::no_header);
+        byte_array_iwrap<boost::archive::binary_iarchive> r(data);
         ssu::negotiation::key_message m;
 
         BOOST_CHECK(data.size() == 188);
 
-        ia >> m;
+        r.archive() >> m;
 
         BOOST_CHECK(m.magic == ssu::stream_protocol::magic);
         BOOST_CHECK(m.chunks.size() == 1);

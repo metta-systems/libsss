@@ -6,17 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// #include <openssl/err.h>
-// #include <openssl/obj_mac.h>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/archive/binary_oarchive.hpp>
 #include <openssl/sha.h>
 #include "crypto/dsa160_key.h"
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
 #include "msgpack_archive.h"
+#include "archive_helper.h"
 #include "logging.h"
 
 namespace ssu {
@@ -311,9 +307,7 @@ dsa160_key::public_key() const
 {
     byte_array data;
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        msgpack_oarchive oa(out, boost::archive::no_header);
-
+        byte_array_owrap<msgpack_oarchive> w(data);
         // Write the public part of the key
     }
     return data;

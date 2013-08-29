@@ -33,10 +33,9 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
 {
     byte_array data;
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Key parameter signing block for init2 and response2 messages.
-
-        oa << group // DH group for public keys
+        byte_array_owrap<boost::archive::binary_oarchive> w(data);
+        // Key parameter signing block for init2 and response2 messages.
+        w.archive() << group // DH group for public keys
            << keylen // AES key length: 16, 24, or 32
            << initiator_hashed_nonce
            << responder_nonce
@@ -108,9 +107,8 @@ static void send(key_message& m, const link_endpoint& target)
 {
     byte_array msg;
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(msg.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header);
-        oa << m;
+        byte_array_owrap<boost::archive::binary_oarchive> w(msg);
+        w.archive() << m;
     }
     target.send(msg);
 }
@@ -221,13 +219,13 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 {
     byte_array data;
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header); // Put together the data to hash
+        byte_array_owrap<boost::archive::binary_oarchive> w(data);
+        // Put together the data to hash
 
         auto lval_addr = src.address().to_v4().to_bytes();
         uint16_t port = src.port();
 
-        oa << hostkey->public_key_
+        w.archive() << hostkey->public_key_
            << responder_nonce
            << initiator_hashed_nonce
            << lval_addr

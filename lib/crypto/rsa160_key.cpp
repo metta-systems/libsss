@@ -8,15 +8,13 @@
 //
 // #include <openssl/err.h>
 // #include <openssl/obj_mac.h>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/archive/binary_oarchive.hpp>
 #include <openssl/sha.h>
 #include "crypto/rsa160_key.h"
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
 #include "msgpack_archive.h"
+#include "archive_helper.h"
 
 namespace ssu {
 namespace crypto {
@@ -82,12 +80,11 @@ rsa160_key::public_key() const
 {
     byte_array data;
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        msgpack_oarchive oa(out, boost::archive::no_header);
+        byte_array_owrap<msgpack_oarchive> w(data);
 
         // Write the public part of the key
         // bool has_private_key = false;
-        // oa << crypto::utils::bn2ba(rsa_->n) << rsa_->e << false;
+        // w.archive() << crypto::utils::bn2ba(rsa_->n) << rsa_->e << false;
     }
     return data;
 }

@@ -18,9 +18,7 @@
 #include <boost/endian/conversion2.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/range/iterator_range.hpp>
+#include "archive_helper.h"
 #include "byte_array.h"
 #include "binary_literal.h"
 
@@ -224,10 +222,10 @@ template<class Archive, typename T>
 inline void encode_option(Archive& oa, const T& t, uint32_t maxlen)
 {
     byte_array arr;
-    boost::iostreams::filtering_ostream ov(boost::iostreams::back_inserter(arr.as_vector()));
-    boost::archive::binary_oarchive oa_buf(ov, boost::archive::no_header);
-    oa_buf << t;
-    ov.flush();
+    {
+        byte_array_owrap<boost::archive::binary_oarchive> w(arr);
+        w.archive() << t;
+    }
 
     uint32_t size = arr.size();
     size = boost::endian2::big(size);

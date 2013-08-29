@@ -25,24 +25,22 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
     boost::optional<uint32_t> maybe_value;
 
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(data.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header);
+        byte_array_owrap<boost::archive::binary_oarchive> w(data);
 
         BOOST_CHECK(maybe_value.is_initialized() == false);
-        oa << maybe_value;
+        w.archive() << maybe_value;
         maybe_value = i;
         BOOST_CHECK(maybe_value.is_initialized() == true);
         BOOST_CHECK(*maybe_value == 0xabbadead);
-        oa << maybe_value;
+        w.archive() << maybe_value;
     }
     {
-        boost::iostreams::filtering_istream in(boost::make_iterator_range(data.as_vector()));
-        boost::archive::binary_iarchive ia(in, boost::archive::no_header);
+        byte_array_iwrap<boost::archive::binary_iarchive> r(data);
 
         BOOST_CHECK(data.size() == 6);
-        ia >> maybe_value;
+        r.archive() >> maybe_value;
         BOOST_CHECK(maybe_value.is_initialized() == false);
-        ia >> maybe_value;
+        r.archive() >> maybe_value;
         BOOST_CHECK(maybe_value.is_initialized() == true);
         BOOST_CHECK(*maybe_value == 0xabbadead);
     }
