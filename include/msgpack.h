@@ -532,7 +532,7 @@ which represents N
 THINGS MISSING IN MSGPACK
 * union
 * void
-* optional
+* optional - can be represented as "obj or nil"
 * length-delimited optional
 
 They need no additional types and can be implemented as follows deriving from their
@@ -577,7 +577,8 @@ This is equivalent to the following union:
     void;
  } identifier;
 
-Using msgpack it can be represented by a boolean type and then the TRUE-arm or void.
+Using msgpack it can be represented by a nil for FALSE arm or an object for TRUE arm.
+The represented object must not be nil.
 
 Length-delimited optional:
 
