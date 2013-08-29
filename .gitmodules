@@ -1,3 +1,6 @@
 [submodule "cmake"]
 	path = cmake
 	url = https://berkus@github.com/berkus/cmake-setup.git
+[submodule "3rdparty/msgpack"]
+	path = 3rdparty/msgpack
+	url = https://github.com/berkus/msgpack.git
