@@ -28,22 +28,34 @@ class msgpack_oarchive
     friend class boost::archive::save_access;
     // friend class boost::archive::detail::interface_oarchive<msgpack_oarchive>;
 
+    // Implement this to support msgpack write buffer semantics.
+    friend class msgpack::packer<msgpack_oarchive>;
+    void write(const char* data, size_t size) {
+        save_binary(data, size);
+    }
+
     // default fall through for any types not specified here
     template<class T>
     void save(const T & t){
+        // msgpack::pack(*this, t);
         this->primitive_base_t::save(t);
     }
 
-    // void save_override(const bool t, int)
-    // {
-        // write_bool(t);
-        // msgpack::encode_boolean(*this, t);
-    // }
+    void save(const int& t) {
+        msgpack::pack(*this, t);
+    }
 
-    // void save_override(byte_array const& t, int)
-    // {
-        // msgpack::encode_array(*this, t, 0xffffffff);
-    // }
+    void save(const int64_t& t) {
+        msgpack::pack(*this, t);
+    }
+
+    void save(const uint64_t& t) {
+        msgpack::pack(*this, t);
+    }
+
+    void save(const bool& t) {
+        msgpack::pack(*this, t);
+    }
 
 public:
     msgpack_oarchive(std::ostream & os, unsigned int flags = 0) :
