@@ -51,9 +51,6 @@ public:
     {
         this->base_t::init(flags);
     }
-
-    // msgpack_oarchive(byte_array& buffer);
-    // how to make this work without loads of code? we need to instantiate two extra classes...
 };
 
 #include <boost/archive/impl/basic_binary_oarchive.ipp>
