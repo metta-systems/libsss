@@ -13,7 +13,7 @@
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
-#include "msgpack_archive.h"
+#include "msgpack_oarchive.h"
 #include "archive_helper.h"
 
 namespace ssu {

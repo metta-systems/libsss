@@ -10,6 +10,8 @@
 #include "negotiation/key_message.h"
 #include "crypto.h"
 #include "host.h"
+#include "msgpack_oarchive.h"
+#include "archive_helper.h"
 
 using namespace ssu;
 
@@ -33,7 +35,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
 {
     byte_array data;
     {
-        byte_array_owrap<boost::archive::binary_oarchive> w(data);
+        byte_array_owrap<msgpack_oarchive> w(data);
         // Key parameter signing block for init2 and response2 messages.
         w.archive() << group // DH group for public keys
            << keylen // AES key length: 16, 24, or 32
@@ -107,7 +109,7 @@ static void send(key_message& m, const link_endpoint& target)
 {
     byte_array msg;
     {
-        byte_array_owrap<boost::archive::binary_oarchive> w(msg);
+        byte_array_owrap<msgpack_oarchive> w(msg);
         w.archive() << m;
     }
     target.send(msg);
@@ -219,7 +221,7 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 {
     byte_array data;
     {
-        byte_array_owrap<boost::archive::binary_oarchive> w(data);
+        byte_array_owrap<msgpack_oarchive> w(data);
         // Put together the data to hash
 
         auto lval_addr = src.address().to_v4().to_bytes();

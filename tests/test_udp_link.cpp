@@ -51,8 +51,6 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     byte_array msg;
 
     {
-        boost::iostreams::filtering_ostream out(boost::iostreams::back_inserter(msg.as_vector()));
-        boost::archive::binary_oarchive oa(out, boost::archive::no_header);
         negotiation::key_message m;
         negotiation::key_chunk k;
         negotiation::dh_init1_chunk dh;
@@ -73,7 +71,8 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
         m.magic = stream_protocol::magic;
         m.chunks.push_back(k);
 
-        oa << m;
+        byte_array_owrap<msgpack_oarchive> write(msg);
+        write.archive() << m;
     }
 
     // and send it to ourselves.

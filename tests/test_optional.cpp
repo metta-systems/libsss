@@ -6,13 +6,12 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 #include <boost/optional/optional.hpp>
-#include "custom_optional.h" // optional value serialization instead of boost version
+// #include "custom_optional.h" // optional value serialization instead of boost version
 #include "byte_array.h"
+#include "msgpack_iarchive.h"
+#include "msgpack_oarchive.h"
+#include "archive_helper.h"
 #define BOOST_TEST_MODULE Test_optional_serialization
 #include <boost/test/unit_test.hpp>
 
@@ -25,22 +24,22 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
     boost::optional<uint32_t> maybe_value;
 
     {
-        byte_array_owrap<boost::archive::binary_oarchive> w(data);
+        byte_array_owrap<msgpack_oarchive> write(data);
 
         BOOST_CHECK(maybe_value.is_initialized() == false);
-        w.archive() << maybe_value;
+        write.archive() << maybe_value;
         maybe_value = i;
         BOOST_CHECK(maybe_value.is_initialized() == true);
         BOOST_CHECK(*maybe_value == 0xabbadead);
-        w.archive() << maybe_value;
+        write.archive() << maybe_value;
     }
     {
-        byte_array_iwrap<boost::archive::binary_iarchive> r(data);
+        byte_array_iwrap<msgpack_iarchive> read(data);
 
         BOOST_CHECK(data.size() == 6);
-        r.archive() >> maybe_value;
+        read.archive() >> maybe_value;
         BOOST_CHECK(maybe_value.is_initialized() == false);
-        r.archive() >> maybe_value;
+        read.archive() >> maybe_value;
         BOOST_CHECK(maybe_value.is_initialized() == true);
         BOOST_CHECK(*maybe_value == 0xabbadead);
     }

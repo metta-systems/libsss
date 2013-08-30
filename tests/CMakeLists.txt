@@ -8,7 +8,9 @@ create_test(server "ssu;support;${OPENSSL_LIBRARIES}")
 #create_test(udp_link "ssu;support;${OPENSSL_LIBRARIES}")
 #create_test(run_udp_receiver "ssu;support")
 
-create_test(optional "ssu;support")
+# Optional test not working yet because of missing proper msgpack_oarchive/iarchive support.
+#create_test(optional "ssu;support")
+
 create_test(serialization "ssu;support")
 
 # This needs to be sprinkled with BOOST_CHECK()s.
