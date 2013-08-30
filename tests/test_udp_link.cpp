@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     // and send it to ourselves.
     link->send(local_ep, msg);
 
-    link->unbind(); //XXX should be done in the key_responder's receive method...
+    // link->unbind(); //XXX should be done in the key_responder's receive method...
 
     host->run_io_service();
 }
