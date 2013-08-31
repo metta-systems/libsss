@@ -17,7 +17,7 @@ class byte_array_iwrap
 public:
     byte_array_iwrap(byte_array& data)
         : in(boost::make_iterator_range(data.as_vector()))
-        , ia(in, boost::archive::no_header)
+        , ia(in)
     {}
 
     Archive& archive() { return ia; }
@@ -32,7 +32,7 @@ class byte_array_owrap
 public:
     byte_array_owrap(byte_array& data)
         : out(boost::iostreams::back_inserter(data.as_vector()))
-        , oa(out, boost::archive::no_header)
+        , oa(out)
     {}
 
     Archive& archive() { return oa; }
