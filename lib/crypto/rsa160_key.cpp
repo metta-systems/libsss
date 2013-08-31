@@ -13,7 +13,7 @@
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
-#include "msgpack_oarchive.h"
+#include "msgpack_ostream.h"
 #include "archive_helper.h"
 
 namespace ssu {
@@ -80,11 +80,9 @@ rsa160_key::public_key() const
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_oarchive> w(data);
-
+        byte_array_owrap<msgpack_ostream> write(data);
         // Write the public part of the key
-        // bool has_private_key = false;
-        // w.archive() << crypto::utils::bn2ba(rsa_->n) << rsa_->e << false;
+        write.archive() << crypto::utils::bn2ba(rsa_->n) << crypto::utils::bn2ba(rsa_->e) << false;
     }
     return data;
 }

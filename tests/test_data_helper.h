@@ -1,6 +1,6 @@
 #pragma once
 
-#include "msgpack_oarchive.h"
+#include "msgpack_ostream.h"
 #include "archive_helper.h"
 #include "byte_array.h"
 #include "protocol.h"
@@ -44,8 +44,8 @@ generate_dh1_chunk()
 
         m.chunks.push_back(chu);
 
-        byte_array_owrap<msgpack_oarchive> w(data);
-        w.archive() << m;
+        byte_array_owrap<msgpack_ostream> write(data);
+        write.archive() << m;
     }
     return data;
 }

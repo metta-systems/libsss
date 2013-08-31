@@ -10,7 +10,7 @@
 #include "negotiation/key_message.h"
 #include "crypto.h"
 #include "host.h"
-#include "msgpack_oarchive.h"
+#include "msgpack_ostream.h"
 #include "archive_helper.h"
 
 using namespace ssu;
@@ -35,9 +35,9 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_oarchive> w(data);
+        byte_array_owrap<msgpack_ostream> write(data);
         // Key parameter signing block for init2 and response2 messages.
-        w.archive() << group // DH group for public keys
+        write.archive() << group // DH group for public keys
            << keylen // AES key length: 16, 24, or 32
            << initiator_hashed_nonce
            << responder_nonce
@@ -109,8 +109,8 @@ static void send(key_message& m, const link_endpoint& target)
 {
     byte_array msg;
     {
-        byte_array_owrap<msgpack_oarchive> w(msg);
-        w.archive() << m;
+        byte_array_owrap<msgpack_ostream> write(msg);
+        write.archive() << m;
     }
     target.send(msg);
 }
@@ -221,13 +221,13 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_oarchive> w(data);
+        byte_array_owrap<msgpack_ostream> write(data);
         // Put together the data to hash
 
         auto lval_addr = src.address().to_v4().to_bytes();
         uint16_t port = src.port();
 
-        w.archive() << hostkey->public_key_
+        write.archive() << hostkey->public_key_
            << responder_nonce
            << initiator_hashed_nonce
            << lval_addr

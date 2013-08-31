@@ -11,7 +11,7 @@
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
-#include "msgpack_oarchive.h"
+#include "msgpack_ostream.h"
 #include "archive_helper.h"
 #include "logging.h"
 
@@ -307,7 +307,7 @@ dsa160_key::public_key() const
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_oarchive> w(data);
+        byte_array_owrap<msgpack_ostream> write(data);
         // Write the public part of the key
     }
     return data;
