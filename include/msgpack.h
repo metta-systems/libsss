@@ -433,6 +433,7 @@ which represents N
 == array format ==
 
 fixarray stores an array whose length is upto 15 elements:
+0x9X
 +--------+~~~~~~~~~~~~~~~~~+
 |1001XXXX|    N objects    |
 +--------+~~~~~~~~~~~~~~~~~+
@@ -457,6 +458,7 @@ which represents N
 * the next element of a key is its associated value
 
 fixmap stores a map whose length is upto 15 elements
+0x8X
 +--------+~~~~~~~~~~~~~~~~~+
 |1000XXXX|   N*2 objects   |
 +--------+~~~~~~~~~~~~~~~~~+
