@@ -12,6 +12,7 @@ class msgpack_iarchive
         msgpack_iarchive,
         std::istream::char_type,
         std::istream::traits_type>
+    , public boost::archive::detail::shared_ptr_helper
 {
     typedef boost::archive::binary_iarchive_impl<
                 msgpack_iarchive,
