@@ -6,13 +6,12 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include <boost/endian/conversion2.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
 #include "link.h"
 #include "link_channel.h"
 #include "link_receiver.h"
 #include "logging.h"
+#include "archive_helper.h"
+#include "msgpack_istream.h"
 
 namespace ssu {
 
@@ -97,10 +96,9 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
     }
 
     try {
-        boost::iostreams::filtering_istream in(boost::make_iterator_range(msg.as_vector()));
-        boost::archive::binary_iarchive ia(in, boost::archive::no_header);
+        byte_array_iwrap<msgpack_istream> read(msg);
         magic_t magic;
-        ia >> magic;
+        read.archive() >> magic;
         link_receiver* recv = host_.receiver(magic);
         if (recv)
         {
