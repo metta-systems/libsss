@@ -72,11 +72,10 @@ key_responder::key_responder(std::shared_ptr<host> host)
 
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 {
-    boost::iostreams::filtering_istream in(boost::make_iterator_range(msg.as_vector()));
-    boost::archive::binary_iarchive ia(in, boost::archive::no_header);
+    byte_array_iwrap<msgpack_istream> read(msg);
 	key_message m;
-	ia >> m;
-    // XXX here may be some decoding error...
+	read.archive() >> m;
+    // XXX here may be some decoding error - at the moment handled in link::receive()
 
     assert(m.magic == stream_protocol::magic);
 
