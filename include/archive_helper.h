@@ -6,7 +6,7 @@
 #include "byte_array.h"
 
 /**
- * Wrap byte array in an input wrapping for boost.serialization archives.
+ * Wrap byte array in an input wrapping for boost.serialization or msgpack archives.
  */
 template <class Archive>
 class byte_array_iwrap
@@ -15,7 +15,7 @@ class byte_array_iwrap
     Archive ia;
 
 public:
-    byte_array_iwrap(byte_array& data)
+    byte_array_iwrap(byte_array const& data)
         : in(boost::make_iterator_range(data.as_vector()))
         , ia(in)
     {}
