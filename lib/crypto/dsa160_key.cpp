@@ -348,6 +348,7 @@ dsa160_key::sign(byte_array const& digest) const
 
     byte_array signature;
     {
+        byte_array_owrap<msgpack_ostream> write(signature);
         // write to signature
         // signature << sig->r << sig->s;
     }
