@@ -11,6 +11,7 @@
 #include "crypto.h"
 #include "host.h"
 #include "msgpack_ostream.h"
+#include "msgpack_istream.h"
 #include "archive_helper.h"
 
 using namespace ssu;
