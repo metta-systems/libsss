@@ -123,6 +123,25 @@ class dh_init1_chunk
     byte_array     initiator_dh_public_key;              // Initiator's DH public key
     byte_array     responder_eid;                        // Optional: desired EID of responder
 
+    template <typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        pk << group
+           << key_min_length
+           << initiator_hashed_nonce
+           << initiator_dh_public_key
+           << responder_eid;
+    }
+    void msgpack_unpack(msgpack::object o)
+    {
+        msgpack::type::make_define(__VA_ARGS__).msgpack_unpack(o);
+    }
+    template <typename MSGPACK_OBJECT>
+    void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone* z) const
+    {
+        msgpack::type::make_define(__VA_ARGS__).msgpack_object(o, z);
+    }
+
     MSGPACK_DEFINE(group, key_min_length, initiator_hashed_nonce, initiator_dh_public_key, responder_eid);
 };
 
