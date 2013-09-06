@@ -8,7 +8,7 @@
 //
 #define BOOST_TEST_MODULE Test_optional_serialization
 #include <boost/test/unit_test.hpp>
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include "byte_array.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
