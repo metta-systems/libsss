@@ -8,10 +8,9 @@
 //
 #pragma once
 
-// #include <boost/endian/conversion.hpp>
 #include <boost/optional/optional.hpp>
 #include "logging.h"
-#include "msgpack_ostream.h"
+#include "flurry.h"
 #include "underlying.h"
 #include "opaque_endian.h"
 
@@ -122,28 +121,17 @@ class dh_init1_chunk
     byte_array     initiator_hashed_nonce;               // Initiator's SHA256-hashed nonce
     byte_array     initiator_dh_public_key;              // Initiator's DH public key
     byte_array     responder_eid;                        // Optional: desired EID of responder
-
-    template <typename Packer>
-    void msgpack_pack(Packer& pk) const
-    {
-        pk << group
-           << key_min_length
-           << initiator_hashed_nonce
-           << initiator_dh_public_key
-           << responder_eid;
-    }
-    void msgpack_unpack(msgpack::object o)
-    {
-        msgpack::type::make_define(__VA_ARGS__).msgpack_unpack(o);
-    }
-    template <typename MSGPACK_OBJECT>
-    void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone* z) const
-    {
-        msgpack::type::make_define(__VA_ARGS__).msgpack_object(o, z);
-    }
-
-    MSGPACK_DEFINE(group, key_min_length, initiator_hashed_nonce, initiator_dh_public_key, responder_eid);
 };
+
+inline flurry::oarchive operator << (flurry::oarchive& oa, dh_init1_chunk& dc1)
+{
+    oa << dc1.group
+       << dc1.key_min_length
+       << dc1.initiator_hashed_nonce
+       << dc1.initiator_dh_public_key
+       << dc1.responder_eid;
+    return oa;
+}
 
 class dh_response1_chunk
 {
@@ -157,11 +145,22 @@ class dh_response1_chunk
     byte_array     responder_eid;               // Optional: responder's EID
     byte_array     responder_public_key;        // Optional: responder's public key
     byte_array     responder_signature;         // Optional: responder's signature
-
-    MSGPACK_DEFINE(group, key_min_length, initiator_hashed_nonce, responder_nonce
-          , responder_dh_public_key, responder_challenge_cookie, responder_eid
-          , responder_public_key, responder_signature);
 };
+
+inline flurry::oarchive operator << (flurry::oarchive& oa, dh_response1_chunk& dc1)
+{
+    oa << dc1.group
+       << dc1.key_min_length
+       << dc1.initiator_hashed_nonce
+       << dc1.responder_nonce
+       << dc1.responder_dh_public_key
+       << dc1.responder_challenge_cookie
+       << dc1.responder_eid
+       << dc1.responder_public_key
+       << dc1.responder_signature;
+    return oa;
+}
+
 
 class dh_init2_chunk
 {
@@ -174,19 +173,34 @@ class dh_init2_chunk
     byte_array     responder_dh_public_key;     // Responder's DH public key
     byte_array     responder_challenge_cookie;  // Responder's challenge cookie
     byte_array     initiator_id;                // Initiator's encrypted identity
-
-    MSGPACK_DEFINE(group, key_min_length, initiator_nonce, responder_nonce
-          , initiator_dh_public_key, responder_dh_public_key, responder_challenge_cookie
-          , initiator_id);
 };
+
+inline flurry::oarchive operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
+{
+    oa << dc2.group
+       << dc2.key_min_length
+       << dc2.initiator_nonce
+       << dc2.responder_nonce
+       << dc2.initiator_dh_public_key
+       << dc2.responder_dh_public_key
+       << dc2.responder_challenge_cookie
+       << dc2.initiator_id;
+    return oa;
+}
 
 class dh_response2_chunk
 {
+    public://temp
     byte_array  initiator_hashed_nonce;         // Initiator's original nonce
     byte_array  responder_id;                   // Responder's encrypted identity
-
-    MSGPACK_DEFINE(initiator_hashed_nonce, responder_id);
 };
+
+inline flurry::oarchive operator << (flurry::oarchive& oa, dh_response2_chunk& dc2)
+{
+    oa << dc2.initiator_hashed_nonce
+       << dc2.responder_id;
+    return oa;
+}
 
 enum class key_chunk_type : uint32_t {
     packet             = 0x0001,
@@ -210,7 +224,6 @@ class key_chunk
     boost::optional<dh_init2_chunk>            dh_init2;
     boost::optional<dh_response2_chunk>        dh_response2;
 
-    MSGPACK_DEFINE(type);
     // friend class boost::serialization::access;
     // template<class Archive>
     // void load(Archive &ar, const unsigned int) {
@@ -262,36 +275,37 @@ class key_chunk
     //         }
     //     }
     // }
-
-    // template <typename Packer>
-    // inline void msgpack_pack(Packer& o) const
-    // {
-    //     o << type;
-        // switch (type) {
-        //     case key_chunk_type::packet:
-        //         os << *packet;
-        //         break;
-        //     case key_chunk_type::checksum_init:
-        //         os << *checksum_init;
-        //         break;
-        //     case key_chunk_type::checksum_response:
-        //         os << *checksum_response;
-        //         break;
-        //     case key_chunk_type::dh_init1:
-        //         os << *dh_init1;
-        //         break;
-        //     case key_chunk_type::dh_response1:
-        //         os << *dh_response1;
-        //         break;
-        //     case key_chunk_type::dh_init2:
-        //         os << *dh_init2;
-        //         break;
-        //     case key_chunk_type::dh_response2:
-        //         os << *dh_response2;
-        //         break;
-        // }
-    // }
 };
+
+inline flurry::oarchive operator << (flurry::oarchive& oa, key_chunk& kc)
+{
+    oa << kc.type;
+    switch (kc.type) {
+        case key_chunk_type::packet:
+            oa << *kc.packet;
+            break;
+        case key_chunk_type::checksum_init:
+            oa << *kc.checksum_init;
+            break;
+        case key_chunk_type::checksum_response:
+            oa << *kc.checksum_response;
+            break;
+        case key_chunk_type::dh_init1:
+            oa << *kc.dh_init1;
+            break;
+        case key_chunk_type::dh_response1:
+            oa << *kc.dh_response1;
+            break;
+        case key_chunk_type::dh_init2:
+            oa << *kc.dh_init2;
+            break;
+        case key_chunk_type::dh_response2:
+            oa << *kc.dh_response2;
+            break;
+    }
+    return oa;
+}
+
 
 class key_message
 {
@@ -299,10 +313,14 @@ class key_message
     uint32_t magic;
     std::vector<key_chunk> chunks;
 
-    MSGPACK_DEFINE(magic, chunks);
-
 public:
 };
+
+inline flurry::oarchive operator << (flurry::oarchive& oa, key_message& km)
+{
+    oa << km.magic << km.chunks;
+    return oa;
+}
 
 } // negotiation namespace
 } // ssu namespace
