@@ -10,9 +10,8 @@
 #include "negotiation/key_message.h"
 #include "crypto.h"
 #include "host.h"
-#include "msgpack_ostream.h"
-#include "msgpack_istream.h"
-#include "archive_helper.h"
+#include "byte_array_wrap.h"
+#include "flurry.h"
 
 using namespace ssu;
 
@@ -36,7 +35,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_ostream> write(data);
+        byte_array_owrap<flurry::oarchive> write(data);
         // Key parameter signing block for init2 and response2 messages.
         write.archive() << group // DH group for public keys
            << keylen // AES key length: 16, 24, or 32

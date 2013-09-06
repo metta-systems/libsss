@@ -6,15 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// #include <openssl/err.h>
-// #include <openssl/obj_mac.h>
 #include <openssl/sha.h>
 #include "crypto/rsa160_key.h"
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
-#include "msgpack_ostream.h"
-#include "archive_helper.h"
+#include "byte_array_wrap.h"
+#include "flurry.h"
 
 namespace ssu {
 namespace crypto {
@@ -80,7 +78,7 @@ rsa160_key::public_key() const
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_ostream> write(data);
+        byte_array_owrap<flurry::oarchive> write(data);
         // Write the public part of the key
         write.archive() << crypto::utils::bn2ba(rsa_->n) << crypto::utils::bn2ba(rsa_->e) << false;
     }
@@ -92,6 +90,9 @@ rsa160_key::private_key() const
 {
     byte_array data;
     {
+        byte_array_owrap<flurry::oarchive> write(data);
+        // Write the public and private parts of the key
+        write.archive() << crypto::utils::bn2ba(rsa_->n) << crypto::utils::bn2ba(rsa_->e) << true;
     }
     return data;
 }

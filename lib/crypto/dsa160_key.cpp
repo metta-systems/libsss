@@ -11,8 +11,8 @@
 #include "crypto/utils.h"
 #include "crypto.h"
 #include "byte_array.h"
-#include "msgpack_ostream.h"
-#include "archive_helper.h"
+#include "byte_array_wrap.h"
+#include "flurry.h"
 #include "logging.h"
 
 namespace ssu {
@@ -307,8 +307,9 @@ dsa160_key::public_key() const
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_ostream> write(data);
+        byte_array_owrap<flurry::oarchive> write(data);
         // Write the public part of the key
+        write.archive() << false;
     }
     return data;
 }
@@ -318,6 +319,9 @@ dsa160_key::private_key() const
 {
     byte_array data;
     {
+        byte_array_owrap<flurry::oarchive> write(data);
+        // Write the public and private parts of the key
+        write.archive() << true;
     }
     return data;
 }
@@ -348,9 +352,9 @@ dsa160_key::sign(byte_array const& digest) const
 
     byte_array signature;
     {
-        byte_array_owrap<msgpack_ostream> write(signature);
+        byte_array_owrap<flurry::oarchive> write(signature);
         // write to signature
-        // signature << sig->r << sig->s;
+        write.archive() << sig->r << sig->s;
     }
 
     DSA_SIG_free(sig);
