@@ -10,8 +10,8 @@
 #include "link_channel.h"
 #include "link_receiver.h"
 #include "logging.h"
-#include "archive_helper.h"
-#include "msgpack_istream.h"
+#include "flurry.h"
+#include "byte_array_wrap.h"
 
 namespace ssu {
 
@@ -96,9 +96,11 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
     }
 
     try {
-        byte_array_iwrap<msgpack_istream> read(msg);
         magic_t magic;
+        byte_array_iwrap<flurry::iarchive> read(msg);
+
         read.archive() >> magic;
+
         link_receiver* recv = host_.receiver(magic);
         if (recv)
         {

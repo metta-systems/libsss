@@ -73,7 +73,7 @@ key_responder::key_responder(std::shared_ptr<host> host)
 
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 {
-    byte_array_iwrap<msgpack_istream> read(msg);
+    byte_array_iwrap<flurry::iarchive> read(msg);
 	key_message m;
 	read.archive() >> m;
     // XXX here may be some decoding error - at the moment handled in link::receive()
@@ -109,7 +109,7 @@ static void send(key_message& m, const link_endpoint& target)
 {
     byte_array msg;
     {
-        byte_array_owrap<msgpack_ostream> write(msg);
+        byte_array_owrap<flurry::oarchive> write(msg);
         write.archive() << m;
     }
     target.send(msg);
@@ -221,17 +221,16 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_ostream> write(data);
         // Put together the data to hash
-
         auto lval_addr = src.address().to_v4().to_bytes();
-        uint16_t port = src.port();
 
-        write.archive() << hostkey->public_key_
-           << responder_nonce
-           << initiator_hashed_nonce
-           << lval_addr
-           << port;
+        byte_array_owrap<flurry::oarchive> write(data);
+        write.archive()
+            << hostkey->public_key_
+            << responder_nonce
+            << initiator_hashed_nonce
+            << lval_addr
+            << src.port();
     }
 
     logger::file_dump dump(data);

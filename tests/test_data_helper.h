@@ -1,8 +1,8 @@
 #pragma once
 
-#include "msgpack_ostream.h"
-#include "archive_helper.h"
 #include "byte_array.h"
+#include "byte_array_wrap.h"
+#include "flurry.h"
 #include "protocol.h"
 #include "negotiation/key_message.h"
 
@@ -44,7 +44,7 @@ generate_dh1_chunk()
 
         m.chunks.push_back(chu);
 
-        byte_array_owrap<msgpack_ostream> write(data);
+        byte_array_owrap<flurry::oarchive> write(data);
         write.archive() << m;
     }
     return data;

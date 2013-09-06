@@ -6,17 +6,14 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#define BOOST_TEST_MODULE Test_key_message_serialization
+#include <boost/test/unit_test.hpp>
 #include <fstream>
 #include "protocol.h"
 #include "byte_array.h"
-#include "msgpack_ostream.h"
-#include "msgpack_specializations.h"
-#include "msgpack_iarchive.h"
-#include "custom_optional.h"
+#include "byte_array_wrap.h"
+#include "flurry.h"
 #include "negotiation/key_message.h"
-#define BOOST_TEST_MODULE Test_key_message_serialization
-#include <boost/test/unit_test.hpp>
-
 #include "link.h"
 #include "test_data_helper.h"
 #include "logging.h"
@@ -27,13 +24,8 @@ BOOST_AUTO_TEST_CASE(serialize_msgpack_types)
 {
     byte_array data;
     {
-        byte_array_owrap<msgpack_ostream> write(data);
-        uint64_t m = 42;
-        uint64_t p = 0xdeadbeefabba;
-        bool t = false;
-        bool f = true;
-        byte_array data{'a','b','c','d','e'};
-        write.archive() << t << f << m << p << data;
+        byte_array_owrap<flurry::oarchive> write(data);
+        write.archive() << true << false << 42 << 0xdeadbeefabba << byte_array({'a','b','c','d','e'});
     }
     logger::file_dump out(data);
 }
