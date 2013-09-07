@@ -42,17 +42,24 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         ssu::negotiation::key_message m;
         byte_array_iwrap<flurry::iarchive> read(data);
 
-        BOOST_CHECK(data.size() == 0xae); // was: 0xbf
+        BOOST_CHECK(data.size() == 0xaf);
 
         read.archive() >> m;
 
         BOOST_CHECK(m.magic == ssu::stream_protocol::magic);
-        BOOST_CHECK(m.chunks.size() == 1);
+        BOOST_CHECK(m.chunks.size() == 2);
         BOOST_CHECK(m.chunks[0].type == ssu::negotiation::key_chunk_type::dh_init1);
         BOOST_CHECK(m.chunks[0].dh_init1.is_initialized());
         BOOST_CHECK(m.chunks[0].dh_init1->group == ssu::negotiation::dh_group_type::dh_group_1024);
         BOOST_CHECK(m.chunks[0].dh_init1->key_min_length = 0x10);
+
         BOOST_CHECK(m.chunks[0].dh_init1->initiator_hashed_nonce.size() == 32);
+        BOOST_CHECK(m.chunks[0].dh_init1->initiator_dh_public_key.size() == 128);
+
+        for (int i = 0; i < 32; ++i) {
+            BOOST_CHECK(uint8_t(m.chunks[0].dh_init1->initiator_hashed_nonce[i]) == i);
+        }
+
         for (int i = 0; i < 128; ++i) {
             BOOST_CHECK(uint8_t(m.chunks[0].dh_init1->initiator_dh_public_key[i]) == 255 - i);
         }
