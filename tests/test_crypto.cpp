@@ -1,7 +1,8 @@
 /// Copyright (c) 2013, Aldrin's Notebook.
 /// http://opensource.org/licenses/BSD-2-Clause
-
 #include "crypto.h"
+
+using namespace ssu;
 
 void random_generation()
 {
