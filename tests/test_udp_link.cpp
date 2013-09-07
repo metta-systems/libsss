@@ -13,6 +13,8 @@
 #include "host.h"
 #include "negotiation/key_message.h"
 #include "negotiation/key_responder.h"
+#include "byte_array_wrap.h"
+#include "flurry.h"
 
 using namespace std;
 using namespace ssu;
@@ -44,7 +46,7 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
 
     // Add key responder to link.
-    negotiation::key_responder receiver;
+    negotiation::key_responder receiver(host);
     host->bind_receiver(stream_protocol::magic, &receiver);
 
     // Render key message to buffer.
@@ -71,7 +73,7 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
         m.magic = stream_protocol::magic;
         m.chunks.push_back(k);
 
-        byte_array_owrap<msgpack_oarchive> write(msg);
+        byte_array_owrap<flurry::oarchive> write(msg);
         write.archive() << m;
     }
 
