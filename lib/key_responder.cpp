@@ -45,7 +45,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
            << responder_dh_public_key
            << peer_eid;
     }
-    assert(data.size() % 4 == 0);
+    // assert(data.size() % 4 == 0);
     logger::file_dump dump(data);
 
     // make this into a wrapper that calculates given hash type over a byte_array...
