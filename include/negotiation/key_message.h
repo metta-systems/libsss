@@ -88,10 +88,16 @@ struct KeyMessage {
 
 */
 
+//=================================================================================================
+// packet_chunk
+//=================================================================================================
+
 class packet_chunk
 {
     public://temp
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, packet_chunk& pc)
 {
@@ -103,10 +109,18 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, packet_chunk& pc)
     return ia;
 }
 
+//=================================================================================================
+// Lightweight checksum negotiation chunks
+//
+// checksum_init_chunk
+//=================================================================================================
+
 class checksum_init_chunk
 {
     public://temp
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, checksum_init_chunk& cic)
 {
@@ -118,10 +132,16 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, checksum_init_chunk&
     return ia;
 }
 
+//=================================================================================================
+// checksum_response_chunk
+//=================================================================================================
+
 class checksum_response_chunk
 {
     public://temp
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, checksum_response_chunk& crc)
 {
@@ -133,6 +153,10 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, checksum_response_ch
     return ia;
 }
 
+//=================================================================================================
+// dh_group_type
+//=================================================================================================
+
 enum class dh_group_type : uint32_t {
     dh_group_1024 = 0, // 1024-bit DH group
     dh_group_2048 = 1, // 2048-bit DH group
@@ -140,7 +164,11 @@ enum class dh_group_type : uint32_t {
     dh_group_max  = 3
 };
 
+//=================================================================================================
 // DH/JFK negotiation chunks
+//
+// dh_init1_chunk
+//=================================================================================================
 
 class dh_init1_chunk
 {
@@ -152,6 +180,8 @@ class dh_init1_chunk
     byte_array     initiator_dh_public_key;              // Initiator's DH public key
     byte_array     responder_eid;                        // Optional: desired EID of responder
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init1_chunk& dc1)
 {
@@ -173,6 +203,10 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init1_chunk& dc1)
     return ia;
 }
 
+//=================================================================================================
+// dh_response1_chunk
+//=================================================================================================
+
 class dh_response1_chunk
 {
     public://temp
@@ -186,6 +220,8 @@ class dh_response1_chunk
     byte_array     responder_public_key;        // Optional: responder's public key
     byte_array     responder_signature;         // Optional: responder's signature
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response1_chunk& dc1)
 {
@@ -215,6 +251,9 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response1_chunk& 
     return ia;
 }
 
+//=================================================================================================
+// dh_init2_chunk
+//=================================================================================================
 
 class dh_init2_chunk
 {
@@ -228,6 +267,8 @@ class dh_init2_chunk
     byte_array     responder_challenge_cookie;  // Responder's challenge cookie
     byte_array     initiator_id;                // Initiator's encrypted identity
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
 {
@@ -255,12 +296,18 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init2_chunk& dc2)
     return ia;
 }
 
+//=================================================================================================
+// dh_response2_chunk
+//=================================================================================================
+
 class dh_response2_chunk
 {
     public://temp
     byte_array  initiator_hashed_nonce;         // Initiator's original nonce
     byte_array  responder_id;                   // Responder's encrypted identity
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response2_chunk& dc2)
 {
@@ -276,6 +323,9 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response2_chunk& 
     return ia;
 }
 
+//=================================================================================================
+// key_chunk_type
+//=================================================================================================
 
 enum class key_chunk_type : uint32_t {
     packet             = 0x0001,
@@ -286,6 +336,10 @@ enum class key_chunk_type : uint32_t {
     dh_init2           = 0x0023,
     dh_response2       = 0x0024,
 };
+
+//=================================================================================================
+// key_chunk
+//=================================================================================================
 
 class key_chunk
 {
@@ -299,6 +353,8 @@ class key_chunk
     boost::optional<dh_init2_chunk>            dh_init2;
     boost::optional<dh_response2_chunk>        dh_response2;
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, key_chunk& kc)
 {
@@ -381,6 +437,10 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_chunk& kc)
     return ia;
 }
 
+//=================================================================================================
+// key_message
+//=================================================================================================
+
 class key_message
 {
     public://temp
@@ -389,6 +449,8 @@ class key_message
 
 public:
 };
+
+//-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, key_message& km)
 {
