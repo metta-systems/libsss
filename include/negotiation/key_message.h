@@ -93,15 +93,45 @@ class packet_chunk
     public://temp
 };
 
+inline flurry::oarchive& operator << (flurry::oarchive& oa, packet_chunk& pc)
+{
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, packet_chunk& pc)
+{
+    return ia;
+}
+
 class checksum_init_chunk
 {
     public://temp
 };
 
+inline flurry::oarchive& operator << (flurry::oarchive& oa, checksum_init_chunk& cic)
+{
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, checksum_init_chunk& cic)
+{
+    return ia;
+}
+
 class checksum_response_chunk
 {
     public://temp
 };
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, checksum_response_chunk& crc)
+{
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, checksum_response_chunk& crc)
+{
+    return ia;
+}
 
 enum class dh_group_type : uint32_t {
     dh_group_1024 = 0, // 1024-bit DH group
@@ -123,7 +153,7 @@ class dh_init1_chunk
     byte_array     responder_eid;                        // Optional: desired EID of responder
 };
 
-inline flurry::oarchive operator << (flurry::oarchive& oa, dh_init1_chunk& dc1)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init1_chunk& dc1)
 {
     oa << dc1.group
        << dc1.key_min_length
@@ -131,6 +161,16 @@ inline flurry::oarchive operator << (flurry::oarchive& oa, dh_init1_chunk& dc1)
        << dc1.initiator_dh_public_key
        << dc1.responder_eid;
     return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init1_chunk& dc1)
+{
+    ia >> dc1.group
+       >> dc1.key_min_length
+       >> dc1.initiator_hashed_nonce
+       >> dc1.initiator_dh_public_key
+       >> dc1.responder_eid;
+    return ia;
 }
 
 class dh_response1_chunk
@@ -147,7 +187,7 @@ class dh_response1_chunk
     byte_array     responder_signature;         // Optional: responder's signature
 };
 
-inline flurry::oarchive operator << (flurry::oarchive& oa, dh_response1_chunk& dc1)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response1_chunk& dc1)
 {
     oa << dc1.group
        << dc1.key_min_length
@@ -159,6 +199,20 @@ inline flurry::oarchive operator << (flurry::oarchive& oa, dh_response1_chunk& d
        << dc1.responder_public_key
        << dc1.responder_signature;
     return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response1_chunk& dc1)
+{
+    ia >> dc1.group
+       >> dc1.key_min_length
+       >> dc1.initiator_hashed_nonce
+       >> dc1.responder_nonce
+       >> dc1.responder_dh_public_key
+       >> dc1.responder_challenge_cookie
+       >> dc1.responder_eid
+       >> dc1.responder_public_key
+       >> dc1.responder_signature;
+    return ia;
 }
 
 
@@ -175,7 +229,7 @@ class dh_init2_chunk
     byte_array     initiator_id;                // Initiator's encrypted identity
 };
 
-inline flurry::oarchive operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
 {
     oa << dc2.group
        << dc2.key_min_length
@@ -188,6 +242,19 @@ inline flurry::oarchive operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
     return oa;
 }
 
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init2_chunk& dc2)
+{
+    ia >> dc2.group
+       >> dc2.key_min_length
+       >> dc2.initiator_nonce
+       >> dc2.responder_nonce
+       >> dc2.initiator_dh_public_key
+       >> dc2.responder_dh_public_key
+       >> dc2.responder_challenge_cookie
+       >> dc2.initiator_id;
+    return ia;
+}
+
 class dh_response2_chunk
 {
     public://temp
@@ -195,12 +262,20 @@ class dh_response2_chunk
     byte_array  responder_id;                   // Responder's encrypted identity
 };
 
-inline flurry::oarchive operator << (flurry::oarchive& oa, dh_response2_chunk& dc2)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response2_chunk& dc2)
 {
     oa << dc2.initiator_hashed_nonce
        << dc2.responder_id;
     return oa;
 }
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response2_chunk& dc2)
+{
+    ia >> dc2.initiator_hashed_nonce
+       >> dc2.responder_id;
+    return ia;
+}
+
 
 enum class key_chunk_type : uint32_t {
     packet             = 0x0001,
@@ -223,61 +298,9 @@ class key_chunk
     boost::optional<dh_response1_chunk>        dh_response1;
     boost::optional<dh_init2_chunk>            dh_init2;
     boost::optional<dh_response2_chunk>        dh_response2;
-
-    // friend class boost::serialization::access;
-    // template<class Archive>
-    // void load(Archive &ar, const unsigned int) {
-    //     uint32_t t;
-    //     ar >> t;
-    //     type = key_chunk_type(boost::endian2::big(t));
-    //     switch (type) {
-    //         case key_chunk_type::packet:
-    //         {
-    //             packet = packet_chunk();
-    //             ar >> *packet;
-    //             break;
-    //         }
-    //         case key_chunk_type::checksum_init:
-    //         {
-    //             checksum_init = checksum_init_chunk();
-    //             ar >> *checksum_init;
-    //             break;
-    //         }
-    //         case key_chunk_type::checksum_response:
-    //         {
-    //             checksum_response = checksum_response_chunk();
-    //             ar >> *checksum_response;
-    //             break;
-    //         }
-    //         case key_chunk_type::dh_init1:
-    //         {
-    //             dh_init1 = dh_init1_chunk();
-    //             ar >> *dh_init1;
-    //             break;
-    //         }
-    //         case key_chunk_type::dh_response1:
-    //         {
-    //             dh_response1 = dh_response1_chunk();
-    //             ar >> *dh_response1;
-    //             break;
-    //         }
-    //         case key_chunk_type::dh_init2:
-    //         {
-    //             dh_init2 = dh_init2_chunk();
-    //             ar >> *dh_init2;
-    //             break;
-    //         }
-    //         case key_chunk_type::dh_response2:
-    //         {
-    //             dh_response2 = dh_response2_chunk();
-    //             ar >> *dh_response2;
-    //             break;
-    //         }
-    //     }
-    // }
 };
 
-inline flurry::oarchive operator << (flurry::oarchive& oa, key_chunk& kc)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, key_chunk& kc)
 {
     oa << kc.type;
     switch (kc.type) {
@@ -306,6 +329,57 @@ inline flurry::oarchive operator << (flurry::oarchive& oa, key_chunk& kc)
     return oa;
 }
 
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_chunk& kc)
+{
+    uint32_t type;
+    ia >> type;
+    kc.type = key_chunk_type(type);
+    switch (kc.type) {
+        case key_chunk_type::packet:
+        {
+            kc.packet = packet_chunk();
+            ia >> *kc.packet;
+            break;
+        }
+        case key_chunk_type::checksum_init:
+        {
+            kc.checksum_init = checksum_init_chunk();
+            ia >> *kc.checksum_init;
+            break;
+        }
+        case key_chunk_type::checksum_response:
+        {
+            kc.checksum_response = checksum_response_chunk();
+            ia >> *kc.checksum_response;
+            break;
+        }
+        case key_chunk_type::dh_init1:
+        {
+            kc.dh_init1 = dh_init1_chunk();
+            ia >> *kc.dh_init1;
+            break;
+        }
+        case key_chunk_type::dh_response1:
+        {
+            kc.dh_response1 = dh_response1_chunk();
+            ia >> *kc.dh_response1;
+            break;
+        }
+        case key_chunk_type::dh_init2:
+        {
+            kc.dh_init2 = dh_init2_chunk();
+            ia >> *kc.dh_init2;
+            break;
+        }
+        case key_chunk_type::dh_response2:
+        {
+            kc.dh_response2 = dh_response2_chunk();
+            ia >> *kc.dh_response2;
+            break;
+        }
+    }
+    return ia;
+}
 
 class key_message
 {
@@ -316,10 +390,16 @@ class key_message
 public:
 };
 
-inline flurry::oarchive operator << (flurry::oarchive& oa, key_message& km)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, key_message& km)
 {
     oa << km.magic << km.chunks;
     return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_message& km)
+{
+    ia >> km.magic >> km.chunks;
+    return ia;
 }
 
 } // negotiation namespace
