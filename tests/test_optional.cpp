@@ -19,15 +19,13 @@ using namespace std;
 BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
 {
     byte_array data;
-    uint32_t i = 0xabbadead;
-    boost::optional<uint32_t> maybe_value;
-
     {
+        boost::optional<uint32_t> maybe_value;
         byte_array_owrap<flurry::oarchive> write(data);
 
         BOOST_CHECK(maybe_value.is_initialized() == false);
         write.archive() << maybe_value;
-        maybe_value = i;
+        maybe_value = 0xabbadead;
         BOOST_CHECK(maybe_value.is_initialized() == true);
         BOOST_CHECK(*maybe_value == 0xabbadead);
         write.archive() << maybe_value;
@@ -36,9 +34,10 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         logger::file_dump out(data);
     }
     {
+        boost::optional<uint32_t> maybe_value;
         byte_array_iwrap<flurry::iarchive> read(data);
 
-        // BOOST_CHECK(data.size() == 6);
+        BOOST_CHECK(data.size() == 6);
         read.archive() >> maybe_value;
         BOOST_CHECK(maybe_value.is_initialized() == false);
         read.archive() >> maybe_value;
