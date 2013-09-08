@@ -42,7 +42,10 @@ identity identity::generate(scheme sch, int bits)
 
 identity identity::from_endpoint(endpoint const& ep)
 {
-    return identity();
+    identity ident;
+    ident.id_ = byte_array();
+
+    return ident;
 }
 
 peer_id identity::id() const
