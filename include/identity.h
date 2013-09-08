@@ -10,6 +10,8 @@
 
 #include "link.h"
 #include "byte_array.h"
+#include "peer_id.h"
+#include "crypto/sign_key.h"
 
 namespace ssu {
 
@@ -28,13 +30,15 @@ namespace ssu {
  */
 class identity
 {
-    identity() {}
+    crypto::sign_key* key_{0};
+    peer_id           id_;
+
 public:
     /**
      * Endpoint identifier scheme numbers.
-     * The scheme number occupies the top 6 bits in any EID,
+     * The scheme number occupies the top 5 bits in any EID,
      * making the EID's scheme easily recognizable
-     * via the first character in its Base64 representation.
+     * via the first character in its base32 representation.
      */
     enum scheme {
         null = 0,     ///< Reserved for the "null" identity.
@@ -50,6 +54,19 @@ public:
     };
 
     /**
+     * Create an invalid identity.
+     */
+    identity() = default;
+
+    /**
+     * Generate a new identity with unique private key, using reasonable default parameters.
+     * @param scheme the signing scheme to use.
+     * @param bits the desired key strength in bits, or 0 to use the selected scheme's default.
+     * @return the generated identity.
+     */
+    static identity generate(scheme sch = rsa160, int bits = 0);
+
+    /**
      * Construct a non-cryptographic EID from an endpoint IP address.
      */
     static identity from_endpoint(endpoint const& ep);
@@ -57,10 +74,19 @@ public:
     /**
      * Get this identity's EID part.
      */
-    byte_array id() const;
+    peer_id id() const;
+
+    bool has_private_key() const;
 };
 
 class identity_host_state
-{};
+{
+    identity host_identity_;
+public:
+    /**
+     * Create if necessary and return the host's cryptographic identity.
+     */
+    identity host_identity();
+};
 
 } // ssu namespace
