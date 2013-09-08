@@ -100,9 +100,24 @@ public:
      */
     struct unique_stream_id_t
     {
-        counter_t counter; ///< Stream counter in channel
-        byte_array half_channel_id; ///< Unique channel+direction ID 
-                                    ///< ("half-channel id")
+        counter_t counter_{0}; ///< Stream counter in channel
+        byte_array half_channel_id_; ///< Unique channel+direction ID ("half-channel id")
+
+        inline unique_stream_id_t() = default;
+
+        inline unique_stream_id_t(counter_t counter, byte_array chan_id)
+            : counter_(counter)
+            , half_channel_id_(chan_id)
+        {}
+
+        inline bool is_empty() const {
+            return half_channel_id_.is_empty();
+        }
+
+        inline bool operator ==(unique_stream_id_t const& other) const
+        {
+            return counter_ == other.counter_ and half_channel_id_ == other.half_channel_id_;
+        }
     };
 };
 
