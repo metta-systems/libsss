@@ -11,6 +11,7 @@
 
 #include "test_data_helper.h"
 #include "stream.h"
+#include "server.h"
 #include "simulation/simulator.h"
 #include "simulation/sim_host.h"
 #include "simulation/sim_link.h"
@@ -61,8 +62,14 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     other_link->bind(other_host_address);
     BOOST_CHECK(other_link->is_active());
 
-    // ssu::stream* my_stream(my_host);
-    // my_stream->connect_to(other_host->host_identity().id(), "simulator", "test", other_host_address);
+    shared_ptr<ssu::server> other_server(make_shared<ssu::server>(other_host));
+    BOOST_CHECK(other_server != nullptr);
+    bool res = other_server->listen("simulator", "Simulating", "test", "Test protocol");
+    BOOST_CHECK(res == true);
+
+    shared_ptr<ssu::stream> my_stream(make_shared<stream>(my_host));
+    BOOST_CHECK(my_stream != nullptr);
+    my_stream->connect_to(other_host->host_identity().id(), "simulator", "test", other_host_address);
 
     sim->run();
 }
