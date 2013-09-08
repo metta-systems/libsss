@@ -425,17 +425,17 @@ public:
      * then it should self-destruct once the shutdown is complete.
      *
      * To close the stream gracefully in either or both directions,
-     * specify Read, Write, or Read|Write for the @a mode argument.
-     * Closing the stream in the Write direction 
+     * specify read, write, or read|write for the @a mode argument.
+     * Closing the stream in the write direction 
      * writes the end-of-stream marker to our end of the stream,
      * indicating to our peer that no more data will arrive from us.
-     * Closing the stream in the Read direction discards any data
+     * Closing the stream in the read direction discards any data
      * waiting to be read or subsequently received from the peer.
-     * Specify a mode of @a Reset to shutdown the stream immediately;
+     * Specify a mode of @a reset to shutdown the stream immediately;
      * written data that is still queued or in transit may be lost.
      * 
      * @param mode which part of the stream to close:
-     *      either Read, Write, Close (Read|Write), or Reset.
+     *      either read, write, close (read|write), or reset.
      */
     void shutdown(shutdown_mode mode);
 
@@ -449,7 +449,8 @@ public:
     /// Control the initial receive buffer size for new child streams.
     void set_child_receive_buffer_size(size_t size);
 
-    /** Give the stream layer a location hint for a specific EID,
+    /**
+     * Give the stream layer a location hint for a specific EID,
      * which may or may not be the EID of the host
      * to which this stream is currently connected (if any).
      * The stream layer will use this hint in any current or subsequent
