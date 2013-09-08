@@ -142,7 +142,8 @@ public:
         template <typename T>
         T* header()
         {
-            return reinterpret_cast<T*>(buf.data() + channel::header_len + sizeof(T));
+            buf.resize(channel::header_len + sizeof(T));
+            return reinterpret_cast<T*>(buf.data() + channel::header_len);
         }
     };
 
