@@ -47,7 +47,7 @@ public:
 
     /**
      * Bind to a particular channel number.
-     * @returns false if the channel is already in use.
+     * @returns false if the channel is already in use and cannot be bound to.
      */
     bool bind(link* link, const endpoint& remote_ep, channel_number chan);
 
