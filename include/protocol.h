@@ -55,18 +55,18 @@ public:
         big_uint16_t stream_id;
         packet_type  type;
         uint8_t      window;
-    };
+    } __attribute__((packed));
 
     struct init_header : public stream_header
     {
     	big_uint16_t new_stream_id;
     	big_uint16_t tx_seq_no;
-    };
+    } __attribute__((packed));
     typedef init_header reply_header;
     struct data_header : public stream_header
     {
     	big_uint32_t tx_seq_no;
-    };
+    } __attribute__((packed));
     typedef stream_header datagram_header;
     typedef stream_header ack_header;
     typedef stream_header reset_header;
