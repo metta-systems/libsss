@@ -119,10 +119,10 @@ public:
      */
     struct packet
     {
-        base_stream* owner{nullptr};
-        uint64_t tsn{0};     ///< Logical byte position. XXX tx_byte_pos
-        byte_array buf;      ///< Packet buffer including headers.
-        int header_len{0};       ///< Size of channel and stream headers.
+        base_stream* owner{nullptr};            ///< Packet owner.
+        uint64_t tsn{0};                        ///< Logical byte position. XXX tx_byte_pos
+        byte_array buf;                         ///< Packet buffer including headers.
+        int header_len{0};                      ///< Size of channel and stream headers.
         packet_type type{packet_type::invalid}; ///< Type of this packet.
         bool late{false};                       ///< Possibly lost packet.
 
