@@ -40,9 +40,11 @@ bool stream::connect_to(peer_id const& destination,
     // then use the location hint as a surrogate peer identity.
     byte_array eid = destination.id();
     if (eid.is_empty()) {
-        eid = identity::from_endpoint(destination_endpoint_hint).id();
+        eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
         assert(!eid.is_empty());
     }
+
+    logger::debug() << "Connecting to peer with id " << eid;
 
     disconnect();
 
