@@ -28,7 +28,7 @@ class channel : public link_channel
     link::status                   link_status_;
 
 public:
-    static const int hdrlen = 8/*XXX*/;
+    static constexpr int header_len = 8/*XXX*/;
 
 	virtual void start(bool initiate);
 	virtual void stop();
