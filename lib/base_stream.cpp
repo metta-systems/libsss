@@ -81,6 +81,7 @@ void base_stream::recalculate_transmit_window()
 void base_stream::connect_to(std::string const& service, std::string const& protocol)
 {
     logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
+    tx_attach();
 }
 
 size_t base_stream::bytes_available() const
