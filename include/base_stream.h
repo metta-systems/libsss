@@ -21,11 +21,11 @@ class stream_channel;
  */
 class stream_attachment : public stream_protocol
 {
-protected:
-    base_stream*     stream_;       ///< Our stream.
+public:
+    base_stream*     stream_{0};    ///< Our stream.
     stream_channel*  channel_{0};   ///< Channel our stream is attached to.
-    id_t             stream_id_;    ///< Our stream ID in this channel.
-    uint64_t         sid_seq_;      ///< Reference packet sequence for stream ID.
+    id_t             stream_id_{0}; ///< Our stream ID in this channel.
+    uint64_t         sid_seq_{0};   ///< Reference packet sequence for stream ID.
 };
 
 class stream_tx_attachment : public stream_attachment
