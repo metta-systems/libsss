@@ -149,9 +149,9 @@ public:
      *      if the dstid is a non-cryptographic legacy address.
      * @return true if successful, false if an error occurred.
      */
-    bool connect_to(peer_id& destination, 
+    bool connect_to(peer_id const& destination,
         std::string service, std::string protocol,
-        const endpoint& destination_endpoint_hint = endpoint());
+        endpoint const& destination_endpoint_hint = endpoint());
 
     /**
      * Disconnect the stream from its current peer.
@@ -455,7 +455,7 @@ public:
      * The stream layer will use this hint in any current or subsequent
      * attempts to connect to the specified EID.
      */
-    bool add_location_hint(const peer_id& eid, const endpoint& hint);
+    bool add_location_hint(peer_id const& eid, endpoint const& hint);
 
     /// Dump the state of this stream, for debugging purposes.
     void dump();

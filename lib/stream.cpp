@@ -31,7 +31,7 @@ stream::~stream()
     assert(stream_ == nullptr);
 }
 
-bool stream::connect_to(peer_id& destination, 
+bool stream::connect_to(peer_id const& destination, 
     std::string service, std::string protocol,
     endpoint const& destination_endpoint_hint)
 {
