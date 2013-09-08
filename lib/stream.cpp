@@ -59,7 +59,18 @@ bool stream::connect_to(peer_id const& destination,
 
 void stream::disconnect()
 {
-    stream_->shutdown(shutdown_mode::close);
+    if (stream_) {
+        stream_->shutdown(shutdown_mode::close);
+        delete stream_;
+        stream_ = nullptr;
+    }
+}
+
+void stream::shutdown(shutdown_mode mode)
+{
+    if (stream_) {
+        stream_->shutdown(mode);
+    }
 }
 
 bool stream::is_connected() const
