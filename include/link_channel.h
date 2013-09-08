@@ -31,8 +31,8 @@ public:
      */
     virtual void stop();
 
-    inline bool is_active()       const { return active_; }
-    inline bool is_bound()        const { return link_ != nullptr; }
+    inline bool is_active() const { return active_; }
+    inline bool is_bound()  const { return link_ != nullptr; }
 
     /**
      * Set up for communication with specified remote endpoint,
