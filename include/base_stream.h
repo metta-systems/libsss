@@ -9,6 +9,7 @@
 #pragma once
 
 #include "abstract_stream.h"
+#include "channel.h"
 
 namespace ssu {
 
@@ -136,6 +137,12 @@ public:
         }
         inline int payload_size() const {
             return buf.size() - header_len;
+        }
+
+        template <typename T>
+        T* header()
+        {
+            return reinterpret_cast<T*>(buf.data() + channel::header_len + sizeof(T));
         }
     };
 

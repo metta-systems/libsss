@@ -59,7 +59,12 @@ bool base_stream::attached()
 }
 
 void base_stream::tx_attach()
-{}
+{
+    logger::debug() << "Internal stream tx_attach";
+
+    packet p(this, packet_type::attach);
+    auto hdr = p.header<attach_header>();
+}
 
 //calcReceiveWindow
 void base_stream::recalculate_receive_window()
