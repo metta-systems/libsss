@@ -14,10 +14,14 @@ base_stream::base_stream(std::shared_ptr<host> h,
                          const peer_id& peer,
                          std::shared_ptr<base_stream> parent)
     : abstract_stream(h)
-{}
+{
+    logger::debug() << "Constructing internal stream for peer " << peer;
+}
 
 base_stream::~base_stream()
-{}
+{
+    logger::debug() << "Destructing internal stream";
+}
 
 //txenqflow()
 void base_stream::tx_enqueue_channel(bool tx_immediately)
@@ -64,7 +68,9 @@ void base_stream::recalculate_transmit_window()
 {}
 
 void base_stream::connect_to(std::string const& service, std::string const& protocol)
-{}
+{
+    logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
+}
 
 size_t base_stream::bytes_available() const
 {
@@ -132,13 +138,19 @@ bool base_stream::is_link_up() const
 }
 
 void base_stream::shutdown(stream::shutdown_mode mode)
-{}
+{
+    logger::debug() << "Shutting down internal stream";
+}
 
 void base_stream::set_receive_buffer_size(size_t size)
-{}
+{
+    logger::debug() << "Setting internal stream receive buffer size " << size << " bytes";
+}
 
 void base_stream::set_child_receive_buffer_size(size_t size)
-{}
+{
+    logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
+}
 
 void base_stream::dump()
 {}
