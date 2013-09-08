@@ -107,6 +107,9 @@ class base_stream : public abstract_stream
     // Transmit various types of packets.
     //====================================
 
+    /**
+     * Send the stream attach packet to the peer.
+     */
     void tx_attach();
 
 public:
