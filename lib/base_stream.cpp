@@ -29,6 +29,8 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
     if (!attached())
         return tx_attach();
 
+    logger::debug() << "Internal stream enqueue on channel";
+
     // stream_channel* channel = tx_current_attachment->channel;
     // assert(channel && channel->is_active());
 
@@ -61,11 +63,15 @@ void base_stream::tx_attach()
 
 //calcReceiveWindow
 void base_stream::recalculate_receive_window()
-{}
+{
+    logger::debug() << "Internal stream recalculate receive window";
+}
 
 //calc
 void base_stream::recalculate_transmit_window()
-{}
+{
+    logger::debug() << "Internal stream recalculate transmit window";
+}
 
 void base_stream::connect_to(std::string const& service, std::string const& protocol)
 {
@@ -122,13 +128,15 @@ byte_array base_stream::read_datagram(size_t max_size)
     return byte_array();
 }
 
-abstract_stream* base_stream:: open_substream()
+abstract_stream* base_stream::open_substream()
 {
+    logger::debug() << "Internal stream open substream";
     return 0;
 }
 
-abstract_stream* base_stream:: accept_substream()
+abstract_stream* base_stream::accept_substream()
 {
+    logger::debug() << "Internal stream accept substream";
     return 0;
 }
 
@@ -153,7 +161,16 @@ void base_stream::set_child_receive_buffer_size(size_t size)
 }
 
 void base_stream::dump()
-{}
-
-
+{
+    logger::debug() << "Internal stream " << this;
+    // << " state " << state
+    // << " TSN " << tasn
+    // << " RSN " << rsn
+    // << " ravail " << ravail
+    // << " rahead " << rahead.size()
+    // << " rsegs " << rsegs.size()
+    // << " rmsgavail " << rmsgavail
+    // << " rmsgs " << rmsgsize.size()
 }
+
+} // ssu namespace
