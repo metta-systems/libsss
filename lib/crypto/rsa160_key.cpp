@@ -28,7 +28,7 @@ rsa160_key::rsa160_key(byte_array const& key)
 rsa160_key::rsa160_key(int bits, unsigned e)
 {
     if (bits == 0) {
-        bits = 1024;
+        bits = 2048;
     }
     if (e == 0) {
         e = 65537;

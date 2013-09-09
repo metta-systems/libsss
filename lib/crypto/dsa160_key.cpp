@@ -249,6 +249,9 @@ dsa160_key::dsa160_key(byte_array const& key)
 
 dsa160_key::dsa160_key(int bits)
 {
+    if (bits == 0) {
+        bits = 2048;
+    }
     // Choose an appropriate set of DSA parameters for the new key.
     if (bits <= 1024) {
         dsa_ = get_dsa1024();
