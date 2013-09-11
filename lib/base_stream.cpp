@@ -67,8 +67,17 @@ void base_stream::tx_attach()
 {
     logger::debug() << "Internal stream tx_attach";
 
+    int slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
+    // tx_current_attachment_->channel_;
+
     packet p(this, packet_type::attach);
-    auto hdr = p.header<attach_header>();
+    auto header = p.header<attach_header>();
+
+    header->stream_id = tx_current_attachment_->stream_id_;
+    header->type_subtype = type_bits(packet_type::attach)
+                 | (init_ ? subtype_bits(flags::attach_init) : 0)
+                 | (slot & subtype_bits(flags::attach_slot_mask));
+    header->window = receive_window_byte();
 }
 
 //calcReceiveWindow
