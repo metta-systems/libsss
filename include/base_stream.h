@@ -106,6 +106,8 @@ class base_stream : public abstract_stream
 
     static const size_t default_rx_buffer_size = 65536;
 
+    stream_peer* peer_;             ///< Information about the other side of this connection.
+
     void recalculate_receive_window();
     void recalculate_transmit_window();
 
