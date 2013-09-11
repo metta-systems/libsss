@@ -9,6 +9,7 @@
 #include "stream.h"
 #include "base_stream.h"
 #include "identity.h"
+#include "logging.h"
 
 namespace ssu {
 
@@ -83,4 +84,13 @@ bool stream::is_connected() const
 void stream::connect_at(endpoint const& ep)
 {}
 
+//=================================================================================================
+// Stream host state.
+//=================================================================================================
+
+stream_peer* stream_host_state::stream_peer(peer_id const& id)
+{
+    return 0;
 }
+
+} // ssu namespace

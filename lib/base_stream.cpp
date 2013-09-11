@@ -7,6 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "base_stream.h"
+#include "logging.h"
+#include "host.h"
 
 namespace ssu {
 

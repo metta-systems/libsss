@@ -8,14 +8,17 @@
 //
 #pragma once
 
+#include <map>
 #include <boost/signals2/signal.hpp>
 #include "byte_array.h"
-#include "host.h"
 #include "peer_id.h"
+#include "link.h"
 
 namespace ssu {
 
+class host;
 class base_stream;
+class stream_peer;
 
 /**
  * User-space interface to the stream.
@@ -488,4 +491,17 @@ protected:
     void set_error(const std::string& error);
 };
 
-} // namespace ssu
+/**
+ * Host state related to stream management.
+ */
+class stream_host_state
+{
+    std::map<peer_id, stream_peer*> peers_;
+public:
+    /**
+     * Create if necessary and return the stream peer's information (from the other side).
+     */
+    stream_peer* stream_peer(peer_id const& id);
+};
+
+} // ssu namespace

@@ -12,11 +12,13 @@
 #include "protocol.h"
 #include "peer_id.h"
 #include "stream.h"
+#include "underlying.h"
 
 namespace ssu {
 
 class host;
 class stream;
+class stream_peer;
 
 /** 
  * @internal

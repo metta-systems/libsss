@@ -11,6 +11,7 @@
 #include "dh.h"
 #include "link.h"
 #include "timer.h"
+#include "stream.h"
 #include "identity.h"
 #include "negotiation/key_responder.h"
 
@@ -34,6 +35,7 @@ class host
     , public dh_host_state
     , public key_host_state
     , public identity_host_state
+    , public stream_host_state
     , public virtual asio_host_state
     , public timer_host_state
 {
