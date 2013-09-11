@@ -85,7 +85,24 @@ void base_stream::recalculate_transmit_window()
 void base_stream::connect_to(std::string const& service, std::string const& protocol)
 {
     logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
-    tx_attach();
+    attach_for_transmit();
+}
+
+void base_stream::attach_for_transmit()
+{
+    assert(!peerid.is_empty());
+
+    // If we already have a transmit-attachment, nothing to do.
+    if (tx_current_attachment_ != nullptr) {
+        assert(tx_current_attachment_->is_in_use());
+        return;
+    }
+
+    // If we're disconnected, we'll never need to attach again...
+    if (state_ == state::disconnected)
+        return;
+
+    logger::debug() << "Internal stream attaching for transmission";
 }
 
 size_t base_stream::bytes_available() const
