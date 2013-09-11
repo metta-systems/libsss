@@ -41,7 +41,7 @@ protected:
     std::shared_ptr<host> host_;    ///< Per-host state.
     std::weak_ptr<stream> owner;    ///< Back-pointer to stream object, 
                                     ///< or nullptr if stream has been deleted.
-    peer_id peerid;                 ///< EID of peer we're connected to.
+    peer_id peerid_;                ///< EID of peer we're connected to.
 
 private:
     int                 priority_;    ///< Current priority level

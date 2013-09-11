@@ -93,16 +93,30 @@ class base_stream : public abstract_stream
         disconnected   ///< Connection terminated.
     };
 
-    std::weak_ptr<base_stream> parent; ///< Parent, if it still exists.
+    std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
+    state state_{state::created};
+    uint8_t receive_window_byte_{0};
+    bool init_{true};
+
+    // Channel attachment state
+    static constexpr int  max_attachments = 2;
+    stream_tx_attachment  tx_attachments_[max_attachments];  // Our channel attachments
+    stream_rx_attachment  rx_attachments_[max_attachments];  // Peer's channel attachments
+    stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
 
     static const size_t default_rx_buffer_size = 65536;
 
     void recalculate_receive_window();
     void recalculate_transmit_window();
 
+    inline uint8_t receive_window_byte() const {
+        return receive_window_byte_;
+    }
+
     void tx_enqueue_channel(bool tx_immediately);
 
     bool attached();
+    void attach_for_transmit();
 
     //====================================
     // Transmit various types of packets.

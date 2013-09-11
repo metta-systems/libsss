@@ -11,11 +11,14 @@
 namespace ssu {
 
 base_stream::base_stream(std::shared_ptr<host> h, 
-                         const peer_id& peer,
+                         const peer_id& peer_id,
                          std::shared_ptr<base_stream> parent)
     : abstract_stream(h)
+    , parent_(parent)
 {
-    logger::debug() << "Constructing internal stream for peer " << peer;
+    logger::debug() << "Constructing internal stream for peer " << peer_id;
+    peerid_ = peer_id;
+    peer_ = h->stream_peer(peer_id);
 }
 
 base_stream::~base_stream()
@@ -70,6 +73,7 @@ void base_stream::tx_attach()
 void base_stream::recalculate_receive_window()
 {
     logger::debug() << "Internal stream recalculate receive window";
+    receive_window_byte_ = 0x1a;
 }
 
 //calc
@@ -168,8 +172,8 @@ void base_stream::set_child_receive_buffer_size(size_t size)
 
 void base_stream::dump()
 {
-    logger::debug() << "Internal stream " << this;
-    // << " state " << state
+    logger::debug() << "Internal stream " << this
+                    << " state " << int(state_);
     // << " TSN " << tasn
     // << " RSN " << rsn
     // << " ravail " << ravail
