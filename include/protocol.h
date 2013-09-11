@@ -53,7 +53,7 @@ public:
     struct stream_header
     {
         big_uint16_t stream_id;
-        packet_type  type;
+        uint8_t      type_subtype; // Field consists of two 4 bit fields - type and flags
         uint8_t      window;
     } __attribute__((packed));
 
@@ -92,6 +92,9 @@ public:
         // Flag bits for Reset packets
         reset_remote      = 0x1,  ///< SID orientation (set: sent LSID is in remote space)
     };
+
+    inline uint8_t type_bits(packet_type type) { return uint8_t(type) << 4; }
+    inline uint8_t subtype_bits(flags subtype) { return uint8_t(subtype);   }
 
     /**
      * Type for identifying streams uniquely across channels.
