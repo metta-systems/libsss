@@ -84,6 +84,12 @@ bool stream::is_connected() const
 void stream::connect_at(endpoint const& ep)
 {}
 
+void stream::set_error(const std::string& error)
+{
+    // @todo: set error string
+    error_notify(error);
+}
+
 //=================================================================================================
 // Stream host state.
 //=================================================================================================

@@ -311,4 +311,22 @@ void base_stream::dump()
     // << " rmsgs " << rmsgsize.size()
 }
 
+//-----------------
+// Signal handlers
+//-----------------
+
+void base_stream::flow_connected()
+{}
+
+void base_stream::parent_attached()
+{}
+
+//=================================================================================================
+// stream_tx_attachment
+//=================================================================================================
+
+void stream_tx_attachment::set_attaching(stream_channel* channel, id_t sid)
+{}
+
+
 } // ssu namespace
