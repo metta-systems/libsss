@@ -134,7 +134,7 @@ void base_stream::attach_for_transmit()
         // Get the channel setup process for this host ID underway.
         // XXX provide an initial packet to avoid an extra RTT!
         logger::debug() << "Waiting for channel";
-        peer_->on_channel_connected.connect(std::bind(&base_stream::flow_connected, this));
+        peer_->on_channel_connected.connect(std::bind(&base_stream::channel_connected, this));
         return peer_->connect_channel();
     }
 
@@ -195,7 +195,7 @@ void base_stream::attach_for_transmit()
         logger::debug() << "Creating stream " << usid_;
     }
 
-    // Get us in line to transmit on the flow.
+    // Get us in line to transmit on the channel.
     // We at least need to transmit an attach message of some kind;
     // in the case of Init or Reply it might also include data.
 
@@ -315,8 +315,10 @@ void base_stream::dump()
 // Signal handlers
 //-----------------
 
-void base_stream::flow_connected()
-{}
+void base_stream::channel_connected()
+{
+    logger::debug() << "Channel has connected.";
+}
 
 void base_stream::parent_attached()
 {}

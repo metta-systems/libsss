@@ -137,7 +137,7 @@ class base_stream : public abstract_stream
     void tx_attach();
 
     // Handlers.
-    void flow_connected();
+    void channel_connected();
     void parent_attached();
 
 public:
