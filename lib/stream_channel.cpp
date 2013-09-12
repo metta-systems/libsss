@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "stream_channel.h"
 #include "logging.h"
 
