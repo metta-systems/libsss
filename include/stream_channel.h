@@ -21,9 +21,22 @@ class stream_peer;
 /**
  * Channel implementation for SSU streams.
  */
-class stream_channel : public channel
+class stream_channel : public channel, public stream_protocol
 {
-    stream_peer* peer_;
+    /**
+     * Maximum number of in-use SIDs to skip while trying to allocate one,
+     * before we just give up and detach an existing one in this range.
+     */
+    static constexpr int max_sid_skip = 16;
+
+    std::shared_ptr<base_stream> root_{nullptr};
+    stream_peer* peer_{nullptr};
+
+    std::unordered_map<stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace
+    std::unordered_map<stream_id_t, stream_rx_attachment*> receive_sids_; // Peer's SID namespace
+    counter_t transmit_sid_counter_{0}; // Next stream counter to assign.
+    counter_t transmit_sid_acked_{0};   // Last acknowledged stream counter.
+    counter_t received_sid_counter_{0};   // Last stream counter received.
 
     /**
      * Streams queued for transmission on this channel.
@@ -41,6 +54,10 @@ public:
     ~stream_channel();
 
     inline stream_peer* target_peer() { return peer_; }
+
+    inline std::shared_ptr<base_stream> root_stream() { return root_; }
+
+    counter_t allocate_transmit_sid();
 
     void enqueue_stream(base_stream* stream);
     void dequeue_stream(base_stream* stream);
