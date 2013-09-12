@@ -32,6 +32,7 @@ class stream_channel;
 class stream_peer : public stream_protocol
 {
     friend class base_stream; // @fixme Use accessors n stuff.
+    friend class stream_host_state; // @fixme used only to construct.
 
     /**
      * Retry connection attempts for persistent streams once every minute.
