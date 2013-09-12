@@ -326,7 +326,14 @@ void base_stream::parent_attached()
 //=================================================================================================
 
 void stream_tx_attachment::set_attaching(stream_channel* channel, id_t sid)
-{}
+{
+    assert(!is_in_use());
+
+    channel_ = channel;
+    stream_id_ = sid;
+    active_ = deprecated_ = false;
+    sid_seq_ = ~0; //@fixme magic number
+}
 
 
 } // ssu namespace
