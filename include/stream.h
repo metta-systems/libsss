@@ -496,12 +496,21 @@ protected:
  */
 class stream_host_state
 {
-    std::map<peer_id, stream_peer*> peers_;
+    std::unordered_map<peer_id, stream_peer*> peers_;
 public:
+    inline stream_host_state() {}
+    virtual ~stream_host_state();
+
+    virtual std::shared_ptr<host> get_host() = 0;
+
     /**
      * Create if necessary and return the stream peer's information (from the other side).
      */
-    stream_peer* stream_peer(peer_id const& id);
+    class stream_peer* stream_peer(peer_id const& id);
+    /**
+     * Return the stream peer's information (from the other side) or nullptr.
+     */
+    class stream_peer* stream_peer_if_exists(peer_id const& id);
 };
 
 } // ssu namespace

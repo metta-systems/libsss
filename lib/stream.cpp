@@ -7,9 +7,11 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "stream.h"
+#include "private/stream_peer.h"
 #include "base_stream.h"
 #include "identity.h"
 #include "logging.h"
+#include "host.h"
 
 namespace ssu {
 
@@ -94,9 +96,21 @@ void stream::set_error(const std::string& error)
 // Stream host state.
 //=================================================================================================
 
+stream_host_state::~stream_host_state()
+{}
+
 stream_peer* stream_host_state::stream_peer(peer_id const& id)
 {
-    return 0;
+    if (peers_.find(id) == peers_.end())
+        peers_[id] = new class stream_peer(get_host(), id);
+    return peers_[id];
+}
+
+class stream_peer* stream_host_state::stream_peer_if_exists(peer_id const& id)
+{
+    if (peers_.find(id) == peers_.end())
+        return nullptr;
+    return peers_[id];
 }
 
 } // ssu namespace
