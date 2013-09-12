@@ -17,6 +17,7 @@ add_library(ssu STATIC
     identity.cpp
     key_responder.cpp
     link.cpp
+    link_channel.cpp
     server.cpp
     stream.cpp
     stream_channel.cpp
