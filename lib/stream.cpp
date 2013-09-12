@@ -62,6 +62,17 @@ bool stream::connect_to(peer_id const& destination,
     return true;
 }
 
+bool stream::add_location_hint(peer_id const& eid, endpoint const& hint)
+{
+    if (eid.is_empty()) {
+        set_error("No target EID for location hint");
+        return false;
+    }
+
+    host_->stream_peer(eid)->add_location_hint(hint);
+    return true;
+}
+
 void stream::disconnect()
 {
     if (stream_) {

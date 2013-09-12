@@ -30,7 +30,9 @@ void stream_peer::clear_primary_channel()
 {}
 
 void stream_peer::add_location_hint(const endpoint& hint)
-{}
+{
+    locations_.insert(hint);
+}
 
 // } // private_ namespace
 } // ssu namespace
