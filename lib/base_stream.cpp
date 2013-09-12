@@ -321,7 +321,9 @@ void base_stream::channel_connected()
 }
 
 void base_stream::parent_attached()
-{}
+{
+    logger::debug() << "Parent stream has attached, we can now attach.";
+}
 
 //=================================================================================================
 // stream_tx_attachment
