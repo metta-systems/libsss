@@ -42,14 +42,14 @@ class link_endpoint : public endpoint
     link* link_{nullptr}; ///< Associated link, if any.
 public:
     link_endpoint() {}
-    link_endpoint(const link_endpoint& other) : endpoint(other), link_(other.link_) {}
+    link_endpoint(link_endpoint const& other) : endpoint(other), link_(other.link_) {}
     /**
      * This here should technically use shared_ptr and let link_endpoint maintain a weak_ptr,
      * but practically, as the only factory creating link_endpoints in the udp_link,
      * it will outlive them and a simple pointer suffices.
      * @todo Make it nicer once the usage pattern is more clear here.
      */
-    link_endpoint(const endpoint& other, link* l) : endpoint(other), link_(l) {}
+    link_endpoint(link* l, endpoint const& other) : endpoint(other), link_(l) {}
 
     // Send a message to this endpoint on this link
     bool send(const char *data, int size) const;

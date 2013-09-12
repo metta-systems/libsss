@@ -117,7 +117,7 @@ void sim_packet::arrive()
 
     target_host_->dequeue_packet(shared_from_this());
 
-    link_endpoint src_ep(from_, link.get());
+    link_endpoint src_ep(link.get(), from_);
     link->receive(data_, src_ep);
 
     self.reset(); // We are ought to be deleted now.

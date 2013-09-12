@@ -136,7 +136,7 @@ link::unbind_channel(endpoint const& ep, channel_number chan)
 udp_link::udp_link(const endpoint& ep, link_host_state& h)
     : link(h)
     , udp_socket(h.get_io_service())
-    , received_from(ep, this)
+    , received_from(this, ep)
 {
     bind(ep); // temporarily maintain old behaviour where creating udp_link binds it
 }
