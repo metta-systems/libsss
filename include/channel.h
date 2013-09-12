@@ -32,6 +32,9 @@ class channel : public link_channel
 public:
     static constexpr int header_len = 8/*XXX*/;
 
+    channel(std::shared_ptr<host> host);
+    virtual ~channel();
+
 	virtual void start(bool initiate);
 	virtual void stop();
 
