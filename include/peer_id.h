@@ -44,4 +44,18 @@ inline std::ostream& operator << (std::ostream& os, peer_id const& id)
     return os << id.to_string();
 }
 
-} // namespace ssu
+} // ssu namespace
+
+// Hash specialization for peer_id
+namespace std {
+
+template<>
+struct hash<ssu::peer_id> : public std::unary_function<ssu::peer_id, size_t>
+{
+    inline size_t operator()(ssu::peer_id const& a) const noexcept
+    {
+        return std::hash<byte_array>()(a.id());
+    }
+};
+
+} // std namespace
