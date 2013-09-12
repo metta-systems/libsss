@@ -32,11 +32,11 @@ class stream_protocol
 public:
     // Control chunk magic value for the structured streams.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
-    static const magic_t magic;
+    static constexpr magic_t magic = 0x00535355;
 
-    typedef uint64_t counter_t; ///< Counter for SID assignment.
-    typedef uint16_t id_t;      ///< Stream ID within channel.
-    typedef uint32_t byteseq_t; ///< Stream byte sequence number.
+    typedef uint64_t counter_t;    ///< Counter for SID assignment.
+    typedef uint16_t stream_id_t;  ///< Stream ID within channel.
+    typedef uint32_t byteseq_t;    ///< Stream byte sequence number.
 
     enum class packet_type : uint8_t {
     	invalid  = 0x0,
@@ -123,5 +123,12 @@ public:
         }
     };
 };
+
+inline
+std::ostream& operator << (std::ostream& os, stream_protocol::unique_stream_id_t const& id)
+{
+    os << "USID[" << id.counter_ << ":" << id.half_channel_id_ << "]";
+    return os;
+}
 
 } // namespace ssu
