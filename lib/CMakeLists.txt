@@ -9,6 +9,7 @@ set(simulator_SOURCES
 add_library(ssu STATIC 
     abstract_stream.cpp
     base_stream.cpp
+    channel.cpp
     crypto/sign_key.cpp
     crypto/rsa160_key.cpp
     crypto/dsa160_key.cpp
