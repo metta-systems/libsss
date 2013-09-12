@@ -14,15 +14,19 @@
 
 namespace ssu {
 
-base_stream::base_stream(std::shared_ptr<host> h, 
+//=================================================================================================
+// base_stream
+//=================================================================================================
+
+base_stream::base_stream(std::shared_ptr<host> host, 
                          const peer_id& peer_id,
                          std::shared_ptr<base_stream> parent)
-    : abstract_stream(h)
+    : abstract_stream(host)
     , parent_(parent)
 {
     logger::debug() << "Constructing internal stream for peer " << peer_id;
     peerid_ = peer_id;
-    peer_ = h->stream_peer(peer_id);
+    peer_ = host->stream_peer(peer_id);
 }
 
 base_stream::~base_stream()
