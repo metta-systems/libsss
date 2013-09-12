@@ -10,6 +10,7 @@
 
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <boost/asio.hpp>
 #include <boost/signals2/signal.hpp>
@@ -67,6 +68,7 @@ public:
 class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
 {
     std::unordered_map<magic_t, link_receiver*> receivers;
+    std::unordered_set<link*> active_links_;
 
     /**
      * Initialize and return the link this host instance uses to communicate.
@@ -90,6 +92,10 @@ public:
      * Find and return a receiver for given control channel magic value.
      */
     virtual link_receiver* receiver(magic_t magic);
+
+    inline void activate_link(link* l)   { active_links_.insert(l); }
+    inline void deactivate_link(link* l) { active_links_.erase(l); }
+    inline std::unordered_set<link*> active_links() const { return active_links_; }
 };
 
 /**
@@ -129,7 +135,15 @@ public:
     ~link();
 
     inline bool is_active() const { return active_; }
-    inline void set_active(bool active) { active_ = active; }
+    inline void set_active(bool active) { 
+        active_ = active;
+        if (active_) {
+            host_.activate_link(this);
+        }
+        else {
+            host_.deactivate_link(this);
+        }
+    }
 
     /**
      * Open the underlying socket and bind it to given endpoint.
