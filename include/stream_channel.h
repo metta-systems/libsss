@@ -71,6 +71,8 @@ public:
     void acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq) override;
     void missed(uint64_t txseq, int npackets) override;
     void expire(uint64_t txseq, int npackets) override;
+
+    bool channel_receive(uint64_t pktseq, byte_array &pkt) override;
 };
 
 } // namespace ssu
