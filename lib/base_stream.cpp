@@ -9,6 +9,8 @@
 #include "base_stream.h"
 #include "logging.h"
 #include "host.h"
+#include "private/stream_peer.h"
+#include "stream_channel.h"
 
 namespace ssu {
 
@@ -31,8 +33,8 @@ base_stream::~base_stream()
 //txenqflow()
 void base_stream::tx_enqueue_channel(bool tx_immediately)
 {
-    if (!attached())
-        return tx_attach();
+    if (!is_attached())
+        return attach_for_transmit();
 
     logger::debug() << "Internal stream enqueue on channel";
 
@@ -58,9 +60,9 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
     //     channel->ready_transmit();
 }
 
-bool base_stream::attached()
+bool base_stream::is_attached()
 {
-    return false;
+    return tx_current_attachment_ != nullptr;
 }
 
 void base_stream::tx_attach()
@@ -99,9 +101,16 @@ void base_stream::connect_to(std::string const& service, std::string const& prot
     attach_for_transmit();
 }
 
+void base_stream::disconnect()
+{
+    logger::debug() << "Disconnecting internal stream";
+    state_ = state::disconnected;
+    // @todo bring down the connection
+}
+
 void base_stream::attach_for_transmit()
 {
-    assert(!peerid.is_empty());
+    assert(!peerid_.is_empty());
 
     // If we already have a transmit-attachment, nothing to do.
     if (tx_current_attachment_ != nullptr) {
@@ -114,6 +123,87 @@ void base_stream::attach_for_transmit()
         return;
 
     logger::debug() << "Internal stream attaching for transmission";
+
+    // See if there's already an active channel for this peer.
+    // If so, use it - otherwise, create new one.
+    if (!peer_->primary_channel_) {
+        // Get the channel setup process for this host ID underway.
+        // XXX provide an initial packet to avoid an extra RTT!
+        logger::debug() << "Waiting for channel";
+        peer_->on_channel_connected.connect(std::bind(&base_stream::flow_connected, this));
+        return peer_->connect_channel();
+    }
+
+    stream_channel* channel = peer_->primary_channel_;
+    assert(channel->is_active());
+
+    // If we're initiating a new stream and our peer hasn't acked it yet,
+    // make sure we have a parent USID to refer to in creating the stream.
+    if (init_ && parent_usid_.is_empty())
+    {
+        auto parent = parent_.lock();
+        // No parent USID yet - try to get it from the parent stream.
+        if (!parent)
+        {
+            // Top-level streams just use any channel's root stream.
+            if (top_level_) {
+                parent_ = channel->root_stream();
+                parent = parent_.lock();
+            } else {
+                return fail("Parent stream closed before child stream could be initiated");
+            }
+        }
+        parent_usid_ = parent->usid_;
+        // Parent itself doesn't have an USID yet - we have to wait until it does.
+        if (parent_usid_.is_empty())
+        {
+            logger::debug() << "Parent of " << this << " has no USID yet - waiting";
+            parent->on_attached.connect(std::bind(&base_stream::parent_attached, this));
+            return parent->attach_for_transmit();
+        }
+    }
+
+    //-----------------------------------------
+    // Allocate a stream_id_t for this stream.
+    //-----------------------------------------
+
+    // Scan forward through our SID space a little ways for a free SID;
+    // if there are none, then pick a random one and detach it.
+    counter_t sid = channel->allocate_transmit_sid();
+
+    // Find a free attachment slot.
+    int slot = 0;
+    while (tx_attachments_[slot].is_in_use())
+    {
+        if (++slot == max_attachments) {
+            logger::fatal() << "attach_for_transmit: all slots are in use.";
+            // @fixme: Free up some slot.
+        }
+    }
+
+    // Attach to the stream using the selected slot.
+    tx_attachments_[slot].set_attaching(channel, sid);
+    tx_current_attachment_ = &tx_attachments_[slot];
+
+    // Fill in the new stream's USID, if it doesn't have one yet.
+    if (usid_.is_empty()) {
+        set_usid(unique_stream_id_t(sid, channel->tx_channel_id()));
+        logger::debug() << "Creating stream " << usid_;
+    }
+
+    // Get us in line to transmit on the flow.
+    // We at least need to transmit an attach message of some kind;
+    // in the case of Init or Reply it might also include data.
+
+    //assert(!channel->tx_streams_.contains(this));
+    tx_enqueue_channel();
+    if (channel->may_transmit())
+        channel->on_ready_transmit();
+}
+
+void base_stream::set_usid(unique_stream_id_t new_usid)
+{
+    usid_ = new_usid;
 }
 
 size_t base_stream::bytes_available() const
@@ -196,6 +286,12 @@ void base_stream::set_receive_buffer_size(size_t size)
 void base_stream::set_child_receive_buffer_size(size_t size)
 {
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
+}
+
+void base_stream::fail(std::string const& error)
+{
+    disconnect();
+    set_error(error);
 }
 
 void base_stream::dump()

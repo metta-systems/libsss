@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <boost/signals2/signal.hpp>
 #include "abstract_stream.h"
 #include "channel.h"
 
@@ -97,6 +98,10 @@ class base_stream : public abstract_stream
     state state_{state::created};
     uint8_t receive_window_byte_{0};
     bool init_{true};
+    bool top_level_{false}; ///< This is a top-level stream.
+
+    unique_stream_id_t usid_,        ///< Unique stream ID.
+                       parent_usid_; ///< Unique ID of parent stream.
 
     // Channel attachment state
     static constexpr int  max_attachments = 2;
@@ -115,10 +120,12 @@ class base_stream : public abstract_stream
         return receive_window_byte_;
     }
 
-    void tx_enqueue_channel(bool tx_immediately);
+    void tx_enqueue_channel(bool tx_immediately = false);
 
-    bool attached();
+    bool is_attached();
     void attach_for_transmit();
+
+    void set_usid(unique_stream_id_t new_usid);
 
     //====================================
     // Transmit various types of packets.
@@ -128,6 +135,10 @@ class base_stream : public abstract_stream
      * Send the stream attach packet to the peer.
      */
     void tx_attach();
+
+    // Handlers.
+    void flow_connected();
+    void parent_attached();
 
 public:
     /**
@@ -174,6 +185,8 @@ public:
     base_stream(std::shared_ptr<host> h, peer_id const& peer, std::shared_ptr<base_stream> parent);
     virtual ~base_stream();
 
+    void fail(std::string const& error);
+
     /**
      * Connect to a given service on a remote host.
      * @param service the service name to connect to on the remote host.
@@ -182,6 +195,7 @@ public:
      * @param protocol the application protocol name to connect to.
      */
     void connect_to(std::string const& service, std::string const& protocol);
+    void disconnect();
 
     size_t bytes_available() const override;
     bool at_end() const override; //XXX QIODevice relic
@@ -200,6 +214,19 @@ public:
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
     void dump() override;
+
+    //=========
+    // Signals
+    //=========
+    /**
+     * An active attachment attempt succeeded and was acked by receiver.
+     */
+    boost::signals2::signal<void()> on_attached;
+
+    /**
+     * An active detachment attempt succeeded and was acked by receiver.
+     */
+    boost::signals2::signal<void()> on_detached;
 };
 
 } // namespace ssu
