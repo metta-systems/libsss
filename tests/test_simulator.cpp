@@ -64,11 +64,13 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
 
     shared_ptr<ssu::server> other_server(make_shared<ssu::server>(other_host));
     BOOST_CHECK(other_server != nullptr);
-    bool res = other_server->listen("simulator", "Simulating", "test", "Test protocol");
-    BOOST_CHECK(res == true);
+    bool listening = other_server->listen("simulator", "Simulating", "test", "Test protocol");
+    BOOST_CHECK(listening == true);
 
     shared_ptr<ssu::stream> my_stream(make_shared<stream>(my_host));
     BOOST_CHECK(my_stream != nullptr);
+    bool hinted = my_stream->add_location_hint(other_host->host_identity().id(), other_host_address); // no routing yet
+    BOOST_CHECK(hinted == true);
     my_stream->connect_to(other_host->host_identity().id(), "simulator", "test", other_host_address);
 
     sim->run();
