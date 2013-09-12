@@ -3,6 +3,12 @@
 
 namespace ssu {
 
+/**
+ * Maximum number of in-use SIDs to skip while trying to allocate one,
+ * before we just give up and detach an existing one in this range.
+ */
+constexpr int max_sid_skip = 16;
+
 stream_protocol::counter_t stream_channel::allocate_transmit_sid()
 {
     counter_t sid = transmit_sid_counter_;

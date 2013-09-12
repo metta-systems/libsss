@@ -23,12 +23,6 @@ class stream_peer;
  */
 class stream_channel : public channel, public stream_protocol
 {
-    /**
-     * Maximum number of in-use SIDs to skip while trying to allocate one,
-     * before we just give up and detach an existing one in this range.
-     */
-    static constexpr int max_sid_skip = 16;
-
     std::shared_ptr<base_stream> root_{nullptr};
     stream_peer* peer_{nullptr};
 
