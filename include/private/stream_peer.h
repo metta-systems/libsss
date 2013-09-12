@@ -31,15 +31,21 @@ class stream_channel;
  */
 class stream_peer : public stream_protocol
 {
-    // Retry connection attempts for persistent streams once every minute.
+    friend class base_stream; // @fixme Use accessors n stuff.
+
+    /**
+     * Retry connection attempts for persistent streams once every minute.
+     */
     static const async::timer::duration_type connect_retry_period;
 
-    // Number of stall warnings we get from our primary stream
-    // before we start a new lookup/key exchange phase to try replacing it.
+    /**
+     * Number of stall warnings we get from our primary stream
+     * before we start a new lookup/key exchange phase to try replacing it.
+     */
     static const int stall_warnings_max = 3;
 
-    std::shared_ptr<host> host_;         ///< Per-host state.
-    const peer_id         remote_id_;    ///< Host ID of target.
+    std::shared_ptr<host> host_;               ///< Per-host state.
+    const peer_id         remote_id_;          ///< Host ID of target.
     stream_channel*       primary_channel_{0}; ///< Current primary channel.
     int                   stall_warnings_{0};
 
