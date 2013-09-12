@@ -89,7 +89,7 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
     // First byte should be a channel number.
     // Try to find an endpoint-specific channel.
     channel_number cn = msg.at(0);
-    link_channel* chan = channel(src, cn);
+    link_channel* chan = channel_for(src, cn);
     if (chan)
     {
         return chan->receive(msg, src);
@@ -118,6 +118,19 @@ void link::receive(const byte_array& msg, const link_endpoint& src)
                         << "' buffer contents " << msg;
         return;
     }
+}
+
+bool
+link::bind_channel(endpoint const& ep, channel_number chan, link_channel* lc)
+{
+    channels_.insert(std::make_pair(std::make_pair(ep, chan), lc));
+    return true;
+}
+
+void
+link::unbind_channel(endpoint const& ep, channel_number chan)
+{
+    channels_.erase(std::make_pair(ep, chan));
 }
 
 udp_link::udp_link(const endpoint& ep, link_host_state& h)

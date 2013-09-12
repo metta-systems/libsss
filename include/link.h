@@ -111,14 +111,9 @@ class link //: public std::enable_shared_from_this<link>
     /**
      * Channels working through this link at the moment.
      */
-    std::map<std::pair<link_endpoint, channel_number>, link_channel*> channels_;
+    std::map<std::pair<endpoint, channel_number>, link_channel*> channels_;
 
     bool active_{false};
-
-    link_channel* channel(const endpoint& src, channel_number cn) {
-        // return channels_[std::make_pair(src, cn)];
-        return 0;
-    }
 
 public:
     // ssu expresses current link status as one of three states:
@@ -163,12 +158,19 @@ public:
 
     virtual std::vector<endpoint> local_endpoints() = 0;
 
+    link_channel* channel_for(endpoint const& src, channel_number cn) {
+        return channels_[std::make_pair(src, cn)];
+    }
+
     /**
      * Implementation subclass calls this method with received packets.
      * @param msg the packet received.
      * @param src the source from which the packet arrived.
      */
     void receive(const byte_array& msg, const link_endpoint& src);
+
+    bool bind_channel(endpoint const& ep, channel_number chan, link_channel* lc);
+    void unbind_channel(endpoint const& ep, channel_number chan);
 };
 
 /**
