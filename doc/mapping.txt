@@ -34,3 +34,7 @@ SocketReceiver         link_receiver
 |  +--FlowResponder
 +--TcpServer
 +--Router
+
+link_channel
++--channel
+   +--stream_channel
