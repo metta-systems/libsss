@@ -1,5 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-
 set(simulator_SOURCES
     simulation/sim_connection.cpp
     simulation/sim_host.cpp
