@@ -43,7 +43,7 @@ class stream_peer : public stream_protocol
      * Number of stall warnings we get from our primary stream
      * before we start a new lookup/key exchange phase to try replacing it.
      */
-    static const int stall_warnings_max = 3;
+    static constexpr int stall_warnings_max = 3;
 
     std::shared_ptr<host> host_;               ///< Per-host state.
     const peer_id         remote_id_;          ///< Host ID of target.
