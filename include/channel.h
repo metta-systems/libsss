@@ -27,11 +27,17 @@ class channel : public link_channel
 
     link::status                   link_status_;
 
+    byte_array                     tx_channel_id_;
+
 public:
     static constexpr int header_len = 8/*XXX*/;
 
 	virtual void start(bool initiate);
 	virtual void stop();
+
+    virtual int may_transmit();
+
+    inline byte_array tx_channel_id() { return tx_channel_id_; }
 
     /**
      * Set the encryption/authentication method for this channel.
