@@ -91,6 +91,9 @@ class stream_peer : public stream_protocol
     // Clear the peer's current primary flow.
     void clear_primary_channel();
 
+    // Handlers.
+    void completed(bool failed);
+
 public:
     /// Supply an endpoint hint that may be useful for finding this peer.
     void add_location_hint(const endpoint& hint);
