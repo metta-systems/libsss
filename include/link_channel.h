@@ -10,6 +10,7 @@
 
 #include "byte_array.h"
 #include "protocol.h"
+#include "link.h"
 
 namespace ssu {
 
@@ -21,7 +22,15 @@ namespace ssu {
  */
 class link_channel
 {
+    link*          link_{nullptr};            ///< Link we're currently bound to, if any.
+    endpoint       remote_ep_;                ///< Endpoint of the remote side.
+    channel_number local_channel_number_{0};  ///< Channel number of this channel at local node.
+    channel_number remote_channel_number_{0}; ///< Channel number of this channel at remote node.
+    bool           active_{false};            ///< True if we're sending and accepting packets.
+
 public:
+    virtual ~link_channel();
+
     /**
      * Start the channel.
      * @param initiate Initiate the key exchange using key_initiator.
@@ -65,7 +74,7 @@ public:
     ready_transmit_signal on_ready_transmit;
 
 protected:
-    friend class link;
+    friend class link; // @fixme no need for extra friendliness
 
     inline bool send(const byte_array& pkt) const {
         assert(active_);
@@ -78,11 +87,6 @@ protected:
     virtual void receive(byte_array const& msg, link_endpoint const& src) {
         on_received(msg, src);
     }
-
-private:
-    link*               link_;      ///< Link we're currently bound to, if any.
-    endpoint            remote_ep_; ///< Endpoint of the remote side.
-    bool                active_;    ///< True if we're sending and accepting packets.
 };
 
 } // ssu namespace
