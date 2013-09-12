@@ -6,7 +6,7 @@ namespace ssu {
 
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
-stream_peer::stream_peer(std::shared_ptr<host>& host, const peer_id& remote_id)
+stream_peer::stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id)
     : host_(host)
     , remote_id_(remote_id)
 {}

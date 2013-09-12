@@ -64,7 +64,7 @@ class stream_peer : public stream_protocol
     std::map<unique_stream_id_t, base_stream*> usid_streams_;
 
 
-    stream_peer(std::shared_ptr<host>& host, const peer_id& remote_id);
+    stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id);
     ~stream_peer();
 
     inline peer_id remote_host_id() const { return remote_id_; }
