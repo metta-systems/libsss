@@ -19,6 +19,7 @@
 namespace ssu {
 
 class host;
+class channel;
 
 namespace negotiation {
 
@@ -60,6 +61,7 @@ public:
 class key_initiator : public std::enable_shared_from_this<key_initiator>
 {
     std::shared_ptr<host> host_;
+    channel* channel_; ///< Channel for which we initiated key exchange.
     const link_endpoint&  target_; ///< Remote endpoint we're trying to contact.
     peer_id               remote_id_;
     byte_array            user_info_; ///< Transparent user info block transmitted in init2 phase.
@@ -109,7 +111,8 @@ protected:
     inline magic_t magic() const { return magic_; }
 
 public:
-    key_initiator(std::shared_ptr<host> host, link_endpoint const& target, peer_id const& target_peer);
+    key_initiator(std::shared_ptr<host> host, channel* chn, 
+                    link_endpoint const& target, magic_t magic, peer_id const& target_peer);
     ~key_initiator();
 
     void exchange_keys(); // Actually start init1 phase.

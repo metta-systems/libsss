@@ -252,10 +252,14 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 //===========================================================================================================
 
 key_initiator::key_initiator(std::shared_ptr<host> host,
+                             channel* channel,
                              link_endpoint const& target,
+                             magic_t magic,
                              peer_id const& target_peer)
     : host_(host)
+    , channel_(channel)
     , target_(target)
+    , magic_(magic)
     , remote_id_(target_peer)
     , retransmit_timer_(host_.get())
     , key_min_length_(128/8)
