@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// #include "protocol.h"
+#include "protocol.h"
 
-// namespace ssu {
-// const magic_t stream_protocol::magic = 0x00535355;
-// }
+namespace ssu {
+constexpr magic_t stream_protocol::magic;
+}

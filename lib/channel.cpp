@@ -10,6 +10,8 @@
 
 namespace ssu {
 
+constexpr int channel::header_len;
+
 channel::channel(std::shared_ptr<host> host)
     : link_channel()
     , host_(host)

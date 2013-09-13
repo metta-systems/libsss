@@ -18,6 +18,8 @@ namespace ssu {
 // base_stream
 //=================================================================================================
 
+constexpr int base_stream::max_attachments;
+
 base_stream::base_stream(std::shared_ptr<host> host, 
                          const peer_id& peer_id,
                          std::shared_ptr<base_stream> parent)
