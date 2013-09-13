@@ -74,7 +74,7 @@ class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
      * Initialize and return the link this host instance uses to communicate.
      * Repeated calls will return already initialized link instance.
      */
-    virtual std::shared_ptr<link> create_link() { return nullptr; }
+    virtual std::shared_ptr<link> create_link() { return nullptr; } // @fixme
 
 public:
     /**

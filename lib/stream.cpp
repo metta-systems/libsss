@@ -13,9 +13,15 @@
 #include "logging.h"
 #include "host.h"
 
+using namespace std;
+
 namespace ssu {
 
-stream::stream(std::shared_ptr<host> h)
+//=================================================================================================
+// stream
+//=================================================================================================
+
+stream::stream(shared_ptr<host> h)
     : host_(h)
 {
 }
@@ -35,7 +41,7 @@ stream::~stream()
 }
 
 bool stream::connect_to(peer_id const& destination, 
-    std::string service, std::string protocol,
+    string service, string protocol,
     endpoint const& destination_endpoint_hint)
 {
     // Determine a suitable target EID.
@@ -97,7 +103,7 @@ bool stream::is_connected() const
 void stream::connect_at(endpoint const& ep)
 {}
 
-void stream::set_error(const std::string& error)
+void stream::set_error(string const& error)
 {
     // @todo: set error string
     error_notify(error);

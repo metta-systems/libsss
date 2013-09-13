@@ -13,6 +13,7 @@
 #include "byte_array_wrap.h"
 #include "flurry.h"
 
+using namespace std;
 using namespace ssu;
 
 //===========================================================================================================
@@ -45,8 +46,6 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
            << responder_dh_public_key
            << peer_eid;
     }
-    // assert(data.size() % 4 == 0);
-    logger::file_dump dump(data);
 
     // make this into a wrapper that calculates given hash type over a byte_array...
     crypto::hash md;
@@ -103,7 +102,7 @@ void key_responder::receive(const byte_array& msg, const link_endpoint& src)
     }
 };
 
-static void warning(std::string message)
+static void warning(string message)
 {
     logger::warning() << "key_responder: " << message;
 }
@@ -170,7 +169,7 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
     if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
         return warning("invalid minimum AES key length");
 
-    std::shared_ptr<dh_hostkey_t> hostkey(host_->get_dh_key(data.group)); // get or generate a host key
+    shared_ptr<dh_hostkey_t> hostkey(host_->get_dh_key(data.group)); // get or generate a host key
     if (!hostkey)
         return warning("unrecognized DH key group");
     // if (i1.dhi.size() > DH_size(hk->dh))
@@ -219,7 +218,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
  */
 void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src)
 {
-    key_initiator* initiator = host_->get_initiator(data.initiator_hashed_nonce).get();
+    shared_ptr<key_initiator> initiator = host_->get_initiator(data.initiator_hashed_nonce);
     if (!initiator or initiator->group() != data.group)
         return warning("Got dh_response1 for unknown dh_init1");
     if (initiator->is_done())
@@ -234,7 +233,7 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
  * Compute HMAC challenge cookie for DH.
  */
 byte_array
-key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
+key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
     const byte_array& responder_nonce,
     const byte_array& initiator_hashed_nonce,
     const ssu::link_endpoint& src)
@@ -253,8 +252,6 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
             << src.port();
     }
 
-    logger::file_dump dump(data);
-
     // Compute the keyed hash
     assert(hostkey->hmac_secret_key_.size() == crypto::HMACKEYLEN);
 
@@ -271,7 +268,7 @@ key_responder::calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> ho
 // key_initiator
 //===========================================================================================================
 
-key_initiator::key_initiator(std::shared_ptr<host> host,
+key_initiator::key_initiator(shared_ptr<host> host,
                              channel* channel,
                              link_endpoint const& target,
                              magic_t magic,
@@ -296,7 +293,7 @@ key_initiator::~key_initiator()
 
 void key_initiator::exchange_keys()
 {
-    logger::debug() << "Initiating connection to " << target_ << " peer id " << remote_id_;
+    logger::debug() << "Initiating key exchange connection to " << target_ << " peer id " << remote_id_;
 
     host_->register_dh_initiator(initiator_hashed_nonce_, target_, shared_from_this());
 
@@ -339,7 +336,7 @@ void key_initiator::send_dh_init1()
     shared_master_secret_.clear();
 
     // Construct dh_init1 frame from the current state.
-    std::shared_ptr<dh_hostkey_t> hostkey = host_->get_dh_key(dh_group_); // get or generate a host key
+    shared_ptr<dh_hostkey_t> hostkey = host_->get_dh_key(dh_group_); // get or generate a host key
     initiator_public_key_ = hostkey->public_key_;
 
     dh_init1_chunk init;
@@ -367,7 +364,7 @@ void key_initiator::send_dh_init2()
 // key_host_state
 //===========================================================================================================
 
-std::shared_ptr<ssu::negotiation::key_initiator>
+shared_ptr<ssu::negotiation::key_initiator>
 key_host_state::get_initiator(byte_array nonce)
 {
     auto it = dh_initiators_.find(nonce);
@@ -380,7 +377,7 @@ key_host_state::get_initiator(byte_array nonce)
 void
 key_host_state::register_dh_initiator(byte_array const& nonce,
                                    endpoint const& ep,
-                                   std::shared_ptr<ssu::negotiation::key_initiator> ki)
+                                   shared_ptr<ssu::negotiation::key_initiator> ki)
 {
     dh_initiators_.insert(make_pair(nonce, ki));
     ep_initiators_.insert(make_pair(ep, ki));
