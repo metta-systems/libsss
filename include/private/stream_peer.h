@@ -57,7 +57,7 @@ class stream_peer : public stream_protocol
 
     // For channels under construction:
     std::unordered_set<endpoint> locations_; ///< Potential locations known
-    std::map<link_endpoint, negotiation::key_initiator*> key_exchanges_initiated_;
+    std::map<link_endpoint, std::shared_ptr<negotiation::key_initiator>> key_exchanges_initiated_;
 
     // All existing streams involving this peer.
     std::unordered_set<base_stream*> all_streams_;

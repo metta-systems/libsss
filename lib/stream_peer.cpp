@@ -1,6 +1,8 @@
 #include "private/stream_peer.h"
 #include "stream_channel.h"
 
+using namespace std;
+
 namespace ssu {
 // namespace private_ {
 
@@ -8,7 +10,7 @@ constexpr int stream_peer::stall_warnings_max;
 
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
-stream_peer::stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id)
+stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id)
     : host_(host)
     , remote_id_(remote_id)
 {}
@@ -62,7 +64,7 @@ void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
     }
 
     // Start the key exchange process for the channel.
-    negotiation::key_initiator* init = new negotiation::key_initiator(host_, chan, lep, magic, remote_id_);
+    shared_ptr<negotiation::key_initiator> init = make_shared<negotiation::key_initiator>(host_, chan, lep, magic, remote_id_);
     init->on_completed.connect(boost::bind(&stream_peer::completed, this, _1));
     key_exchanges_initiated_.insert(make_pair(lep, init));
 }
