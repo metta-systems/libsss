@@ -270,8 +270,7 @@ key_initiator::key_initiator(shared_ptr<host> host,
     allowed_methods_ = key_method_aes;
 
     crypto::fill_random(initiator_nonce_.as_vector());
-    crypto::hash kmd(initiator_nonce_.as_vector());
-    kmd.finalize(initiator_hashed_nonce_);
+    initiator_hashed_nonce_ = sha256::hash(initiator_nonce_);
 }
 
 key_initiator::~key_initiator()
