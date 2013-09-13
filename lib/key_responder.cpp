@@ -303,6 +303,7 @@ void key_initiator::exchange_keys()
 
 void key_initiator::retransmit(bool fail)
 {
+    logger::debug() << "Time to retransmit the key exchange packet.";
     if (fail)
     {
         logger::debug() << "Key exchange failed";
