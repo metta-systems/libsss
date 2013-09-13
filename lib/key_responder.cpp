@@ -29,11 +29,11 @@ namespace {
 byte_array
 calc_signature_hash(ssu::negotiation::dh_group_type group,
     int keylen,
-    const byte_array& initiator_hashed_nonce,
-    const byte_array& responder_nonce,
-    const byte_array& initiator_dh_public_key,
-    const byte_array& responder_dh_public_key,
-    const byte_array& peer_eid)
+    byte_array const& initiator_hashed_nonce,
+    byte_array const& responder_nonce,
+    byte_array const& initiator_dh_public_key,
+    byte_array const& responder_dh_public_key,
+    byte_array const& peer_eid)
 {
     byte_array data;
     {
