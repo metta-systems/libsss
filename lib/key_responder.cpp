@@ -51,6 +51,29 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
     return sha256::hash(data);
 }
 
+byte_array
+calc_key(byte_array const& master,
+    byte_array const& initiator_hashed_nonce,
+    byte_array const& responder_nonce,
+    char which, int keylen)
+{
+    byte_array master_hash = sha256::hash(master);
+    assert(master_hash.size() == crypto::HMACKEYLEN);
+
+    crypto::hash hmac(master_hash.as_vector());
+    hmac.update(initiator_hashed_nonce.as_vector());
+    hmac.update(responder_nonce.as_vector());
+    auto which1 = std::array<char,1>({which});
+    hmac.update(which1);
+
+    crypto::hash::value key;
+    hmac.finalize(key);
+
+    byte_array out = key;
+    out.resize(keylen);
+    return out;
+}
+
 } // anonymous namespace
 
 //===========================================================================================================
