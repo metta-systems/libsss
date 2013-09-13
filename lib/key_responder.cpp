@@ -71,6 +71,12 @@ key_responder::key_responder(shared_ptr<host> host, magic_t magic)
     , host_(host)
 {}
 
+bool key_responder::is_initiator_acceptable(link_endpoint const& initiator_ep,
+            byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data)
+{
+    return true;
+}
+
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 {
     byte_array_iwrap<flurry::iarchive> read(msg);

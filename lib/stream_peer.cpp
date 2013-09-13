@@ -56,6 +56,8 @@ void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
 
     logger::debug() << "Initiating key exchange from link " << l << " to remote endpoint " << ep;
 
+    host_->instantiate_stream_responder();
+
     channel* chan = new stream_channel(host_, this, remote_id_);
     if (!chan->bind(l, ep)) {
         logger::warning() << "Could not bind new channel to target " << ep;

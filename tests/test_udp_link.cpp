@@ -45,9 +45,7 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
     endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
     shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
 
-    // Add key responder to link.
-    negotiation::key_responder receiver(host);
-    host->bind_receiver(stream_protocol::magic, &receiver);
+    // Add key responder to link. - this is done automagically when server::listen()s
 
     // Render key message to buffer.
     byte_array msg;

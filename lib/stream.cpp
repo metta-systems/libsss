@@ -104,11 +104,33 @@ void stream::set_error(const std::string& error)
 }
 
 //=================================================================================================
+// stream_responder
+//=================================================================================================
+
+stream_responder::stream_responder(shared_ptr<host> host)
+    : key_responder(host, magic_id)
+{}
+
+channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
+            byte_array const& initiator_eid,
+            byte_array const& user_data_in, byte_array& user_data_out)
+{
+    return nullptr;
+}
+
+//=================================================================================================
 // Stream host state.
 //=================================================================================================
 
 stream_host_state::~stream_host_state()
 {}
+
+void stream_host_state::instantiate_stream_responder()
+{
+    if (!responder_)
+        responder_ = new stream_responder(get_host());
+    assert(responder_);
+}
 
 stream_peer* stream_host_state::stream_peer(peer_id const& id)
 {

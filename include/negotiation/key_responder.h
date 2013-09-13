@@ -32,6 +32,8 @@ class dh_hostkey_t;
  *
  * It forwards received requests to a corresponding key initiator in the host state
  * (via host_->get_initiator()).
+ *
+ * The implemented subclass of this abstract base is stream_responder.
  */
 class key_responder : public link_receiver
 {
@@ -52,6 +54,28 @@ public:
     key_responder(std::shared_ptr<host> host, magic_t magic);
 
     void receive(const byte_array& msg, const link_endpoint& src) override;
+
+protected:
+    /**
+     * key_responder calls this to check whether to accept a connection,
+     * before actually bothering to verify the initiator's identity.
+     * The default implementation always returns true.
+     */
+    virtual bool is_initiator_acceptable(link_endpoint const& initiator_ep,
+            byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data);
+
+    /**
+     * key_responder calls this to create a channel requested by a client.
+     * The returned channel must be bound to the specified source endpoint,
+     * but not yet active (started).
+     *
+     * The 'user_data_in' contains the information block passed by the client,
+     * and the 'user_data_out' block will be passed back to the client.
+     * This method can return nullptr to reject the incoming connection.
+     */
+    virtual channel* create_channel(link_endpoint const& initiator_ep,
+            byte_array const& initiator_eid,
+            byte_array const& user_data_in, byte_array& user_data_out) = 0;
 };
 
 /**

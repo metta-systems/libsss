@@ -18,6 +18,7 @@ server::server(std::shared_ptr<host> h)
 bool server::listen(std::string const& service_name, std::string const& service_desc,
                     std::string const& protocol_name, std::string const& protocol_desc)
 {
+    host_->instantiate_stream_responder();
     return false;
 }
 

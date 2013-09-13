@@ -13,12 +13,14 @@
 #include "byte_array.h"
 #include "peer_id.h"
 #include "link.h"
+#include "negotiation/key_responder.h"
 
 namespace ssu {
 
 class host;
 class base_stream;
 class stream_peer;
+class channel;
 
 /**
  * User-space interface to the stream.
@@ -492,16 +494,41 @@ protected:
 };
 
 /**
+ * Private helper class, to register with link layer to receive key exchange packets.
+ * Only one instance ever created per host.
+ */
+class stream_responder : public negotiation::key_responder, public stream_protocol
+{
+    friend class stream_host_state;
+
+    stream_responder(std::shared_ptr<host> host);
+
+    channel* create_channel(link_endpoint const& initiator_ep,
+            byte_array const& initiator_eid,
+            byte_array const& user_data_in, byte_array& user_data_out) override;
+};
+
+/**
  * Host state related to stream management.
+ * @fixme This whole class must be protected - not part of public host API.
  */
 class stream_host_state
 {
+    stream_responder* responder_{nullptr};
     std::unordered_map<peer_id, stream_peer*> peers_;
+
 public:
-    inline stream_host_state() {}
+    inline stream_host_state() = default;
     virtual ~stream_host_state();
 
     virtual std::shared_ptr<host> get_host() = 0;
+
+    /**
+     * We instantiate stream responder when listening for incoming connections in ssu::server,
+     * or when setting up peer key exchange in stream_peer.
+     * @fixme just create the responder right away and don't bother? It's low footprint.
+     */
+    void instantiate_stream_responder();
 
     /**
      * Create if necessary and return the stream peer's information (from the other side).
