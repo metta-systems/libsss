@@ -129,6 +129,20 @@ static void send(magic_t magic, dh_init1_chunk& r, const link_endpoint& to)
     send(m, to);
 }
 
+static void send(magic_t magic, dh_init2_chunk& r, const link_endpoint& to)
+{
+    key_message m;
+    key_chunk chunk;
+
+    chunk.type = key_chunk_type::dh_init2;
+    chunk.dh_init2 = r;
+
+    m.magic = magic;
+    m.chunks.push_back(chunk);
+
+    send(m, to);
+}
+
 static void send(magic_t magic, dh_response1_chunk& r, const link_endpoint& to)
 {
     key_message m;
@@ -335,6 +349,9 @@ void key_initiator::send_dh_init2()
 {
     logger::debug() << "Send dh_init2 to " << target_;
     state_ = state::init2;
+
+    dh_init2_chunk init;
+    send(magic(), init, target_);
 }
 
 } // namespace negotiation
