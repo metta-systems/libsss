@@ -13,6 +13,7 @@
 #include "flurry.h"
 #include "underlying.h"
 #include "opaque_endian.h"
+#include "protocol.h"
 
 namespace ssu {
 namespace negotiation {
@@ -42,23 +43,6 @@ struct KeyChunkChkR1Data {
 };
 
 ////////// Diffie-Helman Key Negotiation //////////
-
-// Encrypted and authenticated identity blocks for I2 and R2 messages
-struct KeyIdentI {
-    unsigned char   chani;      // Initiator's channel number
-    opaque      eidi<256>;  // Initiator's endpoint identifier
-    opaque      eidr<256>;  // Desired EID of responder
-    opaque      idpki<>;    // Initiator's identity public key
-    opaque      sigi<>;     // Initiator's parameter signature
-    opaque      ulpi<>;     // Upper-level protocol data
-};
-struct KeyIdentR {
-    unsigned char   chanr;      // Responder's channel number
-    opaque      eidr<256>;  // Responder's endpoint identifier
-    opaque      idpkr<>;    // Responder's identity public key
-    opaque      sigr<>;     // Responder's parameter signature
-    opaque      ulpr<>;     // Upper-level protocol data
-};
 
 // Responder DH key signing block for R2 messages (JFKi only)
 struct KeyParamR {
@@ -163,6 +147,83 @@ enum class dh_group_type : uint32_t {
     dh_group_3072 = 2, // 3072-bit DH group
     dh_group_max  = 3
 };
+
+//=================================================================================================
+// Encrypted and authenticated identity blocks for I2 and R2 messages
+//
+// initiator_identity_chunk
+//=================================================================================================
+
+class initiator_identity_chunk
+{
+public:
+    channel_number initiator_channel_number;
+    byte_array     initiator_eid;
+    byte_array     responder_eid; // Desired EID of responder
+    byte_array     initiator_id_public_key;  // Initiator's identity public key
+    byte_array     initiator_signature; // Initiator's parameter signature
+    byte_array     user_data_in; // Upper-level protocol data
+};
+
+//-------------------------------------------------------------------------------------------------
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, initiator_identity_chunk& iic)
+{
+    oa << iic.initiator_channel_number
+       << iic.initiator_eid
+       << iic.responder_eid
+       << iic.initiator_id_public_key
+       << iic.initiator_signature
+       << iic.user_data_in;
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, initiator_identity_chunk& iic)
+{
+    ia >> iic.initiator_channel_number
+       >> iic.initiator_eid
+       >> iic.responder_eid
+       >> iic.initiator_id_public_key
+       >> iic.initiator_signature
+       >> iic.user_data_in;
+    return ia;
+}
+
+//=================================================================================================
+// responder_identity_chunk
+//=================================================================================================
+
+class responder_identity_chunk
+{
+public:
+    channel_number responder_channel_number;
+    byte_array     responder_eid;
+    byte_array     responder_id_public_key;
+    byte_array     responder_signature; // Responder's parameter signature
+    byte_array     user_data_out; // Upper-level protocol data
+};
+
+//-------------------------------------------------------------------------------------------------
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, responder_identity_chunk& ric)
+{
+    oa << ric.responder_channel_number
+       << ric.responder_eid
+       << ric.responder_id_public_key
+       << ric.responder_signature
+       << ric.user_data_out;
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, responder_identity_chunk& ric)
+{
+    ia >> ric.responder_channel_number
+       >> ric.responder_eid
+       >> ric.responder_id_public_key
+       >> ric.responder_signature
+       >> ric.user_data_out;
+    return ia;
+}
 
 //=================================================================================================
 // DH/JFK negotiation chunks
