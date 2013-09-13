@@ -224,10 +224,10 @@ namespace std {
 template<> 
 struct hash<ssu::endpoint> : public std::unary_function<ssu::endpoint, size_t>
 {
-    inline size_t operator()(ssu::endpoint const& /*a*/) const noexcept
+    inline size_t operator()(ssu::endpoint const& a) const noexcept
     {
-        size_t seed = 0;
-        return seed;
+        // this is a crappy slow hash until we can get ahold of a good c++1y hash
+        return hash<std::string>()(a.address().to_string()) ^ (hash<int>()(a.port()) << 1);
     }
 };
 
