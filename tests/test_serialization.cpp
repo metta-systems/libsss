@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
 
         read.archive() >> m;
 
-        BOOST_CHECK(m.magic == ssu::stream_protocol::magic);
+        BOOST_CHECK(m.magic == ssu::stream_protocol::magic_id);
         BOOST_CHECK(m.chunks.size() == 2);
         BOOST_CHECK(m.chunks[0].type == ssu::negotiation::key_chunk_type::dh_init1);
         BOOST_CHECK(m.chunks[0].dh_init1.is_initialized());

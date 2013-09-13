@@ -20,7 +20,7 @@ generate_dh1_chunk()
         ssu::negotiation::dh_init1_chunk dh;
         ssu::negotiation::checksum_init_chunk cic;
 
-        m.magic = ssu::stream_protocol::magic;
+        m.magic = ssu::stream_protocol::magic_id;
         chu.type = ssu::negotiation::key_chunk_type::dh_init1;
         dh.group = ssu::negotiation::dh_group_type::dh_group_1024;
         dh.key_min_length = 0x10;

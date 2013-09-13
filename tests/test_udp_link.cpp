@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
         k.type = negotiation::key_chunk_type::dh_init1;
         k.dh_init1 = dh;
 
-        m.magic = stream_protocol::magic;
+        m.magic = stream_protocol::magic_id;
         m.chunks.push_back(k);
 
         byte_array_owrap<flurry::oarchive> write(msg);

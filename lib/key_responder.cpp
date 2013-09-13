@@ -78,7 +78,7 @@ void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 	read.archive() >> m;
     // XXX here may be some decoding error - at the moment handled in link::receive()
 
-    assert(m.magic == stream_protocol::magic);
+    assert(m.magic == stream_protocol::magic_id);
 
     for (auto chunk : m.chunks)
     {

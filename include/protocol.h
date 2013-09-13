@@ -32,7 +32,7 @@ class stream_protocol
 public:
     // Control chunk magic value for the structured streams.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
-    static constexpr magic_t magic = 0x00535355;
+    static constexpr magic_t magic_id = 0x00535355;
 
     typedef uint64_t counter_t;    ///< Counter for SID assignment.
     typedef uint16_t stream_id_t;  ///< Stream ID within channel.

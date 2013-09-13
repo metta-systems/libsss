@@ -9,5 +9,5 @@
 #include "protocol.h"
 
 namespace ssu {
-constexpr magic_t stream_protocol::magic;
+constexpr magic_t stream_protocol::magic_id;
 }
