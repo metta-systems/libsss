@@ -10,6 +10,16 @@ namespace ssu {
  */
 constexpr int max_sid_skip = 16;
 
+stream_channel::stream_channel(std::shared_ptr<host> host, stream_peer* peer, const peer_id& id)
+    : channel(host)
+    , peer_(peer)
+    , root_(std::make_shared<base_stream>(host, id, nullptr))
+{
+}
+
+stream_channel::~stream_channel()
+{}
+
 stream_protocol::counter_t stream_channel::allocate_transmit_sid()
 {
     counter_t sid = transmit_sid_counter_;

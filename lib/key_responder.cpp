@@ -271,6 +271,9 @@ key_initiator::key_initiator(std::shared_ptr<host> host,
     kmd.finalize(initiator_hashed_nonce_);
 }
 
+key_initiator::~key_initiator()
+{}
+
 void key_initiator::exchange_keys()
 {
     logger::debug() << "Initiating connection to " << target_ << " peer id " << remote_id_;
