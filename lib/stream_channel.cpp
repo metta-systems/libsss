@@ -30,4 +30,41 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
     return sid;
 }
 
+void stream_channel::start(bool initiate)
+{
+    logger::debug() << "stream_channel: start";
+}
+
+void stream_channel::stop()
+{
+    logger::debug() << "stream_channel: stop";
+}
+
+bool stream_channel::transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct)
+{
+    logger::debug() << "stream_channel: transmit_ack";
+    return false;
+}
+
+void stream_channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
+{
+    logger::debug() << "stream_channel: acknowledged";
+}
+
+void stream_channel::missed(uint64_t txseq, int npackets)
+{
+    logger::debug() << "stream_channel: missed";
+}
+
+void stream_channel::expire(uint64_t txseq, int npackets)
+{
+    logger::debug() << "stream_channel: expire";
+}
+
+bool stream_channel::channel_receive(uint64_t pktseq, byte_array &pkt)
+{
+    logger::debug() << "stream_channel: channel_receive";
+    return false;
+}
+
 } // ssu namespace
