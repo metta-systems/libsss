@@ -9,6 +9,7 @@
 #include "negotiation/key_responder.h"
 #include "negotiation/key_message.h"
 #include "crypto.h"
+#include "crypto/sha256_hash.h"
 #include "host.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
@@ -47,13 +48,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
            << peer_eid;
     }
 
-    // make this into a wrapper that calculates given hash type over a byte_array...
-    crypto::hash md;
-    crypto::hash::value sha256hash;
-    md.update(data.as_vector());
-    md.finalize(sha256hash);
-
-    return sha256hash;
+    return sha256::hash(data);
 }
 
 } // anonymous namespace
@@ -252,16 +247,7 @@ key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey
             << src.port();
     }
 
-    // Compute the keyed hash
-    assert(hostkey->hmac_secret_key_.size() == crypto::HMACKEYLEN);
-
-    crypto::hash kmd(hostkey->hmac_secret_key_.as_vector());
-    crypto::hash::value mac;
-    assert(mac.size() == crypto::HMACLEN);//mmmhm, expected HMACLEN is 16 but we generate 32 bytes HMACs... incompat?
-    kmd.update(data.as_vector());
-    kmd.finalize(mac);
-
-    return mac;
+    return sha256::keyed_hash(hostkey->hmac_secret_key_, data);
 }
 
 //===========================================================================================================

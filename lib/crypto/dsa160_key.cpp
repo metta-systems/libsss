@@ -10,6 +10,7 @@
 #include "crypto/dsa160_key.h"
 #include "crypto/utils.h"
 #include "crypto.h"
+#include "crypto/sha256_hash.h"
 #include "byte_array.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
@@ -290,9 +291,7 @@ dsa160_key::id() const
     if (type() == invalid)
         return byte_array();
 
-    crypto::hash::value hash;
-    crypto::hash md;
-    md.update(public_key().as_vector()).finalize(hash);
+    crypto::hash::value hash = sha256::hash(public_key());
 
     byte_array id(hash);
     // Only use 160 bits of the hash to produce the ID,
