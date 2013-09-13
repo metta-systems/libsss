@@ -67,7 +67,7 @@ public:
  */
 class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
 {
-    std::unordered_map<magic_t, link_receiver*> receivers;
+    std::unordered_map<magic_t, link_receiver*> receivers_;
     std::unordered_set<link*> active_links_;
 
     /**
@@ -84,8 +84,11 @@ public:
         if (magic & 0xff000000) {
             throw "Invalid magic value for binding a receiver.";
         }
-        receiver->magic(magic);
-        receivers.insert(std::make_pair(magic, receiver)); // @todo: Will NOT replace existing element.
+        receivers_.insert(std::make_pair(magic, receiver)); // @todo: Will NOT replace existing element.
+    }
+
+    void unbind_receiver(magic_t magic) {
+        receivers_.erase(magic);
     }
 
     /**
