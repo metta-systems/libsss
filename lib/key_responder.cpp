@@ -66,8 +66,8 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
 namespace ssu {
 namespace negotiation {
 
-key_responder::key_responder(std::shared_ptr<host> host)
-    : link_receiver()
+key_responder::key_responder(shared_ptr<host> host, magic_t magic)
+    : link_receiver(*host, magic)
     , host_(host)
 {}
 

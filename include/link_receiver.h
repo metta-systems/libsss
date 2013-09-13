@@ -15,6 +15,7 @@ class byte_array;
 namespace ssu {
 
 class link_endpoint;
+class link_host_state;
 
 /**
  * Abstract base class for control protocol receivers.
@@ -25,16 +26,28 @@ class link_endpoint;
  */
 class link_receiver
 {
+    link_host_state& host_;
     magic_t magic_{0};
 
 protected:
-    link_receiver() {}
+    void bind();
+    void unbind();
+
+    inline link_receiver(link_host_state& host) : host_(host) {}
+    inline link_receiver(link_host_state& host, magic_t magic) : host_(host), magic_(magic) { bind(); }
+    inline ~link_receiver() { unbind(); }
 
     inline magic_t magic() const { return magic_; }
 
+    // @fixme Possibly set_magic() might set a magic on default link_receiver and bind() it.
+
 public:
-    inline void magic(magic_t set_magic) { magic_ = set_magic; } //temp?
-    virtual void receive(const byte_array& msg, const link_endpoint& src) = 0;
+    /**
+     * Link calls this method to dispatch control messages.
+     * @param msg Data packet.
+     * @param src Origin endpoint.
+     */
+    virtual void receive(byte_array const& msg, link_endpoint const& src) = 0;
 };
 
 } // ssu namespace

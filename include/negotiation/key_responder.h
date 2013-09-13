@@ -49,7 +49,7 @@ class key_responder : public link_receiver
         const ssu::link_endpoint& src);
 
 public:
-    key_responder(std::shared_ptr<host> host);
+    key_responder(std::shared_ptr<host> host, magic_t magic);
 
     void receive(const byte_array& msg, const link_endpoint& src) override;
 };

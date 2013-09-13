@@ -16,6 +16,22 @@
 namespace ssu {
 
 //=================================================================================================
+// link_receiver
+//=================================================================================================
+
+void link_receiver::bind()
+{
+    logger::debug() << "Link receiver " << this << " binds for magic " << hex(magic_, 8, true);
+    host_.bind_receiver(magic_, this);
+}
+
+void link_receiver::unbind()
+{
+    logger::debug() << "Link receiver " << this << " unbinds magic " << hex(magic_, 8, true);
+    host_.unbind_receiver(magic_);
+}
+
+//=================================================================================================
 // link_host_state
 //=================================================================================================
 
