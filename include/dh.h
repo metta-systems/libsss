@@ -8,10 +8,11 @@
 //
 #pragma once
 
+#include <unordered_map>
+#include <openssl/dh.h>
 #include "byte_array.h"
 #include "timer.h"
 #include "negotiation/key_message.h"
-#include <openssl/dh.h>
 
 namespace ssu {
 
@@ -38,7 +39,7 @@ class dh_hostkey_t
     /**
      * Hash table of cached R2 responses made using this key, for replay protection.
      */
-    std::map<byte_array, byte_array> r2_cache_;
+    std::unordered_map<byte_array, byte_array> r2_cache_;
 
     /**
      * Expire the key.
