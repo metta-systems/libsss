@@ -63,8 +63,7 @@ calc_key(byte_array const& master,
     crypto::hash hmac(master_hash.as_vector());
     hmac.update(initiator_hashed_nonce.as_vector());
     hmac.update(responder_nonce.as_vector());
-    auto which1 = std::array<char,1>({which});
-    hmac.update(which1);
+    hmac.update(byte_array({which}).as_vector());
 
     crypto::hash::value key;
     hmac.finalize(key);
