@@ -326,7 +326,7 @@ class dh_init2_chunk
     byte_array     initiator_dh_public_key;     // Initiator's DH public key
     byte_array     responder_dh_public_key;     // Responder's DH public key
     byte_array     responder_challenge_cookie;  // Responder's challenge cookie
-    byte_array     initiator_id;                // Initiator's encrypted identity
+    byte_array     initiator_info;              // Initiator's encrypted identity
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -340,7 +340,7 @@ inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
        << dc2.initiator_dh_public_key
        << dc2.responder_dh_public_key
        << dc2.responder_challenge_cookie
-       << dc2.initiator_id;
+       << dc2.initiator_info;
     return oa;
 }
 
@@ -353,7 +353,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init2_chunk& dc2)
        >> dc2.initiator_dh_public_key
        >> dc2.responder_dh_public_key
        >> dc2.responder_challenge_cookie
-       >> dc2.initiator_id;
+       >> dc2.initiator_info;
     return ia;
 }
 

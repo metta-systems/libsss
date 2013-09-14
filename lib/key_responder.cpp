@@ -10,6 +10,7 @@
 #include "negotiation/key_message.h"
 #include "crypto.h"
 #include "crypto/sha256_hash.h"
+#include "crypto/aes_256_cbc.h"
 #include "host.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
@@ -91,6 +92,32 @@ bool key_responder::is_initiator_acceptable(link_endpoint const& initiator_ep,
             byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data)
 {
     return true;
+}
+
+/**
+ * Compute HMAC challenge cookie for DH.
+ */
+byte_array
+key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
+    const byte_array& responder_nonce,
+    const byte_array& initiator_hashed_nonce,
+    const ssu::link_endpoint& src)
+{
+    byte_array data;
+    {
+        // Put together the data to hash
+        auto lval_addr = src.address().to_v4().to_bytes();
+
+        byte_array_owrap<flurry::oarchive> write(data);
+        write.archive()
+            << hostkey->public_key_
+            << responder_nonce
+            << initiator_hashed_nonce
+            << lval_addr
+            << src.port();
+    }
+
+    return sha256::keyed_hash(hostkey->hmac_secret_key_, data);
 }
 
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
@@ -210,24 +237,117 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
     response.responder_dh_public_key = hostkey->public_key_;
     response.responder_challenge_cookie = challenge_cookie;
     // Don't offer responder's identity (eid, public key and signature) for now.
+
+    logger::debug() << "Send dh_response1 to " << src;
     send(magic(), response, src);
+    // retransmit_timer_.restart();
 }
 
 /**
  * We got init2, this means the init1/response1 phase might have been done.
- * Find the key_initiator for this exchange and continue.
  */
 void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src)
 {
     logger::debug() << "Got dh_init2";
-    ssu::negotiation::dh_group_type group = ssu::negotiation::dh_group_type::dh_group_1024;
-    int keylen = 16;
-    byte_array initiator_hashed_nonce;
-    byte_array responder_nonce;
-    byte_array initiator_dh_public_key;
-    byte_array responder_dh_public_key;
-    byte_array peer_eid;
-    byte_array hash = calc_signature_hash(group, keylen, initiator_hashed_nonce, responder_nonce, initiator_dh_public_key, responder_dh_public_key, peer_eid);
+
+    // We'll need the originator's hashed nonce as well...
+    byte_array initiator_hashed_nonce = sha256::hash(data.initiator_nonce);
+
+    if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
+        return warning("invalid minimum AES key length");
+
+    // Find the appropriate host key
+    shared_ptr<dh_hostkey_t> hostkey(host_->get_dh_key(data.group)); // get or generate a host key
+    if (!hostkey or data.responder_dh_public_key != hostkey->public_key_)
+    {
+        // Key mismatch, probably due to a timeout and key change.
+        // Send a new dh_response1 instead of response2.
+        logger::debug() << "Received dh_init2 with incorrect public key";
+
+        dh_init1_chunk init;
+        init.group = data.group;
+        init.key_min_length = data.key_min_length;
+        init.initiator_hashed_nonce = initiator_hashed_nonce;
+        init.initiator_dh_public_key = data.initiator_dh_public_key;
+        init.responder_eid.clear();
+
+        return got_dh_init1(init, src);
+    }
+
+    // See if we've already responded to this particular dh_init2 - if so,
+    // just return our previous cached response.
+    // Use hhkr as the index, as per the JFK spec.
+    if (hostkey->r2_cache_.find(data.responder_challenge_cookie) != hostkey->r2_cache_.end())
+    {
+        logger::debug() << "Received duplicate dh_init2 packet, replying with cached response.";
+        src.send(hostkey->r2_cache_[data.responder_challenge_cookie]);
+        return;
+    }
+
+    // Verify the challenge hash
+    if (data.responder_challenge_cookie !=
+        calc_dh_cookie(hostkey, data.responder_nonce, initiator_hashed_nonce, src))
+    {
+        logger::debug() << "Received dh_init2 with bad challenge hash, dropping.";
+        return; // Just drop the bad dh_init2
+    }
+
+    //----------------------------------
+    // Compute the shared master secret
+    //----------------------------------
+
+    byte_array master_secret = hostkey->calc_key(data.initiator_dh_public_key);
+
+    // Check and strip the MAC field on the encrypted identity
+    byte_array mac_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, '2', 256/8);
+
+    // For when we're tight on speed, the aes-256-ocb might be a better option:
+    // http://www.cs.ucdavis.edu/~rogaway/ocb/news/code/ocb.c
+    // http://www.cs.ucdavis.edu/~rogaway/ocb/news/code/ae.h
+    // These are patented in US, but there's a free license for open source software.
+
+    // @todo: wrap this into a hmac_verify() kind of helper
+    crypto::hash hmac(mac_key.as_vector());
+    int hmac_size = crypto::HMACLEN;
+    byte_array block = data.initiator_info;
+    block.resize(block.size() - hmac_size);
+    hmac.update(block.as_vector());
+    crypto::hash::value result;
+    hmac.finalize(result);
+
+    byte_array expected_hmac;
+    expected_hmac.resize(hmac_size);
+    std::copy(data.initiator_info.end() - hmac_size,
+              data.initiator_info.end(),
+              expected_hmac.begin());
+
+    if (byte_array(result) != expected_hmac)
+    {
+        logger::warning() << "Received dh_init2 with bad initiator identity MAC.";
+        return; // XXX generate cached error response instead
+    }
+
+    // Decrypt it with AES-256-CBC
+    byte_array enc_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, '1', 256/8);
+    byte_array initiator_info = aes_256_cbc(aes_256_cbc::type::decrypt, enc_key).decrypt(data.initiator_info);
+
+    // Decode the identity information
+    byte_array_iwrap<flurry::iarchive> read(initiator_info);
+    initiator_identity_chunk iic;
+    read.archive() >> iic;
+
+    if (iic.initiator_channel_number == 0) {
+        logger::debug() << "Received dh_init2 with bad identity info.";
+        return; // XXX generate cached error response instead
+    }
+
+    // Check that the initiator is someone we want to talk with!
+    if (!is_initiator_acceptable(src, iic.initiator_eid, iic.user_data_in))
+    {
+        logger::warning() << "Rejecting dh_init2 due to is_initiator_acceptable()";
+        return; // XXX generate cached error response instead
+    }
+
 }
 
 /**
@@ -243,33 +363,21 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
 
     logger::debug() << "Got dh_response1";
 
+    // generate encrypted part here
+
     initiator->send_dh_init2();
 }
 
-/**
- * Compute HMAC challenge cookie for DH.
- */
-byte_array
-key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
-    const byte_array& responder_nonce,
-    const byte_array& initiator_hashed_nonce,
-    const ssu::link_endpoint& src)
+void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src)
 {
-    byte_array data;
-    {
-        // Put together the data to hash
-        auto lval_addr = src.address().to_v4().to_bytes();
+    shared_ptr<key_initiator> initiator = host_->get_initiator(data.initiator_hashed_nonce);
+    if (!initiator)
+        return warning("Got dh_response2 for unknown dh_init2");
+    if (initiator->is_done())
+        return warning("Got duplicate dh_response2 for completed initiator");
 
-        byte_array_owrap<flurry::oarchive> write(data);
-        write.archive()
-            << hostkey->public_key_
-            << responder_nonce
-            << initiator_hashed_nonce
-            << lval_addr
-            << src.port();
-    }
-
-    return sha256::keyed_hash(hostkey->hmac_secret_key_, data);
+    logger::debug() << "Got dh_response2";
+    // state_ = state::done;
 }
 
 //===========================================================================================================
