@@ -362,6 +362,15 @@ void key_initiator::send_dh_init2()
     state_ = state::init2;
 
     dh_init2_chunk init;
+    init.group = dh_group_;
+    init.key_min_length = key_min_length_;
+    init.initiator_nonce = initiator_nonce_;
+    init.responder_nonce = responder_nonce_;
+    init.initiator_dh_public_key = initiator_public_key_;
+    init.responder_dh_public_key = responder_public_key_;
+    init.responder_challenge_cookie = responder_challenge_cookie_;
+    init.initiator_info = encrypted_identity_info_;
+
     send(magic(), init, target_);
 }
 
