@@ -7,6 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "stream.h"
+#include "stream_channel.h"
+#include "stream_responder.h"
 #include "private/stream_peer.h"
 #include "base_stream.h"
 #include "identity.h"
@@ -121,7 +123,17 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out)
 {
-    return nullptr;
+    stream_peer* peer = get_host()->stream_peer(initiator_eid);
+
+    stream_channel* chan = new stream_channel(get_host(), peer, initiator_eid);
+    if (!chan->bind(initiator_ep))
+    {
+        logger::warning() << "stream_responder - could not bind new channel";
+        delete chan;
+        return nullptr;
+    }
+
+    return chan;
 }
 
 //=================================================================================================

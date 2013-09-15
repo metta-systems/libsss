@@ -9,10 +9,9 @@
 #pragma once
 
 #include "host.h"
-#include "key_responder.h"
+#include "negotiation/key_responder.h"
 
 namespace ssu {
-
 namespace negotiation {
 
 /**
@@ -22,9 +21,12 @@ namespace negotiation {
  */
 class stream_responder : public key_responder, public stream_protocol
 {
-    stream_responder(shared_ptr<host>& host);
+    stream_responder(std::shared_ptr<host>& host);
+
+    channel* create_channel(link_endpoint const& initiator_ep,
+            byte_array const& initiator_eid,
+            byte_array const& user_data_in, byte_array& user_data_out) override;
 };
 
-} // namespace negotiation
-
-} // namespace ssu
+} // negotiation namespace
+} // ssu namespace
