@@ -14,13 +14,14 @@
 #include "host.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
+#include "channel.h"
 
 using namespace std;
 using namespace ssu;
 
-//===========================================================================================================
+//=================================================================================================
 // Supplemental functions.
-//===========================================================================================================
+//=================================================================================================
 
 namespace {
 
@@ -74,14 +75,96 @@ calc_key(byte_array const& master,
     return out;
 }
 
-} // anonymous namespace
+void warning(string message)
+{
+    logger::warning() << "key_responder: " << message;
+}
 
-//===========================================================================================================
-// key_responder
-//===========================================================================================================
+} // anonymous namespace
 
 namespace ssu {
 namespace negotiation {
+
+//=================================================================================================
+// send helpers
+//=================================================================================================
+
+namespace {
+
+/**
+ * Send complete prepared key_message.
+ */
+void send(key_message& m, link_endpoint const& target)
+{
+    byte_array msg;
+    {
+        byte_array_owrap<flurry::oarchive> write(msg);
+        write.archive() << m;
+    }
+    target.send(msg);
+}
+
+void send(magic_t magic, dh_init1_chunk& r, link_endpoint const& to)
+{
+    key_message m;
+    key_chunk chunk;
+
+    chunk.type = key_chunk_type::dh_init1;
+    chunk.dh_init1 = r;
+
+    m.magic = magic;
+    m.chunks.push_back(chunk);
+
+    send(m, to);
+}
+
+void send(magic_t magic, dh_init2_chunk& r, link_endpoint const& to)
+{
+    key_message m;
+    key_chunk chunk;
+
+    chunk.type = key_chunk_type::dh_init2;
+    chunk.dh_init2 = r;
+
+    m.magic = magic;
+    m.chunks.push_back(chunk);
+
+    send(m, to);
+}
+
+void send(magic_t magic, dh_response1_chunk& r, link_endpoint const& to)
+{
+    key_message m;
+    key_chunk chunk;
+
+    chunk.type = key_chunk_type::dh_response1;
+    chunk.dh_response1 = r;
+
+    m.magic = magic;
+    m.chunks.push_back(chunk);
+
+    send(m, to);
+}
+
+void send(magic_t magic, dh_response2_chunk& r, link_endpoint const& to)
+{
+    key_message m;
+    key_chunk chunk;
+
+    chunk.type = key_chunk_type::dh_response2;
+    chunk.dh_response2 = r;
+
+    m.magic = magic;
+    m.chunks.push_back(chunk);
+
+    send(m, to);
+}
+
+} // anonymous namespace
+
+//=================================================================================================
+// key_responder
+//=================================================================================================
 
 key_responder::key_responder(shared_ptr<host> host, magic_t magic)
     : link_receiver(*host, magic)
@@ -139,72 +222,14 @@ void key_responder::receive(const byte_array& msg, const link_endpoint& src)
                 return got_dh_init2(*chunk.dh_init2, src);
             case ssu::negotiation::key_chunk_type::dh_response1:
                 return got_dh_response1(*chunk.dh_response1, src);//key_initiator method?
+            case ssu::negotiation::key_chunk_type::dh_response2:
+                return got_dh_response2(*chunk.dh_response2, src);//key_initiator method?
             default:
                 logger::warning() << "Unknown negotiation chunk type " << uint32_t(chunk.type);
                 break;
         }
     }
 };
-
-static void warning(string message)
-{
-    logger::warning() << "key_responder: " << message;
-}
-
-/**
- * Send complete prepared key_message.
- */
-static void send(key_message& m, const link_endpoint& target)
-{
-    byte_array msg;
-    {
-        byte_array_owrap<flurry::oarchive> write(msg);
-        write.archive() << m;
-    }
-    target.send(msg);
-}
-
-static void send(magic_t magic, dh_init1_chunk& r, const link_endpoint& to)
-{
-    key_message m;
-    key_chunk chunk;
-
-    chunk.type = key_chunk_type::dh_init1;
-    chunk.dh_init1 = r;
-
-    m.magic = magic;
-    m.chunks.push_back(chunk);
-
-    send(m, to);
-}
-
-static void send(magic_t magic, dh_init2_chunk& r, const link_endpoint& to)
-{
-    key_message m;
-    key_chunk chunk;
-
-    chunk.type = key_chunk_type::dh_init2;
-    chunk.dh_init2 = r;
-
-    m.magic = magic;
-    m.chunks.push_back(chunk);
-
-    send(m, to);
-}
-
-static void send(magic_t magic, dh_response1_chunk& r, const link_endpoint& to)
-{
-    key_message m;
-    key_chunk chunk;
-
-    chunk.type = key_chunk_type::dh_response1;
-    chunk.dh_response1 = r;
-
-    m.magic = magic;
-    m.chunks.push_back(chunk);
-
-    send(m, to);
-}
 
 void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src)
 {
@@ -241,6 +266,106 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
     logger::debug() << "Send dh_response1 to " << src;
     send(magic(), response, src);
     // retransmit_timer_.restart();
+}
+
+/**
+ * We got a response, this means we might've sent a request first, find the corresponding initiator.
+ */
+void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src)
+{
+    shared_ptr<key_initiator> initiator = host_->get_initiator(data.initiator_hashed_nonce);
+    if (!initiator or initiator->group() != data.group)
+        return warning("Got dh_response1 for unknown dh_init1");
+    if (initiator->is_done())
+        return warning("Got duplicate dh_response1 for completed initiator");
+
+    assert(initiator->initiator_hashed_nonce_ == data.initiator_hashed_nonce);
+    assert(initiator->channel_ != nullptr);
+
+    logger::debug() << "Got dh_response1";
+
+    if (data.group >= dh_group_type::dh_group_max)
+        return warning("invalid group type");
+    if (data.group < initiator->dh_group_)
+        return warning("key group less than required minimum");
+
+    if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
+        return warning("invalid minimum AES key length");
+    if (data.key_min_length < initiator->key_min_length_)
+        return warning("key length less than required minimum");
+
+    // If the group changes or our public key expires, revert to dh_init1 phase.
+    if (initiator->dh_group_ != data.group)
+    {
+        initiator->dh_group_ = data.group;
+        return initiator->send_dh_init1();
+    }
+    shared_ptr<dh_hostkey_t> hostkey(host_->get_dh_key(data.group));
+    if (!hostkey or initiator->initiator_public_key_ != hostkey->public_key_)
+        return initiator->send_dh_init1();
+
+    // Always use the latest responder parameters received,
+    // even if we've already received an R1 response.
+    // XXX to be really DoS-protected from active attackers,
+    // we should cache some number of the last R1 responses we get
+    // until we receive a valid R2 response with the correct identity.
+    initiator->key_min_length_ = data.key_min_length;
+    initiator->responder_nonce_ = data.responder_nonce;
+    initiator->responder_public_key_ = data.responder_dh_public_key;
+    initiator->responder_challenge_cookie_ = data.responder_challenge_cookie;
+    // XX ignore any public responder identity in the dh_response1 for now.
+
+    initiator->shared_master_secret_ = hostkey->calc_key(data.responder_dh_public_key);
+
+    // Sign the key parameters to prove our identity
+    byte_array signature_hash = calc_signature_hash(initiator->dh_group_,
+        initiator->key_min_length_, initiator->initiator_hashed_nonce_,
+        initiator->responder_nonce_, initiator->initiator_public_key_,
+        initiator->responder_public_key_, byte_array(/*no eid yet*/));
+    byte_array signature = host_->host_identity().sign(signature_hash);
+
+    // Build encrypted part of init2 message.
+    initiator_identity_chunk iic;
+    iic.initiator_channel_number = initiator->channel_->local_channel();
+    iic.initiator_eid = host_->host_identity().id().id();
+    iic.responder_eid = byte_array(); // XXX
+    iic.initiator_id_public_key = host_->host_identity().public_key();
+    iic.initiator_signature = signature;
+    iic.user_data_in = initiator->user_data_in_;
+
+    byte_array encrypted_initiator_info;
+    {
+        byte_array_owrap<flurry::oarchive> write(encrypted_initiator_info);
+        write.archive() << iic;
+    }
+
+    // Encrypt it with AES-256-CBC
+    byte_array enc_key = calc_key(initiator->shared_master_secret_,
+        initiator->initiator_hashed_nonce_,
+        initiator->responder_nonce_,
+        '1', 256/8);
+
+    encrypted_initiator_info = aes_256_cbc(aes_256_cbc::type::encrypt, enc_key).encrypt(encrypted_initiator_info);
+
+    // Authenticate it with HMAC-SHA256-128
+    byte_array mac_key = calc_key(initiator->shared_master_secret_,
+        initiator->initiator_hashed_nonce_,
+        initiator->responder_nonce_,
+        '2', 256/8);
+
+    // @todo: wrap this into a hmac_calc_append() kind of helper
+    crypto::hash hmac(mac_key.as_vector());
+    int hmac_size = crypto::HMACLEN;
+    hmac.update(encrypted_initiator_info.as_vector());
+    crypto::hash::value result;
+    hmac.finalize(result);
+
+    encrypted_initiator_info.append(result);
+
+    initiator->encrypted_identity_info_ = encrypted_initiator_info;
+
+    initiator->send_dh_init2();
+    initiator->retransmit_timer_.start(async::timer::retry_min);
 }
 
 /**
@@ -295,6 +420,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     //----------------------------------
     // Compute the shared master secret
     //----------------------------------
+    logger::debug() << "Computing master secret.";
 
     byte_array master_secret = hostkey->calc_key(data.initiator_dh_public_key);
 
@@ -305,6 +431,8 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     // http://www.cs.ucdavis.edu/~rogaway/ocb/news/code/ocb.c
     // http://www.cs.ucdavis.edu/~rogaway/ocb/news/code/ae.h
     // These are patented in US, but there's a free license for open source software.
+
+    logger::debug() << "Verifying HMAC.";
 
     // @todo: wrap this into a hmac_verify() kind of helper
     crypto::hash hmac(mac_key.as_vector());
@@ -327,6 +455,8 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
         return; // XXX generate cached error response instead
     }
 
+    logger::debug() << "Decrypting initiator info.";
+
     // Decrypt it with AES-256-CBC
     byte_array enc_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, '1', 256/8);
     byte_array initiator_info = aes_256_cbc(aes_256_cbc::type::decrypt, enc_key).decrypt(data.initiator_info);
@@ -348,24 +478,102 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
         return; // XXX generate cached error response instead
     }
 
-}
+    // Check that the initiator actually wants to talk with us
+    byte_array host_id = host_->host_identity().id().id();
+    byte_array responder_eid = iic.responder_eid;
+    if (responder_eid.is_empty())
+    {
+        responder_eid = host_id;
+    }
+    else if (responder_eid != host_id)
+    {
+        logger::warning() << "Received dh_init2 from initiator looking for someone else.";
+        return; // XXX generate cached error response instead
+    }
 
-/**
- * We got a response, this means we might've sent a request first, find the corresponding initiator.
- */
-void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src)
-{
-    shared_ptr<key_initiator> initiator = host_->get_initiator(data.initiator_hashed_nonce);
-    if (!initiator or initiator->group() != data.group)
-        return warning("Got dh_response1 for unknown dh_init1");
-    if (initiator->is_done())
-        return warning("Got duplicate dh_response1 for completed initiator");
+    // Verify the initiator's identity
+    identity initiator_id(iic.initiator_eid);
+    if (!initiator_id.set_key(iic.initiator_id_public_key))
+    {
+        logger::warning() << "Received dh_init2 with bad initiator public key.";
+        return; // XXX generate cached error response instead
+    }
 
-    logger::debug() << "Got dh_response1";
+    byte_array signature_hash = calc_signature_hash(data.group,
+        data.key_min_length, initiator_hashed_nonce,
+        data.responder_nonce, data.initiator_dh_public_key,
+        data.responder_dh_public_key, iic.responder_eid);
 
-    // generate encrypted part here
+    if (!initiator_id.verify(signature_hash, iic.initiator_signature))
+    {
+        logger::warning() << "Received dh_init2 with bad initiator signature.";
+        return; // XXX generate cached error response instead
+    }
 
-    initiator->send_dh_init2();
+    logger::debug() << "Authenticated initiator with id " << peer_id(iic.initiator_eid)
+        << " at " << src;
+
+    // Everything looks good - setup a channel and produce dh_response2.
+    byte_array user_data_out;
+
+    channel* chan = create_channel(src, iic.initiator_eid, iic.user_data_in, user_data_out);
+    if (!chan)
+    {
+        logger::debug() << "Rejecting dh_init2 due to null return from create_channel()";
+        return; // XXX generate cached error response instead
+    }
+    assert(chan->is_bound());
+    assert(!chan->is_active());
+
+    // *** Should be no failures after this point. ***
+
+    // Sign the key parameters to prove our own identity
+    signature_hash = calc_signature_hash(data.group, data.key_min_length, initiator_hashed_nonce,
+        data.responder_nonce, data.initiator_dh_public_key, data.responder_dh_public_key,
+        iic.initiator_eid);
+    byte_array responder_signature = host_->host_identity().sign(signature_hash);
+
+    // Build the part of the dh_response2 message to be encrypted.
+    // (XX should we include anything for the 'sa' in the JFK spec?)
+    responder_identity_chunk resp_ic;
+    resp_ic.responder_channel_number = chan->local_channel();
+    resp_ic.responder_eid = responder_eid;
+    resp_ic.responder_id_public_key = host_->host_identity().public_key();
+    resp_ic.responder_signature = responder_signature;
+    resp_ic.user_data_out = user_data_out;
+
+    byte_array encrypted_responder_info;
+    {
+        byte_array_owrap<flurry::oarchive> write(encrypted_responder_info);
+        write.archive() << resp_ic;
+    }
+
+    // Encrypt and authenticate our identity
+    encrypted_responder_info = aes_256_cbc(aes_256_cbc::type::encrypt, enc_key).encrypt(encrypted_responder_info);
+
+    // @todo: wrap this into a hmac_calc_append() kind of helper
+    crypto::hash hmac2(mac_key.as_vector());
+    hmac2.update(encrypted_responder_info.as_vector());
+    crypto::hash::value result2;
+    hmac2.finalize(result2);
+
+    encrypted_responder_info.append(result2);
+
+    // Build, send, and cache our dh_response2.
+    dh_response2_chunk response;
+    response.initiator_hashed_nonce = initiator_hashed_nonce;
+    response.responder_info = encrypted_responder_info;
+
+    logger::debug() << "Send dh_response2 to " << src;
+    send(magic(), response, src);
+
+    // hostkey->r2_cache_.insert(make_pair(data.responder_challenge_cookie, pkt));
+
+    // Set up the armor for the new channel
+    // Set up the new channel IDs
+    // Let the ball roll
+    // chan->set_remote_channel(iic.initiator_channel_number);
+    // chan->start(false);
 }
 
 void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src)
@@ -377,12 +585,13 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
         return warning("Got duplicate dh_response2 for completed initiator");
 
     logger::debug() << "Got dh_response2";
-    // state_ = state::done;
+
+    initiator->done();
 }
 
-//===========================================================================================================
+//=================================================================================================
 // key_initiator
-//===========================================================================================================
+//=================================================================================================
 
 key_initiator::key_initiator(shared_ptr<host> host,
                              channel* channel,
@@ -482,11 +691,11 @@ void key_initiator::send_dh_init2()
     send(magic(), init, target_);
 }
 
-} // namespace negotiation
+} // negotiation namespace
 
-//===========================================================================================================
+//=================================================================================================
 // key_host_state
-//===========================================================================================================
+//=================================================================================================
 
 shared_ptr<ssu::negotiation::key_initiator>
 key_host_state::get_initiator(byte_array nonce)
@@ -507,4 +716,4 @@ key_host_state::register_dh_initiator(byte_array const& nonce,
     ep_initiators_.insert(make_pair(ep, ki));
 }
 
-} // namespace ssu
+} // ssu namespace

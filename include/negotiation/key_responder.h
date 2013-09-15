@@ -50,12 +50,9 @@ class key_responder : public link_receiver
         const byte_array& initiator_hashed_nonce,
         const ssu::link_endpoint& src);
 
-public:
-    key_responder(std::shared_ptr<host> host, magic_t magic);
-
-    void receive(const byte_array& msg, const link_endpoint& src) override;
-
 protected:
+    inline std::shared_ptr<host> get_host() { return host_; }
+
     /**
      * key_responder calls this to check whether to accept a connection,
      * before actually bothering to verify the initiator's identity.
@@ -76,6 +73,11 @@ protected:
     virtual channel* create_channel(link_endpoint const& initiator_ep,
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out) = 0;
+
+public:
+    key_responder(std::shared_ptr<host> host, magic_t magic);
+
+    void receive(const byte_array& msg, const link_endpoint& src) override;
 };
 
 /**
@@ -84,6 +86,8 @@ protected:
  */
 class key_initiator : public std::enable_shared_from_this<key_initiator>
 {
+    friend class key_responder; // still some coupling between the two classes...
+
     std::shared_ptr<host> host_;
     channel*              channel_;   ///< Channel for which we initiated key exchange.
     link_endpoint         target_;    ///< Remote endpoint we're trying to contact.
@@ -129,7 +133,18 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     // Encrypted and authenticated identity information
     byte_array                                 encrypted_identity_info_;
     
+    byte_array                                 user_data_in_;
+
     void retransmit(bool fail);
+    inline void done()
+    {
+        bool send_signal = (state_ != state::done);
+        state_ = state::done;
+        retransmit_timer_.stop();
+        if (send_signal) {
+            on_completed(true);
+        }
+    }
 
 protected:
     inline magic_t magic() const { return magic_; }
