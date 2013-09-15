@@ -79,7 +79,7 @@ rsa160_key::public_key() const
     {
         byte_array_owrap<flurry::oarchive> write(data);
         // Write the public part of the key
-        write.archive() << crypto::utils::bn2ba(rsa_->n) << crypto::utils::bn2ba(rsa_->e) << false;
+        write.archive() << rsa_->n << rsa_->e << false;
     }
     return data;
 }
@@ -91,7 +91,8 @@ rsa160_key::private_key() const
     {
         byte_array_owrap<flurry::oarchive> write(data);
         // Write the public and private parts of the key
-        write.archive() << crypto::utils::bn2ba(rsa_->n) << crypto::utils::bn2ba(rsa_->e) << true;
+        write.archive() << rsa_->n << rsa_->e << true;
+        write.archive() << rsa_->d << rsa_->p << rsa_->q << rsa_->dmp1 << rsa_->dmq1 << rsa_->iqmp;
     }
     return data;
 }

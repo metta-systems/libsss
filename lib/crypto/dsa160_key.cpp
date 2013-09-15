@@ -311,7 +311,7 @@ dsa160_key::public_key() const
     {
         byte_array_owrap<flurry::oarchive> write(data);
         // Write the public part of the key
-        write.archive() << false;
+        write.archive() << dsa_->p << dsa_->q << dsa_->g << dsa_->pub_key << byte_array();
     }
     return data;
 }
@@ -323,7 +323,7 @@ dsa160_key::private_key() const
     {
         byte_array_owrap<flurry::oarchive> write(data);
         // Write the public and private parts of the key
-        write.archive() << true;
+        write.archive() << dsa_->p << dsa_->q << dsa_->g << dsa_->pub_key << dsa_->priv_key;
     }
     return data;
 }
