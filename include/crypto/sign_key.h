@@ -42,6 +42,8 @@ public:
         public_and_private = 2,
     };
 
+    virtual ~sign_key();
+
     /// Get the type of this key (public or private).
     inline key_type type() const { return type_; }
 
@@ -64,8 +66,6 @@ public:
 
     /// Verify a signature
     virtual bool verify(byte_array const& digest, byte_array const& signature) const = 0;
-
-    virtual ~sign_key();
 
 protected:
     sign_key();
