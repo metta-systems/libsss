@@ -86,9 +86,9 @@ void stream_peer::add_location_hint(const endpoint& hint)
     locations_.insert(hint);
 }
 
-void stream_peer::completed(bool failed)
+void stream_peer::completed(bool success)
 {
-    logger::debug() << "Stream peer key exchange completed " << (failed ? "erroneously" : "successfully");
+    logger::debug() << "Stream peer key exchange completed " << (success ? "successfully" : "erroneously");
 }
 
 // } // private_ namespace

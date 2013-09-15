@@ -149,6 +149,9 @@ public:
     void send_dh_init2();
     void send_dh_response2();
 
+    /**
+     * Send completion signal, indicating success when true or failure when false.
+     */
     typedef boost::signals2::signal<void (bool)> completion_signal;
     completion_signal on_completed;
 };

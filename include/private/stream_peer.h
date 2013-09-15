@@ -92,7 +92,7 @@ class stream_peer : public stream_protocol
     void clear_primary_channel();
 
     // Handlers.
-    void completed(bool failed);
+    void completed(bool success);
 
 public:
     /// Supply an endpoint hint that may be useful for finding this peer.
