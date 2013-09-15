@@ -65,6 +65,9 @@ public:
      */
     void unbind();
 
+    channel_number local_channel() const { return local_channel_number_; }
+    channel_number remote_channel() const { return remote_channel_number_; }
+
     // Provide access to signal types for clients
     typedef boost::signals2::signal<void (byte_array const&, link_endpoint const&)> received_signal;
     typedef boost::signals2::signal<void ()> ready_transmit_signal;
