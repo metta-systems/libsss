@@ -573,6 +573,10 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
 
     // Set up the armor for the new channel
     // Set up the new channel IDs
+    byte_array tx_chan_id = calc_key(master_secret, data.responder_nonce, initiator_hashed_nonce, 'I', 128/8);
+    byte_array rx_chan_id = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, 'I', 128/8);
+    chan->set_channel_ids(tx_chan_id, rx_chan_id);
+
     // Let the ball roll
     chan->set_remote_channel(iic.initiator_channel_number);
     chan->start(false);
