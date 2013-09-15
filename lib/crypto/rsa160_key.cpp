@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <openssl/sha.h>
+#include <openssl/err.h>
 #include "crypto/rsa160_key.h"
 #include "crypto/utils.h"
 #include "crypto.h"
@@ -14,6 +15,7 @@
 #include "byte_array.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
+#include "logging.h"
 
 namespace ssu {
 namespace crypto {
@@ -131,13 +133,36 @@ rsa160_key::sign(byte_array const& digest) const
     unsigned siglen = RSA_size(rsa_);
     signature.resize(siglen);
 
+    if (!RSA_sign(NID_sha256,
+            (unsigned char*)digest.data(), SHA256_DIGEST_LENGTH,
+            (unsigned char*)signature.data(), &siglen, rsa_))
+    {
+        logger::fatal() << "RSA signing error - " << ERR_error_string(ERR_get_error(), NULL);
+    }
+
+    assert(siglen <= signature.size());
+    signature.resize(siglen);
+
     return signature;
 }
 
 bool
 rsa160_key::verify(byte_array const& digest, byte_array const& signature) const
 {
-    return false;
+    if (type() == invalid)
+        return false;
+    assert(digest.size() == SHA256_DIGEST_LENGTH);
+
+    int rc = RSA_verify(NID_sha256,
+            (unsigned char*)digest.data(), SHA256_DIGEST_LENGTH,
+            (unsigned char*)signature.const_data(), signature.size(), rsa_);
+
+    if (!rc)
+    {
+        logger::warning() << "RSA signature verification failed - " << ERR_error_string(ERR_get_error(), NULL);
+    }
+
+    return rc == 1;
 }
 
 void

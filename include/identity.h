@@ -123,6 +123,17 @@ public:
     inline byte_array sign(byte_array const& digest) {
         return key_->sign(digest);
     }
+
+    /**
+     * Verify a signature.
+     * This identity must contain a valid public key.
+     * @param digest the hash digest of the signed message.
+     * @param sig the signature to be verified.
+     * @return true if signature verification succeeds.
+     */
+    inline bool verify(byte_array const& digest, byte_array const& sig) const {
+        return key_->verify(digest, sig);
+    }
 };
 
 class identity_host_state
