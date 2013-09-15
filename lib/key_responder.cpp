@@ -574,8 +574,8 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     // Set up the armor for the new channel
     // Set up the new channel IDs
     // Let the ball roll
-    // chan->set_remote_channel(iic.initiator_channel_number);
-    // chan->start(false);
+    chan->set_remote_channel(iic.initiator_channel_number);
+    chan->start(false);
 }
 
 void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src)

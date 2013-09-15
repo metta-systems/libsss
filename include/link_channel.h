@@ -67,6 +67,7 @@ public:
 
     channel_number local_channel() const { return local_channel_number_; }
     channel_number remote_channel() const { return remote_channel_number_; }
+    void set_remote_channel(channel_number ch) { remote_channel_number_ = ch; }
 
     // Provide access to signal types for clients
     typedef boost::signals2::signal<void (byte_array const&, link_endpoint const&)> received_signal;
