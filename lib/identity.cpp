@@ -17,6 +17,67 @@ namespace ssu {
 // identity
 //=================================================================================================
 
+identity::identity(byte_array const& id)
+    : id_(id)
+{
+}
+
+identity::identity(peer_id const& id)
+    : id_(id)
+{}
+
+identity::identity(byte_array const& id, byte_array const& key)
+    : id_(id)
+{
+    if (!set_key(key))
+        throw bad_key();
+}
+
+void identity::clear_key()
+{
+    delete key_;
+    key_ = nullptr;
+}
+
+bool identity::set_key(byte_array const& key)
+{
+    clear_key();
+
+    scheme ksch = key_scheme();
+    switch (ksch) {
+        case dsa160:
+            key_ = new crypto::dsa160_key(key);
+            break;
+        case rsa160:
+            key_ = new crypto::rsa160_key(key);
+            break;
+        default:
+            logger::warning() << "Unknown identity key scheme " << ksch;
+            return false;
+    }
+
+    // Check if decode succeeded.
+    if (key_->type() == crypto::sign_key::key_type::invalid)
+    {
+        clear_key();
+        return false;
+    }
+
+    // Verify that the supplied key actually matches the ID we have.
+    // *** This is a crucial step for security! ***
+    byte_array key_id = key_->id();
+    key_id[0] = (key_id[0] & 7) | (ksch << 3); // replace top 5 bits of ID with scheme used
+
+    if (key_id != id_)
+    {
+        clear_key();
+        logger::warning() << "Attempt to set mismatching identity key!";
+        return false;
+    }
+
+    return true;
+}
+
 identity identity::generate(scheme sch, int bits)
 {
     crypto::sign_key* key;
@@ -42,6 +103,12 @@ identity identity::generate(scheme sch, int bits)
     ident.id_ = id;
 
     return ident;
+}
+
+identity::scheme identity::key_scheme() const
+{
+    assert(!id_.is_empty());
+    return scheme(id_.id()[0] >> 3);
 }
 
 identity identity::from_endpoint(endpoint const& ep)

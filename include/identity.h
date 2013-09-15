@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <stdexcept>
 #include "link.h"
 #include "byte_array.h"
 #include "peer_id.h"
@@ -34,6 +35,11 @@ class identity
     peer_id           id_;
 
 public:
+    class bad_key : public std::runtime_error {
+    public:
+        explicit inline bad_key() : std::runtime_error("bad identity key") {}
+    };
+
     /**
      * Endpoint identifier scheme numbers.
      * The scheme number occupies the top 5 bits in any EID,
@@ -59,6 +65,26 @@ public:
     identity() = default;
 
     /**
+     * Create an identity with a given binary identifier.
+     * @param id the binary identifier.
+     */
+    identity(byte_array const& id);
+
+    /**
+     * Create an identity with a given binary identifier.
+     * @param id the binary peer identifier.
+     */
+    identity(peer_id const& id);
+
+    /**
+     * Create an identity with a binary identifier and corresponding key.
+     * Throws bad_key if key data is invalid.
+     * @param id the binary identifier.
+     * @param key the binary representation of the key associated with the identifier.
+     */
+    identity(byte_array const& id, byte_array const& key);
+
+    /**
      * Generate a new identity with unique private key, using reasonable default parameters.
      * @param scheme the signing scheme to use.
      * @param bits the desired key strength in bits, or 0 to use the selected scheme's default.
@@ -76,6 +102,7 @@ public:
      */
     peer_id id() const;
 
+    scheme key_scheme() const;
     bool has_private_key() const;
 
     /// Get this identity's binary-encoded public key.
@@ -83,6 +110,9 @@ public:
 
     /// Get this identity's binary-encoded private key.
     byte_array private_key() const;
+
+    void clear_key();
+    bool set_key(byte_array const& key);
 
     /**
      * Sign a message.

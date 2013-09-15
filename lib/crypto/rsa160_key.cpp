@@ -22,9 +22,24 @@ rsa160_key::rsa160_key(RSA *rsa)
     : rsa_(rsa)
 {}
 
-/// @todo
 rsa160_key::rsa160_key(byte_array const& key)
-{}
+{
+    rsa_ = RSA_new();
+    assert(rsa_);
+
+    byte_array_iwrap<flurry::iarchive> read(key);
+    bool has_private_key;
+
+    read.archive() >> rsa_->n >> rsa_->e >> has_private_key;
+    if (has_private_key) {
+        read.archive() >> rsa_->d >> rsa_->p >> rsa_->q >> rsa_->dmp1 >> rsa_->dmq1 >> rsa_->iqmp;
+    }
+
+    if (has_private_key)
+        set_type(public_and_private);
+    else
+        set_type(public_only);
+}
 
 rsa160_key::rsa160_key(int bits, unsigned e)
 {

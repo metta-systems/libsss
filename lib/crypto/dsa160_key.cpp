@@ -244,9 +244,22 @@ dsa160_key::dsa160_key(DSA *dsa)
     : dsa_(dsa)
 {}
 
-/// @todo
 dsa160_key::dsa160_key(byte_array const& key)
-{}
+{
+    dsa_ = DSA_new();
+    assert(dsa_);
+
+    byte_array_iwrap<flurry::iarchive> read(key);
+    read.archive() >> dsa_->p >> dsa_->q >> dsa_->g >> dsa_->pub_key >> dsa_->priv_key;
+
+    if (BN_num_bytes(dsa_->priv_key) > 0) {
+        set_type(public_and_private);
+    } else {
+        set_type(public_only);
+        BN_free(dsa_->priv_key);
+        dsa_->priv_key = NULL;
+    }
+}
 
 dsa160_key::dsa160_key(int bits)
 {
