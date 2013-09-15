@@ -94,7 +94,7 @@ namespace {
 /**
  * Send complete prepared key_message.
  */
-void send(key_message& m, link_endpoint const& target)
+byte_array send(key_message& m, link_endpoint const& target)
 {
     byte_array msg;
     {
@@ -102,6 +102,7 @@ void send(key_message& m, link_endpoint const& target)
         write.archive() << m;
     }
     target.send(msg);
+    return msg;
 }
 
 void send(magic_t magic, dh_init1_chunk& r, link_endpoint const& to)
@@ -146,7 +147,8 @@ void send(magic_t magic, dh_response1_chunk& r, link_endpoint const& to)
     send(m, to);
 }
 
-void send(magic_t magic, dh_response2_chunk& r, link_endpoint const& to)
+byte_array
+send(magic_t magic, dh_response2_chunk& r, link_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -157,7 +159,7 @@ void send(magic_t magic, dh_response2_chunk& r, link_endpoint const& to)
     m.magic = magic;
     m.chunks.push_back(chunk);
 
-    send(m, to);
+    return send(m, to);
 }
 
 } // anonymous namespace
@@ -565,9 +567,9 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     response.responder_info = encrypted_responder_info;
 
     logger::debug() << "Send dh_response2 to " << src;
-    send(magic(), response, src);
+    byte_array pkt = send(magic(), response, src);
 
-    // hostkey->r2_cache_.insert(make_pair(data.responder_challenge_cookie, pkt));
+    hostkey->r2_cache_.insert(make_pair(data.responder_challenge_cookie, pkt));
 
     // Set up the armor for the new channel
     // Set up the new channel IDs
