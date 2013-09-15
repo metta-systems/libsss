@@ -84,11 +84,11 @@ class stream_peer : public stream_protocol
     // if such an attempt isn't already in progress.
     void initiate_key_exchange(link* l, const endpoint& ep);
 
-    // Called by StreamFlow::start() whenever a new flow
+    // Called by stream_channel::start() whenever a new channel
     // (either incoming or outgoing) successfully starts.
     void channel_started(stream_channel* channel);
 
-    // Clear the peer's current primary flow.
+    // Clear the peer's current primary channel.
     void clear_primary_channel();
 
     // Handlers.
@@ -99,8 +99,8 @@ public:
     void add_location_hint(const endpoint& hint);
 
     typedef boost::signals2::signal<void (void)> channel_state_signal;
-    channel_state_signal on_channel_connected; ///< Primary flow connection attempt succeeded.
-    channel_state_signal on_channel_failed; ///< Connection attempt or the primary flow failed.
+    channel_state_signal on_channel_connected; ///< Primary channel connection attempt succeeded.
+    channel_state_signal on_channel_failed; ///< Connection attempt or the primary channel failed.
 };
 
 // } // private_ namespace
