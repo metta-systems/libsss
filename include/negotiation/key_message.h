@@ -365,7 +365,7 @@ class dh_response2_chunk
 {
     public://temp
     byte_array  initiator_hashed_nonce;         // Initiator's original nonce
-    byte_array  responder_id;                   // Responder's encrypted identity
+    byte_array  responder_info;                 // Responder's encrypted identity
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -373,14 +373,14 @@ class dh_response2_chunk
 inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response2_chunk& dc2)
 {
     oa << dc2.initiator_hashed_nonce
-       << dc2.responder_id;
+       << dc2.responder_info;
     return oa;
 }
 
 inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response2_chunk& dc2)
 {
     ia >> dc2.initiator_hashed_nonce
-       >> dc2.responder_id;
+       >> dc2.responder_info;
     return ia;
 }
 
