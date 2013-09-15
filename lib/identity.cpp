@@ -13,6 +13,10 @@
 
 namespace ssu {
 
+//=================================================================================================
+// identity
+//=================================================================================================
+
 identity identity::generate(scheme sch, int bits)
 {
     crypto::sign_key* key;
@@ -57,6 +61,24 @@ bool identity::has_private_key() const
 {
     return key_ and key_->type() == crypto::sign_key::public_and_private;
 }
+
+byte_array identity::public_key() const
+{
+    if (!key_)
+        return byte_array();
+    return key_->public_key();
+}
+
+byte_array identity::private_key() const
+{
+    if (!key_)
+        return byte_array();
+    return key_->private_key();
+}
+
+//=================================================================================================
+// identity_host_state
+//=================================================================================================
 
 identity identity_host_state::host_identity()
 {

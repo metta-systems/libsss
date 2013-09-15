@@ -77,6 +77,22 @@ public:
     peer_id id() const;
 
     bool has_private_key() const;
+
+    /// Get this identity's binary-encoded public key.
+    byte_array public_key() const;
+
+    /// Get this identity's binary-encoded private key.
+    byte_array private_key() const;
+
+    /**
+     * Sign a message.
+     * This identity must contain a valid private key.
+     * @param digest the hash digest of the message to be signed.
+     * @return the resulting signature, in a byte_array.
+     */
+    inline byte_array sign(byte_array const& digest) {
+        return key_->sign(digest);
+    }
 };
 
 class identity_host_state
