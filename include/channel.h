@@ -53,12 +53,9 @@ public:
      * Set the encryption/authentication method for this channel.
      * This MUST be set before a new channel can be activated.
      */
-    inline void set_armor(std::unique_ptr<channel_armor>& armor) {
+    inline void set_armor(std::unique_ptr<channel_armor> armor) {
         armor_ = std::move(armor);
     }
-    // inline channel_armor* armor() { // huh, what for?
-        // return armor_;
-    // }
 
     /**
      * Return the current link status as observed by this channel.
