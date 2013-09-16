@@ -23,7 +23,7 @@ channel::~channel()
 
 void channel::start(bool initiate)
 {
-    logger::debug() << "channel: start";
+    logger::debug() << "channel: start " << (initiate ? "(initiator)" : "(responder)");
 }
 
 void channel::stop()

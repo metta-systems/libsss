@@ -42,7 +42,7 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
 
 void stream_channel::start(bool initiate)
 {
-    logger::debug() << "stream_channel: start";
+    logger::debug() << "stream_channel: start " << (initiate ? "(initiator)" : "(responder)");
 }
 
 void stream_channel::stop()
