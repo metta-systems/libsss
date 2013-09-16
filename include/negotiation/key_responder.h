@@ -91,7 +91,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     std::shared_ptr<host> host_;
     channel*              channel_;   ///< Channel for which we initiated key exchange.
     link_endpoint         target_;    ///< Remote endpoint we're trying to contact.
-    peer_id               remote_id_;
+    peer_id               remote_id_; ///< Target's host id (empty if unspecified).
     byte_array            user_info_; ///< Transparent user info block transmitted in init2 phase.
     magic_t               magic_{0};
     uint32_t              allowed_methods_{0}; ///< Bitwise set of below method flags

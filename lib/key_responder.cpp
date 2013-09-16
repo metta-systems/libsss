@@ -599,9 +599,123 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
         return warning("Got dh_response2 for unknown dh_init2");
     if (initiator->is_done())
         return warning("Got duplicate dh_response2 for completed initiator");
+    if (initiator->shared_master_secret_.is_empty())
+        return warning("Received dh_response2 ahead of dh_response1!");
+
+    assert(initiator->initiator_hashed_nonce_ == data.initiator_hashed_nonce);
+    assert(initiator->channel_ != nullptr);
 
     logger::debug() << "Got dh_response2";
 
+    // Make sure our host key hasn't expired in the meantime
+    // XXX but reverting here leaves the responder with a hung channel! <---
+    shared_ptr<dh_hostkey_t> hostkey(host_->get_dh_key(initiator->dh_group_));
+    if (!hostkey or initiator->initiator_public_key_ != hostkey->public_key_)
+        return initiator->send_dh_init1();
+
+    // Check and strip the MAC field on the responder's encrypted identity
+    byte_array mac_key = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
+        initiator->responder_nonce_, '2', 256/8);
+
+    logger::debug() << "Verifying HMAC.";
+
+    // @todo: wrap this into a hmac_verify() kind of helper
+    crypto::hash hmac(mac_key.as_vector());
+    int hmac_size = crypto::HMACLEN;
+    byte_array block = data.responder_info;
+    block.resize(block.size() - hmac_size);
+    hmac.update(block.as_vector());
+    crypto::hash::value result;
+    hmac.finalize(result);
+
+    byte_array expected_hmac;
+    expected_hmac.resize(hmac_size);
+    std::copy(data.responder_info.end() - hmac_size,
+              data.responder_info.end(),
+              expected_hmac.begin());
+
+    if (byte_array(result) != expected_hmac)
+    {
+        logger::warning() << "Received dh_response2 with bad responder identity MAC.";
+        return;
+    }
+
+    logger::debug() << "Decrypting responder info.";
+
+    // Decrypt it with AES-256-CBC
+    byte_array enc_key = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
+        initiator->responder_nonce_, '1', 256/8);
+
+    byte_array responder_info = aes_256_cbc(aes_256_cbc::type::decrypt, enc_key).decrypt(data.responder_info);
+
+    // Decode the identity information
+    byte_array_iwrap<flurry::iarchive> read(responder_info);
+    responder_identity_chunk resp_ic;
+    read.archive() >> resp_ic;
+
+    if (resp_ic.responder_channel_number == 0 or resp_ic.responder_eid.is_empty())
+    {
+        logger::debug() << "Received dh_response2 with bad responder identity info.";
+        return;
+    }
+
+    // Make sure the responder is who we actually wanted to talk to
+    if (!initiator->remote_id_.is_empty() and resp_ic.responder_eid != initiator->remote_id_)
+    {
+        logger::warning() << "Received dh_response2 from responder with wrong identity.";
+        return;
+    }
+
+    // Verify the initiator's identity
+    identity responder_id(resp_ic.responder_eid);
+    if (!responder_id.set_key(resp_ic.responder_id_public_key))
+    {
+        logger::warning() << "Received dh_response2 with bad responder public key.";
+        return;
+    }
+
+    byte_array signature_hash = calc_signature_hash(initiator->dh_group_,
+        initiator->key_min_length_, initiator->initiator_hashed_nonce_,
+        initiator->responder_nonce_, initiator->initiator_public_key_,
+        initiator->responder_public_key_, host_->host_identity().id().id());
+
+    if (!responder_id.verify(signature_hash, resp_ic.responder_signature))
+    {
+        logger::warning() << "Received dh_response2 with bad responder signature.";
+        return;
+    }
+
+    logger::debug() << "Authenticated responder with id " << peer_id(resp_ic.responder_eid)
+        << " at " << src;
+
+    // Set up new channel's armor
+    byte_array tx_enc_key = calc_key(initiator->shared_master_secret_,
+                                     initiator->initiator_hashed_nonce_,
+                                     initiator->responder_nonce_, 'E', 128/8);
+    byte_array tx_mac_key = calc_key(initiator->shared_master_secret_,
+                                     initiator->initiator_hashed_nonce_,
+                                     initiator->responder_nonce_, 'A', 256/8);
+    byte_array rx_enc_key = calc_key(initiator->shared_master_secret_,
+                                     initiator->responder_nonce_,
+                                     initiator->initiator_hashed_nonce_, 'E', 128/8);
+    byte_array rx_mac_key = calc_key(initiator->shared_master_secret_,
+                                     initiator->responder_nonce_,
+                                     initiator->initiator_hashed_nonce_, 'A', 256/8);
+
+    initiator->channel_->set_armor(unique_ptr<aes_armor>(new aes_armor(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key)));
+
+    // Set up the new channel IDs
+    byte_array tx_chan_id = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
+                                     initiator->responder_nonce_, 'I', 128/8);
+    byte_array rx_chan_id = calc_key(initiator->shared_master_secret_, initiator->responder_nonce_,
+                                     initiator->initiator_hashed_nonce_, 'I', 128/8);
+    initiator->channel_->set_channel_ids(tx_chan_id, rx_chan_id);
+
+    // Finish flow setup
+    initiator->channel_->set_remote_channel(resp_ic.responder_channel_number);
+
+    // Our job is done
+    initiator->channel_->start(true);
     initiator->done();
 }
 
