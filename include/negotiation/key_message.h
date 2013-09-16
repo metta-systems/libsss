@@ -29,7 +29,7 @@ struct packet_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, packet_chunk& pc)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, packet_chunk const& pc)
 {
     oa << pc.data;
     return oa;
@@ -70,7 +70,7 @@ struct initiator_identity_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, initiator_identity_chunk& iic)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, initiator_identity_chunk const& iic)
 {
     oa << iic.initiator_channel_number
        << iic.initiator_eid
@@ -107,7 +107,7 @@ struct responder_identity_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, responder_identity_chunk& ric)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, responder_identity_chunk const& ric)
 {
     oa << ric.responder_channel_number
        << ric.responder_eid
@@ -144,7 +144,7 @@ struct dh_init1_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init1_chunk& dc1)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init1_chunk const& dc1)
 {
     oa << dc1.group
        << dc1.key_min_length
@@ -183,7 +183,7 @@ struct dh_response1_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response1_chunk& dc1)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response1_chunk const& dc1)
 {
     oa << dc1.group
        << dc1.key_min_length
@@ -229,7 +229,7 @@ struct dh_init2_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init2_chunk& dc2)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_init2_chunk const& dc2)
 {
     oa << dc2.group
        << dc2.key_min_length
@@ -267,7 +267,7 @@ struct dh_response2_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response2_chunk& dc2)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, dh_response2_chunk const& dc2)
 {
     oa << dc2.initiator_hashed_nonce
        << dc2.responder_info;
@@ -309,7 +309,7 @@ struct key_chunk
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, key_chunk& kc)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, key_chunk const& kc)
 {
     oa << kc.type;
     switch (kc.type) {
@@ -384,7 +384,7 @@ struct key_message
 
 //-------------------------------------------------------------------------------------------------
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, key_message& km)
+inline flurry::oarchive& operator << (flurry::oarchive& oa, key_message const& km)
 {
     oa << km.magic << km.chunks;
     return oa;
