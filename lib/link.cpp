@@ -172,9 +172,7 @@ udp_link::udp_link(const endpoint& ep, link_host_state& h)
     : link(h)
     , udp_socket(h.get_io_service())
     , received_from(this, ep)
-{
-    bind(ep); // temporarily maintain old behaviour where creating udp_link binds it
-}
+{}
 
 void
 udp_link::prepare_async_receive()
