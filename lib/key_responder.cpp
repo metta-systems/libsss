@@ -17,6 +17,7 @@
 #include "byte_array_wrap.h"
 #include "flurry.h"
 #include "channel.h"
+#include "link.h"
 
 using namespace std;
 using namespace ssu;
@@ -193,15 +194,12 @@ key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey
     byte_array data;
     {
         // Put together the data to hash
-        auto lval_addr = src.address().to_v4().to_bytes();
-
         byte_array_owrap<flurry::oarchive> write(data);
         write.archive()
             << hostkey->public_key_
             << responder_nonce
             << initiator_hashed_nonce
-            << lval_addr
-            << src.port();
+            << src;
     }
 
     return sha256::keyed_hash(hostkey->hmac_secret_key_, data);

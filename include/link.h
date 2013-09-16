@@ -19,6 +19,7 @@
 #include "byte_array.h"
 #include "asio_host_state.h"
 #include "link_receiver.h"
+#include "flurry.h"
 
 namespace ssu {
 
@@ -61,6 +62,34 @@ public:
     // ??? FIXME
     link* link() const { return link_; }
 };
+
+// Flurry specialization for endpoint
+inline flurry::oarchive& operator << (flurry::oarchive& oa, endpoint const& ep)
+{
+    if (ep.address().is_v4())
+        oa << ep.address().to_v4().to_bytes();
+    else
+        oa << ep.address().to_v6().to_bytes();
+    oa << ep.port();
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, endpoint& ep)
+{
+    return ia;
+}
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, link_endpoint const& ep)
+{
+    oa << (ssu::endpoint const&)ep;
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, link_endpoint& ep)
+{
+    ia >> (ssu::endpoint&)ep;
+    return ia;
+}
 
 /**
  * This mixin class encapsulates link-related part of host state.
