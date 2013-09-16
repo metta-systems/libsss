@@ -287,8 +287,6 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response2_chunk& 
 
 enum class key_chunk_type : uint32_t {
     packet             = 0x0001,
-    checksum_init      = 0x0011,
-    checksum_response  = 0x0012,
     dh_init1           = 0x0021,
     dh_response1       = 0x0022,
     dh_init2           = 0x0023,
@@ -303,8 +301,6 @@ struct key_chunk
 {
     key_chunk_type                             type;
     boost::optional<packet_chunk>              packet;
-    boost::optional<checksum_init_chunk>       checksum_init;
-    boost::optional<checksum_response_chunk>   checksum_response;
     boost::optional<dh_init1_chunk>            dh_init1;
     boost::optional<dh_response1_chunk>        dh_response1;
     boost::optional<dh_init2_chunk>            dh_init2;
@@ -319,12 +315,6 @@ inline flurry::oarchive& operator << (flurry::oarchive& oa, key_chunk& kc)
     switch (kc.type) {
         case key_chunk_type::packet:
             oa << *kc.packet;
-            break;
-        case key_chunk_type::checksum_init:
-            oa << *kc.checksum_init;
-            break;
-        case key_chunk_type::checksum_response:
-            oa << *kc.checksum_response;
             break;
         case key_chunk_type::dh_init1:
             oa << *kc.dh_init1;
@@ -352,18 +342,6 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_chunk& kc)
         {
             kc.packet = packet_chunk();
             ia >> *kc.packet;
-            break;
-        }
-        case key_chunk_type::checksum_init:
-        {
-            kc.checksum_init = checksum_init_chunk();
-            ia >> *kc.checksum_init;
-            break;
-        }
-        case key_chunk_type::checksum_response:
-        {
-            kc.checksum_response = checksum_response_chunk();
-            ia >> *kc.checksum_response;
             break;
         }
         case key_chunk_type::dh_init1:

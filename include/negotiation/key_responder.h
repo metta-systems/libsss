@@ -97,7 +97,6 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     uint32_t              allowed_methods_{0}; ///< Bitwise set of below method flags
 
     enum methods {
-        key_method_checksum = (1 << 0),
         key_method_aes      = (1 << 1),
     };
 
@@ -109,11 +108,6 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     } state_;
 
     ssu::async::timer retransmit_timer_;
-
-    // Weak keyed checksum state
-
-    uint32_t checksum_key_;
-    byte_array responder_cookie_;
 
     // AES/SHA256 with DH key agreement
 
