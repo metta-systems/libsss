@@ -45,7 +45,7 @@ public:
     link_endpoint(link_endpoint const& other) : endpoint(other), link_(other.link_) {}
     /**
      * This here should technically use shared_ptr and let link_endpoint maintain a weak_ptr,
-     * but practically, as the only factory creating link_endpoints in the udp_link,
+     * but practically, as the only factory creating link_endpoints is the udp_link,
      * it will outlive them and a simple pointer suffices.
      * @todo Make it nicer once the usage pattern is more clear here.
      */

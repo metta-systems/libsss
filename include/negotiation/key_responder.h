@@ -92,7 +92,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     channel*              channel_;   ///< Channel for which we initiated key exchange.
     link_endpoint         target_;    ///< Remote endpoint we're trying to contact.
     peer_id               remote_id_; ///< Target's host id (empty if unspecified).
-    byte_array            user_info_; ///< Transparent user info block transmitted in init2 phase.
+
     magic_t               magic_{0};
     uint32_t              allowed_methods_{0}; ///< Bitwise set of below method flags
 
@@ -117,8 +117,8 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
 
     // AES/SHA256 with DH key agreement
 
-    ssu::negotiation::dh_group_type dh_group_;
-    int key_min_length_{0};
+    ssu::negotiation::dh_group_type            dh_group_;
+    int                                        key_min_length_{0};
 
     // Protocol state set up before sending init1
     byte_array                                 initiator_nonce_;
@@ -130,12 +130,18 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     byte_array                                 responder_public_key_;
     byte_array                                 responder_challenge_cookie_;
     byte_array                                 shared_master_secret_;
-    // Encrypted and authenticated identity information
+    /**
+     * Encrypted and authenticated identity information.
+     */
     byte_array                                 encrypted_identity_info_;
     
+    /**
+     * Transparent user info block transmitted in init2 phase.
+     */
     byte_array                                 user_data_in_;
 
     void retransmit(bool fail);
+
     inline void done()
     {
         bool send_signal = (state_ != state::done);
@@ -154,7 +160,10 @@ public:
                     link_endpoint const& target, magic_t magic, peer_id const& target_peer);
     ~key_initiator();
 
-    void exchange_keys(); // Actually start init1 phase.
+    /**
+     * Actually start init1 phase.
+     */
+    void exchange_keys();
 
     inline ssu::negotiation::dh_group_type group() const { return dh_group_; }
     inline bool is_done() const { return state_ == state::done; }
@@ -178,14 +187,20 @@ public:
  */
 class key_host_state
 {
-    //std::unordered_map<chk_ep, std::shared_ptr<key_initiator>> chk_initiators;
+    /**
+     * Initiators by nonce.
+     */
     std::unordered_map<byte_array, std::shared_ptr<negotiation::key_initiator>> dh_initiators_;
+    /**
+     * Initiators by endpoint.
+     */
     std::unordered_multimap<endpoint, std::shared_ptr<negotiation::key_initiator>> ep_initiators_;
 
 public:
     std::shared_ptr<negotiation::key_initiator> get_initiator(byte_array nonce);
 
-    void register_dh_initiator(byte_array const& nonce, endpoint const& ep, std::shared_ptr<ssu::negotiation::key_initiator> ki);
+    void register_dh_initiator(byte_array const& nonce, endpoint const& ep,
+        std::shared_ptr<ssu::negotiation::key_initiator> ki);
 };
 
 } // namespace ssu

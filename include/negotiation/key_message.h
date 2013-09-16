@@ -18,122 +18,26 @@
 namespace ssu {
 namespace negotiation {
 
-/**
-All the XDR crap for key negotiation:
-////////// Lightweight Checksum Negotiation //////////
-
-// Checksum negotiation chunks
-struct KeyChunkChkI1Data {
-    // XXX nonces should be 64-bit, to ensure USIDs unique over all time!
-    unsigned int    cki;        // Initiator's checksum key
-    unsigned char   chani;      // Initiator's channel number
-    opaque      cookie<>;   // Responder's cookie, if any
-    opaque      ulpi<>;     // Upper-level protocol data
-    opaque      cpkt<>;     // Piggybacked channel packet
-};
-struct KeyChunkChkR1Data {
-    unsigned int    cki;        // Initiator's checksum key, echoed
-    unsigned int    ckr;        // Responder's checksum key,
-                    // = 0 if cookie required
-    unsigned char   chanr;      // Responder's channel number,
-                    // 0 if cookie required
-    opaque      cookie<>;   // Responder's cookie, if any
-    opaque      ulpr<>;     // Upper-level protocol data
-    opaque      cpkt<>;     // Piggybacked channel packet
-};
-
-////////// Diffie-Helman Key Negotiation //////////
-
-// Responder DH key signing block for R2 messages (JFKi only)
-struct KeyParamR {
-    DhGroup     group;      // DH group for public keys
-    opaque      dhr<384>;   // Responder's DH public key
-};
-
-union KeyChunkUnion switch (KeyChunkType type) {
-    case KeyChunkPacket:    opaque packet<>;
-
-    case KeyChunkChkI1: KeyChunkChkI1Data chki1;
-    case KeyChunkChkR1: KeyChunkChkR1Data chkr1;
-
-    case KeyChunkDhI1:  KeyChunkDhI1Data dhi1;
-    case KeyChunkDhR1:  KeyChunkDhR1Data dhr1;
-    case KeyChunkDhI2:  KeyChunkDhI2Data dhi2;
-    case KeyChunkDhR2:  KeyChunkDhR2Data dhr2;
-};
-typedef KeyChunkUnion ?KeyChunk;
-
-
-// Top-level format of all negotiation protocol messages
-struct KeyMessage {
-    int     magic;      // 24-bit magic value
-    KeyChunk    chunks<>;   // Message chunks
-};
-
-*/
-
 //=================================================================================================
 // packet_chunk
 //=================================================================================================
 
-class packet_chunk
+struct packet_chunk
 {
-    public://temp
+    byte_array data;
 };
 
 //-------------------------------------------------------------------------------------------------
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, packet_chunk& pc)
 {
+    oa << pc.data;
     return oa;
 }
 
 inline flurry::iarchive& operator >> (flurry::iarchive& ia, packet_chunk& pc)
 {
-    return ia;
-}
-
-//=================================================================================================
-// Lightweight checksum negotiation chunks
-//
-// checksum_init_chunk
-//=================================================================================================
-
-class checksum_init_chunk
-{
-    public://temp
-};
-
-//-------------------------------------------------------------------------------------------------
-
-inline flurry::oarchive& operator << (flurry::oarchive& oa, checksum_init_chunk& cic)
-{
-    return oa;
-}
-
-inline flurry::iarchive& operator >> (flurry::iarchive& ia, checksum_init_chunk& cic)
-{
-    return ia;
-}
-
-//=================================================================================================
-// checksum_response_chunk
-//=================================================================================================
-
-class checksum_response_chunk
-{
-    public://temp
-};
-
-//-------------------------------------------------------------------------------------------------
-
-inline flurry::oarchive& operator << (flurry::oarchive& oa, checksum_response_chunk& crc)
-{
-    return oa;
-}
-
-inline flurry::iarchive& operator >> (flurry::iarchive& ia, checksum_response_chunk& crc)
-{
+    ia >> pc.data;
     return ia;
 }
 
@@ -149,14 +53,13 @@ enum class dh_group_type : uint32_t {
 };
 
 //=================================================================================================
-// Encrypted and authenticated identity blocks for I2 and R2 messages
+// Encrypted and authenticated identity blocks for init2 and response2 messages
 //
 // initiator_identity_chunk
 //=================================================================================================
 
-class initiator_identity_chunk
+struct initiator_identity_chunk
 {
-public:
     channel_number initiator_channel_number;
     byte_array     initiator_eid;
     byte_array     responder_eid; // Desired EID of responder
@@ -193,9 +96,8 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, initiator_identity_c
 // responder_identity_chunk
 //=================================================================================================
 
-class responder_identity_chunk
+struct responder_identity_chunk
 {
-public:
     channel_number responder_channel_number;
     byte_array     responder_eid;
     byte_array     responder_id_public_key;
@@ -231,12 +133,10 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, responder_identity_c
 // dh_init1_chunk
 //=================================================================================================
 
-class dh_init1_chunk
+struct dh_init1_chunk
 {
-    public://temp
     dh_group_type  group{dh_group_type::dh_group_1024};  // DH group of initiator's public key
     uint32_t       key_min_length{0};                    // Minimum AES key length: 16, 24, 32
-    // fixme: replace these with fixed-size boost::array<>s?
     byte_array     initiator_hashed_nonce;               // Initiator's SHA256-hashed nonce
     byte_array     initiator_dh_public_key;              // Initiator's DH public key
     byte_array     responder_eid;                        // Optional: desired EID of responder
@@ -268,9 +168,8 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init1_chunk& dc1)
 // dh_response1_chunk
 //=================================================================================================
 
-class dh_response1_chunk
+struct dh_response1_chunk
 {
-    public://temp
     dh_group_type  group;                       // DH group for public keys
     int            key_min_length;              // Chosen AES key length: 16, 24, 32
     byte_array     initiator_hashed_nonce;      // Initiator's hashed nonce
@@ -316,9 +215,8 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response1_chunk& 
 // dh_init2_chunk
 //=================================================================================================
 
-class dh_init2_chunk
+struct dh_init2_chunk
 {
-    public://temp
     dh_group_type  group;                       // DH group for public keys
     int            key_min_length;              // AES key length: 16, 24, or 32
     byte_array     initiator_nonce;             // Initiator's original nonce
@@ -361,9 +259,8 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_init2_chunk& dc2)
 // dh_response2_chunk
 //=================================================================================================
 
-class dh_response2_chunk
+struct dh_response2_chunk
 {
-    public://temp
     byte_array  initiator_hashed_nonce;         // Initiator's original nonce
     byte_array  responder_info;                 // Responder's encrypted identity
 };
@@ -402,9 +299,8 @@ enum class key_chunk_type : uint32_t {
 // key_chunk
 //=================================================================================================
 
-class key_chunk
+struct key_chunk
 {
-    public://temp
     key_chunk_type                             type;
     boost::optional<packet_chunk>              packet;
     boost::optional<checksum_init_chunk>       checksum_init;
@@ -502,13 +398,10 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_chunk& kc)
 // key_message
 //=================================================================================================
 
-class key_message
+struct key_message
 {
-    public://temp
     uint32_t magic;
     std::vector<key_chunk> chunks;
-
-public:
 };
 
 //-------------------------------------------------------------------------------------------------

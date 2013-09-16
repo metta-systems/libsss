@@ -79,7 +79,7 @@ calc_key(byte_array const& master,
 
 void warning(string message)
 {
-    logger::warning() << "key_responder: " << message;
+    logger::warning() << "Key exchange - " << message;
 }
 
 } // anonymous namespace
@@ -186,9 +186,9 @@ bool key_responder::is_initiator_acceptable(link_endpoint const& initiator_ep,
  */
 byte_array
 key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
-    const byte_array& responder_nonce,
-    const byte_array& initiator_hashed_nonce,
-    const ssu::link_endpoint& src)
+    byte_array const& responder_nonce,
+    byte_array const& initiator_hashed_nonce,
+    ssu::link_endpoint const& src)
 {
     byte_array data;
     {
