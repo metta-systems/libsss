@@ -10,6 +10,7 @@ add_library(ssu STATIC
     abstract_stream.cpp
     base_stream.cpp
     channel.cpp
+    crypto/aes_armor.cpp
     crypto/aes_128_ctr.cpp
     crypto/aes_256_cbc.cpp
     crypto/sign_key.cpp
