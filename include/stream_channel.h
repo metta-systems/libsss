@@ -24,6 +24,7 @@ class stream_peer;
 class stream_channel : public channel, public stream_protocol
 {
     std::shared_ptr<base_stream> root_{nullptr};
+    typedef channel super;
     stream_peer* peer_{nullptr};
 
     std::unordered_map<stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace

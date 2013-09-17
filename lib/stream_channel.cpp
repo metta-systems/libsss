@@ -43,11 +43,13 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
 void stream_channel::start(bool initiate)
 {
     logger::debug() << "stream_channel: start " << (initiate ? "(initiator)" : "(responder)");
+    super::start(initiate);
 }
 
 void stream_channel::stop()
 {
     logger::debug() << "stream_channel: stop";
+    super::stop();
 }
 
 bool stream_channel::transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct)

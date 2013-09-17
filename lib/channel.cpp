@@ -24,6 +24,14 @@ channel::~channel()
 void channel::start(bool initiate)
 {
     logger::debug() << "channel: start " << (initiate ? "(initiator)" : "(responder)");
+
+    assert(armor_);
+
+    super::start(initiate);
+
+    on_ready_transmit();
+
+    set_link_status(link::status::up);
 }
 
 void channel::stop()

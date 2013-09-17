@@ -22,6 +22,8 @@ class host;
  */
 class channel : public link_channel
 {
+    typedef link_channel super;
+
     std::shared_ptr<host>          host_;
     std::unique_ptr<channel_armor> armor_; // armors cannot be shared.
 
