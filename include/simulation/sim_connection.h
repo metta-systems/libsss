@@ -15,7 +15,6 @@ namespace simulation {
 class simulator;
 class sim_host;
 
-// SimLink
 class sim_connection : public std::enable_shared_from_this<sim_connection>
 {
 public:
