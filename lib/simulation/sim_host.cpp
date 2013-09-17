@@ -46,12 +46,12 @@ sim_host::current_time()
 std::unique_ptr<async::timer_engine>
 sim_host::create_timer_engine_for(async::timer* t)
 {
-    return make_unique<async::timer_engine>(t, simulator_);
+    return make_unique<sim_timer_engine>(t, simulator_);
 }
 
 std::shared_ptr<link> sim_host::create_link()
 {
-    return shared_ptr<link>(make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this())));
+    return make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this()));
 }
 
 void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)

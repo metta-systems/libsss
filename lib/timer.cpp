@@ -108,7 +108,7 @@ boost::posix_time::ptime timer_host_state::current_time()
 
 std::unique_ptr<async::timer_engine> timer_host_state::create_timer_engine_for(async::timer* t)
 {
-	return make_unique<async::timer_engine>(t, io_service);
+	return make_unique<async::default_timer_engine>(t, io_service);
 }
 
 } // namespace ssu
