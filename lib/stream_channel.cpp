@@ -15,10 +15,22 @@ stream_channel::stream_channel(std::shared_ptr<host> host, stream_peer* peer, co
     , peer_(peer)
     , root_(std::make_shared<base_stream>(host, id, nullptr))
 {
+    on_ready_transmit.connect(boost::bind(&stream_channel::got_ready_transmit, this));
+    on_link_status_changed.connect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
 }
 
 stream_channel::~stream_channel()
 {}
+
+void stream_channel::got_ready_transmit()
+{
+    logger::debug() << "stream_channel: ready to transmit";
+}
+
+void stream_channel::got_link_status_changed(link::status new_status)
+{
+    logger::debug() << "stream_channel: link status changed, new status " << new_status;
+}
 
 stream_protocol::counter_t stream_channel::allocate_transmit_sid()
 {

@@ -44,6 +44,10 @@ class stream_channel : public channel, public stream_protocol
     std::unordered_map<tx_seq_id, base_stream::packet*> waiting_ack_;
     std::unordered_map<tx_seq_id, base_stream::packet*> waiting_expiry_;
 
+    // Handlers.
+    void got_ready_transmit();
+    void got_link_status_changed(link::status new_status);
+
 public:
     stream_channel(std::shared_ptr<host> host, stream_peer* peer, const peer_id& id);
     ~stream_channel();
