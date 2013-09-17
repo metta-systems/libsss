@@ -12,6 +12,7 @@
 #include "simulation/sim_link.h"
 #include "simulation/sim_packet.h"
 #include "simulation/sim_connection.h"
+#include "make_unique.h"
 
 using namespace std;
 
@@ -45,7 +46,7 @@ sim_host::current_time()
 std::unique_ptr<async::timer_engine>
 sim_host::create_timer_engine_for(async::timer* t)
 {
-    return unique_ptr<async::timer_engine>(new sim_timer_engine(t, simulator_));
+    return make_unique<async::timer_engine>(t, simulator_);
 }
 
 std::shared_ptr<link> sim_host::create_link()

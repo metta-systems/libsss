@@ -6,7 +6,6 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include <memory>
 #include "negotiation/key_responder.h"
 #include "negotiation/key_message.h"
 #include "crypto.h"
@@ -18,6 +17,7 @@
 #include "flurry.h"
 #include "channel.h"
 #include "link.h"
+#include "make_unique.h"
 
 using namespace std;
 using namespace ssu;
@@ -700,7 +700,7 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
                                      initiator->responder_nonce_,
                                      initiator->initiator_hashed_nonce_, 'A', 256/8);
 
-    initiator->channel_->set_armor(unique_ptr<aes_armor>(new aes_armor(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key)));
+    initiator->channel_->set_armor(make_unique<aes_armor>(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key));
 
     // Set up the new channel IDs
     byte_array tx_chan_id = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
