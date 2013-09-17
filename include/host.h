@@ -40,12 +40,12 @@ class host
     , public timer_host_state
 {
 public:
-	/**
-	 * Create a "bare-bones" host state object with no links or identity.
-	 * Client must establish a host identity via set_host_ident()
-	 * and activate one or more network links before using ssu.
-	 */
-	host() {}
+    /**
+     * Create a "bare-bones" host state object with no links or identity.
+     * Client must establish a host identity via set_host_ident()
+     * and activate one or more network links before using ssu.
+     */
+    host() {}
 
     inline std::shared_ptr<host> get_host() override { return shared_from_this(); }
 };
