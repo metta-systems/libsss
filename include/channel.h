@@ -38,8 +38,8 @@ public:
     channel(std::shared_ptr<host> host);
     virtual ~channel();
 
-	virtual void start(bool initiate);
-	virtual void stop();
+	void start(bool initiate) override;
+	void stop() override;
 
     virtual int may_transmit();
 
