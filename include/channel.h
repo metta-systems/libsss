@@ -64,6 +64,8 @@ public:
      */
     inline link::status link_status() const { return link_status_; }
 
+    inline void set_link_status(link::status new_status) { link_status_ = new_status; }
+
 protected:
     /**
      * Main method for upper-layer subclass to receive a packet on a flow.
