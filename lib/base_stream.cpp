@@ -12,6 +12,8 @@
 #include "private/stream_peer.h"
 #include "stream_channel.h"
 
+using namespace std;
+
 namespace ssu {
 
 //=================================================================================================
@@ -20,9 +22,9 @@ namespace ssu {
 
 constexpr int base_stream::max_attachments;
 
-base_stream::base_stream(std::shared_ptr<host> host, 
+base_stream::base_stream(shared_ptr<host> host, 
                          const peer_id& peer_id,
-                         std::shared_ptr<base_stream> parent)
+                         shared_ptr<base_stream> parent)
     : abstract_stream(host)
     , parent_(parent)
 {
@@ -101,7 +103,7 @@ void base_stream::recalculate_transmit_window()
     logger::debug() << "Internal stream recalculate transmit window";
 }
 
-void base_stream::connect_to(std::string const& service, std::string const& protocol)
+void base_stream::connect_to(string const& service, string const& protocol)
 {
     logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
     attach_for_transmit();
@@ -136,7 +138,7 @@ void base_stream::attach_for_transmit()
         // Get the channel setup process for this host ID underway.
         // XXX provide an initial packet to avoid an extra RTT!
         logger::debug() << "Waiting for channel";
-        peer_->on_channel_connected.connect(std::bind(&base_stream::channel_connected, this));
+        peer_->on_channel_connected.connect(boost::bind(&base_stream::channel_connected, this));
         return peer_->connect_channel();
     }
 
@@ -164,7 +166,7 @@ void base_stream::attach_for_transmit()
         if (parent_usid_.is_empty())
         {
             logger::debug() << "Parent of " << this << " has no USID yet - waiting";
-            parent->on_attached.connect(std::bind(&base_stream::parent_attached, this));
+            parent->on_attached.connect(boost::bind(&base_stream::parent_attached, this));
             return parent->attach_for_transmit();
         }
     }
@@ -294,7 +296,7 @@ void base_stream::set_child_receive_buffer_size(size_t size)
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
 }
 
-void base_stream::fail(std::string const& error)
+void base_stream::fail(string const& error)
 {
     disconnect();
     set_error(error);
