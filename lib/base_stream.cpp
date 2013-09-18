@@ -337,11 +337,41 @@ void stream_tx_attachment::set_attaching(stream_channel* channel, id_t sid)
 {
     assert(!is_in_use());
 
+    logger::debug() << "Stream transmit attachment going active on channel " << channel;
+
     channel_ = channel;
     stream_id_ = sid;
     active_ = deprecated_ = false;
     sid_seq_ = ~0; //@fixme magic number
 }
 
+//=================================================================================================
+// stream_rx_attachment
+//=================================================================================================
+
+void stream_rx_attachment::set_active(stream_channel* channel, id_t sid, uint64_t rxseq)
+{
+    assert(!is_active());
+
+    logger::debug() << "Stream receive attachment going active on channel " << channel;
+
+    channel_ = channel;
+    stream_id_ = sid;
+    sid_seq_ = rxseq;
+
+    assert(channel_->receive_sids_.find(stream_id_) == channel_->receive_sids_.end());
+    channel_->receive_sids_.insert(make_pair(stream_id_, this));
+}
+
+void stream_rx_attachment::clear()
+{
+    logger::debug() << "Stream receive attachment going inactive";
+    if (channel_)
+    {
+        assert(channel_->receive_sids_[stream_id_] == this);
+        channel_->receive_sids_.erase(stream_id_);
+        channel_ = nullptr;
+    }
+}
 
 } // ssu namespace

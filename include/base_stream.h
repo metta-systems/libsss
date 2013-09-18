@@ -86,6 +86,8 @@ public:
  */
 class base_stream : public abstract_stream
 {
+    friend class stream_channel;
+
     enum class state {
         created = 0,   ///< Newly created.
         wait_service,  ///< Initiating, waiting for service reply.
