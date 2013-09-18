@@ -90,6 +90,11 @@ void base_stream::tx_attach()
     header->window = receive_window_byte();
 }
 
+void base_stream::transmit_on(stream_channel* channel)
+{
+    logger::debug() << "Internal stream transmit_on " << channel;
+}
+
 //calcReceiveWindow
 void base_stream::recalculate_receive_window()
 {

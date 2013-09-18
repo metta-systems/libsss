@@ -138,6 +138,15 @@ class base_stream : public abstract_stream
      */
     void tx_attach();
 
+    /**
+     * Called by stream_channel::got_ready_transmit() to transmit or retransmit
+     * one packet on a given channel. That packet might have to be an attach packet
+     * if we haven't finished attaching yet, or it might have to be an empty segment
+     * if we've run out of transmit window space but our latest receive window update
+     * may be out-of-date.
+     */
+    void transmit_on(stream_channel* channel);
+
     // Handlers.
     void channel_connected();
     void parent_attached();

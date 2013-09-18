@@ -45,6 +45,21 @@ stream_channel::~stream_channel()
 void stream_channel::got_ready_transmit()
 {
     logger::debug() << "stream_channel: ready to transmit";
+
+    if (sending_streams_.empty())
+        return;
+
+    // Round-robin between our streams for now.
+    do {
+        // Grab the next stream in line to transmit
+        base_stream *stream = sending_streams_.front();
+        sending_streams_.pop();
+
+        // Allow it to transmit one packet.
+        // It will add itself back onto sending_streams_ if it has more.
+        stream->transmit_on(this);
+
+    } while (!sending_streams_.empty() and may_transmit());
 }
 
 void stream_channel::got_link_status_changed(link::status new_status)
