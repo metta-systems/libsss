@@ -66,6 +66,11 @@ public:
 
     inline void set_link_status(link::status new_status) { link_status_ = new_status; }
 
+    typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
+
+    /// Indicates when this channel observes a change in link status.
+    link_status_changed_signal on_link_status_changed;
+
 protected:
     /**
      * Main method for upper-layer subclass to receive a packet on a flow.

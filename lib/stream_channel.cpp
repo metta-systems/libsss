@@ -2,6 +2,8 @@
 #include "stream_channel.h"
 #include "logging.h"
 
+using namespace std;
+
 namespace ssu {
 
 /**
@@ -10,11 +12,29 @@ namespace ssu {
  */
 constexpr int max_sid_skip = 16;
 
-stream_channel::stream_channel(std::shared_ptr<host> host, stream_peer* peer, const peer_id& id)
+// Stream ID 0 always refers to the root stream.
+constexpr stream_protocol::stream_id_t root_sid = 0x0000;
+
+stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const peer_id& id)
     : channel(host)
     , peer_(peer)
-    , root_(std::make_shared<base_stream>(host, id, nullptr))
+    , root_(make_shared<base_stream>(host, id, nullptr))
+    , transmit_sid_counter_{1}
+    , transmit_sid_acked_{0}
+    , received_sid_counter_{0}
 {
+    root_->state_ = base_stream::state::connected;
+
+    // Pre-attach the root stream to this channel in both directions.
+    root_->tx_attachments_[0].set_attaching(this, root_sid);
+    root_->tx_attachments_[0].set_active(1);
+    root_->tx_current_attachment_ = &root_->tx_attachments_[0];
+
+    root_->rx_attachments_[0].set_active(this, root_sid, 1);
+
+    // Listen on the root stream for top-level application streams
+    root_->listen(stream::listen_mode::unlimited);
+
     on_ready_transmit.connect(boost::bind(&stream_channel::got_ready_transmit, this));
     on_link_status_changed.connect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
 }
@@ -29,7 +49,7 @@ void stream_channel::got_ready_transmit()
 
 void stream_channel::got_link_status_changed(link::status new_status)
 {
-    logger::debug() << "stream_channel: link status changed, new status " << new_status;
+    logger::debug() << "stream_channel: link status changed, new status " << int(new_status);
 }
 
 stream_protocol::counter_t stream_channel::allocate_transmit_sid()
@@ -38,7 +58,7 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
     if (transmit_sids_.find(sid) != transmit_sids_.end())
     {
         int maxsearch = 0x7ff0 - (transmit_sid_counter_ - transmit_sid_acked_);
-        maxsearch = std::min(maxsearch, max_sid_skip);
+        maxsearch = min(maxsearch, max_sid_skip);
         do {
             if (maxsearch-- <= 0) {
                 logger::fatal() << "allocate_transmit_sid: no free SIDs";

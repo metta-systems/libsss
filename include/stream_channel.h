@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <queue>
 #include <unordered_map>
 #include "channel.h"
 #include "base_stream.h"
@@ -23,8 +24,17 @@ class stream_peer;
  */
 class stream_channel : public channel, public stream_protocol
 {
-    std::shared_ptr<base_stream> root_{nullptr};
+    friend class stream_rx_attachment; /// @fixme
+
     typedef channel super;
+
+    /// Top-level stream used for connecting to services.
+    std::shared_ptr<base_stream> root_{nullptr};
+
+    /// Stream peer this channel is associated with.
+    /// A stream_channel is always either a direct child of its stream_peer,
+    /// or a child of a key_initiator which is a child of its stream_peer, @fixme
+    /// so there should be no chance of this pointer ever dangling.
     stream_peer* peer_{nullptr};
 
     std::unordered_map<stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace
@@ -33,16 +43,24 @@ class stream_channel : public channel, public stream_protocol
     counter_t transmit_sid_acked_{0};   // Last acknowledged stream counter.
     counter_t received_sid_counter_{0};   // Last stream counter received.
 
+    /// Closed stream IDs waiting for close acknowledgment.
+    std::unordered_set<stream_id_t> closed_streams_;
+
     /**
      * Streams queued for transmission on this channel.
      * This should be a priority queue for simplicity of enqueueing.
      */
-    // priority_queue<base_stream*> tx_streams;
+    std::queue<base_stream*> sending_streams_;
 
     typedef uint64_t tx_seq_id;///@fixme
 
     std::unordered_map<tx_seq_id, base_stream::packet*> waiting_ack_;
     std::unordered_map<tx_seq_id, base_stream::packet*> waiting_expiry_;
+
+    // RxSID of stream on which we last received a packet -
+    // this determines for which stream we send receive window info
+    // when transmitting "bare" Ack packets.
+    stream_id_t ack_sid_;
 
     // Handlers.
     void got_ready_transmit();
