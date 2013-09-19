@@ -148,6 +148,9 @@ void base_stream::recalculate_transmit_window()
 void base_stream::connect_to(string const& service, string const& protocol)
 {
     logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
+
+    top_level_ = true;
+
     attach_for_transmit();
 }
 
@@ -165,6 +168,7 @@ void base_stream::attach_for_transmit()
     // If we already have a transmit-attachment, nothing to do.
     if (tx_current_attachment_ != nullptr) {
         assert(tx_current_attachment_->is_in_use());
+        logger::debug() << "Internal stream already has attached, doing nothing";
         return;
     }
 
@@ -200,6 +204,7 @@ void base_stream::attach_for_transmit()
                 parent_ = channel->root_stream();
                 parent = parent_.lock();
             } else {
+                logger::warning() << "Parent stream closed before child stream could be initiated";
                 return fail("Parent stream closed before child stream could be initiated");
             }
         }
@@ -363,12 +368,15 @@ void base_stream::dump()
 
 void base_stream::channel_connected()
 {
-    logger::debug() << "Channel has connected.";
+    logger::debug() << "Internal stream - channel has connected.";
+
+    // Retry attach now that we hopefully have an active channel.
+    attach_for_transmit();
 }
 
 void base_stream::parent_attached()
 {
-    logger::debug() << "Parent stream has attached, we can now attach.";
+    logger::debug() << "Internal stream - parent stream has attached, we can now attach.";
 }
 
 //=================================================================================================

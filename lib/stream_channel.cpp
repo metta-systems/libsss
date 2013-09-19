@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "stream_channel.h"
+#include "private/stream_peer.h"
 #include "logging.h"
 
 using namespace std;
@@ -91,6 +92,16 @@ void stream_channel::start(bool initiate)
 {
     logger::debug() << "stream_channel: start " << (initiate ? "(initiator)" : "(responder)");
     super::start(initiate);
+    assert(is_active());
+
+    // Set the root stream's USID based on our channel ID
+    root_->usid_.half_channel_id_ = initiate ? tx_channel_id() : rx_channel_id();
+    root_->usid_.counter_ = 0;
+    assert(!root_->usid_.is_empty());
+
+    // If our target doesn't yet have an active flow, use this one.
+    // This way we either an incoming or outgoing flow can be a primary.
+    target_peer()->channel_started(this);
 }
 
 void stream_channel::stop()
