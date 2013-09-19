@@ -11,6 +11,8 @@
 #include "host.h"
 #include "private/stream_peer.h"
 #include "stream_channel.h"
+#include "flurry.h"
+#include "byte_array_wrap.h"
 
 using namespace std;
 
@@ -77,8 +79,8 @@ void base_stream::tx_attach()
 {
     logger::debug() << "Internal stream tx_attach";
 
+    stream_channel* chan = tx_current_attachment_->channel_;
     int slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
-    // tx_current_attachment_->channel_;
 
     packet p(this, packet_type::attach);
     auto header = p.header<attach_header>();
@@ -88,6 +90,28 @@ void base_stream::tx_attach()
                  | (init_ ? subtype_bits(flags::attach_init) : 0)
                  | (slot & subtype_bits(flags::attach_slot_mask));
     header->window = receive_window_byte();
+
+    // The body of the Attach packet is the stream's full USID,
+    // and the parent's USID too if we're still initiating the stream.
+    byte_array body;
+    {
+        byte_array_owrap<flurry::oarchive> write(body);
+        write.archive() << usid_;
+        if (init_)
+            write.archive() << parent_usid_;
+        else
+            write.archive() << nullptr;
+    }
+    p.buf.append(body);
+
+    // Transmit it on the current flow.
+    uint64_t pktseq;
+    chan->channel_transmit(p.buf, pktseq);
+
+    // Save the attach packet in the flow's ackwait hash,
+    // so that we'll be notified when the attach packet gets acked.
+    p.late = false;
+    chan->waiting_ack_.insert(make_pair(pktseq, p));
 }
 
 void base_stream::transmit_on(stream_channel* channel)
