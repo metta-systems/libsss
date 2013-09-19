@@ -24,6 +24,8 @@ channel::channel(std::shared_ptr<host> host)
     tx_events_.push(transmit_event_t(0, false));
     assert(tx_events_.size() == 1);
     mark_time_ = host_->current_time();
+
+    reset_congestion_control();
 }
 
 channel::~channel()
@@ -37,6 +39,8 @@ void channel::start(bool initiate)
 
     super::start(initiate);
 
+    // We're ready to go!
+    start_retransmit_timer();
     on_ready_transmit();
 
     set_link_status(link::status::up);
@@ -45,6 +49,18 @@ void channel::start(bool initiate)
 void channel::stop()
 {
     logger::debug() << "channel: stop";
+}
+
+void channel::reset_congestion_control()
+{
+    cumulative_rtt_ = boost::posix_time::milliseconds(500);
+}
+
+void channel::start_retransmit_timer()
+{
+    async::timer::duration_type timeout =
+        boost::posix_time::milliseconds(cumulative_rtt_.total_milliseconds() * 2);
+    retransmit_timer_.start(timeout); // Wait for full round-trip time.
 }
 
 int channel::may_transmit()
@@ -78,11 +94,20 @@ uint32_t channel::make_second_header_word(uint8_t ack_count, uint32_t ack_sequen
 
 bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
 {
+    assert(packet.size() > header_len); // Must be non-empty packet.
+
     // Include implicit acknowledgment of the latest packet(s) we've acked
     uint32_t ackseq = make_second_header_word(rx_ack_count_, rx_ack_sequence_);
 
     // Send the packet
     bool success = transmit(packet, ackseq, packet_seq, true);
+
+    // If the retransmission timer is inactive, start it afresh.
+    // (If this was a retransmission, rtxTimeout() would have restarted it.)
+    if (!retransmit_timer_.is_active()) {
+        start_retransmit_timer();
+    }
+
     return success;
 }
 

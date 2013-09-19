@@ -82,6 +82,9 @@ class channel : public link_channel
     // bool delayack;      ///< Enable delayed acknowledgments
     // Timer acktimer;     ///< Delayed ACK timer
 
+    // Channel statistics.
+    async::timer::duration_type cumulative_rtt_;
+
 public:
     /**
      * Amount of space client must leave at the beginning of a packet
@@ -167,6 +170,10 @@ protected:
     virtual void expire(uint64_t txseq, int npackets);
 
 private:
+    void reset_congestion_control();
+
+    void start_retransmit_timer();
+
     /**
      * Private low-level transmit routine:
      * encrypt, authenticate, and transmit a packet whose cleartext header and data are
