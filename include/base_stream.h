@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <queue>
 #include <boost/signals2/signal.hpp>
 #include "abstract_stream.h"
 #include "channel.h"
@@ -96,11 +97,47 @@ class base_stream : public abstract_stream
         disconnected   ///< Connection terminated.
     };
 
+    /**
+     * @internal
+     * Unit of data transmission on SSU stream.
+     */
+    struct packet
+    {
+        base_stream* owner{nullptr};            ///< Packet owner.
+        uint64_t tsn{0};                        ///< Logical byte position. XXX tx_byte_pos
+        byte_array buf;                         ///< Packet buffer including headers.
+        int header_len{0};                      ///< Size of channel and stream headers.
+        packet_type type{packet_type::invalid}; ///< Type of this packet.
+        bool late{false};                       ///< Possibly lost packet.
+
+        inline packet() = default;
+        inline packet(base_stream* o, packet_type t)
+            : owner(o)
+            , type(t)
+        {}
+        inline bool is_null() const {
+            return owner == nullptr;
+        }
+        inline int payload_size() const {
+            return buf.size() - header_len;
+        }
+
+        template <typename T>
+        T* header()
+        {
+            buf.resize(channel::header_len + sizeof(T));
+            return reinterpret_cast<T*>(buf.data() + channel::header_len);
+        }
+    };
+
     std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
     state state_{state::created};
     uint8_t receive_window_byte_{0};
     bool init_{true};
     bool top_level_{false}; ///< This is a top-level stream.
+    bool tx_enqueued_channel_{false}; ///< We're enqueued for transmission on our channel.
+
+    std::queue<packet> tx_queue_; ///< Transmit packets queue.
 
     unique_stream_id_t usid_,        ///< Unique stream ID.
                        parent_usid_; ///< Unique ID of parent stream.
@@ -152,39 +189,6 @@ class base_stream : public abstract_stream
     void parent_attached();
 
 public:
-    /**
-     * @internal
-     * Unit of data transmission on SSU stream.
-     */
-    struct packet
-    {
-        base_stream* owner{nullptr};            ///< Packet owner.
-        uint64_t tsn{0};                        ///< Logical byte position. XXX tx_byte_pos
-        byte_array buf;                         ///< Packet buffer including headers.
-        int header_len{0};                      ///< Size of channel and stream headers.
-        packet_type type{packet_type::invalid}; ///< Type of this packet.
-        bool late{false};                       ///< Possibly lost packet.
-
-        inline packet() = default;
-        inline packet(base_stream* o, packet_type t)
-            : owner(o)
-            , type(t)
-        {}
-        inline bool is_null() const {
-            return owner == nullptr;
-        }
-        inline int payload_size() const {
-            return buf.size() - header_len;
-        }
-
-        template <typename T>
-        T* header()
-        {
-            buf.resize(channel::header_len + sizeof(T));
-            return reinterpret_cast<T*>(buf.data() + channel::header_len);
-        }
-    };
-
     /**
      * Create a base_stream instance.
      * @param host parent host
