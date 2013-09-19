@@ -116,7 +116,20 @@ void base_stream::tx_attach()
 
 void base_stream::transmit_on(stream_channel* channel)
 {
+    assert(tx_enqueued_channel_);
+    assert(tx_current_attachment_ != nullptr);
+    assert(channel == tx_current_attachment_->channel_);
+
     logger::debug() << "Internal stream transmit_on " << channel;
+
+    tx_enqueued_channel_ = false; // Channel has just dequeued us.
+
+    // We've exhausted all of our optimized-path options:
+    // we have to send a specialized Attach packet instead of useful data.
+    tx_attach();
+
+    // Don't requeue onto our flow at this point -
+    // we can't transmit any data until we get that ack!
 }
 
 //calcReceiveWindow
