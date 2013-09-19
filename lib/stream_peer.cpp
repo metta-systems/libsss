@@ -73,7 +73,39 @@ void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
 }
 
 void stream_peer::channel_started(stream_channel* channel)
-{}
+{
+    logger::debug() << "Stream peer - channel " << channel << " started";
+
+    assert(channel->is_active());
+    assert(channel->target_peer() == this);
+    assert(channel->link_status() == link::status::up);
+
+    if (primary_channel_) {
+        // If we already have a working primary channel, we don't need a new one.
+        if (primary_channel_->link_status() == link::status::up)
+            return; 
+
+        // But if the current primary is on the blink, replace it.
+        clear_primary_channel();
+    }
+
+    logger::debug() << "Stream peer - new primary channel " << channel;
+
+    // Use this channel as our primary channel for this target.
+    primary_channel_ = channel;
+    stall_warnings_ = 0;
+
+    // Re-parent it directly underneath us, so it won't be deleted when its KeyInitiator disappears.
+    // fl->setParent(this);
+
+    // Watch the link status of our primary channel, so we can try to replace it if it fails.
+    primary_channel_->on_link_status_changed.connect(
+        boost::bind(&stream_peer::primary_status_changed, this, _1));
+
+    // Notify all waiting streams
+    on_channel_connected();
+    on_link_status_changed(link::status::up);
+}
 
 void stream_peer::clear_primary_channel()
 {
@@ -89,6 +121,18 @@ void stream_peer::add_location_hint(const endpoint& hint)
 void stream_peer::completed(bool success)
 {
     logger::debug() << "Stream peer key exchange completed " << (success ? "successfully" : "erroneously");
+    // @todo Detach and remove key_initiator(s)
+}
+
+void stream_peer::primary_status_changed(link::status new_status)
+{
+    if (new_status == link::status::up)
+    {
+        stall_warnings_ = 0;
+        return;
+    }
+    // @todo Stall counts...
+    on_link_status_changed(new_status);
 }
 
 // } // private_ namespace

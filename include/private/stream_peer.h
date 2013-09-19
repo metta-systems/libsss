@@ -33,6 +33,7 @@ class stream_peer : public stream_protocol
 {
     friend class base_stream; // @fixme Use accessors n stuff.
     friend class stream_host_state; // @fixme used only to construct.
+    friend class stream_channel; // @fixme Used to call channel_started() only.
 
     /**
      * Retry connection attempts for persistent streams once every minute.
@@ -93,6 +94,7 @@ class stream_peer : public stream_protocol
 
     // Handlers.
     void completed(bool success);
+    void primary_status_changed(link::status new_status);
 
 public:
     /// Supply an endpoint hint that may be useful for finding this peer.
@@ -101,6 +103,10 @@ public:
     typedef boost::signals2::signal<void (void)> channel_state_signal;
     channel_state_signal on_channel_connected; ///< Primary channel connection attempt succeeded.
     channel_state_signal on_channel_failed; ///< Connection attempt or the primary channel failed.
+
+    typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
+    /// Indicates when this stream peer observes a change in link status.
+    link_status_changed_signal on_link_status_changed;
 };
 
 // } // private_ namespace
