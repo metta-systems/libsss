@@ -44,10 +44,10 @@ stream_channel::~stream_channel()
 
 void stream_channel::got_ready_transmit()
 {
-    logger::debug() << "stream_channel: ready to transmit";
-
     if (sending_streams_.empty())
         return;
+
+    logger::debug() << "stream_channel: ready to transmit";
 
     // Round-robin between our streams for now.
     do {
