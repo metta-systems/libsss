@@ -54,8 +54,8 @@ class stream_channel : public channel, public stream_protocol
 
     typedef uint64_t tx_seq_id;///@fixme
 
-    std::unordered_map<tx_seq_id, base_stream::packet*> waiting_ack_;
-    std::unordered_map<tx_seq_id, base_stream::packet*> waiting_expiry_;
+    std::unordered_map<tx_seq_id, base_stream::packet> waiting_ack_;
+    std::unordered_map<tx_seq_id, base_stream::packet> waiting_expiry_;
 
     // RxSID of stream on which we last received a packet -
     // this determines for which stream we send receive window info
