@@ -24,6 +24,7 @@ class stream_peer;
  */
 class stream_channel : public channel, public stream_protocol
 {
+    friend class base_stream; /// @fixme
     friend class stream_rx_attachment; /// @fixme
 
     typedef channel super;
@@ -63,7 +64,6 @@ class stream_channel : public channel, public stream_protocol
     stream_id_t ack_sid_;
 
     // Handlers.
-    void got_ready_transmit();
     void got_link_status_changed(link::status new_status);
 
 public:
@@ -96,6 +96,9 @@ public:
     void expire(uint64_t txseq, int npackets) override;
 
     bool channel_receive(uint64_t pktseq, byte_array &pkt) override;
+
+    // Handlers.
+    void got_ready_transmit();
 };
 
 } // namespace ssu

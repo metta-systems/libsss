@@ -8,10 +8,12 @@
 //
 #pragma once
 
+#include <queue>
 #include "byte_array.h"
 #include "link.h"
 #include "link_channel.h"
 #include "channel_armor.h"
+#include "timer.h"
 
 namespace ssu {
 
@@ -22,19 +24,81 @@ class host;
  */
 class channel : public link_channel
 {
+    friend class base_stream; // @fixme *sigh*
+
     typedef link_channel super;
 
     std::shared_ptr<host>          host_;
-    std::unique_ptr<channel_armor> armor_; // armors cannot be shared.
+    std::unique_ptr<channel_armor> armor_; ///< Armors cannot be shared.
 
-    link::status                   link_status_;
+    // Retransmit state
+    async::timer retransmit_timer_;  ///< Retransmit timer.
+    link::status link_status_;       ///< Link online status.
 
-    byte_array                     tx_channel_id_;
-    byte_array                     rx_channel_id_;
+    byte_array   tx_channel_id_;
+    byte_array   rx_channel_id_;
+
+    struct transmit_event_t
+    {
+        int32_t size_;   ///< Total size of packet including hdr
+        bool    data_;   ///< Was an upper-layer data packet
+        bool    pipe_;   ///< Currently counted toward transmit_data_pipe
+
+        inline transmit_event_t(int32_t size, bool is_data)
+            : size_(size)
+            , data_(is_data)
+            , pipe_(is_data)
+        {}
+    };
+
+    static constexpr uint64_t max_packet_sequence = ~0ULL;
+
+    // Transmit state
+    uint64_t tx_sequence_{1};             ///< Next sequence number to transmit
+    std::queue<transmit_event_t> tx_events_; ///< Record of transmission events (XX data sizes)
+    uint64_t tx_event_sequence_{0};       ///< Seqno of oldest recorded tx event
+    uint64_t tx_ack_sequence_{0};         ///< Highest transmit sequence number ACK'd
+    // uint64_t recovseq;   ///< Sequence at which fast recovery finishes
+    uint64_t mark_sequence_{1};           ///< Transmit sequence number of "marked" packet
+    uint64_t mark_base_{0};               ///< Snapshot of txackseq at time mark was placed
+    boost::posix_time::ptime mark_time_;      ///< Time at which marked packet was sent
+    // uint32_t txackmask;  ///< Mask of packets transmitted and ACK'd
+    uint32_t tx_inflight_count_{0};       ///< Data packets currently in flight
+    uint32_t tx_inflight_size_{0};        ///< Data bytes currently in flight
+    uint32_t mark_acks_{0};               ///< Number of ACK'd packets since last mark
+    uint32_t mark_sent_{0};               ///< Number of ACKs expected after last mark
+    // uint32_t cwnd;       ///< Current congestion window
+    // bool cwndlim;       ///< We were cwnd-limited this round-trip
+
+    // Receive state
+    // quint64 rxseq;      ///< Highest sequence number received so far
+    // quint32 rxmask;     ///< Mask of packets received so far
+
+    // Receive-side ACK state
+    uint64_t rx_ack_sequence_{0};         ///< Highest sequence number acknowledged so far
+    // //quint32 rxackmask;  // Mask of packets received & acknowledged
+    uint8_t rx_ack_count_{0};             ///< Number of contiguous packets received before rxackseq
+    // quint8 rxunacked;   ///< Number of contiguous packets not yet ACKed
+    // bool delayack;      ///< Enable delayed acknowledgments
+    // Timer acktimer;     ///< Delayed ACK timer
 
 public:
+    /**
+     * Amount of space client must leave at the beginning of a packet
+     * to be transmitted with channel_transmit() or received via channel_receive().
+     * @fixme won't always be static const.
+     */
     static constexpr int header_len = 8/*XXX*/;
 
+    // Layout of the first header word: channel number, tx sequence
+    // Transmitted in cleartext.
+    static uint32_t make_first_header_word(channel_number channel, uint32_t tx_sequence);
+
+    // Layout of the second header word: ACK count, ACK sequence number
+    // Encrypted for transmission.
+    static uint32_t make_second_header_word(uint8_t ack_count, uint32_t ack_sequence);
+
+public:
     channel(std::shared_ptr<host> host);
     virtual ~channel();
 
@@ -73,6 +137,18 @@ public:
 
 protected:
     /**
+     * Transmit a packet across the channel.
+     * Caller must leave header_len bytes at the beginning for the header. The packet
+     * is armored in-place in the provided byte_array. It is the caller's responsibility
+     * to transmit only when flow control says it's OK (may_transmit() returns true)
+     * or upon getting on_ready_transmit() signal.
+     * Provides in 'packet_seq' the transmit sequence number that was assigned to the packet.
+     * Returns true if the transmit was successful, or false if it failed (e.g., due
+     * to lack of buffer space); a sequence number is assigned even on failure however.
+     */
+    bool channel_transmit(byte_array& packet, uint64_t& packet_seq);
+
+    /**
      * Main method for upper-layer subclass to receive a packet on a flow.
      * Should return true if the packet was processed and should be acked,
      * or false to silently pretend we never received the packet.
@@ -91,6 +167,14 @@ protected:
     virtual void expire(uint64_t txseq, int npackets);
 
 private:
+    /**
+     * Private low-level transmit routine:
+     * encrypt, authenticate, and transmit a packet whose cleartext header and data are
+     * already fully set up, with a specified ACK sequence/count word.
+     * Returns true on success, false on error (e.g., no output buffer space for packet)
+     */
+    bool transmit(byte_array& packet, uint32_t packseq, uint64_t& pktseq, bool is_data);
+
     /**
      * Called by link to dispatch a received packet to this channel.
      * @param msg [description]
