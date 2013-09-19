@@ -12,6 +12,7 @@
 #include <type_traits>
 #include "byte_array.h"
 #include "opaque_endian.h"
+#include "flurry.h"
 
 namespace ssu {
 
@@ -129,6 +130,20 @@ std::ostream& operator << (std::ostream& os, stream_protocol::unique_stream_id_t
 {
     os << "USID[" << id.counter_ << ":" << id.half_channel_id_ << "]";
     return os;
+}
+
+inline
+flurry::oarchive& operator << (flurry::oarchive& oa, stream_protocol::unique_stream_id_t const& id)
+{
+    oa << id.counter_ << id.half_channel_id_;
+    return oa;
+}
+
+inline
+flurry::iarchive& operator >> (flurry::iarchive& ia, stream_protocol::unique_stream_id_t& id)
+{
+    ia >> id.counter_ >> id.half_channel_id_;
+    return ia;
 }
 
 } // namespace ssu
