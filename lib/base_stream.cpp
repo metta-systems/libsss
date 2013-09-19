@@ -48,11 +48,11 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
 
     logger::debug() << "Internal stream enqueue on channel";
 
-    // stream_channel* channel = tx_current_attachment->channel;
-    // assert(channel && channel->is_active());
+    stream_channel* channel = tx_current_attachment_->channel_;
+    assert(channel && channel->is_active());
 
-    // if (!tx_enqueued_channel)
-    // {
+    if (!tx_enqueued_channel_)
+    {
     //     if (tx_queue.empty())
     //     {
     //         if (owner) {
@@ -62,12 +62,12 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
     //     else
     //     {
     //         channel->enqueue_stream(this);
-    //         tx_enqueued_channel = true;
+    //         tx_enqueued_channel_ = true;
     //     }
-    // }
+    }
 
-    // if (tx_immediately && channel->may_transmit())
-    //     channel->ready_transmit();
+    if (tx_immediately && channel->may_transmit())
+        channel->got_ready_transmit();
 }
 
 bool base_stream::is_attached()
