@@ -41,7 +41,7 @@ class abstract_stream : public stream_protocol
 
 protected:
     std::shared_ptr<host> host_;    ///< Per-host state.
-    std::weak_ptr<stream> owner;    ///< Back-pointer to stream object, 
+    std::weak_ptr<stream> owner_;   ///< Back-pointer to stream object, 
                                     ///< or nullptr if stream has been deleted.
     peer_id peerid_;                ///< EID of peer we're connected to.
 
@@ -213,7 +213,7 @@ public:
 
 protected:
     void set_error(const std::string& error) {
-        if (std::shared_ptr<stream> strm = owner.lock()) {
+        if (auto strm = owner_.lock()) {
             strm->set_error(error);
         }
     }
