@@ -181,10 +181,30 @@ void channel::expire(uint64_t txseq, int npackets)
 
 void channel::receive(const byte_array& msg, const link_endpoint& src)
 {
-    logger::debug() << "channel: receive";
-    /// @todo
-    packet_seq_t pktseq;
-    channel_receive(pktseq, msg);
+    // Determine the full 64-bit packet sequence number
+    big_uint32_t ptxseq = msg.as<big_uint32_t>()[0];
+
+    channel_number pktchan = ptxseq >> 24;
+    assert(pktchan == local_channel());    // enforced by sock.cc
+
+    int32_t seqdiff = ((int32_t)(ptxseq << 8)
+                    - ((int32_t)rx_sequence_ << 8))
+                    >> 8;
+
+    packet_seq_t pktseq = rx_sequence_ + seqdiff;
+    logger::debug() << "channel: receive - rxseq " << pktseq << ", size " << msg.size();
+
+    byte_array pkt = msg;
+    // Authenticate and decrypt the packet
+    if (!armor_->receive_decode(pktseq, pkt)) {
+        logger::warning() << "Received packet auth failed on rx " << pktseq;
+        return;
+    }
+    //@todo replace first word in pkt with data from msg - it's unencrypted
+
+    if (channel_receive(pktseq, pkt))
+        ;//acknowledge(pktseq, true);
+        // XX should still replay-protect even if no ack!
 }
 
 } // ssu namespace
