@@ -113,11 +113,14 @@ void stream_channel::stop()
 void stream_channel::enqueue_stream(base_stream* stream)
 {
     logger::debug() << "enqueue_stream " << stream;
+    // @todo Stream priorities.
+    sending_streams_.push(stream);
 }
 
 void stream_channel::dequeue_stream(base_stream* stream)
 {
     logger::debug() << "dequeue_stream " << stream;
+    // sending_streams_.erase(stream); // @fixme
 }
 
 bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct)
