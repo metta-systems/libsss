@@ -240,6 +240,19 @@ public:
     void set_child_receive_buffer_size(size_t size) override;
     void dump() override;
 
+    // Receive handling.
+    // Returns true if received packet needs to be acked, false otherwise.
+    static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    void rx_data(byte_array const& pkt, uint32_t byte_seq);
+
     //=========
     // Signals
     //=========

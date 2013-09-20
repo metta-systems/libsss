@@ -416,6 +416,130 @@ void base_stream::dump()
     // << " rmsgs " << rmsgsize.size()
 }
 
+template <typename T>
+inline T const* as_header(byte_array const& v)
+{
+    return reinterpret_cast<T const*>(v.data() + channel::header_len);
+}
+
+constexpr size_t header_len_min = channel::header_len + 4;
+
+bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    if (pkt.size() < header_len_min) {
+        logger::warning() << "Received runt packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
+    auto header = as_header<stream_header>(pkt);
+
+    switch (type_from_header(header))
+    {
+        case packet_type::init:
+            return rx_init_packet(pktseq, pkt, channel);
+        case packet_type::reply:
+            return rx_reply_packet(pktseq, pkt, channel);
+        case packet_type::data:
+            return rx_data_packet(pktseq, pkt, channel);
+        case packet_type::datagram:
+            return rx_datagram_packet(pktseq, pkt, channel);
+        case packet_type::ack:
+            return rx_ack_packet(pktseq, pkt, channel);
+        case packet_type::reset:
+            return rx_reset_packet(pktseq, pkt, channel);
+        case packet_type::attach:
+            return rx_attach_packet(pktseq, pkt, channel);
+        case packet_type::detach:
+            return rx_detach_packet(pktseq, pkt, channel);
+        default:
+            logger::warning() << "Unknown packet type " << hex << int(type_from_header(header));
+            return false; // @fixme Protocol error, close channel?
+    }
+}
+
+bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<init_header>(pkt);
+    return false;
+}
+
+bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<reply_header>(pkt);
+    return false;
+}
+
+bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<data_header>(pkt);
+    return false;
+}
+
+bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<datagram_header>(pkt);
+    return false;
+}
+
+bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<ack_header>(pkt);
+    return false;
+}
+
+bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<reset_header>(pkt);
+    return false;
+}
+
+template <typename Key, typename Container>
+inline bool contains(Container& c, Key& k)
+{
+    return c.find(k) != end(c);
+}
+
+bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    logger::debug() << "Received attach packet";
+
+    auto header = as_header<attach_header>(pkt);
+    bool init = (header->type_subtype & flags::attach_init) != 0;
+    int slot = header->type_subtype & flags::attach_slot_mask;
+    unique_stream_id_t usid, parent_usid;
+
+    byte_array_iwrap<flurry::iarchive> read(pkt);
+    read.archive().skip_raw_data(sizeof(attach_header) + channel::header_len);
+
+    // Decode the USID(s) in the body
+    read.archive() >> usid;
+    if (init) {
+        read.archive() >> parent_usid;
+    }
+
+    if (usid.is_empty() or (init and parent_usid.is_empty()))
+    {
+        logger::warning() << "Invalid attach packet received";
+        return false; // @fixme Protocol error, shutdown channel?
+    }
+
+    if (contains(channel->peer_->usid_streams_, usid))
+    {
+        logger::debug() << "Found USID in existing streams";
+    }
+
+    return false;
+}
+
+bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+{
+    auto header = as_header<detach_header>(pkt);
+    return false;
+}
+
+void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
+{}
+
 //-----------------
 // Signal handlers
 //-----------------

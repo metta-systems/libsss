@@ -74,7 +74,7 @@ class channel : public link_channel
     // bool cwndlim;       ///< We were cwnd-limited this round-trip
 
     // Receive state
-    // quint64 rxseq;      ///< Highest sequence number received so far
+    packet_seq_t rx_sequence_{0};      ///< Highest sequence number received so far
     // quint32 rxmask;     ///< Mask of packets received so far
 
     // Receive-side ACK state
