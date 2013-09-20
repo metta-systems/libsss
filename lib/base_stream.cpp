@@ -92,9 +92,8 @@ void base_stream::tx_attach()
     auto header = p.header<attach_header>();
 
     header->stream_id = tx_current_attachment_->stream_id_;
-    header->type_subtype = type_bits(packet_type::attach)
-                 | (init_ ? subtype_bits(flags::attach_init) : 0)
-                 | (slot & subtype_bits(flags::attach_slot_mask));
+    header->type_subtype = type_and_subtype(packet_type::attach,
+                 (init_ ? flags::attach_init : 0) | (slot & flags::attach_slot_mask));
     header->window = receive_window_byte();
 
     // The body of the Attach packet is the stream's full USID,

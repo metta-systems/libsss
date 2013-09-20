@@ -107,8 +107,9 @@ public:
         reset_remote      = 0x1,  ///< SID orientation (set: sent LSID is in remote space)
     };
 
-    inline uint8_t type_bits(packet_type type) { return uint8_t(type) << 4; }
-    inline uint8_t subtype_bits(flags subtype) { return uint8_t(subtype);   }
+    inline uint8_t type_and_subtype(packet_type type, uint8_t subtype) {
+        return uint8_t(type) << 4 | (subtype & 0xf);
+    }
 
     /**
      * Type for identifying streams uniquely across channels.
