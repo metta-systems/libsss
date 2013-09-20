@@ -386,13 +386,19 @@ struct key_message
 
 inline flurry::oarchive& operator << (flurry::oarchive& oa, key_message const& km)
 {
-    oa << km.magic << km.chunks;
+    big_uint32_t magic_out(km.magic);
+    oa.pack_raw_data(reinterpret_cast<const char*>(&magic_out), 4);
+    oa << km.chunks;
     return oa;
 }
 
 inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_message& km)
 {
-    ia >> km.magic >> km.chunks;
+    byte_array ub;
+    ub.resize(4);
+    ia.unpack_raw_data(ub);
+    km.magic = ub.as<big_uint32_t>()[0];
+    ia >> km.chunks;
     return ia;
 }
 

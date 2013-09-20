@@ -159,7 +159,7 @@ protected:
      * Should return true if the packet was processed and should be acked,
      * or false to silently pretend we never received the packet.
      */
-    virtual bool channel_receive(packet_seq_t pktseq, byte_array &pkt) = 0;
+    virtual bool channel_receive(packet_seq_t pktseq, byte_array const& pkt) = 0;
 
     /**
      * Create and transmit a packet for acknowledgment purposes only.

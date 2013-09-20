@@ -144,7 +144,7 @@ void stream_channel::expire(packet_seq_t txseq, int npackets)
     logger::debug() << "stream_channel: expire " << txseq;
 }
 
-bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array &pkt)
+bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
 {
     logger::debug() << "stream_channel: channel_receive " << pktseq;
     return false;

@@ -127,10 +127,7 @@ link::receive(const byte_array& msg, const link_endpoint& src)
     }
 
     try {
-        magic_t magic;
-        byte_array_iwrap<flurry::iarchive> read(msg);
-
-        read.archive() >> magic;
+        big_uint32_t magic = msg.as<big_uint32_t>()[0];
 
         link_receiver* recv = host_.receiver(magic);
         if (recv)
