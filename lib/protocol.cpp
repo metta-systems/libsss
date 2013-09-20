@@ -9,5 +9,6 @@
 #include "protocol.h"
 
 namespace ssu {
+constexpr size_t stream_protocol::mtu;
 constexpr magic_t stream_protocol::magic_id;
 }

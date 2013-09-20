@@ -42,6 +42,8 @@ typedef uint64_t packet_seq_t;
 class stream_protocol
 {
 public:
+    static constexpr size_t mtu = 1500; // @fixme This needs to be a per-link variable.
+
     // Control chunk magic value for the structured streams.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
     static constexpr magic_t magic_id = 0x00535355;
