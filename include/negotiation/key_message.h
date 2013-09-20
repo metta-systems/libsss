@@ -285,7 +285,8 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, dh_response2_chunk& 
 // key_chunk_type
 //=================================================================================================
 
-enum class key_chunk_type : uint32_t {
+enum class key_chunk_type : uint32_t
+{
     packet             = 0x0001,
     dh_init1           = 0x0021,
     dh_response1       = 0x0022,
