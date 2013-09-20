@@ -125,7 +125,8 @@ class base_stream : public abstract_stream
         template <typename T>
         T* header()
         {
-            buf.resize(channel::header_len + sizeof(T));
+            header_len = channel::header_len + sizeof(T);
+            buf.resize(header_len);
             return reinterpret_cast<T*>(buf.data() + channel::header_len);
         }
     };
