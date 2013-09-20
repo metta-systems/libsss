@@ -110,6 +110,16 @@ void stream_channel::stop()
     super::stop();
 }
 
+void stream_channel::enqueue_stream(base_stream* stream)
+{
+    logger::debug() << "enqueue_stream " << stream;
+}
+
+void stream_channel::dequeue_stream(base_stream* stream)
+{
+    logger::debug() << "dequeue_stream " << stream;
+}
+
 bool stream_channel::transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct)
 {
     logger::debug() << "stream_channel: transmit_ack";
