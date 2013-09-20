@@ -99,8 +99,8 @@ void stream_channel::start(bool initiate)
     root_->usid_.counter_ = 0;
     assert(!root_->usid_.is_empty());
 
-    // If our target doesn't yet have an active flow, use this one.
-    // This way we either an incoming or outgoing flow can be a primary.
+    // If our target doesn't yet have an active channel, use this one.
+    // This way either an incoming or outgoing channel can be a primary.
     target_peer()->channel_started(this);
 }
 
