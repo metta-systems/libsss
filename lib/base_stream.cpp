@@ -105,7 +105,7 @@ void base_stream::tx_attach()
     p.buf.append(body);
 
     // Transmit it on the current flow.
-    uint64_t pktseq;
+    packet_seq_t pktseq;
     chan->channel_transmit(p.buf, pktseq);
 
     // Save the attach packet in the flow's ackwait hash,
@@ -383,7 +383,7 @@ void base_stream::parent_attached()
 // stream_tx_attachment
 //=================================================================================================
 
-void stream_tx_attachment::set_attaching(stream_channel* channel, id_t sid)
+void stream_tx_attachment::set_attaching(stream_channel* channel, stream_id_t sid)
 {
     assert(!is_in_use());
 
@@ -399,7 +399,7 @@ void stream_tx_attachment::set_attaching(stream_channel* channel, id_t sid)
 // stream_rx_attachment
 //=================================================================================================
 
-void stream_rx_attachment::set_active(stream_channel* channel, id_t sid, uint64_t rxseq)
+void stream_rx_attachment::set_active(stream_channel* channel, stream_id_t sid, packet_seq_t rxseq)
 {
     assert(!is_active());
 

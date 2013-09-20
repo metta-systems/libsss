@@ -13,7 +13,7 @@
 namespace ssu {
 
 constexpr int channel::header_len;
-constexpr uint64_t channel::max_packet_sequence;
+constexpr packet_seq_t channel::max_packet_sequence;
 
 channel::channel(std::shared_ptr<host> host)
     : link_channel()

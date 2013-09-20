@@ -53,10 +53,8 @@ class stream_channel : public channel, public stream_protocol
      */
     std::queue<base_stream*> sending_streams_;
 
-    typedef uint64_t tx_seq_id;///@fixme
-
-    std::unordered_map<tx_seq_id, base_stream::packet> waiting_ack_;
-    std::unordered_map<tx_seq_id, base_stream::packet> waiting_expiry_;
+    std::unordered_map<packet_seq_t, base_stream::packet> waiting_ack_;
+    std::unordered_map<packet_seq_t, base_stream::packet> waiting_expiry_;
 
     // RxSID of stream on which we last received a packet -
     // this determines for which stream we send receive window info
@@ -89,13 +87,13 @@ public:
     void start(bool initiate) override;
     void stop() override;
 
-    bool transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct) override;
+    bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct) override;
 
-    void acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq) override;
-    void missed(uint64_t txseq, int npackets) override;
-    void expire(uint64_t txseq, int npackets) override;
+    void acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq) override;
+    void missed(packet_seq_t txseq, int npackets) override;
+    void expire(packet_seq_t txseq, int npackets) override;
 
-    bool channel_receive(uint64_t pktseq, byte_array &pkt) override;
+    bool channel_receive(packet_seq_t pktseq, byte_array &pkt) override;
 
     // Handlers.
     void got_ready_transmit();

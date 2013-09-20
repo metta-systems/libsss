@@ -51,16 +51,16 @@ class channel : public link_channel
         {}
     };
 
-    static constexpr uint64_t max_packet_sequence = ~0ULL;
+    static constexpr packet_seq_t max_packet_sequence = ~0ULL;
 
     // Transmit state
-    uint64_t tx_sequence_{1};             ///< Next sequence number to transmit
+    packet_seq_t tx_sequence_{1};             ///< Next sequence number to transmit
     std::queue<transmit_event_t> tx_events_; ///< Record of transmission events (XX data sizes)
-    uint64_t tx_event_sequence_{0};       ///< Seqno of oldest recorded tx event
-    uint64_t tx_ack_sequence_{0};         ///< Highest transmit sequence number ACK'd
+    packet_seq_t tx_event_sequence_{0};       ///< Seqno of oldest recorded tx event
+    packet_seq_t tx_ack_sequence_{0};         ///< Highest transmit sequence number ACK'd
     // uint64_t recovseq;   ///< Sequence at which fast recovery finishes
-    uint64_t mark_sequence_{1};           ///< Transmit sequence number of "marked" packet
-    uint64_t mark_base_{0};               ///< Snapshot of txackseq at time mark was placed
+    packet_seq_t mark_sequence_{1};           ///< Transmit sequence number of "marked" packet
+    packet_seq_t mark_base_{0};               ///< Snapshot of txackseq at time mark was placed
     boost::posix_time::ptime mark_time_;      ///< Time at which marked packet was sent
     // uint32_t txackmask;  ///< Mask of packets transmitted and ACK'd
     uint32_t tx_inflight_count_{0};       ///< Data packets currently in flight
@@ -75,9 +75,9 @@ class channel : public link_channel
     // quint32 rxmask;     ///< Mask of packets received so far
 
     // Receive-side ACK state
-    uint64_t rx_ack_sequence_{0};         ///< Highest sequence number acknowledged so far
+    packet_seq_t rx_ack_sequence_{0};         ///< Highest sequence number acknowledged so far
     // //quint32 rxackmask;  // Mask of packets received & acknowledged
-    uint8_t rx_ack_count_{0};             ///< Number of contiguous packets received before rxackseq
+    packet_seq_t rx_ack_count_{0};             ///< Number of contiguous packets received before rxackseq
     // quint8 rxunacked;   ///< Number of contiguous packets not yet ACKed
     // bool delayack;      ///< Enable delayed acknowledgments
     // Timer acktimer;     ///< Delayed ACK timer
@@ -149,25 +149,25 @@ protected:
      * Returns true if the transmit was successful, or false if it failed (e.g., due
      * to lack of buffer space); a sequence number is assigned even on failure however.
      */
-    bool channel_transmit(byte_array& packet, uint64_t& packet_seq);
+    bool channel_transmit(byte_array& packet, packet_seq_t& packet_seq);
 
     /**
      * Main method for upper-layer subclass to receive a packet on a flow.
      * Should return true if the packet was processed and should be acked,
      * or false to silently pretend we never received the packet.
      */
-    virtual bool channel_receive(uint64_t pktseq, byte_array &pkt) = 0;
+    virtual bool channel_receive(packet_seq_t pktseq, byte_array &pkt) = 0;
 
     /**
      * Create and transmit a packet for acknowledgment purposes only.
      * Upper layer may override this if ack packets should contain
      * more than an just an empty channel payload.
      */
-    virtual bool transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct);
+    virtual bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct);
 
-    virtual void acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq);
-    virtual void missed(uint64_t txseq, int npackets);
-    virtual void expire(uint64_t txseq, int npackets);
+    virtual void acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq);
+    virtual void missed(packet_seq_t txseq, int npackets);
+    virtual void expire(packet_seq_t txseq, int npackets);
 
 private:
     void reset_congestion_control();
@@ -180,7 +180,7 @@ private:
      * already fully set up, with a specified ACK sequence/count word.
      * Returns true on success, false on error (e.g., no output buffer space for packet)
      */
-    bool transmit(byte_array& packet, uint32_t packseq, uint64_t& pktseq, bool is_data);
+    bool transmit(byte_array& packet, uint32_t ack_seq, packet_seq_t& packet_seq, bool is_data);
 
     /**
      * Called by link to dispatch a received packet to this channel.

@@ -16,11 +16,22 @@
 
 namespace ssu {
 
-typedef uint32_t magic_t; ///< Protocol magic marker, must have 0x00 as the highest byte (channel number).
+/**
+ * Protocol magic marker, must have 0x00 as the highest byte (channel number).
+ */
+typedef uint32_t magic_t;
 
-// An 8-bit channel number distinguishes different channels
-// between the same pair of socket-layer endpoints. Channel number 0 is always invalid.
+/**
+ * An 8-bit channel number distinguishes different channels
+ * between the same pair of socket-layer endpoints. Channel number 0 is always invalid.
+ * Up to 255 simultaneous channels possible.
+ */
 typedef uint8_t channel_number;
+
+/**
+ * Packet sequence number.
+ */
+typedef uint64_t packet_seq_t;
 
 /**
  * @internal

@@ -26,8 +26,8 @@ class stream_attachment : public stream_protocol
 public:
     base_stream*     stream_{0};    ///< Our stream.
     stream_channel*  channel_{0};   ///< Channel our stream is attached to.
-    id_t             stream_id_{0}; ///< Our stream ID in this channel.
-    uint64_t         sid_seq_{0};   ///< Reference packet sequence for stream ID.
+    stream_id_t      stream_id_{0}; ///< Our stream ID in this channel.
+    packet_seq_t     sid_seq_{0};   ///< Reference packet sequence for stream ID.
 };
 
 class stream_tx_attachment : public stream_attachment
@@ -45,13 +45,13 @@ public:
      * Transition from Unused to Attaching -
      * this happens when we send a first Init, Reply, or Attach packet.
      */
-    void set_attaching(stream_channel* channel, id_t sid);
+    void set_attaching(stream_channel* channel, stream_id_t sid);
 
     /**
      * Transition from Attaching to Active -
      * this happens when we get an Ack to our Init, Reply, or Attach.
      */
-    inline void set_active(uint64_t rxseq) {
+    inline void set_active(packet_seq_t rxseq) {
         assert(is_in_use() && !is_acknowledged());
         sid_seq_ = rxseq;
         active_ = true;
@@ -67,7 +67,7 @@ public:
     inline bool is_active() const { return channel_ != nullptr; }
 
     // Transition from unused to active.
-    void set_active(stream_channel* channel, id_t sid, uint64_t rxseq);
+    void set_active(stream_channel* channel, stream_id_t sid, packet_seq_t rxseq);
 
     // Transition to the unused state.
     void clear();

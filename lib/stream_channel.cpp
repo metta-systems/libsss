@@ -120,30 +120,30 @@ void stream_channel::dequeue_stream(base_stream* stream)
     logger::debug() << "dequeue_stream " << stream;
 }
 
-bool stream_channel::transmit_ack(byte_array &pkt, uint64_t ackseq, unsigned ackct)
+bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct)
 {
-    logger::debug() << "stream_channel: transmit_ack";
+    logger::debug() << "stream_channel: transmit_ack " << ackseq;
     return false;
 }
 
-void stream_channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
+void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
 {
-    logger::debug() << "stream_channel: acknowledged";
+    logger::debug() << "stream_channel: acknowledged " << txseq;
 }
 
-void stream_channel::missed(uint64_t txseq, int npackets)
+void stream_channel::missed(packet_seq_t txseq, int npackets)
 {
-    logger::debug() << "stream_channel: missed";
+    logger::debug() << "stream_channel: missed " << txseq;
 }
 
-void stream_channel::expire(uint64_t txseq, int npackets)
+void stream_channel::expire(packet_seq_t txseq, int npackets)
 {
-    logger::debug() << "stream_channel: expire";
+    logger::debug() << "stream_channel: expire " << txseq;
 }
 
-bool stream_channel::channel_receive(uint64_t pktseq, byte_array &pkt)
+bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array &pkt)
 {
-    logger::debug() << "stream_channel: channel_receive";
+    logger::debug() << "stream_channel: channel_receive " << pktseq;
     return false;
 }
 
