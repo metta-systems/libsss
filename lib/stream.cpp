@@ -111,6 +111,15 @@ void stream::set_error(string const& error)
     error_notify(error);
 }
 
+ssize_t stream::write_data(const char* data, size_t size)
+{
+    if (!stream_) {
+        set_error("Stream not connected");
+        return -1;
+    }
+    return stream_->write_data(data, size, stream_protocol::flags::data_push);
+}
+
 //=================================================================================================
 // stream_responder
 //=================================================================================================

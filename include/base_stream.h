@@ -104,7 +104,7 @@ class base_stream : public abstract_stream
     struct packet
     {
         base_stream* owner{nullptr};            ///< Packet owner.
-        uint64_t tsn{0};                        ///< Logical byte position. XXX tx_byte_pos
+        uint64_t tx_byte_seq{0};                ///< Logical byte position.
         byte_array buf;                         ///< Packet buffer including headers.
         int header_len{0};                      ///< Size of channel and stream headers.
         packet_type type{packet_type::invalid}; ///< Type of this packet.
@@ -137,8 +137,11 @@ class base_stream : public abstract_stream
     bool init_{true};
     bool top_level_{false}; ///< This is a top-level stream.
     bool tx_enqueued_channel_{false}; ///< We're enqueued for transmission on our channel.
+    bool end_write_{false}; ///< Stream has closed for writing.
 
     std::queue<packet> tx_queue_; ///< Transmit packets queue.
+    std::unordered_set<int32_t> tx_waiting_ack_; ///< Segments waiting to be ACKed.
+    size_t tx_waiting_size_{0}; ///< Cumulative size of all segments waiting to be ACKed.
 
     unique_stream_id_t usid_,        ///< Unique stream ID.
                        parent_usid_; ///< Unique ID of parent stream.
@@ -153,6 +156,10 @@ class base_stream : public abstract_stream
 
     stream_peer* peer_;             ///< Information about the other side of this connection.
 
+    // Byte transmit state
+    int32_t      tx_byte_seq_{0}; // Next transmit byte sequence number to assign.
+
+private:
     void recalculate_receive_window();
     void recalculate_transmit_window();
 
@@ -170,6 +177,8 @@ class base_stream : public abstract_stream
     //====================================
     // Transmit various types of packets.
     //====================================
+
+    void tx_enqueue_packet(packet& p);
 
     /**
      * Send the stream attach packet to the peer.

@@ -40,6 +40,12 @@ base_stream::~base_stream()
     logger::debug() << "Destructing internal stream";
 }
 
+//txenqueue()
+void base_stream::tx_enqueue_packet(packet& p)
+{
+    tx_queue_.push(p);
+}
+
 //txenqflow()
 void base_stream::tx_enqueue_channel(bool tx_immediately)
 {
@@ -291,9 +297,58 @@ byte_array base_stream::read_record(size_t max_size)
     return byte_array();
 }
 
-ssize_t base_stream::write_data(const char* data, size_t size, uint8_t endflags)
+ssize_t base_stream::write_data(const char* data, size_t total_size, uint8_t endflags)
 {
-    return 0;
+    assert(!end_write_);
+    ssize_t actual_size = 0;
+
+    do {
+        // Choose the size of this segment.
+        int size = mtu;
+        uint8_t flags = 0;
+
+        if (total_size <= size) {
+            flags = flags::data_push | endflags;
+            size = total_size;
+        }
+
+        logger::debug() << "Transmit segment at " << tx_byte_seq_ << " size " << size << " bytes";
+
+        // Build the appropriate packet header.
+        packet p(this, packet_type::data);
+        p.tx_byte_seq = tx_byte_seq_;
+
+        // Prepare the header
+        auto header = p.header<data_header>();
+        // header->sid - later
+        header->type_subtype = flags;  // Major type filled in later
+        // header->win - later
+        // header->tsn - later
+
+        // Advance the BSN to account for this data.
+        tx_byte_seq_ += size;
+
+        // Copy in the application payload
+        char *payload = (char*)(header + 1);
+        memcpy(payload, data, size);
+
+        // Hold onto the packet data until it gets ACKed
+        tx_waiting_ack_.insert(p.tx_byte_seq);
+        tx_waiting_size_ += size;
+
+        // Queue up the segment for transmission ASAP
+        tx_enqueue_packet(p);
+
+        // On to the next segment...
+        data += size;
+        total_size -= size;
+        actual_size += size;
+    } while (total_size != 0);
+
+    if (endflags & flags::data_close)
+        end_write_ = true;
+
+    return actual_size;
 }
 
 ssize_t base_stream::read_datagram(char* data, size_t max_size)
