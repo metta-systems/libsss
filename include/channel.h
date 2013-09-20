@@ -14,6 +14,7 @@
 #include "link_channel.h"
 #include "channel_armor.h"
 #include "timer.h"
+#include "logging.h" // for transmit_event_t debug
 
 namespace ssu {
 
@@ -48,7 +49,9 @@ class channel : public link_channel
             : size_(size)
             , data_(is_data)
             , pipe_(is_data)
-        {}
+        {
+            logger::debug() << "New transmission event for " << size_ << (data_ ? " data bytes" : " control bytes");
+        }
     };
 
     static constexpr packet_seq_t max_packet_sequence = ~0ULL;
