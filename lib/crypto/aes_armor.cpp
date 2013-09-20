@@ -47,7 +47,7 @@ byte_array aes_armor::transmit_encode(uint64_t pktseq, const byte_array& pkt)
 
     // Copy the unencrypted header (XX hack)
     // assert(encofs == 4);
-    *(uint32_t*)out.data() = *(uint32_t*)pkt.data();
+    *out.as<uint32_t>() = *pkt.as<uint32_t>();
 
     // Compute the MAC for the packet,
     // including the full 64-bit packet sequence number as a pseudo-header.
@@ -106,7 +106,7 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
 
     // Copy the unencrypted header (XX hack)
     // assert(encofs == 4);
-    *(uint32_t*)out.data() = *(uint32_t*)pkt.data();
+    *out.as<uint32_t>() = *pkt.as<uint32_t>();
 
     pkt = out;
 
