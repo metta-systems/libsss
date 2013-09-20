@@ -161,3 +161,28 @@ flurry::iarchive& operator >> (flurry::iarchive& ia, stream_protocol::unique_str
 }
 
 } // namespace ssu
+
+// Hash specialization for unique_stream_id_t
+namespace std {
+
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
+template<>
+struct hash<ssu::stream_protocol::unique_stream_id_t> : public std::unary_function<ssu::stream_protocol::unique_stream_id_t, size_t>
+{
+    inline size_t operator()(ssu::stream_protocol::unique_stream_id_t const& a) const noexcept
+    {
+        // VEEERY bad implementation for now. @fixme
+        size_t seed = 0xdeadbeef;
+        hash_combine(seed, a.counter_);
+        hash_combine(seed, a.half_channel_id_);
+        return seed;
+    }
+};
+
+} // namespace std

@@ -63,7 +63,7 @@ class stream_peer : public stream_protocol
     // All existing streams involving this peer.
     std::unordered_set<base_stream*> all_streams_;
     // All streams that have USIDs, registered by their USIDs
-    std::map<unique_stream_id_t, base_stream*> usid_streams_;
+    std::unordered_map<unique_stream_id_t, base_stream*> usid_streams_;
 
 
     stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id);
