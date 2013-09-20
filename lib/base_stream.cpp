@@ -53,17 +53,17 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
 
     if (!tx_enqueued_channel_)
     {
-    //     if (tx_queue.empty())
-    //     {
-    //         if (owner) {
-    //             owner->ready_write();
-    //         }
-    //     }
-    //     else
-    //     {
-    //         channel->enqueue_stream(this);
-    //         tx_enqueued_channel_ = true;
-    //     }
+        if (tx_queue_.empty())
+        {
+            if (auto o = owner_.lock()) {
+                o->ready_write();
+            }
+        }
+        else
+        {
+            channel->enqueue_stream(this);
+            tx_enqueued_channel_ = true;
+        }
     }
 
     if (tx_immediately && channel->may_transmit())
