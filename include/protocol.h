@@ -87,7 +87,7 @@ public:
     typedef stream_header attach_header;
     typedef stream_header detach_header;
 
-    enum class flags : uint8_t
+    enum flags : uint8_t
     {
         // Subtype/flag bits for Init, Reply, and Data packets
         data_close        = 0x1,  ///< End of stream.
