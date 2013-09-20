@@ -93,6 +93,13 @@ public:
      * Amount of space client must leave at the beginning of a packet
      * to be transmitted with channel_transmit() or received via channel_receive().
      * @fixme won't always be static const.
+     *
+     * Channel header consists of 
+     * +--------------------------------+-------------------------+
+     * | 24-31: Channel number          | 0-23: Transmit sequence | 4 bytes first header word
+     * +-------------+------------------+-------------------------+
+     * | 28-31: RSVD | 24-27: ACK count | 0-23: ACK sequence      | 4 bytes second header word
+     * +-------------+------------------+-------------------------+
      */
     static constexpr int header_len = 8/*XXX*/;
 

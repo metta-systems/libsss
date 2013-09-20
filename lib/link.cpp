@@ -79,30 +79,19 @@ link::~link()
  *  Channel header (8 bytes)
  *   31          24 23                                0
  *  +--------------+-----------------------------------+
- *  |   Channel    |     Transmit Seq Number (TSN)     |
+ *  |   Channel    |     Transmit Seq Number (TSN)     | 4 bytes
  *  +------+-------+-----------------------------------+
- *  | Rsvd | AckCt | Acknowledgement Seq Number (ASN)  |
+ *  | Rsvd | AckCt | Acknowledgement Seq Number (ASN)  | 4 bytes
  *  +------+-------+-----------------------------------+
- *        ... more channel-specific data here ...
+ *        ... more channel-specific data here ...        variable length
  *
  *  Negotiation header (8+ bytes)
  *   31          24 23                                0
  *  +--------------+-----------------------------------+
- *  |  Channel=0   |     Negotiation Magic Bytes       |
+ *  |  Channel=0   |     Negotiation Magic Bytes       | 4 bytes
  *  +--------------+-----------------------------------+
- *  |                  Chunk #1 size                   |
+ *  |               Flurry array of chunks             | variable length
  *  +--------------------------------------------------+
- *  |                     .....                        |
- *  |                    Chunk #1                      |
- *  |                     .....                        |
- *  +--------------------------------------------------+
- *  |                  Chunk #2 size                   |
- *  +--------------------------------------------------+
- *  |                     .....                        |
- *  |                    Chunk #2                      |
- *  |                     .....                        |
- *  +--------------------------------------------------+
- *
  */
 void
 link::receive(const byte_array& msg, const link_endpoint& src)
