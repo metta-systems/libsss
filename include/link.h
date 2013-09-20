@@ -191,7 +191,10 @@ public:
     virtual std::vector<endpoint> local_endpoints() = 0;
 
     link_channel* channel_for(endpoint const& src, channel_number cn) {
-        return channels_[std::make_pair(src, cn)];
+        auto key = std::make_pair(src, cn);
+        if (channels_.find(key) == channels_.end())
+            return nullptr;
+        return channels_[key];
     }
 
     /**
