@@ -182,6 +182,9 @@ void channel::expire(uint64_t txseq, int npackets)
 void channel::receive(const byte_array& msg, const link_endpoint& src)
 {
     logger::debug() << "channel: receive";
+    /// @todo
+    packet_seq_t pktseq;
+    channel_receive(pktseq, msg);
 }
 
 } // ssu namespace
