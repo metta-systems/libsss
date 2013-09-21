@@ -250,7 +250,8 @@ void base_stream::attach_for_transmit()
     tx_current_attachment_ = &tx_attachments_[slot];
 
     // Fill in the new stream's USID, if it doesn't have one yet.
-    if (usid_.is_empty()) {
+    if (usid_.is_empty())
+    {
         set_usid(unique_stream_id_t(sid, channel->tx_channel_id()));
         logger::debug() << "Creating stream " << usid_;
     }
@@ -267,7 +268,14 @@ void base_stream::attach_for_transmit()
 
 void base_stream::set_usid(unique_stream_id_t new_usid)
 {
+    assert(usid_.is_empty());
+    assert(!new_usid.is_empty());
+
+    if (contains(peer_->usid_streams_, new_usid))
+        logger::warning() << "Internal stream set_usid passed a duplicate stream USID " << new_usid;
+
     usid_ = new_usid;
+    peer_->usid_streams_.insert(make_pair(usid_, this));
 }
 
 size_t base_stream::bytes_available() const
