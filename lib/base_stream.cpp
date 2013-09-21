@@ -507,12 +507,12 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, st
 
 bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    logger::debug() << "Received attach packet";
-
     auto header = as_header<attach_header>(pkt);
     bool init = (header->type_subtype & flags::attach_init) != 0;
     int slot = header->type_subtype & flags::attach_slot_mask;
     unique_stream_id_t usid, parent_usid;
+
+    logger::debug() << "Received attach packet, " << (init ? "init" : "non-init") << " attach on slot " << slot;
 
     byte_array_iwrap<flurry::iarchive> read(pkt);
     read.archive().skip_raw_data(sizeof(attach_header) + channel::header_len);
