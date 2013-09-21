@@ -531,9 +531,50 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 
     if (contains(channel->peer_->usid_streams_, usid))
     {
+        // Found it: the stream already exists, just attach it.
+        base_stream* stream = channel->peer_->usid_streams_[usid];
+
         logger::debug() << "Found USID in existing streams";
+        channel->ack_sid_ = header->stream_id;
+        stream_rx_attachment& rslot = stream->rx_attachments_[slot];
+        if (rslot.is_active())
+        {
+            if (rslot.channel_ == channel and rslot.stream_id_ == header->stream_id)
+            {
+                logger::debug() << stream << " redundant attach " << stream->usid_;
+                rslot.sid_seq_ = min(rslot.sid_seq_, pktseq);
+                return true;
+            }
+            logger::debug() << stream << " replacing attach slot " << slot;
+            rslot.clear();
+        }
+        logger::debug() << stream << " accepting attach " << stream->usid_;
+        rslot.set_active(channel, header->stream_id, pktseq);
+        return true;
     }
 
+    // Stream doesn't exist - lookup parent if it's an init-attach.
+    base_stream* parent_stream{nullptr};
+
+    for (auto x : channel->peer_->usid_streams_) {
+        logger::debug() << "known usid " << x.first;
+    }
+
+    if (init && contains(channel->peer_->usid_streams_, parent_usid)) {
+        parent_stream = channel->peer_->usid_streams_[parent_usid];
+    }
+    if (parent_stream != NULL)
+    {
+        // Found it: create and attach a child stream.
+        channel->ack_sid_ = header->stream_id;
+        parent_stream->rx_substream(pktseq, channel, header->stream_id, slot, usid);
+        return false;   // Already acked in rx_substream()
+    }
+
+    // No way to attach the stream - just reset it.
+    logger::debug() << "rx_attach_packet: unknown stream " << usid;
+    channel->acknowledge(pktseq, false);
+    tx_reset(channel, header->stream_id, flags::reset_remote);
     return false;
 }
 
