@@ -531,7 +531,9 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 
 bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<detach_header>(pkt);
+    // auto header = as_header<detach_header>(pkt);
+    // @todo
+    logger::fatal() << "rx_detach_packet unimplemented.";
     return false;
 }
 
