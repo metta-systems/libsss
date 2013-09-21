@@ -41,7 +41,9 @@ stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const p
 }
 
 stream_channel::~stream_channel()
-{}
+{
+    stop();
+}
 
 void stream_channel::got_ready_transmit()
 {
@@ -93,7 +95,7 @@ void stream_channel::start(bool initiate)
     logger::debug() << "stream_channel: start " << (initiate ? "(initiator)" : "(responder)");
     super::start(initiate);
     assert(is_active());
-
+ 
     // Set the root stream's USID based on our channel ID
     root_->usid_.half_channel_id_ = initiate ? tx_channel_id() : rx_channel_id();
     root_->usid_.counter_ = 0;
