@@ -167,8 +167,6 @@ private:
         return receive_window_byte_;
     }
 
-    void tx_enqueue_channel(bool tx_immediately = false);
-
     bool is_attached();
     void attach_for_transmit();
 
@@ -179,6 +177,7 @@ private:
     //====================================
 
     void tx_enqueue_packet(packet& p);
+    void tx_enqueue_channel(bool tx_immediately = false);
 
     /**
      * Send the stream attach packet to the peer.
@@ -194,7 +193,26 @@ private:
      */
     void transmit_on(stream_channel* channel);
 
-    // Handlers.
+    //===============================================
+    // Receive handling for various types of packets
+    //===============================================
+
+    // Returns true if received packet needs to be acked, false otherwise.
+    static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    void rx_data(byte_array const& pkt, uint32_t byte_seq);
+
+    //===============================================
+    // Signal handlers.
+    //===============================================
+
     void channel_connected();
     void parent_attached();
 
@@ -239,19 +257,6 @@ public:
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
     void dump() override;
-
-    // Receive handling.
-    // Returns true if received packet needs to be acked, false otherwise.
-    static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    void rx_data(byte_array const& pkt, uint32_t byte_seq);
 
     //=========
     // Signals
