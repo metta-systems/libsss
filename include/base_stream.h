@@ -185,6 +185,11 @@ private:
     void tx_attach();
 
     /**
+     * Send the stream reset packet to the peer.
+     */
+    static void tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags);
+
+    /**
      * Called by stream_channel::got_ready_transmit() to transmit or retransmit
      * one packet on a given channel. That packet might have to be an attach packet
      * if we haven't finished attaching yet, or it might have to be an empty segment
@@ -208,6 +213,9 @@ private:
     static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
     static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
     void rx_data(byte_array const& pkt, uint32_t byte_seq);
+
+    base_stream* rx_substream(packet_seq_t pktseq, stream_channel* channel,
+        stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
 
     //===============================================
     // Signal handlers.

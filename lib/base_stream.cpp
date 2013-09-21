@@ -120,6 +120,9 @@ void base_stream::tx_attach()
     chan->waiting_ack_.insert(make_pair(pktseq, p));
 }
 
+void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
+{}
+
 void base_stream::transmit_on(stream_channel* channel)
 {
     assert(tx_enqueued_channel_);
@@ -534,6 +537,12 @@ bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 
 void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 {}
+
+base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
+            stream_id_t sid, unsigned slot, unique_stream_id_t const& usid)
+{
+    return nullptr;
+}
 
 //-----------------
 // Signal handlers
