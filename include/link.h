@@ -20,6 +20,7 @@
 #include "asio_host_state.h"
 #include "link_receiver.h"
 #include "flurry.h"
+#include "algorithm.h"
 
 namespace ssu {
 
@@ -192,7 +193,7 @@ public:
 
     link_channel* channel_for(endpoint const& src, channel_number cn) {
         auto key = std::make_pair(src, cn);
-        if (channels_.find(key) == channels_.end())
+        if (!contains(channels_, key))
             return nullptr;
         return channels_[key];
     }

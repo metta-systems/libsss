@@ -13,6 +13,7 @@
 #include "simulation/sim_packet.h"
 #include "simulation/sim_connection.h"
 #include "make_unique.h"
+#include "algorithm.h"
 
 using namespace std;
 
@@ -83,14 +84,14 @@ bool sim_host::packet_on_queue(shared_ptr<sim_packet> packet) const
 void
 sim_host::register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn)
 {
-    assert(connections_.find(address) == connections_.end());
+    assert(!contains(connections_, address));
     connections_.insert(std::make_pair(address, conn));
 }
 
 void
 sim_host::unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn)
 {
-    assert(connections_.find(address) != connections_.end());
+    assert(contains(connections_, address));
     assert(connections_.find(address)->second == conn);
     connections_.erase(address);
 }

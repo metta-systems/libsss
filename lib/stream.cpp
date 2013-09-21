@@ -14,6 +14,7 @@
 #include "identity.h"
 #include "logging.h"
 #include "host.h"
+#include "algorithm.h"
 
 using namespace std;
 
@@ -161,14 +162,14 @@ void stream_host_state::instantiate_stream_responder()
 
 stream_peer* stream_host_state::stream_peer(peer_id const& id)
 {
-    if (peers_.find(id) == peers_.end())
+    if (!contains(peers_, id))
         peers_[id] = new class stream_peer(get_host(), id);
     return peers_[id];
 }
 
 class stream_peer* stream_host_state::stream_peer_if_exists(peer_id const& id)
 {
-    if (peers_.find(id) == peers_.end())
+    if (!contains(peers_, id))
         return nullptr;
     return peers_[id];
 }

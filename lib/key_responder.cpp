@@ -18,6 +18,7 @@
 #include "channel.h"
 #include "link.h"
 #include "make_unique.h"
+#include "algorithm.h"
 
 using namespace std;
 using namespace ssu;
@@ -404,7 +405,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     // See if we've already responded to this particular dh_init2 - if so,
     // just return our previous cached response.
     // Use hhkr as the index, as per the JFK spec.
-    if (hostkey->r2_cache_.find(data.responder_challenge_cookie) != hostkey->r2_cache_.end())
+    if (contains(hostkey->r2_cache_, data.responder_challenge_cookie))
     {
         logger::debug() << "Received duplicate dh_init2 packet, replying with cached response.";
         src.send(hostkey->r2_cache_[data.responder_challenge_cookie]);

@@ -13,6 +13,7 @@
 #include "stream_channel.h"
 #include "flurry.h"
 #include "byte_array_wrap.h"
+#include "algorithm.h"
 
 using namespace std;
 
@@ -493,12 +494,6 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, st
     return false;
 }
 
-template <typename Key, typename Container>
-inline bool contains(Container& c, Key& k)
-{
-    return c.find(k) != end(c);
-}
-
 bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     logger::debug() << "Received attach packet";
@@ -587,7 +582,7 @@ void stream_rx_attachment::set_active(stream_channel* channel, stream_id_t sid, 
     stream_id_ = sid;
     sid_seq_ = rxseq;
 
-    assert(channel_->receive_sids_.find(stream_id_) == channel_->receive_sids_.end());
+    assert(!contains(channel_->receive_sids_, stream_id_));
     channel_->receive_sids_.insert(make_pair(stream_id_, this));
 }
 

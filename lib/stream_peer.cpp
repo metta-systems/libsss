@@ -1,5 +1,6 @@
 #include "private/stream_peer.h"
 #include "stream_channel.h"
+#include "algorithm.h"
 
 using namespace std;
 
@@ -48,7 +49,7 @@ void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
 
     // Don't simultaneously initiate multiple channels to the same endpoint. @todo
     link_endpoint lep(l, ep);
-    if (key_exchanges_initiated_.find(lep) != key_exchanges_initiated_.end())
+    if (contains(key_exchanges_initiated_, lep))
     {
         logger::debug() << "Already attempting connection to " << ep;
         return;
