@@ -158,6 +158,11 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     return send(epkt);
 }
 
+void channel::acknowledge(uint16_t pktseq, bool send_ack)
+{
+    logger::debug() << "channel: acknowledge " << pktseq << (send_ack ? " sending" : " not sending");
+}
+
 bool channel::transmit_ack(byte_array &packet, uint64_t ackseq, unsigned ackct)
 {
     logger::debug() << "channel: transmit_ack";

@@ -129,6 +129,16 @@ public:
     }
 
     /**
+     * May be called by upper-level protocols during receive
+     * to indicate that the packet has been received and processed,
+     * so that subsequently transmitted packets include this ack info.
+     * if 'send_ack' is true, make sure an acknowledgment gets sent soon:
+     * in the next transmitted packet, or in an ack packet if needed.
+     */
+    void acknowledge(uint16_t pktseq, bool send_ack);
+
+
+    /**
      * Set the encryption/authentication method for this channel.
      * This MUST be set before a new channel can be activated.
      */
