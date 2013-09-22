@@ -136,13 +136,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     uint8_t receive_window_byte_{0};
     bool init_{true};
     bool top_level_{false}; ///< This is a top-level stream.
-    bool tx_enqueued_channel_{false}; ///< We're enqueued for transmission on our channel.
     bool end_write_{false}; ///< Stream has closed for writing.
 
     std::queue<packet> tx_queue_; ///< Transmit packets queue.
-
-    std::unordered_set<int32_t> tx_waiting_ack_; ///< Segments waiting to be ACKed.
-    size_t tx_waiting_size_{0}; ///< Cumulative size of all segments waiting to be ACKed.
 
     unique_stream_id_t usid_,        ///< Unique stream ID.
                        parent_usid_; ///< Unique ID of parent stream.
@@ -157,11 +153,26 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
     stream_peer* peer_;             ///< Information about the other side of this connection.
 
+    //-------------------------------------------
     // Byte transmit state
-    int32_t      tx_byte_seq_{0}; // Next transmit byte sequence number to assign.
+    //-------------------------------------------
+
+    /// Next transmit byte sequence number to assign.
+    int32_t tx_byte_seq_{0};
+    /// Current transmit window.
+    int32_t tx_window_{0};
+    /// Bytes currently in flight.
+    int32_t tx_inflight_{0};
+    /// We're enqueued for transmission on our channel.
+    bool tx_enqueued_channel_{false};
+    /// Segments waiting to be ACKed.
+    std::unordered_set<int32_t> tx_waiting_ack_;
+    /// Cumulative size of all segments waiting to be ACKed.
+    size_t tx_waiting_size_{0};
 
     // Substream receive state
-    std::queue<abstract_stream*> received_substreams_;      ///< Received, waiting substreams.
+    /// Received, waiting substreams.
+    std::queue<abstract_stream*> received_substreams_;
 
 private:
     void recalculate_receive_window();
