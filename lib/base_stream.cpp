@@ -592,7 +592,56 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
             stream_id_t sid, unsigned slot, unique_stream_id_t const& usid)
 {
-    return nullptr;
+    // Make sure we're allowed to create a child stream.
+    if (!is_listening()) {
+        // The parent SID is not in error, so just reset the new child.
+        // Ack the pktseq first so peer won't ignore the reset!
+        logger::debug() << "Other side trying to create substream, but we're not listening.";
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, sid, flags::reset_remote);
+        return nullptr;
+    }
+
+    // Mark the Init packet received now, before transmitting the Reply;
+    // otherwise the Reply won't acknowledge the Init
+    // and the peer will reject it as a stale packet.
+    channel->acknowledge(pktseq, true);
+
+    // Create the child stream.
+    base_stream* new_stream = new base_stream(channel->get_host(), peerid_, shared_from_this());
+
+    // We'll accept the new stream: this is the point of no return.
+    logger::debug() << "Accepting sub-stream " << usid << " as " << new_stream;
+
+    // Extrapolate the sender's stream counter from the new SID it sent.
+    counter_t ctr = channel->received_sid_counter_ + (int16_t)(sid - (int16_t)channel->received_sid_counter_);
+    if (ctr > channel->received_sid_counter_)
+        channel->received_sid_counter_ = ctr;
+
+    // Use this stream counter to form the new stream's USID.
+    // @fixme ctr is not used here??
+    new_stream->set_usid(usid);
+
+    // Automatically attach the child via its appropriate receive-slot.
+    new_stream->rx_attachments_[slot].set_active(channel, sid, pktseq);
+
+    // If this is a new top-level application stream,
+    // we expect a service request before application data.
+    if (shared_from_this() == channel->root_)
+    {
+        new_stream->state_ = state::accepting; // Service request expected
+    }
+    else
+    {
+        new_stream->state_ = state::connected;
+        received_substreams_.push(new_stream);
+        new_stream->on_ready_read_message.connect(
+            boost::bind(&base_stream::substream_read_message, this));
+        if (auto s = owner_.lock())
+            s->on_new_substream();
+    }
+
+    return new_stream;
 }
 
 //-----------------
@@ -610,6 +659,15 @@ void base_stream::channel_connected()
 void base_stream::parent_attached()
 {
     logger::debug() << "Internal stream - parent stream has attached, we can now attach.";
+}
+
+void base_stream::substream_read_message()
+{
+    // When one of our queued subs emits an on_ready_read_message() signal,
+    // we have to forward that via our on_ready_read_datagram() signal.
+    // @fixme WHY?
+    if (auto stream = owner_.lock())
+        stream->on_ready_read_datagram();
 }
 
 //=================================================================================================

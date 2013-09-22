@@ -85,7 +85,7 @@ public:
  * compatibility, and makes it easy to implement service/protocol negotiation
  * for top-level application streams by extending this class.
  */
-class base_stream : public abstract_stream
+class base_stream : public abstract_stream, public std::enable_shared_from_this<base_stream>
 {
     friend class stream_channel;
 
@@ -140,6 +140,7 @@ class base_stream : public abstract_stream
     bool end_write_{false}; ///< Stream has closed for writing.
 
     std::queue<packet> tx_queue_; ///< Transmit packets queue.
+
     std::unordered_set<int32_t> tx_waiting_ack_; ///< Segments waiting to be ACKed.
     size_t tx_waiting_size_{0}; ///< Cumulative size of all segments waiting to be ACKed.
 
@@ -158,6 +159,9 @@ class base_stream : public abstract_stream
 
     // Byte transmit state
     int32_t      tx_byte_seq_{0}; // Next transmit byte sequence number to assign.
+
+    // Substream receive state
+    std::queue<abstract_stream*> received_substreams_;      ///< Received, waiting substreams.
 
 private:
     void recalculate_receive_window();
@@ -223,6 +227,7 @@ private:
 
     void channel_connected();
     void parent_attached();
+    void substream_read_message();
 
 public:
     /**
@@ -269,6 +274,11 @@ public:
     //-------------------------------------------
     // Signals
     //-------------------------------------------
+
+    /**
+     * A complete message has been received.
+     */
+    boost::signals2::signal<void()> on_ready_read_message;
 
     /**
      * An active attachment attempt succeeded and was acked by receiver.
