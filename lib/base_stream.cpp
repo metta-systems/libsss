@@ -615,6 +615,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     // just dispatch it directly as if it were a data packet.
     if (contains(channel->receive_sids_, header->stream_id))
     {
+        logger::debug() << "rx_init_packet: stream exists, dispatch data only";
         stream_rx_attachment* attach = channel->receive_sids_[header->stream_id];
         if (pktseq < attach->sid_seq_) // earlier init packet; that's OK.
             attach->sid_seq_ = pktseq;
@@ -637,6 +638,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     }
 
     stream_rx_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
+    logger::debug() << "rx_init_packet: found parent stream attach " << parent_attach;
     if (pktseq < parent_attach->sid_seq_)
     {
         logger::warning() << "rx_init_packet: stale wrt parent SID sequence";
@@ -648,6 +650,8 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     counter_t ctr = channel->received_sid_counter_ +
         (int16_t)(header->stream_id - (int16_t)channel->received_sid_counter_);
     unique_stream_id_t usid(ctr, channel->rx_channel_id());
+
+    logger::debug() << "rx_init_packet: parent attach stream " << parent_attach->stream_;
 
     // Create the new substream.
     base_stream* new_stream = parent_attach->stream_->rx_substream(pktseq, channel, header->stream_id, 0, usid);
