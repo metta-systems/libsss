@@ -109,7 +109,7 @@ void stream::connect_at(endpoint const& ep)
 void stream::set_error(string const& error)
 {
     // @todo: set error string
-    error_notify(error);
+    on_error_notify(error);
 }
 
 ssize_t stream::write_data(const char* data, size_t size)

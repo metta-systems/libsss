@@ -471,22 +471,22 @@ public:
     //===============================================================
 
     typedef boost::signals2::signal<void (void)> ready_signal;
-    ready_signal ready_read_message;
-    ready_signal ready_read_datagram;
-    ready_signal ready_write;
-    ready_signal receive_blocked;
+    ready_signal on_ready_read_message;
+    ready_signal on_ready_read_datagram;
+    ready_signal on_ready_write;
+    ready_signal on_receive_blocked;
 
     typedef boost::signals2::signal<void (void)> link_status_change_signal;
-    link_status_change_signal link_up;
-    link_status_change_signal link_stalled;
-    link_status_change_signal link_down;
+    link_status_change_signal on_link_up;
+    link_status_change_signal on_link_stalled;
+    link_status_change_signal on_link_down;
 
     typedef boost::signals2::signal<void (void)> substream_notify_signal;
-    substream_notify_signal new_substream;
+    substream_notify_signal on_new_substream;
 
     typedef boost::signals2::signal<void (const std::string&)> error_signal;
-    error_signal error_notify;
-    error_signal reset_notify;
+    error_signal on_error_notify;
+    error_signal on_reset_notify;
 
 protected:
     // Set an error condition on this stream and emit the error_notify signal.
