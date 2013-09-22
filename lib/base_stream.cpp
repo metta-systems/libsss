@@ -471,37 +471,37 @@ bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_cha
 
 bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<init_header>(pkt);
+    // auto header = as_header<init_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<reply_header>(pkt);
+    // auto header = as_header<reply_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<data_header>(pkt);
+    // auto header = as_header<data_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<datagram_header>(pkt);
+    // auto header = as_header<datagram_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<ack_header>(pkt);
+    // auto header = as_header<ack_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    auto header = as_header<reset_header>(pkt);
+    // auto header = as_header<reset_header>(pkt);
     return false;
 }
 

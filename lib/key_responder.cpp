@@ -358,7 +358,7 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
 
     // @todo: wrap this into a hmac_calc_append() kind of helper
     crypto::hash hmac(mac_key.as_vector());
-    int hmac_size = crypto::HMACLEN;
+    // int hmac_size = crypto::HMACLEN;
     hmac.update(encrypted_initiator_info.as_vector());
     crypto::hash::value result;
     hmac.finalize(result);
