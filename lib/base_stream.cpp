@@ -61,7 +61,7 @@ void base_stream::transmit_on(stream_channel* channel)
     // we have to send a specialized Attach packet instead of useful data.
     tx_attach();
 
-    // Don't requeue onto our flow at this point -
+    // Don't requeue onto our channel at this point -
     // we can't transmit any data until we get that ack!
 }
 
@@ -431,11 +431,11 @@ void base_stream::tx_attach()
     }
     p.buf.append(body);
 
-    // Transmit it on the current flow.
+    // Transmit it on the current channel.
     packet_seq_t pktseq;
     chan->channel_transmit(p.buf, pktseq);
 
-    // Save the attach packet in the flow's ackwait hash,
+    // Save the attach packet in the channel's ackwait hash,
     // so that we'll be notified when the attach packet gets acked.
     p.late = false;
     chan->waiting_ack_.insert(make_pair(pktseq, p));
@@ -574,6 +574,8 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, st
 
 bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    // @todo Check packet size against attach_header min size.
+
     auto header = as_header<attach_header>(pkt);
     bool init = (header->type_subtype & flags::attach_init) != 0;
     int slot = header->type_subtype & flags::attach_slot_mask;
