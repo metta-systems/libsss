@@ -31,9 +31,23 @@ base_stream::base_stream(shared_ptr<host> host,
     : abstract_stream(host)
     , parent_(parent)
 {
+    assert(!peer_id.is_empty());
+
     logger::debug() << "Constructing internal stream for peer " << peer_id;
+    recalculate_receive_window();
+
     peerid_ = peer_id;
     peer_ = host->stream_peer(peer_id);
+
+    // Insert us into the peer's master list of streams
+    peer_->all_streams_.insert(this);
+
+    // Initialize the stream back-pointers in the attachment slots.
+    for (int i = 0; i < max_attachments; ++i)
+    {
+        tx_attachments_[i].stream_ = this;
+        rx_attachments_[i].stream_ = this;
+    }
 }
 
 base_stream::~base_stream()
