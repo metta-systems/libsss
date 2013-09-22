@@ -57,6 +57,65 @@ void base_stream::transmit_on(stream_channel* channel)
 
     tx_enqueued_channel_ = false; // Channel has just dequeued us.
 
+    packet* head_packet = &tx_queue_.front();
+    int seg_size = head_packet->payload_size();
+
+    // See if we can potentially use an optimized attach/data packet;
+    // this only works for regular stream segments, not datagrams,
+    // and only within the first 2^16 bytes of the stream.
+    if (head_packet->type == packet_type::data and
+        head_packet->tx_byte_seq <= 0xffff)
+    {
+        // See if we can attach stream using an optimized Init packet,
+        // allowing us to indicate the parent with a short 16-bit LSID
+        // and piggyback useful data onto the packet.
+        // The parent must be attached to the same channel.
+        // XXX probably should use some state invariant
+        // in place of all these checks.
+        if (top_level_)
+            parent_ = channel->root_;
+
+        shared_ptr<base_stream> parent = parent_.lock();
+
+        if (init_ and parent and parent->tx_current_attachment_
+                and parent->tx_current_attachment_->channel_ == channel
+                and parent->tx_current_attachment_->is_active()
+                and usid_.half_channel_id_ == channel->tx_channel_id()
+                and uint16_t(usid_.counter_) == tx_current_attachment_->stream_id_
+            /* XXX  and parent->tflt + segsize <= parent->twin*/)
+        {
+            logger::debug() << "Sending optimized init packet";
+
+            // Adjust the in-flight byte count for channel control.
+            // Init packets get "charged" to the parent stream.
+            parent->tx_inflight_ += seg_size;
+            logger::debug() << this << " inflight init " << head_packet->tx_byte_seq
+                << ", bytes in flight on parent " << parent->tx_inflight_;
+
+            return tx_attach_data(packet_type::init, parent->tx_current_attachment_->stream_id_);
+        }
+
+        // See if our peer has this stream in its SID space,
+        // allowing us to attach using an optimized Reply packet.
+        if (tx_inflight_ + seg_size <= tx_window_)
+        {
+            for (int i = 0; i < max_attachments; i++)
+            {
+                if (rx_attachments_[i].channel_ == channel and rx_attachments_[i].is_active())
+                {
+                    logger::debug() << "sending optimized Reply packet";
+
+                    // Adjust the in-flight byte count.
+                    tx_inflight_ += seg_size;
+                    logger::debug() << this << " inflight reply " << head_packet->tx_byte_seq
+                        << ", bytes in flight " << tx_inflight_;
+
+                    return tx_attach_data(packet_type::reply, rx_attachments_[i].stream_id_);
+                }
+            }
+        }
+    }
+
     // We've exhausted all of our optimized-path options:
     // we have to send a specialized Attach packet instead of useful data.
     tx_attach();
@@ -533,8 +592,60 @@ bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_cha
 
 bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    // auto header = as_header<init_header>(pkt);
-    return false;
+    // @todo Check packet size against init_header min size.
+
+    logger::debug() << "rx_init_packet ...";
+    auto header = as_header<init_header>(pkt);
+
+    // Look up the stream - if it already exists,
+    // just dispatch it directly as if it were a data packet.
+    if (contains(channel->receive_sids_, header->stream_id))
+    {
+        stream_rx_attachment* attach = channel->receive_sids_[header->stream_id];
+        if (pktseq < attach->sid_seq_) // earlier init packet; that's OK.
+            attach->sid_seq_ = pktseq;
+
+        channel->ack_sid_ = header->stream_id;
+        attach->stream_->recalculate_transmit_window(header->window);
+        attach->stream_->rx_data(pkt, header->tx_seq_no);
+        return true; // ACK the packet
+    }
+
+    // Doesn't yet exist - look up the parent stream.
+    if (!contains(channel->receive_sids_, header->new_stream_id))
+    {
+        // The parent SID is in error, so reset that SID.
+        // Ack the pktseq first so peer won't ignore the reset!
+        logger::warning() << "rx_init_packet: unknown parent stream ID";
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, header->new_stream_id, flags::reset_remote);
+        return false;
+    }
+
+    stream_rx_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
+    if (pktseq < parent_attach->sid_seq_)
+    {
+        logger::warning() << "rx_init_packet: stale wrt parent SID sequence";
+        return false; // silently drop stale packet
+    }
+
+    // Extrapolate the sender's stream counter from the new SID it sent,
+    // and use it to form the new stream's USID.
+    counter_t ctr = channel->received_sid_counter_ +
+        (int16_t)(header->stream_id - (int16_t)channel->received_sid_counter_);
+    unique_stream_id_t usid(ctr, channel->rx_channel_id());
+
+    // Create the new substream.
+    base_stream* new_stream = parent_attach->stream_->rx_substream(pktseq, channel, header->stream_id, 0, usid);
+    if (!new_stream)
+        return false;
+
+    // Now process any data segment contained in this init packet.
+    channel->ack_sid_ = header->stream_id;
+    new_stream->recalculate_transmit_window(header->window);
+    new_stream->rx_data(pkt, header->tx_seq_no);
+
+    return false; // Already acknowledged in rx_substream().
 }
 
 bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
