@@ -13,8 +13,6 @@
 #include "link.h"
 #include "link_channel.h"
 #include "channel_armor.h"
-#include "timer.h"
-#include "logging.h" // for transmit_event_t debug
 
 namespace ssu {
 
@@ -29,64 +27,15 @@ class channel : public link_channel
 
     typedef link_channel super;
 
-    std::shared_ptr<host>          host_;
+    class private_data;
+    std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
+
     std::unique_ptr<channel_armor> armor_; ///< Armors cannot be shared.
-
-    // Retransmit state
-    async::timer retransmit_timer_;  ///< Retransmit timer.
-    link::status link_status_;       ///< Link online status.
-
-    byte_array   tx_channel_id_;
-    byte_array   rx_channel_id_;
-
-    struct transmit_event_t
-    {
-        int32_t size_;   ///< Total size of packet including hdr
-        bool    data_;   ///< Was an upper-layer data packet
-        bool    pipe_;   ///< Currently counted toward transmit_data_pipe
-
-        inline transmit_event_t(int32_t size, bool is_data)
-            : size_(size)
-            , data_(is_data)
-            , pipe_(is_data)
-        {
-            logger::debug() << "New transmission event for " << size_ << (data_ ? " data bytes" : " control bytes");
-        }
-    };
+    byte_array   tx_channel_id_;           ///< Transmit ID of the channel.
+    byte_array   rx_channel_id_;           ///< Receive ID of the channel.
+    link::status link_status_;             ///< Link online status.
 
     static constexpr packet_seq_t max_packet_sequence = ~0ULL;
-
-    // Transmit state
-    packet_seq_t tx_sequence_{1};             ///< Next sequence number to transmit
-    std::queue<transmit_event_t> tx_events_; ///< Record of transmission events (XX data sizes)
-    packet_seq_t tx_event_sequence_{0};       ///< Seqno of oldest recorded tx event
-    packet_seq_t tx_ack_sequence_{0};         ///< Highest transmit sequence number ACK'd
-    // uint64_t recovseq;   ///< Sequence at which fast recovery finishes
-    packet_seq_t mark_sequence_{1};           ///< Transmit sequence number of "marked" packet
-    packet_seq_t mark_base_{0};               ///< Snapshot of txackseq at time mark was placed
-    boost::posix_time::ptime mark_time_;      ///< Time at which marked packet was sent
-    // uint32_t txackmask;  ///< Mask of packets transmitted and ACK'd
-    uint32_t tx_inflight_count_{0};       ///< Data packets currently in flight
-    uint32_t tx_inflight_size_{0};        ///< Data bytes currently in flight
-    uint32_t mark_acks_{0};               ///< Number of ACK'd packets since last mark
-    uint32_t mark_sent_{0};               ///< Number of ACKs expected after last mark
-    // uint32_t cwnd;       ///< Current congestion window
-    // bool cwndlim;       ///< We were cwnd-limited this round-trip
-
-    // Receive state
-    packet_seq_t rx_sequence_{0};      ///< Highest sequence number received so far
-    // quint32 rxmask;     ///< Mask of packets received so far
-
-    // Receive-side ACK state
-    packet_seq_t rx_ack_sequence_{0};         ///< Highest sequence number acknowledged so far
-    // //quint32 rxackmask;  // Mask of packets received & acknowledged
-    packet_seq_t rx_ack_count_{0};             ///< Number of contiguous packets received before rxackseq
-    // quint8 rxunacked;   ///< Number of contiguous packets not yet ACKed
-    // bool delayack;      ///< Enable delayed acknowledgments
-    // Timer acktimer;     ///< Delayed ACK timer
-
-    // Channel statistics.
-    async::timer::duration_type cumulative_rtt_;
 
 public:
     /**
@@ -114,6 +63,8 @@ public:
 public:
     channel(std::shared_ptr<host> host);
     virtual ~channel();
+
+    virtual std::shared_ptr<host> get_host();
 
 	void start(bool initiate) override;
 	void stop() override;
