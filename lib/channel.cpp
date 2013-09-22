@@ -261,28 +261,28 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
 
 void channel::acknowledge(uint16_t pktseq, bool send_ack)
 {
-    logger::debug() << "channel: acknowledge " << pktseq << (send_ack ? " sending" : " not sending");
+    logger::debug() << "channel: acknowledge UNIMPLEMENTED " << pktseq << (send_ack ? " sending" : " not sending");
 }
 
 bool channel::transmit_ack(byte_array &packet, uint64_t ackseq, unsigned ackct)
 {
-    logger::debug() << "channel: transmit_ack";
+    logger::debug() << "channel: transmit_ack UNIMPLEMENTED";
     return false;
 }
 
 void channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
 {
-    logger::debug() << "channel: acknowledged";
+    logger::debug() << "channel: acknowledged UNIMPLEMENTED";
 }
 
 void channel::missed(uint64_t txseq, int npackets)
 {
-    logger::debug() << "channel: missed";
+    logger::debug() << "channel: missed UNIMPLEMENTED";
 }
 
 void channel::expire(uint64_t txseq, int npackets)
 {
-    logger::debug() << "channel: expire";
+    logger::debug() << "channel: expire UNIMPLEMENTED";
 }
 
 void channel::receive(const byte_array& msg, const link_endpoint& src)
