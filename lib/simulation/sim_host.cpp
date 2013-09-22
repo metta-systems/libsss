@@ -57,7 +57,7 @@ std::shared_ptr<link> sim_host::create_link()
 
 void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
 {
-    int i = 0;
+    size_t i = 0;
     for (; i < packet_queue_.size(); ++i)
     {
         if (packet->arrival_time() < packet_queue_[i]->arrival_time()) {

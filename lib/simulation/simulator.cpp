@@ -52,7 +52,7 @@ void simulator::run_step()
 
 void simulator::enqueue_timer(sim_timer_engine* timer)
 {
-    int i = 0;
+    size_t i = 0;
     for (; i < timers_.size(); ++i)
     {
         if (timer->wake_time() < timers_[i]->wake_time()) {

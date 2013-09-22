@@ -315,7 +315,7 @@ ssize_t base_stream::write_data(const char* data, size_t total_size, uint8_t end
 
     do {
         // Choose the size of this segment.
-        int size = mtu;
+        size_t size = mtu;
         uint8_t flags = 0;
 
         if (total_size <= size) {

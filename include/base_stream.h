@@ -37,7 +37,7 @@ class stream_tx_attachment : public stream_attachment
 
 public:
     inline bool is_in_use()       const { return channel_ != nullptr; }
-    inline bool is_acknowledged() const { return sid_seq_ != -1; }// todo fixme magic value
+    inline bool is_acknowledged() const { return sid_seq_ != -1ULL; }// todo fixme magic value
     inline bool is_active()       const { return active_; }
     inline bool is_deprecated()   const { return deprecated_; }
 
