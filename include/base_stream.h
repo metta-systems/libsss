@@ -199,6 +199,9 @@ private:
      */
     void tx_attach();
 
+    void tx_attach_data(packet_type type, stream_id_t ref_sid);
+    void tx_data(packet& p);
+
     /**
      * Send the stream reset packet to the peer.
      */

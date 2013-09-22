@@ -355,6 +355,18 @@ void base_stream::dump()
 // Packet transmission
 //-------------------------------------------------------------------------------------------------
 
+template <typename T>
+inline T const* as_header(byte_array const& v)
+{
+    return reinterpret_cast<T const*>(v.const_data() + channel::header_len);
+}
+
+template <typename T>
+inline T* as_header(byte_array& v)
+{
+    return reinterpret_cast<T*>(v.data() + channel::header_len);
+}
+
 //txenqueue()
 void base_stream::tx_enqueue_packet(packet& p)
 {
@@ -429,6 +441,52 @@ void base_stream::tx_attach()
     chan->waiting_ack_.insert(make_pair(pktseq, p));
 }
 
+void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
+{
+    packet p = tx_queue_.front();
+    tx_queue_.pop();
+
+    assert(p.type == packet_type::data);
+    assert(p.tx_byte_seq <= 0xffff);
+
+    // Build the InitHeader.
+    auto header = as_header<init_header>(p.buf);
+    header->stream_id = tx_current_attachment_->stream_id_;
+    // (flags already set - preserve)
+    header->type_subtype = type_and_subtype(type, header->type_subtype); //@fixme & dataAllFlags);
+    header->window = receive_window_byte();
+    header->new_stream_id = ref_sid;
+    header->tx_seq_no = p.tx_byte_seq; // Note: 16-bit TSN
+
+    // Transmit
+    return tx_data(p);
+}
+
+void base_stream::tx_data(packet& p)
+{
+    stream_channel* channel = tx_current_attachment_->channel_;
+
+    // Transmit the packet on our current channel.
+    packet_seq_t pktseq;
+    channel->channel_transmit(p.buf, pktseq);
+
+    logger::debug() << "tx_data " << pktseq << " pos " << p.tx_byte_seq << " size " << p.buf.size();
+
+    // Save the data packet in the channel's ackwait hash.
+    p.late = false;
+    channel->waiting_ack_.insert(make_pair(pktseq, p));
+
+    // Re-queue us on our channel immediately if we still have more data to send.
+    if (tx_queue_.empty())
+    {
+        if (auto o = owner_.lock()) {
+            o->on_ready_write();
+        }
+    } else {
+        tx_enqueue_channel();
+    }
+}
+
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
 {
     logger::warning() << "base_stream::tx_reset UNIMPLEMENTED";
@@ -437,12 +495,6 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 //-------------------------------------------------------------------------------------------------
 // Packet reception
 //-------------------------------------------------------------------------------------------------
-
-template <typename T>
-inline T const* as_header(byte_array const& v)
-{
-    return reinterpret_cast<T const*>(v.data() + channel::header_len);
-}
 
 constexpr size_t header_len_min = channel::header_len + 4;
 
