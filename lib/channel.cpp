@@ -208,7 +208,7 @@ void channel::receive(const byte_array& msg, const link_endpoint& src)
     //@todo replace first word in pkt with data from msg - it's unencrypted
 
     if (channel_receive(pktseq, pkt))
-        ;//acknowledge(pktseq, true);
+        acknowledge(pktseq, true);
         // XX should still replay-protect even if no ack!
 }
 
