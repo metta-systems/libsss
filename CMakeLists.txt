@@ -10,7 +10,9 @@ add_subdirectory(doc)
 add_subdirectory(lib)
 
 # Build libsupport in standalone version.
-add_subdirectory(../support/lib ${CMAKE_CURRENT_BINARY_DIR}/support)
+if (NOT BUILD_IN_METTANODE)
+    add_subdirectory(../support/lib ${CMAKE_CURRENT_BINARY_DIR}/support)
+endif()
 
 if (BUILD_TESTING)
     add_subdirectory(tests)
