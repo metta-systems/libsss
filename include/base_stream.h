@@ -176,7 +176,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
 private:
     void recalculate_receive_window();
-    void recalculate_transmit_window();
+    void recalculate_transmit_window(uint8_t window_byte);
 
     inline uint8_t receive_window_byte() const {
         return receive_window_byte_;
