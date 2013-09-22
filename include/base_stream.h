@@ -172,9 +172,9 @@ private:
 
     void set_usid(unique_stream_id_t new_usid);
 
-    //====================================
+    //-------------------------------------------
     // Transmit various types of packets.
-    //====================================
+    //-------------------------------------------
 
     void tx_enqueue_packet(packet& p);
     void tx_enqueue_channel(bool tx_immediately = false);
@@ -198,9 +198,9 @@ private:
      */
     void transmit_on(stream_channel* channel);
 
-    //===============================================
+    //-------------------------------------------
     // Receive handling for various types of packets
-    //===============================================
+    //-------------------------------------------
 
     // Returns true if received packet needs to be acked, false otherwise.
     static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
@@ -217,9 +217,9 @@ private:
     base_stream* rx_substream(packet_seq_t pktseq, stream_channel* channel,
         stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
 
-    //===============================================
+    //-------------------------------------------
     // Signal handlers.
-    //===============================================
+    //-------------------------------------------
 
     void channel_connected();
     void parent_attached();
@@ -266,9 +266,10 @@ public:
     void set_child_receive_buffer_size(size_t size) override;
     void dump() override;
 
-    //=========
+    //-------------------------------------------
     // Signals
-    //=========
+    //-------------------------------------------
+
     /**
      * An active attachment attempt succeeded and was acked by receiver.
      */
