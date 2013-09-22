@@ -18,8 +18,8 @@ constexpr stream_protocol::stream_id_t root_sid = 0x0000;
 
 stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const peer_id& id)
     : channel(host)
-    , peer_(peer)
     , root_(make_shared<base_stream>(host, id, nullptr))
+    , peer_(peer)
     , transmit_sid_counter_{1}
     , transmit_sid_acked_{0}
     , received_sid_counter_{0}

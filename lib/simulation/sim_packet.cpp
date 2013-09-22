@@ -26,9 +26,9 @@ sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& sr
     : simulator_(source_host->get_simulator())
     , from_(src)
     , to_(dst)
-    , data_(data)
     , target_host_(pipe->uplink_for(source_host))
     , pipe_(pipe)
+    , data_(data)
     , timer_(source_host.get())
 {
     if (!target_host_) {

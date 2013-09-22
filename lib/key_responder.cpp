@@ -730,8 +730,8 @@ key_initiator::key_initiator(shared_ptr<host> host,
     : host_(host)
     , channel_(channel)
     , target_(target)
-    , magic_(magic)
     , remote_id_(target_peer)
+    , magic_(magic)
     , retransmit_timer_(host_.get())
     , key_min_length_(128/8)
 {

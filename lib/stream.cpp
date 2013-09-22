@@ -30,8 +30,8 @@ stream::stream(shared_ptr<host> h)
 }
 
 stream::stream(base_stream* other_stream)
-    : stream_(other_stream)
-    , host_(other_stream->host_)
+    : host_(other_stream->host_)
+    , stream_(other_stream)
 {
     assert(other_stream->owner_.lock() == nullptr);
     other_stream->owner_ = shared_from_this();
