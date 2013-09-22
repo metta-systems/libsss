@@ -27,7 +27,7 @@ public:
     base_stream*     stream_{0};    ///< Our stream.
     stream_channel*  channel_{0};   ///< Channel our stream is attached to.
     stream_id_t      stream_id_{0}; ///< Our stream ID in this channel.
-    packet_seq_t     sid_seq_{0};   ///< Reference packet sequence for stream ID.
+    packet_seq_t     sid_seq_{~0ULL};   ///< Reference packet sequence for stream ID.
 };
 
 class stream_tx_attachment : public stream_attachment

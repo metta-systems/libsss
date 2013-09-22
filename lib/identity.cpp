@@ -80,7 +80,7 @@ bool identity::set_key(byte_array const& key)
 
 identity identity::generate(scheme sch, int bits)
 {
-    crypto::sign_key* key;
+    crypto::sign_key* key{nullptr};
     switch (sch) {
         case dsa160:
             logger::debug() << "Generating new DSA160 sign key";
