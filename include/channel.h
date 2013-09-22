@@ -101,7 +101,7 @@ public:
      * | 28-31: RSVD | 24-27: ACK count | 0-23: ACK sequence      | 4 bytes second header word
      * +-------------+------------------+-------------------------+
      */
-    static constexpr int header_len = 8/*XXX*/;
+    static constexpr int header_len = 8;
 
     // Layout of the first header word: channel number, tx sequence
     // Transmitted in cleartext.
