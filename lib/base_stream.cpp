@@ -431,7 +431,9 @@ void base_stream::tx_attach()
 }
 
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
-{}
+{
+    logger::warning() << "base_stream::tx_reset UNIMPLEMENTED";
+}
 
 //-------------------------------------------------------------------------------------------------
 // Packet reception
@@ -486,30 +488,35 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
 
 bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    logger::warning() << "rx_reply_packet UNIMPLEMENTED.";
     // auto header = as_header<reply_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    logger::warning() << "rx_data_packet UNIMPLEMENTED.";
     // auto header = as_header<data_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    logger::warning() << "rx_datagram_packet UNIMPLEMENTED.";
     // auto header = as_header<datagram_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    logger::warning() << "rx_ack_packet UNIMPLEMENTED.";
     // auto header = as_header<ack_header>(pkt);
     return false;
 }
 
 bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    logger::warning() << "rx_reset_packet UNIMPLEMENTED.";
     // auto header = as_header<reset_header>(pkt);
     return false;
 }
@@ -591,12 +598,14 @@ bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 {
     // auto header = as_header<detach_header>(pkt);
     // @todo
-    logger::fatal() << "rx_detach_packet unimplemented.";
+    logger::fatal() << "rx_detach_packet UNIMPLEMENTED.";
     return false;
 }
 
 void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
-{}
+{
+    logger::warning() << "rx_data UNIMPLEMENTED.";
+}
 
 base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
             stream_id_t sid, unsigned slot, unique_stream_id_t const& usid)
