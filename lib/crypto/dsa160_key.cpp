@@ -341,7 +341,7 @@ dsa160_key::private_key() const
     return data;
 }
 
-struct secure_hash {}; // @fixme temp
+class secure_hash {public: secure_hash() = default;}; // @fixme temp
 
 std::unique_ptr<secure_hash>
 dsa160_key::create_hash() const
