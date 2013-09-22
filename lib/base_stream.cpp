@@ -41,93 +41,17 @@ base_stream::~base_stream()
     logger::debug() << "Destructing internal stream";
 }
 
-//txenqueue()
-void base_stream::tx_enqueue_packet(packet& p)
-{
-    tx_queue_.push(p);
-}
-
-//txenqflow()
-void base_stream::tx_enqueue_channel(bool tx_immediately)
-{
-    if (!is_attached())
-        return attach_for_transmit();
-
-    logger::debug() << "Internal stream enqueue on channel";
-
-    stream_channel* channel = tx_current_attachment_->channel_;
-    assert(channel && channel->is_active());
-
-    if (!tx_enqueued_channel_)
-    {
-        if (tx_queue_.empty())
-        {
-            if (auto o = owner_.lock()) {
-                o->ready_write();
-            }
-        }
-        else
-        {
-            channel->enqueue_stream(this);
-            tx_enqueued_channel_ = true;
-        }
-    }
-
-    if (tx_immediately && channel->may_transmit())
-        channel->got_ready_transmit();
-}
-
 bool base_stream::is_attached()
 {
     return tx_current_attachment_ != nullptr;
 }
-
-void base_stream::tx_attach()
-{
-    logger::debug() << "Internal stream tx_attach";
-
-    stream_channel* chan = tx_current_attachment_->channel_;
-    int slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
-
-    packet p(this, packet_type::attach);
-    auto header = p.header<attach_header>();
-
-    header->stream_id = tx_current_attachment_->stream_id_;
-    header->type_subtype = type_and_subtype(packet_type::attach,
-                 (init_ ? flags::attach_init : 0) | (slot & flags::attach_slot_mask));
-    header->window = receive_window_byte();
-
-    // The body of the Attach packet is the stream's full USID,
-    // and the parent's USID too if we're still initiating the stream.
-    byte_array body;
-    {
-        byte_array_owrap<flurry::oarchive> write(body);
-        write.archive() << usid_;
-        if (init_)
-            write.archive() << parent_usid_;
-        else
-            write.archive() << nullptr;
-    }
-    p.buf.append(body);
-
-    // Transmit it on the current flow.
-    packet_seq_t pktseq;
-    chan->channel_transmit(p.buf, pktseq);
-
-    // Save the attach packet in the flow's ackwait hash,
-    // so that we'll be notified when the attach packet gets acked.
-    p.late = false;
-    chan->waiting_ack_.insert(make_pair(pktseq, p));
-}
-
-void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
-{}
 
 void base_stream::transmit_on(stream_channel* channel)
 {
     assert(tx_enqueued_channel_);
     assert(tx_current_attachment_ != nullptr);
     assert(channel == tx_current_attachment_->channel_);
+    assert(!tx_queue_.empty());
 
     logger::debug() << "Internal stream transmit_on " << channel;
 
@@ -427,6 +351,91 @@ void base_stream::dump()
     // << " rmsgavail " << rmsgavail
     // << " rmsgs " << rmsgsize.size()
 }
+
+//-------------------------------------------------------------------------------------------------
+// Packet transmission
+//-------------------------------------------------------------------------------------------------
+
+//txenqueue()
+void base_stream::tx_enqueue_packet(packet& p)
+{
+    tx_queue_.push(p);
+}
+
+//txenqflow()
+void base_stream::tx_enqueue_channel(bool tx_immediately)
+{
+    if (!is_attached())
+        return attach_for_transmit();
+
+    logger::debug() << "Internal stream enqueue on channel";
+
+    stream_channel* channel = tx_current_attachment_->channel_;
+    assert(channel && channel->is_active());
+
+    if (!tx_enqueued_channel_)
+    {
+        if (tx_queue_.empty())
+        {
+            if (auto o = owner_.lock()) {
+                o->on_ready_write();
+            }
+        }
+        else
+        {
+            channel->enqueue_stream(this);
+            tx_enqueued_channel_ = true;
+        }
+    }
+
+    if (tx_immediately && channel->may_transmit())
+        channel->got_ready_transmit();
+}
+
+void base_stream::tx_attach()
+{
+    logger::debug() << "Internal stream tx_attach";
+
+    stream_channel* chan = tx_current_attachment_->channel_;
+    int slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
+
+    packet p(this, packet_type::attach);
+    auto header = p.header<attach_header>();
+
+    header->stream_id = tx_current_attachment_->stream_id_;
+    header->type_subtype = type_and_subtype(packet_type::attach,
+                 (init_ ? flags::attach_init : 0) | (slot & flags::attach_slot_mask));
+    header->window = receive_window_byte();
+
+    // The body of the Attach packet is the stream's full USID,
+    // and the parent's USID too if we're still initiating the stream.
+    byte_array body;
+    {
+        byte_array_owrap<flurry::oarchive> write(body);
+        write.archive() << usid_;
+        if (init_)
+            write.archive() << parent_usid_;
+        else
+            write.archive() << nullptr;
+    }
+    p.buf.append(body);
+
+    // Transmit it on the current flow.
+    packet_seq_t pktseq;
+    chan->channel_transmit(p.buf, pktseq);
+
+    // Save the attach packet in the flow's ackwait hash,
+    // so that we'll be notified when the attach packet gets acked.
+    p.late = false;
+    chan->waiting_ack_.insert(make_pair(pktseq, p));
+}
+
+void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
+{}
+
+//-------------------------------------------------------------------------------------------------
+// Packet reception
+//-------------------------------------------------------------------------------------------------
 
 template <typename T>
 inline T const* as_header(byte_array const& v)
