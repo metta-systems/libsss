@@ -27,7 +27,6 @@ class sim_packet : public std::enable_shared_from_this<sim_packet>
     std::shared_ptr<sim_connection> pipe_;
     byte_array data_;
     async::timer timer_;
-    bool is_client_{false};
 
     void arrive();
 
