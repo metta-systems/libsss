@@ -633,7 +633,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
         // Ack the pktseq first so peer won't ignore the reset!
         logger::warning() << "rx_init_packet: unknown parent stream ID";
         channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->new_stream_id, flags::reset_remote);
+        tx_reset(channel, header->new_stream_id, flags::reset_remote_sid);
         return false;
     }
 
@@ -772,7 +772,7 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
     // No way to attach the stream - just reset it.
     logger::debug() << "rx_attach_packet: unknown stream " << usid;
     channel->acknowledge(pktseq, false);
-    tx_reset(channel, header->stream_id, flags::reset_remote);
+    tx_reset(channel, header->stream_id, flags::reset_remote_sid);
     return false;
 }
 
@@ -798,7 +798,7 @@ base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* chan
         // Ack the pktseq first so peer won't ignore the reset!
         logger::debug() << "Other side trying to create substream, but we're not listening.";
         channel->acknowledge(pktseq, false);
-        tx_reset(channel, sid, flags::reset_remote);
+        tx_reset(channel, sid, flags::reset_remote_sid);
         return nullptr;
     }
 

@@ -105,7 +105,7 @@ public:
         attach_slot_mask  = 0x1,  ///< Slot to use.
 
         // Flag bits for Reset packets
-        reset_remote      = 0x1,  ///< SID orientation (set: sent LSID is in remote space)
+        reset_remote_sid  = 0x1,  ///< SID orientation (set: sent LSID is in remote space)
     };
 
     static inline uint8_t type_and_subtype(packet_type type, uint8_t subtype) {
