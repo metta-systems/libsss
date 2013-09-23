@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <queue>
 #include <boost/signals2/signal.hpp>
 #include "byte_array.h"
 #include "host.h"
@@ -16,6 +17,7 @@
 namespace ssu {
 
 class stream;
+class base_stream;
 
 /**
  * This class represents a server that can accept incoming SSU connections.
@@ -28,9 +30,11 @@ class stream;
 class server : public stream_protocol
 {
     std::shared_ptr<host> host_;
-    std::string service_name, service_description;
-    std::string protocol_name, protocol_description;
-    std::string error_string;
+    std::queue<base_stream*> received_connections_; // Received connection stream queue
+    std::string service_name_, service_description_;
+    std::string protocol_name_, protocol_description_;
+    std::string error_string_;
+    bool active_{false};
 
 public:
     /**
@@ -60,7 +64,7 @@ public:
     bool listen(std::string const& service_name, std::string const& service_desc,
                 std::string const& protocol_name, std::string const& protocol_desc);
 
-    bool is_listening() const;
+    inline bool is_listening() const { return active_; }
 
     /**
      * Accept an incoming connection as a top-level stream.
@@ -75,7 +79,9 @@ public:
      * in which case the Stream may outlive the StreamServer object.
      *
      * @return a new stream representing ths incoming connection,
-     *         or NULL if no connections are currently waiting.
+     *         or nullptr if no connections are currently waiting.
+     *
+     * @todo return unique_ptr<stream*>
      */
     stream* accept();
 
