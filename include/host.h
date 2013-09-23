@@ -11,9 +11,9 @@
 #include "dh.h"
 #include "link.h"
 #include "timer.h"
-#include "stream.h"
 #include "identity.h"
 #include "negotiation/key_responder.h"
+#include "private/stream_host_state.h"
 
 namespace ssu {
 

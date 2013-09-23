@@ -8,7 +8,6 @@
 //
 #pragma once
 
-#include <map>
 #include <boost/signals2/signal.hpp>
 #include "byte_array.h"
 #include "peer_id.h"
@@ -21,6 +20,7 @@ class host;
 class base_stream;
 class stream_peer;
 class channel;
+class server;
 
 /**
  * User-space interface to the stream.
@@ -73,7 +73,7 @@ class stream : public std::enable_shared_from_this<stream>
     std::shared_ptr<host> host_;
     base_stream* stream_{nullptr};
 
-    stream(base_stream* other_stream);
+    stream(base_stream* other_stream); friend class server;
 
 public:
     /**
@@ -506,38 +506,6 @@ class stream_responder : public negotiation::key_responder, public stream_protoc
     channel* create_channel(link_endpoint const& initiator_ep,
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out) override;
-};
-
-/**
- * Host state related to stream management.
- * @fixme This whole class must be protected - not part of public host API.
- */
-class stream_host_state
-{
-    stream_responder* responder_{nullptr};
-    std::unordered_map<peer_id, stream_peer*> peers_;
-
-public:
-    inline stream_host_state() = default;
-    virtual ~stream_host_state();
-
-    virtual std::shared_ptr<host> get_host() = 0;
-
-    /**
-     * We instantiate stream responder when listening for incoming connections in ssu::server,
-     * or when setting up peer key exchange in stream_peer.
-     * @fixme just create the responder right away and don't bother? It's low footprint.
-     */
-    void instantiate_stream_responder();
-
-    /**
-     * Create if necessary and return the stream peer's information (from the other side).
-     */
-    class stream_peer* stream_peer(peer_id const& id);
-    /**
-     * Return the stream peer's information (from the other side) or nullptr.
-     */
-    class stream_peer* stream_peer_if_exists(peer_id const& id);
 };
 
 } // ssu namespace
