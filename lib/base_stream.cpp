@@ -336,6 +336,9 @@ ssize_t base_stream::write_data(const char* data, size_t total_size, uint8_t end
 
         // Prepare the header
         auto header = p.header<data_header>();
+        p.buf.resize(p.buf.size() + size); // Accomodate buffer space for payload
+        header = p.header<data_header>(); ///@fixme resize may have moved the buffer - do it before
+
         // header->sid - later
         header->type_subtype = flags;  // Major type filled in later
         // header->win - later
@@ -345,7 +348,7 @@ ssize_t base_stream::write_data(const char* data, size_t total_size, uint8_t end
         tx_byte_seq_ += size;
 
         // Copy in the application payload
-        char *payload = (char*)(header + 1);
+        char *payload = reinterpret_cast<char*>(header + 1);
         memcpy(payload, data, size);
 
         // Hold onto the packet data until it gets ACKed

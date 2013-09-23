@@ -126,7 +126,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         T* header()
         {
             header_len = channel::header_len + sizeof(T);
-            buf.resize(header_len);
+            if (buf.size() < size_t(header_len)) {
+                buf.resize(header_len);
+            }
             return reinterpret_cast<T*>(buf.data() + channel::header_len);
         }
     };
