@@ -13,6 +13,7 @@
 #include "byte_array.h"
 #include "opaque_endian.h"
 #include "flurry.h"
+#include "hash_combine.h"
 
 namespace ssu {
 
@@ -169,13 +170,6 @@ flurry::iarchive& operator >> (flurry::iarchive& ia, stream_protocol::unique_str
 // Hash specialization for unique_stream_id_t
 namespace std {
 
-template <class T>
-inline void hash_combine(std::size_t& seed, const T& v)
-{
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-}
-
 template<>
 struct hash<ssu::stream_protocol::unique_stream_id_t> : public std::unary_function<ssu::stream_protocol::unique_stream_id_t, size_t>
 {
@@ -183,8 +177,8 @@ struct hash<ssu::stream_protocol::unique_stream_id_t> : public std::unary_functi
     {
         // VEEERY bad implementation for now. @fixme
         size_t seed = 0xdeadbeef;
-        hash_combine(seed, a.counter_);
-        hash_combine(seed, a.half_channel_id_);
+        stdext::hash_combine(seed, a.counter_);
+        stdext::hash_combine(seed, a.half_channel_id_);
         return seed;
     }
 };
