@@ -108,6 +108,7 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     // assert(encofs == 4);
     *out.as<uint32_t>() = *pkt.as<uint32_t>();
 
+    out.resize(out.size() - crypto::HMACLEN);
     pkt = out;
 
     return true;
