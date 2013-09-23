@@ -132,6 +132,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
             return reinterpret_cast<T*>(buf.data() + channel::header_len);
         }
     };
+    friend std::ostream& operator << (std::ostream& os, packet const& pkt);
 
     struct rx_segment_t
     {
@@ -364,5 +365,28 @@ public:
      */
     boost::signals2::signal<void()> on_detached;
 };
+
+inline std::ostream& operator << (std::ostream& os, ssu::base_stream::packet const& pkt)
+{
+    std::string packet_type = [](stream_protocol::packet_type type){
+        switch (type) {
+            case stream_protocol::packet_type::invalid: return "invalid";
+            case stream_protocol::packet_type::init:    return "init";
+            case stream_protocol::packet_type::reply:   return "reply";
+            case stream_protocol::packet_type::data:    return "data";
+            case stream_protocol::packet_type::datagram:return "datagram";
+            case stream_protocol::packet_type::ack:     return "ack";
+            case stream_protocol::packet_type::reset:   return "reset";
+            case stream_protocol::packet_type::attach:  return "attach";
+            case stream_protocol::packet_type::detach:  return "detach";
+            default:                                    return "unknown";
+        }
+    }(pkt.type);
+
+    os << "[packet txseq " << pkt.tx_byte_seq << ", type " << packet_type
+       << ", owner " << pkt.owner << ", header " << pkt.header_len
+       << (pkt.late ? ", late" : ", not late") << ", data " << pkt.buf << "]";
+    return os;
+}
 
 } // namespace ssu
