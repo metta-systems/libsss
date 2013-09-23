@@ -78,6 +78,7 @@ public:
     	big_uint16_t tx_seq_no;
     } __attribute__((packed));
     typedef init_header reply_header;
+    // init/reply_header and data_header must be the same size to allow optimized init_packets
     struct data_header : public stream_header
     {
     	big_uint32_t tx_seq_no;

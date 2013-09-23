@@ -113,11 +113,11 @@ void base_stream::transmit_on(stream_channel* channel)
         // allowing us to attach using an optimized Reply packet.
         if (tx_inflight_ + seg_size <= tx_window_)
         {
-            for (int i = 0; i < max_attachments; i++)
+            for (int i = 0; i < max_attachments; ++i)
             {
                 if (rx_attachments_[i].channel_ == channel and rx_attachments_[i].is_active())
                 {
-                    logger::debug() << "sending optimized Reply packet";
+                    logger::debug() << "Sending optimized reply packet";
 
                     // Adjust the in-flight byte count.
                     tx_inflight_ += seg_size;
