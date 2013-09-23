@@ -27,7 +27,20 @@ public:
     aes_armor(byte_array const& tx_enc_key, byte_array const& tx_mac_key,
               byte_array const& rx_enc_key, byte_array const& rx_mac_key);
 
+    /**
+     * Encode and authenticate data packet.
+     * @param  pktseq Packet sequence number.
+     * @param  pkt    Packet to send.
+     * @return        Encoded and authenticated packet.
+     */
     byte_array transmit_encode(uint64_t pktseq, const byte_array& pkt) override;
+
+    /**
+     * Decode packet in place.
+     * @param  pktseq Packet sequence number.
+     * @param  pkt    Packet to decrypt, decrypted packet returned in the same argument.
+     * @return        true if packet is verified to be authentic.
+     */
     bool receive_decode(uint64_t pktseq, byte_array& pkt) override;
 };
 
