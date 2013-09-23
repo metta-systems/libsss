@@ -96,7 +96,7 @@ void base_stream::transmit_on(stream_channel* channel)
                 and parent->tx_current_attachment_->is_active()
                 and usid_.half_channel_id_ == channel->tx_channel_id()
                 and uint16_t(usid_.counter_) == tx_current_attachment_->stream_id_
-            /* XXX  and parent->tflt + segsize <= parent->twin*/)
+            /* XXX  and parent->tx_inflight_ + seg_size <= parent->tx_window_*/)
         {
             logger::debug() << "Sending optimized init packet";
 
