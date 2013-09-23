@@ -80,7 +80,7 @@ public:
      * Flag bits used as arguments to the listen() method, indicating when and
      * how to accept incoming substreams.
      */
-    enum class listen_mode
+    enum listen_mode
     {
         reject         = 0,    ///< Reject incoming substreams.
         buffer_limit   = 2,    ///< Accept subs up to receive buffer size.

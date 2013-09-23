@@ -34,6 +34,15 @@ base_stream::base_stream(shared_ptr<host> host,
     assert(!peer_id.is_empty());
 
     logger::debug() << "Constructing internal stream for peer " << peer_id;
+
+    // Initialize inherited parameters
+    if (parent)
+    {
+        if (parent->listen_mode() & stream::listen_mode::inherit)
+            listen(parent->listen_mode());
+        receive_buf_size_ = child_receive_buf_size_ = parent->child_receive_buf_size_;
+    }
+
     recalculate_receive_window();
 
     peerid_ = peer_id;

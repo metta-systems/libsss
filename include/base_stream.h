@@ -170,6 +170,13 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Cumulative size of all segments waiting to be ACKed.
     size_t tx_waiting_size_{0};
 
+    //-------------------------------------------
+    // Byte receive state
+    //-------------------------------------------
+
+    int32_t receive_buf_size_{0};         // Recv buf size for channel control
+    int32_t child_receive_buf_size_{0};   // Recv buf for child streams
+
     // Substream receive state
     /// Received, waiting substreams.
     std::queue<abstract_stream*> received_substreams_;
