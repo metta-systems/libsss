@@ -306,7 +306,11 @@ void channel::receive(const byte_array& msg, const link_endpoint& src)
         logger::warning() << "Received packet auth failed on rx " << pktseq;
         return;
     }
-    //@todo replace first word in pkt with data from msg - it's unencrypted
+
+    {
+        // Log decoded packet.
+        logger::file_dump log(pkt);
+    }
 
     if (channel_receive(pktseq, pkt))
         acknowledge(pktseq, true);
