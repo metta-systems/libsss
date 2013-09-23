@@ -795,7 +795,18 @@ bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 
 void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 {
-    logger::warning() << "rx_data UNIMPLEMENTED.";
+    if (end_read_) {
+        // Ignore anything we receive past end of stream
+        // (which we may have forced from our end via close()).
+        logger::warning() << this << " Ignoring segment received after end-of-stream";
+        assert(readahead_.empty());
+        assert(rx_segments_.empty());
+        return;
+    }
+
+    rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
+
+    logger::warning() << "rx_data " << byte_seq << " payload size " << rseg.segment_size();
 }
 
 base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
