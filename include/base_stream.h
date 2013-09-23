@@ -131,12 +131,44 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         }
     };
 
+    struct rx_segment_t
+    {
+        int32_t rx_byte_seq{0}; ///< Logical byte position.
+        byte_array buf;         ///< Packet buffer including headers.
+        int header_len{0};      ///< Size of channel and stream headers.
+
+        inline rx_segment_t(byte_array const& arr, int32_t rx_seq, int len)
+            : rx_byte_seq(rx_seq)
+            , buf(arr)
+            , header_len(len)
+        {}
+
+        inline int segment_size() const {
+            return buf.size() - header_len;
+        }
+
+        inline stream_header* header() {
+            return reinterpret_cast<stream_header*>(buf.data() + channel::header_len);
+        }
+
+        inline stream_header const* header() const {
+            return reinterpret_cast<stream_header const*>(buf.data() + channel::header_len);
+        }
+
+        inline uint8_t flags() const {
+            return header()->type_subtype & flags::data_all;
+        }
+        inline bool has_flags() const {
+            return flags() != 0;
+        }
+    };
+
     std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
     state state_{state::created};
-    uint8_t receive_window_byte_{0};
     bool init_{true};
     bool top_level_{false}; ///< This is a top-level stream.
     bool end_write_{false}; ///< Stream has closed for writing.
+    bool end_read_{false};  ///< Stream has closed for reading.
 
     std::queue<packet> tx_queue_; ///< Transmit packets queue.
 
@@ -173,6 +205,25 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //-------------------------------------------
     // Byte receive state
     //-------------------------------------------
+
+    // Byte-stream receive state
+    /// Next SSN expected to arrive.
+    int32_t rx_byte_seq_{0};
+    /// Received bytes available.
+    int32_t rx_available_{0};
+    /// Bytes avail in current message.
+    int32_t rx_message_available_{0};
+    /// Total buffer space used.
+    int32_t rx_buffer_used_{0};
+    /// Receive window log2.
+    uint8_t receive_window_byte_{0};
+
+    /// Received out of order.
+    std::list<rx_segment_t> readahead_;
+    /// Received, waiting to be read.
+    std::queue<rx_segment_t> rx_segments_;
+    /// Sizes of received messages.
+    std::queue<int64_t> rx_message_sizes_;
 
     int32_t receive_buf_size_{0};         // Recv buf size for channel control
     int32_t child_receive_buf_size_{0};   // Recv buf for child streams
