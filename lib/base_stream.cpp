@@ -107,7 +107,7 @@ void base_stream::transmit_on(stream_channel* channel)
                 and uint16_t(usid_.counter_) == tx_current_attachment_->stream_id_
             /* XXX  and parent->tx_inflight_ + seg_size <= parent->tx_window_*/)
         {
-            logger::debug() << "Sending optimized init packet";
+            logger::debug() << "Sending optimized init packet with " << seg_size << " bytes of payload";
 
             // Adjust the in-flight byte count for channel control.
             // Init packets get "charged" to the parent stream.
@@ -531,10 +531,10 @@ void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
     assert(p.type == packet_type::data);
     assert(p.tx_byte_seq <= 0xffff);
 
-    // Build the InitHeader.
+    // Build the init_header.
     auto header = as_header<init_header>(p.buf);
     header->stream_id = tx_current_attachment_->stream_id_;
-    // (flags already set - preserve)
+    // Preserve flags already set.
     header->type_subtype = type_and_subtype(type, header->type_subtype); //@fixme & dataAllFlags);
     header->window = receive_window_byte();
     header->new_stream_id = ref_sid;
