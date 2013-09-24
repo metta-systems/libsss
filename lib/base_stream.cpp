@@ -887,6 +887,11 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
         closed = true;
 }
 
+void base_stream::got_service_request()
+{
+    assert(state_ == state::accepting);
+}
+
 //-----------------
 // Signal handlers
 //-----------------
