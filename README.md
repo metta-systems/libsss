@@ -28,6 +28,8 @@ Features of SSU:
  * **Peer-to-peer communication across NATs** via hole punching
  * Implemented as a library that can be linked directly into applications like SSL for easy deployment
 
+![streams](https://raw.github.com/berkus/libssu/develop/doc/streams.png "Streams Structure")
+
 ### Structures
 
 `ssu::host` holds information about this host's connection sessions.
