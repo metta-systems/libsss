@@ -22,7 +22,7 @@ Features of SSU:
    * General **out-of-band signaling**: control requests already in progress
  * Both **reliable** and **best-effort delivery** in a **semantically unified model**
    * supports **messages/datagrams of any size**: no need to limit size of video frames, RPC responses, etc.
- * Dynamic prioritization of application's streams
+ * **Dynamic prioritization** of application's streams
    * e.g., load visible parts of a web page first, change priorities when user scrolls
  * **End-to-end cryptographic security** comparable to SSL
  * **Peer-to-peer communication across NATs** via hole punching
