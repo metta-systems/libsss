@@ -810,8 +810,35 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     }
 
     rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
+    int seg_size = rseg.segment_size();
 
-    logger::warning() << "rx_data " << byte_seq << " payload size " << rseg.segment_size();
+    logger::warning() << "rx_data " << byte_seq << " payload size " << seg_size;
+
+    // See where this packet fits in
+    int rx_seq_diff = rseg.rx_byte_seq - rx_byte_seq_;
+    if (rx_seq_diff <= 0) {
+        // The segment is at or before our current receive position.
+        // How much of its data, if any, is actually useful?
+        // Note that we must process packets at our RSN with no data,
+        // because they might have important flags.
+        int act_size = seg_size + rx_seq_diff;
+
+        // It gives us exactly the data we want next - very good!
+        bool wasnomsgs = !has_pending_records();
+        bool closed = false;
+
+        rx_enqueue_segment(rseg, act_size, /*inout*/closed);
+
+        if (wasnomsgs && has_pending_records()) {
+            if (state_ == state::connected) {
+            } else if (state_ == state::accepting) {
+                got_service_request();
+            }
+        }
+    }
+
+    // Recalculate the receive window now that we've probably consumed some buffer space.
+    recalculate_receive_window();
 }
 
 base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
