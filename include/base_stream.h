@@ -296,6 +296,9 @@ private:
     base_stream* rx_substream(packet_seq_t pktseq, stream_channel* channel,
         stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
 
+    /// Helper function to enqueue useful rx segment data.
+    void rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed);
+
     //-------------------------------------------
     // Signal handlers.
     //-------------------------------------------
