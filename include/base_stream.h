@@ -215,7 +215,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Received bytes available.
     int32_t rx_available_{0};
     /// Bytes avail in current message.
-    int32_t rx_message_available_{0};
+    int32_t rx_message_available_{0};//@fixme rx_record_available_
     /// Total buffer space used.
     int32_t rx_buffer_used_{0};
     /// Receive window log2.
