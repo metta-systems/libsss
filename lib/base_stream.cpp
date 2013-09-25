@@ -821,9 +821,6 @@ bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, st
     logger::debug() << "rx_reply_packet ...";
     auto header = as_header<reply_header>(pkt);
 
-    logger::debug() << "SID " << header->stream_id << " new SID " << header->new_stream_id
-        << " transmit sids size " << channel->transmit_sids_.size();
-
     // Look up the stream - if it already exists,
     // just dispatch it directly as if it were a data packet.
     if (contains(channel->transmit_sids_, header->stream_id))
