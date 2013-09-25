@@ -813,9 +813,66 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
 
 bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    logger::warning() << "rx_reply_packet UNIMPLEMENTED.";
-    // auto header = as_header<reply_header>(pkt);
-    return false;
+    if (pkt.size() < reply_header_len_min) {
+        logger::warning() << "Received runt reply packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
+    logger::debug() << "rx_reply_packet ...";
+    auto header = as_header<reply_header>(pkt);
+
+    logger::debug() << "SID " << header->stream_id << " new SID " << header->new_stream_id
+        << " transmit sids size " << channel->transmit_sids_.size();
+
+    // Look up the stream - if it already exists,
+    // just dispatch it directly as if it were a data packet.
+    if (contains(channel->transmit_sids_, header->stream_id))
+    {
+        logger::debug() << "rx_reply_packet: stream exists, dispatch data only";
+        stream_attachment* attach = channel->transmit_sids_[header->stream_id];
+        if (pktseq < attach->sid_seq_) // earlier reply packet; that's OK.
+            attach->sid_seq_ = pktseq;
+
+        channel->ack_sid_ = header->stream_id;
+        attach->stream_->recalculate_transmit_window(header->window);
+        attach->stream_->rx_data(pkt, header->tx_seq_no);
+        return true; // ACK the packet
+    }
+
+    // Doesn't yet exist - look up the reference stream in our SID space.
+    if (!contains(channel->transmit_sids_, header->new_stream_id))
+    {
+        // The reference SID supposedly in our own space is invalid!
+        // Respond with a reset indicating that SID in our space.
+        // Ack the pktseq first so peer won't ignore the reset!
+        logger::debug() << "rx_reply_packet: unknown reference stream ID";
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, header->new_stream_id, 0);
+        return false;
+    }
+
+    stream_attachment* attach = channel->transmit_sids_[header->new_stream_id];
+
+    if (pktseq < attach->sid_seq_)
+    {
+        logger::debug() << "rx_reply_packet: stale packet - pktseq " << pktseq
+            << " sidseq " << attach->sid_seq_;
+        return false;   // silently drop stale packet
+    }
+
+    base_stream* stream = attach->stream_;
+
+    logger::debug() << stream << " Accepting reply " << stream->usid_;
+
+    // OK, we have the stream - just create the receive-side attachment.
+    stream->rx_attachments_[0].set_active(channel, header->stream_id, pktseq);
+
+    // Now process any data segment contained in this reply packet.
+    channel->ack_sid_ = header->stream_id;
+    stream->recalculate_transmit_window(header->window);
+    stream->rx_data(pkt, header->tx_seq_no);
+
+    return true;    // Acknowledge the packet
 }
 
 bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
