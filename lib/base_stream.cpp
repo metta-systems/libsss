@@ -248,7 +248,6 @@ void base_stream::attach_for_transmit()
                 parent_ = channel->root_stream();
                 parent = parent_.lock();
             } else {
-                logger::warning() << "Parent stream closed before child stream could be initiated";
                 return fail("Parent stream closed before child stream could be initiated");
             }
         }
@@ -540,6 +539,7 @@ void base_stream::fail(string const& error)
 {
     disconnect();
     set_error(error);
+    logger::warning() << error;
 }
 
 void base_stream::dump()
