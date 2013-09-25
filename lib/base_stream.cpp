@@ -315,7 +315,63 @@ bool base_stream::at_end() const
 
 ssize_t base_stream::read_data(char* data, ssize_t max_size)
 {
-    return 0;
+    ssize_t actual_size = 0;
+
+    while (max_size > 0 and rx_available_ > 0)
+    {
+        assert(!end_read_);
+        assert(!rx_segments_.empty());
+        rx_segment_t rseg = rx_segments_.front();
+        rx_segments_.pop();
+
+        ssize_t size = rseg.segment_size();
+        assert(size >= 0);
+
+        // XXX BUG: this breaks if we try to read a partial segment!
+        assert(max_size >= size);
+
+        // Copy the data (or just drop it if data == nullptr).
+        if (data != nullptr) {
+            memcpy(data, rseg.buf.data() + rseg.header_len, size);
+            data += size;
+        }
+        actual_size += size;
+        max_size -= size;
+
+        // Adjust the receive stats
+        rx_available_ -= size;
+        rx_buffer_used_ -= size;
+        assert(rx_available_ >= 0);
+
+        if (has_pending_records())
+        {
+            // We're reading data from a queued message.
+            int64_t& headsize = rx_record_sizes_.front();
+            headsize -= size;
+            assert(headsize >= 0);
+
+            // Always stop at the next message boundary.
+            if (headsize == 0) {
+                rx_record_sizes_.pop();
+                break;
+            }
+        }
+        else
+        {
+            // No queued messages - just read raw data.
+            rx_record_available_ -= size;
+            assert(rx_record_available_ >= 0);
+        }
+
+        // If this segment has the end-marker set, that's it...
+        if (rseg.flags() & flags::data_close)
+            shutdown(stream::shutdown_mode::read);
+    }
+
+    // Recalculate the receive window, now that we've (presumably) freed some buffer space.
+    recalculate_receive_window();
+
+    return actual_size;
 }
 
 int base_stream::pending_records() const
@@ -333,7 +389,20 @@ ssize_t base_stream::read_record(char* data, ssize_t max_size)
     if (!has_pending_records())
         return -1;  // No complete records available
 
-    return 0;
+    // Read as much of the next queued message as we have room for
+    size_t rx_message_count_before = rx_record_sizes_.size();
+    ssize_t actual_size = base_stream::read_data(data, max_size);
+    assert(actual_size > 0);
+
+    // If the message is longer than the supplied buffer, drop the rest.
+    if (rx_record_sizes_.size() == rx_message_count_before)
+    {
+        ssize_t skip_size = base_stream::read_data(nullptr, 1 << 30);
+        assert(skip_size > 0);
+    }
+    assert(rx_record_sizes_.size() == rx_message_count_before - 1);
+
+    return actual_size;
 }
 
 byte_array base_stream::read_record(ssize_t max_size)
