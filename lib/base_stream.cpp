@@ -703,7 +703,15 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 // Packet reception
 //-------------------------------------------------------------------------------------------------
 
-constexpr size_t header_len_min = channel::header_len + 4;
+constexpr size_t header_len_min          = channel::header_len + 4;
+constexpr size_t init_header_len_min     = channel::header_len + 8;
+constexpr size_t reply_header_len_min    = channel::header_len + 8;
+constexpr size_t data_header_len_min     = channel::header_len + 8;
+constexpr size_t datagram_header_len_min = channel::header_len + 4;
+constexpr size_t ack_header_len_min      = channel::header_len + 4;
+constexpr size_t reset_header_len_min    = channel::header_len + 4;
+constexpr size_t attach_header_len_min   = channel::header_len + 4;
+constexpr size_t detach_header_len_min   = channel::header_len + 4;
 
 bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
@@ -740,7 +748,10 @@ bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_cha
 
 bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    // @todo Check packet size against init_header min size.
+    if (pkt.size() < init_header_len_min) {
+        logger::warning() << "Received runt init packet";
+        return false; // @fixme Protocol error, close channel?
+    }
 
     logger::debug() << "rx_init_packet ...";
     auto header = as_header<init_header>(pkt);
@@ -809,6 +820,11 @@ bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, st
 
 bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    if (pkt.size() < data_header_len_min) {
+        logger::warning() << "Received runt data packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
     logger::warning() << "rx_data_packet UNIMPLEMENTED.";
     // auto header = as_header<data_header>(pkt);
     return false;
@@ -816,6 +832,11 @@ bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, str
 
 bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    if (pkt.size() < datagram_header_len_min) {
+        logger::warning() << "Received runt datagram packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
     logger::warning() << "rx_datagram_packet UNIMPLEMENTED.";
     // auto header = as_header<datagram_header>(pkt);
     return false;
@@ -823,6 +844,11 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt,
 
 bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    if (pkt.size() < ack_header_len_min) {
+        logger::warning() << "Received runt ack packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
     logger::warning() << "rx_ack_packet UNIMPLEMENTED.";
     // auto header = as_header<ack_header>(pkt);
     return false;
@@ -830,6 +856,11 @@ bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stre
 
 bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    if (pkt.size() < reset_header_len_min) {
+        logger::warning() << "Received runt reset packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
     logger::warning() << "rx_reset_packet UNIMPLEMENTED.";
     // auto header = as_header<reset_header>(pkt);
     return false;
@@ -837,7 +868,10 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, st
 
 bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    // @todo Check packet size against attach_header min size.
+    if (pkt.size() < attach_header_len_min) {
+        logger::warning() << "Received runt attach packet";
+        return false; // @fixme Protocol error, close channel?
+    }
 
     auto header = as_header<attach_header>(pkt);
     bool init = (header->type_subtype & flags::attach_init) != 0;
@@ -912,6 +946,11 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 
 bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
+    if (pkt.size() < detach_header_len_min) {
+        logger::warning() << "Received runt detach packet";
+        return false; // @fixme Protocol error, close channel?
+    }
+
     // auto header = as_header<detach_header>(pkt);
     // @todo
     logger::fatal() << "rx_detach_packet UNIMPLEMENTED.";
