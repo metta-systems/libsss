@@ -438,7 +438,7 @@ abstract_stream* base_stream::accept_substream()
 
 bool base_stream::is_link_up() const
 {
-    return false;
+    return state_ == state::connected;
 }
 
 void base_stream::shutdown(stream::shutdown_mode mode)
