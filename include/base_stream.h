@@ -237,6 +237,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
 private:
     void got_service_request();
+    void got_service_reply();
 
     void recalculate_receive_window();
     void recalculate_transmit_window(uint8_t window_byte);

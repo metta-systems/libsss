@@ -1047,6 +1047,8 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 
         if (wasnomsgs && has_pending_records()) {
             if (state_ == state::connected) {
+            } else if (state_ == state::wait_service) {
+                got_service_reply();
             } else if (state_ == state::accepting) {
                 got_service_request();
             }
@@ -1172,6 +1174,11 @@ void base_stream::got_service_request()
     state_ = state::connected;
     srv->received_connections_.push(this);
     srv->on_new_connection();
+}
+
+void base_stream::got_service_reply()
+{
+    logger::debug() << "got_service_reply";
 }
 
 //-----------------
