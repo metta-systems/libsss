@@ -157,7 +157,17 @@ void base_stream::recalculate_receive_window()
 
 void base_stream::recalculate_transmit_window(uint8_t window_byte)
 {
-    logger::debug() << "Internal stream recalculate transmit window";
+    int32_t old_window = tx_window_;
+
+    // Calculate the new transmit window
+    int i = window_byte & 0x1f;
+    tx_window_ = (1 << i) - 1;
+
+    logger::debug() << this << " Transmit window change " << old_window << "->" << tx_window_
+        << ", in use " << tx_inflight_;
+
+    if (tx_window_ > old_window)
+        tx_enqueue_channel(/*immediate:*/true);
 }
 
 void base_stream::connect_to(string const& service, string const& protocol)
