@@ -761,7 +761,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     if (contains(channel->receive_sids_, header->stream_id))
     {
         logger::debug() << "rx_init_packet: stream exists, dispatch data only";
-        stream_rx_attachment* attach = channel->receive_sids_[header->stream_id];
+        stream_attachment* attach = channel->receive_sids_[header->stream_id];
         if (pktseq < attach->sid_seq_) // earlier init packet; that's OK.
             attach->sid_seq_ = pktseq;
 
@@ -782,7 +782,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
         return false;
     }
 
-    stream_rx_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
+    stream_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
     logger::debug() << "rx_init_packet: found parent stream attach " << parent_attach;
     if (pktseq < parent_attach->sid_seq_)
     {
