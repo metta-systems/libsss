@@ -1175,7 +1175,24 @@ void base_stream::got_service_request()
 
 void base_stream::got_service_reply()
 {
+    assert(state_ == state::wait_service);
+    assert(tx_current_attachment_);
+
+    byte_array_iwrap<flurry::iarchive> read(read_record(max_service_record_size));
+    uint32_t code, status;
+    read.archive() >> code >> status;
+    if (code != service_code::connect_reply or status != 0)
+    {
+        ostringstream oss;
+        oss << "Service connect failed with code " << code << " status " << status;
+        return fail(oss.str());
+    }
+
     logger::debug() << "got_service_reply";
+
+    state_ = state::connected;
+    if (auto stream = owner_.lock())
+        stream->on_link_up();
 }
 
 //-----------------
