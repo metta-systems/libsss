@@ -215,7 +215,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Received bytes available.
     int32_t rx_available_{0};
     /// Bytes avail in current message.
-    int32_t rx_message_available_{0};//@fixme rx_record_available_
+    int32_t rx_record_available_{0};
     /// Total buffer space used.
     int32_t rx_buffer_used_{0};
     /// Receive window log2.
@@ -226,7 +226,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Received, waiting to be read.
     std::queue<rx_segment_t> rx_segments_;
     /// Sizes of received messages.
-    std::queue<int64_t> rx_message_sizes_;
+    std::queue<int64_t> rx_record_sizes_;
 
     int32_t receive_buf_size_{0};         // Recv buf size for channel control
     int32_t child_receive_buf_size_{0};   // Recv buf for child streams

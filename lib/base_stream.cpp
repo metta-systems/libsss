@@ -901,14 +901,14 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
     rx_segments_.push(seg);
     rx_byte_seq_ += actual_size;
     rx_available_ += actual_size;
-    rx_message_available_ += actual_size;
+    rx_record_available_ += actual_size;
     rx_buffer_used_ += actual_size;
 
-    if ((seg.flags() & (flags::data_message | flags::data_close)) and (rx_message_available_ > 0))
+    if ((seg.flags() & (flags::data_message | flags::data_close)) and (rx_record_available_ > 0))
     {
         logger::debug() << "Received record";
-        rx_message_sizes_.push(rx_message_available_);
-        rx_message_available_ = 0;
+        rx_record_sizes_.push(rx_record_available_);
+        rx_record_available_ = 0;
     }
     if (seg.flags() & flags::data_close)
         closed = true;
