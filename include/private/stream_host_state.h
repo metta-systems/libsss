@@ -12,6 +12,7 @@
 #include <utility>
 #include <string>
 #include "hash_combine.h"
+#include "algorithm.h"
 
 // Hash specialization for pair<string,string>
 // Need to have it before declaration of listeners_ below.
@@ -78,6 +79,12 @@ public:
         listeners_.insert(make_pair(svc_pair, srv));
     }
     // void unregister_listener()
+
+    inline server* listener_for(std::string service, std::string protocol) {
+        if (!contains(listeners_, make_pair(service, protocol)))
+            return nullptr;
+        return listeners_[make_pair(service, protocol)];
+    }
 };
 
 } // ssu namespace
