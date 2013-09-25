@@ -565,6 +565,7 @@ inline T* as_header(byte_array& v)
 void base_stream::tx_enqueue_packet(packet& p)
 {
     tx_queue_.push(p);
+    tx_enqueue_channel(/*immediately:*/true);
 }
 
 //txenqflow()
