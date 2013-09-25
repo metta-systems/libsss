@@ -465,14 +465,14 @@ void base_stream::fail(string const& error)
 void base_stream::dump()
 {
     logger::debug() << "Internal stream " << this
-                    << " state " << int(state_);
-    // << " TSN " << tasn
-    // << " RSN " << rsn
-    // << " ravail " << ravail
-    // << " rahead " << rahead.size()
-    // << " rsegs " << rsegs.size()
-    // << " rmsgavail " << rmsgavail
-    // << " rmsgs " << rmsgsize.size()
+                    << " state " << int(state_)
+                    << " TSN " << tx_byte_seq_
+                    << " RSN " << rx_byte_seq_
+                    << " rx_avail " << rx_available_
+                    << " readahead " << readahead_.size()
+                    << " rx_segs " << rx_segments_.size()
+                    << " rx_rec_avail " << rx_record_available_
+                    << " rx_recs " << rx_record_sizes_.size();
 }
 
 //-------------------------------------------------------------------------------------------------
