@@ -117,6 +117,18 @@ public:
         return packet_type(hdr->type_subtype >> 4);
     }
 
+    /// Service message codes
+    enum service_code : uint32_t {
+        connect_request  = 0x101,    ///< Connect to named service.
+        connect_reply    = 0x201,    ///< Response to connect request.
+
+        reply_ok         = 0,        ///< Service request accepted.
+        reply_not_found  = 1,        ///< Specified service pair not found.
+    };
+
+    // Maximum size of a service request or response record
+    static constexpr int max_service_record_size = 128;
+
     /**
      * Type for identifying streams uniquely across channels.
      *
