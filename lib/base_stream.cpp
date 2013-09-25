@@ -300,17 +300,37 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
 
 int base_stream::pending_records() const
 {
-    return 0;
+    return rx_record_sizes_.size();
+}
+
+ssize_t base_stream::pending_record_size() const
+{
+    return has_pending_records() ? rx_record_sizes_.front() : -1;
 }
 
 ssize_t base_stream::read_record(char* data, ssize_t max_size)
 {
+    if (!has_pending_records())
+        return -1;  // No complete records available
+
     return 0;
 }
 
 byte_array base_stream::read_record(ssize_t max_size)
 {
-    return byte_array();
+    ssize_t rec_size = pending_record_size();
+    if (rec_size <= 0)
+        return byte_array(); // No complete messages available
+
+    // Read the next message into a new byte array
+    byte_array buf;
+    ssize_t buf_size = min(rec_size, max_size);
+    buf.resize(buf_size);
+
+    ssize_t actual_size = read_record(buf.data(), buf_size);
+    assert(actual_size == buf_size);
+
+    return buf;
 }
 
 ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t endflags)
