@@ -60,14 +60,14 @@ public:
     // Reading data.
     //===============================================================
 
-    virtual size_t bytes_available() const = 0;
+    virtual ssize_t bytes_available() const = 0;
     inline bool has_bytes_available() const {
         return bytes_available() > 0;
     }
 
     virtual bool at_end() const = 0; //XXX QIODevice relic
 
-    virtual ssize_t read_data(char* data, size_t max_size) = 0;
+    virtual ssize_t read_data(char* data, ssize_t max_size) = 0;
 
     /**
      * Return number of complete records currently available for reading.
@@ -81,17 +81,19 @@ public:
         return pending_records() > 0;
     }
 
-    virtual ssize_t read_record(char* data, size_t max_size) = 0;
-    virtual byte_array read_record(size_t max_size) = 0;
+    virtual ssize_t pending_record_size() const = 0;
+
+    virtual ssize_t read_record(char* data, ssize_t max_size) = 0;
+    virtual byte_array read_record(ssize_t max_size) = 0;
 
     //===============================================================
     // Byte-oriented data transfer.
     // Writing data.
     //===============================================================
 
-    virtual ssize_t write_data(const char* data, size_t size, uint8_t endflags) = 0;
+    virtual ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) = 0;
 
-    virtual ssize_t write_record(const char* data, size_t size) {
+    virtual ssize_t write_record(const char* data, ssize_t size) {
         return write_data(data, size, flags::data_message);
     }
 
@@ -103,9 +105,9 @@ public:
     // Datagram protocol.
     // Send and receive unordered, unreliable datagrams on this stream.
     //===============================================================
-    virtual ssize_t read_datagram(char* data, size_t max_size) = 0;
-    virtual ssize_t write_datagram(const char* data, size_t size, stream::datagram_type is_reliable) = 0;
-    virtual byte_array read_datagram(size_t max_size) = 0;
+    virtual ssize_t read_datagram(char* data, ssize_t max_size) = 0;
+    virtual ssize_t write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable) = 0;
+    virtual byte_array read_datagram(ssize_t max_size) = 0;
 
     //===============================================================
     // Substreams management.

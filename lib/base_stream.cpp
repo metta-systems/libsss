@@ -283,7 +283,7 @@ void base_stream::set_usid(unique_stream_id_t new_usid)
     peer_->usid_streams_.insert(make_pair(usid_, this));
 }
 
-size_t base_stream::bytes_available() const
+ssize_t base_stream::bytes_available() const
 {
     return 0;
 }
@@ -293,7 +293,7 @@ bool base_stream::at_end() const
     return true;
 }
 
-ssize_t base_stream::read_data(char* data, size_t max_size)
+ssize_t base_stream::read_data(char* data, ssize_t max_size)
 {
     return 0;
 }
@@ -303,24 +303,24 @@ int base_stream::pending_records() const
     return 0;
 }
 
-ssize_t base_stream::read_record(char* data, size_t max_size)
+ssize_t base_stream::read_record(char* data, ssize_t max_size)
 {
     return 0;
 }
 
-byte_array base_stream::read_record(size_t max_size)
+byte_array base_stream::read_record(ssize_t max_size)
 {
     return byte_array();
 }
 
-ssize_t base_stream::write_data(const char* data, size_t total_size, uint8_t endflags)
+ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t endflags)
 {
     assert(!end_write_);
     ssize_t actual_size = 0;
 
     do {
         // Choose the size of this segment.
-        size_t size = mtu;
+        ssize_t size = mtu;
         uint8_t flags = 0;
 
         if (total_size <= size) {
@@ -370,17 +370,17 @@ ssize_t base_stream::write_data(const char* data, size_t total_size, uint8_t end
     return actual_size;
 }
 
-ssize_t base_stream::read_datagram(char* data, size_t max_size)
+ssize_t base_stream::read_datagram(char* data, ssize_t max_size)
 {
     return 0;
 }
 
-ssize_t base_stream::write_datagram(const char* data, size_t size, stream::datagram_type is_reliable)
+ssize_t base_stream::write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable)
 {
     return 0;
 }
 
-byte_array base_stream::read_datagram(size_t max_size)
+byte_array base_stream::read_datagram(ssize_t max_size)
 {
     return byte_array();
 }
