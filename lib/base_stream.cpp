@@ -163,8 +163,27 @@ void base_stream::connect_to(string const& service, string const& protocol)
 {
     logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
 
+    assert(!service.empty());
+    assert(state_ == state::created);
+    assert(tx_current_attachment_ == nullptr);
+
+    // Find or create the Target struct for the destination ID
     top_level_ = true;
 
+    // Queue up a service connect message onto the new stream.
+    // This will only go out once we actually attach to a channel,
+    // but the client can immediately enqueue application data behind it.
+    byte_array msg;
+    {
+        byte_array_owrap<flurry::oarchive> write(msg);
+        write.archive() << service_code::connect_request << service << protocol;
+    }
+    write_record(msg);
+
+    // Record that we're waiting for a response from the server.
+    state_ = state::wait_service;
+
+    // Attach to a suitable channel, initiating a new one if necessary.
     attach_for_transmit();
 }
 
