@@ -26,6 +26,7 @@ class stream_channel : public channel, public stream_protocol
 {
     friend class base_stream; /// @fixme
     friend class stream_rx_attachment; /// @fixme
+    friend class stream_tx_attachment; /// @fixme
 
     typedef channel super;
 
