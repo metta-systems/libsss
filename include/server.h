@@ -29,6 +29,8 @@ class base_stream;
  */
 class server : public stream_protocol
 {
+    friend class base_stream; /// @fixme for enqueueing streams to accept
+
     std::shared_ptr<host> host_;
     std::queue<base_stream*> received_connections_; // Received connection stream queue
     std::string service_name_, service_description_;

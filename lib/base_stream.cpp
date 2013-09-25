@@ -14,6 +14,7 @@
 #include "flurry.h"
 #include "byte_array_wrap.h"
 #include "algorithm.h"
+#include "server.h"
 
 using namespace std;
 
@@ -953,9 +954,48 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
         closed = true;
 }
 
+static byte_array service_reply(stream_protocol::service_code reply)
+{
+    byte_array msg;
+    {
+        byte_array_owrap<flurry::oarchive> write(msg);
+        write.archive() << stream_protocol::service_code::connect_reply << reply;
+    }
+    return msg;
+}
+
 void base_stream::got_service_request()
 {
     assert(state_ == state::accepting);
+
+    byte_array_iwrap<flurry::iarchive> read(read_record(max_service_record_size));
+    uint32_t code;
+    string service, protocol;
+    read.archive() >> code >> service >> protocol; // @fixme may throw..
+    if (code != service_code::connect_request)
+        return fail("Bad service request");
+
+    logger::debug() << "got_service_request service '" << service << "' protocol '" << protocol << "'";
+
+    // Lookup the requested service
+    server* srv = host_->listener_for(service, protocol);
+
+    if (!srv)
+    {
+        write_record(service_reply(service_code::reply_not_found));
+        // XXX send reply with error message
+        ostringstream oss;
+        oss << "Request for service " << service << " with unknown protocol " << protocol;
+        return fail(oss.str());
+    }
+
+    // Send a service reply to the client
+    write_record(service_reply(service_code::reply_ok));
+
+    // Hand off the new stream to the chosen service
+    state_ = state::connected;
+    srv->received_connections_.push(this);
+    srv->on_new_connection();
 }
 
 //-----------------
