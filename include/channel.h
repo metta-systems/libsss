@@ -144,6 +144,15 @@ private:
     void start_retransmit_timer();
 
     /**
+     * Transmit ack packet with no extra payload.
+     * @param  ackseq    Acknowledge sequence number.
+     * @param  ack_count Count of consecutively acknowledged packets.
+     * @return           true if sent successfully.
+     */
+    bool tx_ack(packet_seq_t ackseq, int ack_count);
+    void flush_ack();
+
+    /**
      * Private low-level transmit routine:
      * encrypt, authenticate, and transmit a packet whose cleartext header and data are
      * already fully set up, with a specified ACK sequence/count word.
@@ -157,6 +166,12 @@ private:
      * @param src [description]
      */
     void receive(const byte_array& msg, const link_endpoint& src) override;
+
+    //-------------------------------------------
+    // Handlers
+    //-------------------------------------------
+
+    void ack_timeout();
 };
 
 } // namespace ssu

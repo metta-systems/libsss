@@ -88,11 +88,11 @@ public:
     packet_seq_t rx_ack_sequence_{0};
     // //quint32 rxackmask;  // Mask of packets received & acknowledged
     /// Number of contiguous packets received before rx_ack_sequence_.
-    packet_seq_t rx_ack_count_{0};
+    int rx_ack_count_{0};
     /// Number of contiguous packets not yet ACKed.
     uint8_t rx_unacked_{0};
     // bool delayack;      ///< Enable delayed acknowledgments
-    // Timer acktimer;     ///< Delayed ACK timer
+    async::timer ack_timer_;  ///< Delayed ACK timer.
 
     //-------------------------------------------
     // Channel statistics.
@@ -105,6 +105,7 @@ public:
     private_data(shared_ptr<host> host)
         : host_(host)
         , retransmit_timer_(host.get())
+        , ack_timer_(host.get())
     {}
 
     void reset_congestion_control();
@@ -133,6 +134,9 @@ channel::channel(shared_ptr<host> host)
     pimpl_->mark_time_ = host->current_time();
 
     pimpl_->reset_congestion_control();
+
+    // Delayed ACK state
+    pimpl_->ack_timer_.on_timeout.connect(boost::bind(&channel::ack_timeout, this));
 }
 
 channel::~channel()
@@ -265,15 +269,116 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     return send(epkt);
 }
 
+constexpr int max_ack_count = 0xf;
+
 void channel::acknowledge(uint16_t pktseq, bool send_ack)
 {
-    logger::debug() << "channel: acknowledge UNIMPLEMENTED " << pktseq << (send_ack ? " sending" : " not sending");
+    constexpr int min_ack_packets = 2;
+    constexpr int max_ack_packets = 4;
+
+    logger::debug() << "channel: acknowledge " << pktseq << (send_ack ? " (sending)" : " (not sending)");
+
+    // Update our receive state to account for this packet
+    int32_t seq_diff = pktseq - pimpl_->rx_ack_sequence_;
+    if (seq_diff == 1)
+    {
+        // Received packet is in-order and contiguous.
+        // Roll rx_ack_sequence_ forward appropriately.
+        pimpl_->rx_ack_sequence_ = pktseq;
+        pimpl_->rx_ack_count_++;
+        pimpl_->rx_ack_count_ = min(pimpl_->rx_ack_count_, max_ack_count);
+
+        // ACK the received packet if appropriate.
+        // Delay our ACK for up to min_ack_packets received non-ACK-only packets,
+        // or up to max_ack_packets continuous ack-only packets.
+        ++pimpl_->rx_unacked_;
+        if (!send_ack and pimpl_->rx_unacked_ < max_ack_packets) {
+            // Only ack acks occasionally,
+            // and don't start the ack timer for them.
+            return;
+        }
+        if (pimpl_->rx_unacked_ < max_ack_packets) {
+            // Schedule an ack for transmission by starting the ack timer.
+            // We normally do this even in for non-delayed acks,
+            // so that we can process any other already-received packets first
+            // and have a chance to combine multiple acks into one.
+            if (pimpl_->rx_unacked_ < min_ack_packets) {
+                // Data packet - start delayed ack timer.
+                if (!pimpl_->ack_timer_.is_active())
+                    pimpl_->ack_timer_.start(bp::milliseconds(10));
+            } else {
+                // Start with zero timeout - immediate callback from event loop.
+                pimpl_->ack_timer_.start(bp::milliseconds(0));
+            }
+        } else {
+            // But make sure we send an ack every 4 packets no matter what...
+            flush_ack();
+        }
+    }
+    else if (seq_diff > 1)
+    {
+        // Received packet is in-order but discontiguous.
+        // One or more packets probably were lost.
+        // Flush any delayed ACK immediately, before updating our receive state.
+        flush_ack();
+
+        // Roll rx_ack_sequence_ forward appropriately.
+        pimpl_->rx_ack_sequence_ = pktseq;
+
+        // Reset the contiguous packet counter
+        pimpl_->rx_ack_count_ = 0;    // (0 means 1 packet received)
+
+        // ACK this discontiguous packet immediately
+        // so that the sender is informed of lost packets ASAP.
+        if (send_ack)
+            tx_ack(pimpl_->rx_ack_sequence_, 0);
+    }
+    else if (seq_diff < 0)
+    {
+        // Old packet recieved out of order.
+        // Flush any delayed ACK immediately.
+        flush_ack();
+
+        // ACK this out-of-order packet immediately.
+        if (send_ack)
+            tx_ack(pktseq, 0);
+    }
+}
+
+inline bool channel::tx_ack(packet_seq_t ackseq, int ack_count)
+{
+    byte_array pkt;
+    return transmit_ack(pkt, ackseq, ack_count);
+}
+
+inline void channel::flush_ack()
+{
+    if (pimpl_->rx_unacked_)
+    {
+        pimpl_->rx_unacked_ = 0;
+        tx_ack(pimpl_->rx_ack_sequence_, pimpl_->rx_ack_count_);
+    }
+    pimpl_->ack_timer_.stop();
+}
+
+inline void channel::ack_timeout()
+{
+    flush_ack();
 }
 
 bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 {
-    logger::debug() << "channel: transmit_ack UNIMPLEMENTED";
-    return false;
+    logger::debug() << "channel: transmit_ack seq " << ackseq << ", count " << ack_count+1;
+
+    assert(ack_count <= max_ack_count);
+
+    if (packet.size() < header_len)
+        packet.resize(header_len);
+
+    uint32_t ack_word = make_second_header_word(ack_count, ackseq);
+    packet_seq_t pktseq;
+
+    return transmit(packet, ack_word, pktseq, false);
 }
 
 void channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
