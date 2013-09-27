@@ -545,8 +545,7 @@ void base_stream::set_priority(int priority)
             stream_channel* chan = tx_current_attachment_->channel_;
             assert(chan->is_active());
 
-            int rc = chan->dequeue_stream(this);
-            assert(rc == 1);
+            chan->dequeue_stream(this);
             chan->enqueue_stream(this);
         }
     }
@@ -1339,8 +1338,7 @@ void stream_tx_attachment::clear()
     active_ = false;
 
     // Remove the stream from the channel's waiting streams list
-    int rc = channel->dequeue_stream(stream_);
-    assert(rc <= 1);
+    channel->dequeue_stream(stream_);
     stream_->tx_enqueued_channel_ = false;
 
     // Clear out packets for this stream from channel's ackwait table
