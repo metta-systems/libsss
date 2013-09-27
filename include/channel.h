@@ -141,8 +141,6 @@ protected:
     virtual void expire(packet_seq_t txseq, int npackets);
 
 private:
-    void reset_congestion_control();
-
     void start_retransmit_timer();
 
     /**

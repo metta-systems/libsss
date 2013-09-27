@@ -98,6 +98,7 @@ public:
     // Channel statistics.
     //-------------------------------------------
 
+    // unique_ptr<cc_strategy> congestion_control;
     async::timer::duration_type cumulative_rtt_;
 
 public:
@@ -105,8 +106,15 @@ public:
         : host_(host)
         , retransmit_timer_(host.get())
     {}
+
+    void reset_congestion_control();
 };
 
+// @todo Move this to cc_strategy implementation.
+void channel::private_data::reset_congestion_control()
+{
+    cumulative_rtt_ = bp::milliseconds(500);
+}
 
 //=================================================================================================
 // channel
@@ -124,7 +132,7 @@ channel::channel(shared_ptr<host> host)
     assert(pimpl_->tx_events_.size() == 1);
     pimpl_->mark_time_ = host->current_time();
 
-    reset_congestion_control();
+    pimpl_->reset_congestion_control();
 }
 
 channel::~channel()
@@ -152,12 +160,7 @@ void channel::start(bool initiate)
 
 void channel::stop()
 {
-    logger::debug() << "channel: stop";
-}
-
-void channel::reset_congestion_control()
-{
-    pimpl_->cumulative_rtt_ = boost::posix_time::milliseconds(500);
+    logger::debug() << "channel: stop UNIMPLEMENTED";
 }
 
 void channel::start_retransmit_timer()
