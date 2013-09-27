@@ -572,6 +572,7 @@ void base_stream::set_priority(int priority)
     }
 }
 
+// @todo Return unique_ptr?
 abstract_stream* base_stream::open_substream()
 {
     logger::debug() << "Internal stream open substream";
@@ -640,14 +641,19 @@ inline T* as_header(byte_array& v)
     return reinterpret_cast<T*>(v.data() + channel::header_len);
 }
 
-//txenqueue()
 void base_stream::tx_enqueue_packet(packet& p)
 {
+    // Add the packet to our stream-local transmit queue.
+    // Keep packets in order of transmit sequence number,
+    // but in FIFO order for packets with the same sequence number.
+    // This happens because datagram packets get assigned the current TSN
+    // when they are queued, but without actually incrementing the TSN,
+    // just to keep them in the right order with respect to segments.
+    // (The assigned TSN is not transmitted in the datagram, of course).
     tx_queue_.push(p);
     tx_enqueue_channel(/*immediately:*/true);
 }
 
-//txenqflow()
 void base_stream::tx_enqueue_channel(bool tx_immediately)
 {
     if (!is_attached())
@@ -1293,6 +1299,7 @@ void base_stream::substream_read_message()
 
 //=================================================================================================
 // stream_tx_attachment
+// Where our stream attaches to channel.
 //=================================================================================================
 
 void stream_tx_attachment::set_attaching(stream_channel* channel, stream_id_t sid)
@@ -1354,6 +1361,7 @@ void stream_tx_attachment::clear()
 
 //=================================================================================================
 // stream_rx_attachment
+// Where the peer's stream is attached to the channel.
 //=================================================================================================
 
 void stream_rx_attachment::set_active(stream_channel* channel, stream_id_t sid, packet_seq_t rxseq)

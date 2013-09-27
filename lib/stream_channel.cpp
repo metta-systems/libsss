@@ -84,6 +84,7 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
             }
         } while (contains(transmit_sids_, ++sid));
     }
+    // Update our stream counter
     assert(sid >= transmit_sid_counter_);
     transmit_sid_counter_ = sid + 1;
 
