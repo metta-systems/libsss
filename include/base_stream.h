@@ -186,7 +186,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     stream_rx_attachment  rx_attachments_[max_attachments];  // Peer's channel attachments
     stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
 
-    static const size_t default_rx_buffer_size = 65536;
+    static constexpr size_t default_rx_buffer_size = 65536;
 
     stream_peer* peer_;             ///< Information about the other side of this connection.
 
@@ -230,8 +230,8 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Sizes of received messages.
     std::queue<int64_t> rx_record_sizes_;
 
-    int32_t receive_buf_size_{0};         // Recv buf size for channel control
-    int32_t child_receive_buf_size_{0};   // Recv buf for child streams
+    int32_t receive_buf_size_{default_rx_buffer_size};         // Recv buf size for channel control
+    int32_t child_receive_buf_size_{default_rx_buffer_size};   // Recv buf for child streams
 
     // Substream receive state
     /// Received, waiting substreams.
