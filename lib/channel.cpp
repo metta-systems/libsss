@@ -230,13 +230,13 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
 
     // Don't allow tx_sequence_ counter to wrap (@fixme re-key before it does!)
     packet_seq = pimpl_->tx_sequence_;
-    assert(pimpl_->tx_sequence_ < max_packet_sequence);
-    uint32_t ptxseq = make_first_header_word(remote_channel(), packet_seq);
+    assert(packet_seq < max_packet_sequence);
+    uint32_t tx_seq = make_first_header_word(remote_channel(), packet_seq);
 
     // Fill in the transmit and ACK sequence number fields.
     assert(packet.size() >= header_len);
     big_uint32_t* pkt_header = reinterpret_cast<big_uint32_t*>(packet.data());
-    pkt_header[0] = ptxseq;
+    pkt_header[0] = tx_seq;
     pkt_header[1] = ack_seq;
 
     // Encrypt and compute the MAC for the packet
@@ -399,12 +399,12 @@ void channel::expire(uint64_t txseq, int npackets)
 void channel::receive(const byte_array& msg, const link_endpoint& src)
 {
     // Determine the full 64-bit packet sequence number
-    big_uint32_t ptxseq = msg.as<big_uint32_t>()[0];
+    uint32_t tx_seq = msg.as<big_uint32_t>()[0];
 
-    channel_number pktchan = ptxseq >> 24;
-    assert(pktchan == local_channel());    // enforced by sock.cc
+    channel_number pktchan = tx_seq >> 24;
+    assert(pktchan == local_channel());    // Enforced by link
 
-    int32_t seqdiff = ((int32_t)(ptxseq << 8)
+    int32_t seqdiff = ((int32_t)(tx_seq << 8)
                     - ((int32_t)pimpl_->rx_sequence_ << 8))
                     >> 8;
 
