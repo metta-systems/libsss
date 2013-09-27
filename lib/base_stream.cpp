@@ -346,7 +346,7 @@ void base_stream::attach_for_transmit()
     // We at least need to transmit an attach message of some kind;
     // in the case of Init or Reply it might also include data.
 
-    //assert(!channel->tx_streams_.contains(this));
+    assert(!contains(channel->sending_streams_, this));
     tx_enqueue_channel();
     if (channel->may_transmit())
         channel->on_ready_transmit();
@@ -1383,6 +1383,7 @@ void stream_rx_attachment::clear()
     logger::debug() << "Stream receive attachment going inactive";
     if (channel_)
     {
+        assert(contains(channel_->receive_sids_, stream_id_));
         assert(channel_->receive_sids_[stream_id_] == this);
         channel_->receive_sids_.erase(stream_id_);
         channel_ = nullptr;
