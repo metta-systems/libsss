@@ -576,7 +576,17 @@ void base_stream::set_priority(int priority)
 abstract_stream* base_stream::open_substream()
 {
     logger::debug() << "Internal stream open substream";
-    return 0;
+
+    // Create a new sub-stream.
+    // Note that the parent doesn't have to be attached yet:
+    // the substream will attach and wait for the parent if necessary.
+    base_stream* new_stream = new base_stream(host_, peerid_, shared_from_this());
+    new_stream->state_ = state::connected;
+
+    // Start trying to attach the new stream, if possible.
+    new_stream->attach_for_transmit();
+
+    return new_stream;
 }
 
 abstract_stream* base_stream::accept_substream()
