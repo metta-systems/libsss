@@ -503,6 +503,23 @@ byte_array base_stream::read_datagram(ssize_t max_size)
     return byte_array();
 }
 
+void base_stream::set_priority(int priority)
+{
+    if (current_priority() != priority) {
+        super::set_priority(priority);
+
+        if (tx_enqueued_channel_)
+        {
+            stream_channel* chan = tx_current_attachment_->channel_;
+            assert(chan->is_active());
+
+            int rc = chan->dequeue_stream(this);
+            assert(rc == 1);
+            chan->enqueue_stream(this);
+        }
+    }
+}
+
 abstract_stream* base_stream::open_substream()
 {
     logger::debug() << "Internal stream open substream";

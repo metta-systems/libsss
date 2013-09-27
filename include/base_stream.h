@@ -87,6 +87,8 @@ public:
  */
 class base_stream : public abstract_stream, public std::enable_shared_from_this<base_stream>
 {
+    typedef abstract_stream super;
+
     friend class stream_channel;
 
     enum class state {
@@ -352,6 +354,12 @@ public:
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
     void dump() override;
+    /**
+     * Set the stream's transmit priority level.
+     * This method overrides abstract_stream's default method
+     * to move the stream to the correct transmit queue if necessary.
+     */
+    void set_priority(int priority) override;
 
     //-------------------------------------------
     // Signals

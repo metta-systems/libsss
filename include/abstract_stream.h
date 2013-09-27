@@ -185,7 +185,10 @@ public:
      * but it divides available transmit bandwidth evenly
      * among streams with the same priority level.
      * All streams have a default priority of zero on creation.
-     * @param priority the new priority level for the stream.
+     * @param priority the new priority level for the stream,
+     *  higher values of priority mean higher transmit preference.
+     *  e.g. stream with priority 1 has higher preference than stream
+     *  with default priority 0.
      */
     virtual void set_priority(int priority);
 
@@ -214,6 +217,8 @@ public:
     virtual void dump() = 0;
 
 protected:
+    inline int current_priority() const { return priority_; }
+
     void set_error(const std::string& error) {
         if (auto strm = owner_.lock()) {
             strm->set_error(error);
