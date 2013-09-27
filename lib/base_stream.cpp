@@ -1331,8 +1331,8 @@ void stream_tx_attachment::set_attaching(stream_channel* channel, stream_id_t si
 
     channel_ = channel;
     stream_id_ = sid;
-    active_ = deprecated_ = false;
     sid_seq_ = ~0; //@fixme magic number
+    active_ = deprecated_ = false;
 
     assert(!contains(channel_->transmit_sids_, stream_id_));
     channel_->transmit_sids_.insert(make_pair(stream_id_, this));
