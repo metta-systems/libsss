@@ -551,6 +551,17 @@ void base_stream::set_priority(int priority)
     }
 }
 
+void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq)
+{}
+
+bool base_stream::missed(stream_channel* channel, packet const& pkt)
+{
+    return false;
+}
+
+void base_stream::expire(stream_channel* channel, packet const& pkt)
+{}
+
 // @todo Return unique_ptr?
 abstract_stream* base_stream::open_substream()
 {

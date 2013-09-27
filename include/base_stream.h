@@ -90,6 +90,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     typedef abstract_stream super;
 
     friend class stream_channel;
+    friend class stream_tx_attachment; // access to tx_current_attachment_
 
     enum class state {
         created = 0,   ///< Newly created.
@@ -363,6 +364,15 @@ public:
      * to move the stream to the correct transmit queue if necessary.
      */
     void set_priority(int priority) override;
+
+    // stream_channel calls these to return our transmitted packets to us
+    // after being held in waiting_ack_.
+    // The missed() method returns true if the channel should keep track
+    // of the packet until it expires, at which point it calls expire()
+    // and unconditionally removes it.
+    void acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq);
+    bool missed(stream_channel* channel, packet const& pkt);
+    void expire(stream_channel* channel, packet const& pkt);
 
     //-------------------------------------------
     // Signals
