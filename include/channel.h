@@ -134,7 +134,7 @@ protected:
      * Upper layer may override this if ack packets should contain
      * more than an just an empty channel payload.
      */
-    virtual bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct);
+    virtual bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count);
 
     virtual void acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq);
     virtual void missed(packet_seq_t txseq, int npackets);

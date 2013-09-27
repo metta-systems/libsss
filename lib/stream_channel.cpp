@@ -125,7 +125,7 @@ void stream_channel::dequeue_stream(base_stream* stream)
     // sending_streams_.erase(stream); // @fixme
 }
 
-bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct)
+bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ackct)
 {
     logger::debug() << "stream_channel: transmit_ack " << ackseq;
     return false;

@@ -264,7 +264,7 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
     logger::debug() << "channel: acknowledge UNIMPLEMENTED " << pktseq << (send_ack ? " sending" : " not sending");
 }
 
-bool channel::transmit_ack(byte_array &packet, uint64_t ackseq, unsigned ackct)
+bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 {
     logger::debug() << "channel: transmit_ack UNIMPLEMENTED";
     return false;

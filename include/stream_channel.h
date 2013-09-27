@@ -88,7 +88,7 @@ public:
     void start(bool initiate) override;
     void stop() override;
 
-    bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, unsigned ackct) override;
+    bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ackct) override;
 
     void acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq) override;
     void missed(packet_seq_t txseq, int npackets) override;
