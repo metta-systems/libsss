@@ -1288,6 +1288,10 @@ void base_stream::got_service_reply()
 void base_stream::channel_connected()
 {
     logger::debug() << "Internal stream - channel has connected.";
+    if (peer_)
+    {
+        peer_->on_channel_connected.disconnect(boost::bind(&base_stream::channel_connected, this));
+    }
 
     // Retry attach now that we hopefully have an active channel.
     attach_for_transmit();
@@ -1296,6 +1300,13 @@ void base_stream::channel_connected()
 void base_stream::parent_attached()
 {
     logger::debug() << "Internal stream - parent stream has attached, we can now attach.";
+    if (auto parent = parent_.lock())
+    {
+        parent->on_attached.disconnect(boost::bind(&base_stream::parent_attached, this));
+    }
+
+    // Retry attach now that parent hopefully has a USID.
+    attach_for_transmit();
 }
 
 void base_stream::substream_read_message()
