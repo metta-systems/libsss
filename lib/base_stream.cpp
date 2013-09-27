@@ -15,6 +15,7 @@
 #include "byte_array_wrap.h"
 #include "algorithm.h"
 #include "server.h"
+#include "pubqueue.h"
 
 using namespace std;
 
@@ -64,27 +65,6 @@ base_stream::~base_stream()
 {
     logger::debug() << "Destructing internal stream";
     clear();
-}
-
-template<class T, class C=std::deque<T> >
-struct pubqueue : std::queue<T, C> {
-  using std::queue<T, C>::c;
-
-  static C& get_c(std::queue<T, C> &s) {
-    return s.*&pubqueue::c;
-  }
-  static C const& get_c(std::queue<T, C> const &s) {
-    return s.*&pubqueue::c;
-  }
-};
-
-template<class T, class C>
-C& get_c(std::queue<T, C> &a) {
-  return pubqueue<T, C>::get_c(a);
-}
-template<class T, class C>
-C& get_c(std::queue<T, C> const &a) {
-  return pubqueue<T, C>::get_c(a);
 }
 
 void base_stream::clear()
