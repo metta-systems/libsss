@@ -289,7 +289,7 @@ void base_stream::attach_for_transmit()
 
     // If we're initiating a new stream and our peer hasn't acked it yet,
     // make sure we have a parent USID to refer to in creating the stream.
-    if (init_ && parent_usid_.is_empty())
+    if (init_ and parent_usid_.is_empty())
     {
         auto parent = parent_.lock();
         // No parent USID yet - try to get it from the parent stream.
