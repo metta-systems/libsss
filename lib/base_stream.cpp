@@ -1198,12 +1198,12 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
         closed = true;
 }
 
-static byte_array service_reply(stream_protocol::service_code reply)
+static inline byte_array service_reply(stream_protocol::service_code reply, string message)
 {
     byte_array msg;
     {
         byte_array_owrap<flurry::oarchive> write(msg);
-        write.archive() << stream_protocol::service_code::connect_reply << reply;
+        write.archive() << stream_protocol::service_code::connect_reply << reply << message;
     }
     return msg;
 }
@@ -1226,15 +1226,14 @@ void base_stream::got_service_request()
 
     if (!srv)
     {
-        write_record(service_reply(service_code::reply_not_found));
-        // XXX send reply with error message
         ostringstream oss;
         oss << "Request for service " << service << " with unknown protocol " << protocol;
+        write_record(service_reply(service_code::reply_not_found, oss.str()));
         return fail(oss.str());
     }
 
     // Send a service reply to the client
-    write_record(service_reply(service_code::reply_ok));
+    write_record(service_reply(service_code::reply_ok, "ok"));
 
     // Hand off the new stream to the chosen service
     state_ = state::connected;
@@ -1247,17 +1246,19 @@ void base_stream::got_service_reply()
     assert(state_ == state::wait_service);
     assert(tx_current_attachment_);
 
+    logger::debug() << "got_service_reply";
+
     byte_array_iwrap<flurry::iarchive> read(read_record(max_service_record_size));
     uint32_t code, status;
-    read.archive() >> code >> status;
+    string message;
+    read.archive() >> code >> status >> message;
     if (code != service_code::connect_reply or status != 0)
     {
         ostringstream oss;
-        oss << "Service connect failed with code " << code << " status " << status;
+        oss << "Service connect failed with code " << code << " status " << status
+            << " message " << message;
         return fail(oss.str());
     }
-
-    logger::debug() << "got_service_reply";
 
     state_ = state::connected;
     if (auto stream = owner_.lock())
