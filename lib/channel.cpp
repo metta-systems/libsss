@@ -12,6 +12,9 @@
 #include "timer.h"
 #include "make_unique.h"
 
+using namespace std;
+namespace bp = boost::posix_time;
+
 namespace ssu {
 
 //=================================================================================================
@@ -36,7 +39,7 @@ struct transmit_event_t
 class channel::private_data
 {
 public:
-    std::shared_ptr<host>          host_;
+    shared_ptr<host>          host_;
 
     //-------------------------------------------
     // Transmit state
@@ -45,7 +48,7 @@ public:
     /// Next sequence number to transmit.
     packet_seq_t tx_sequence_{1};
     /// Record of transmission events (XX data sizes).
-    std::queue<transmit_event_t> tx_events_;
+    queue<transmit_event_t> tx_events_;
     /// Seqno of oldest recorded tx event.
     packet_seq_t tx_event_sequence_{0};
     /// Highest transmit sequence number ACK'd.
@@ -56,7 +59,7 @@ public:
     /// Snapshot of tx_ack_sequence_ at time mark was placed.
     packet_seq_t mark_base_{0};
     /// Time at which marked packet was sent.
-    boost::posix_time::ptime mark_time_;
+    bp::ptime mark_time_;
     // uint32_t txackmask;  ///< Mask of packets transmitted and ACK'd
     /// Data packets currently in flight.
     uint32_t tx_inflight_count_{0};
@@ -98,7 +101,7 @@ public:
     async::timer::duration_type cumulative_rtt_;
 
 public:
-    private_data(std::shared_ptr<host> host)
+    private_data(shared_ptr<host> host)
         : host_(host)
         , retransmit_timer_(host.get())
     {}
@@ -112,7 +115,7 @@ public:
 constexpr int channel::header_len;
 constexpr packet_seq_t channel::max_packet_sequence;
 
-channel::channel(std::shared_ptr<host> host)
+channel::channel(shared_ptr<host> host)
     : link_channel()
     , pimpl_(make_unique<private_data>(host))
 {
@@ -127,7 +130,7 @@ channel::channel(std::shared_ptr<host> host)
 channel::~channel()
 {}
 
-std::shared_ptr<host> channel::get_host()
+shared_ptr<host> channel::get_host()
 {
     return pimpl_->host_;
 }
@@ -160,7 +163,7 @@ void channel::reset_congestion_control()
 void channel::start_retransmit_timer()
 {
     async::timer::duration_type timeout =
-        boost::posix_time::milliseconds(pimpl_->cumulative_rtt_.total_milliseconds() * 2);
+        bp::milliseconds(pimpl_->cumulative_rtt_.total_milliseconds() * 2);
     pimpl_->retransmit_timer_.start(timeout); // Wait for full round-trip time.
 }
 
