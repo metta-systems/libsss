@@ -1345,8 +1345,7 @@ void stream_tx_attachment::clear()
     for (auto ackw : channel->waiting_ack_)
     {
         base_stream::packet& p = ackw.second;
-        assert(!p.is_empty());
-        assert(p.owner);
+        assert(!p.is_null());
 
         if (p.owner != stream_)
             continue;
