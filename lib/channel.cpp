@@ -176,7 +176,7 @@ void channel::start_retransmit_timer()
 
 int channel::may_transmit()
 {
-    logger::debug() << "channel: may_transmit";
+    logger::debug() << "channel: may_transmit UNIMPLEMENTED";
     return 1;
 }
 
@@ -420,7 +420,7 @@ void channel::receive(const byte_array& msg, const link_endpoint& src)
 
     {
         // Log decoded packet.
-        logger::file_dump log(pkt);
+        logger::file_dump decoded(pkt);
     }
 
     if (channel_receive(pktseq, pkt))

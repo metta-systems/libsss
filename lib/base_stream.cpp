@@ -339,7 +339,7 @@ void base_stream::attach_for_transmit()
     if (usid_.is_empty())
     {
         set_usid(unique_stream_id_t(sid, channel->tx_channel_id()));
-        logger::debug() << "Creating stream " << usid_;
+        logger::debug() << this << " Creating stream " << usid_;
     }
 
     // Get us in line to transmit on the channel.
