@@ -51,8 +51,9 @@ class stream_channel : public channel, public stream_protocol
     /**
      * Streams queued for transmission on this channel.
      * This should be a priority queue for simplicity of enqueueing.
+     * We use deque with the limitation that only push_back() and pop_front() are used.
      */
-    std::queue<base_stream*> sending_streams_;
+    std::deque<base_stream*> sending_streams_;
 
     std::unordered_map<packet_seq_t, base_stream::packet> waiting_ack_;
     std::unordered_map<packet_seq_t, base_stream::packet> waiting_expiry_;

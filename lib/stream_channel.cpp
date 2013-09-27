@@ -56,7 +56,7 @@ void stream_channel::got_ready_transmit()
     do {
         // Grab the next stream in line to transmit
         base_stream *stream = sending_streams_.front();
-        sending_streams_.pop();
+        sending_streams_.pop_front();
 
         // Allow it to transmit one packet.
         // It will add itself back onto sending_streams_ if it has more.
@@ -117,13 +117,15 @@ void stream_channel::enqueue_stream(base_stream* stream)
 {
     logger::debug() << "enqueue_stream " << stream;
     // @todo Stream priorities.
-    sending_streams_.push(stream);
+    sending_streams_.push_back(stream);
 }
 
 void stream_channel::dequeue_stream(base_stream* stream)
 {
     logger::debug() << "dequeue_stream " << stream;
-    // sending_streams_.erase(stream); // @fixme
+    sending_streams_.erase(
+        remove(sending_streams_.begin(), sending_streams_.end(), stream), sending_streams_.end());
+    return ;
 }
 
 bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ackct)

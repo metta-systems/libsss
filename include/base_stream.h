@@ -175,7 +175,8 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     bool end_write_{false}; ///< Stream has closed for writing.
     bool end_read_{false};  ///< Stream has closed for reading.
 
-    std::queue<packet> tx_queue_; ///< Transmit packets queue.
+    // Use deque for queues, with the limitation that push_back() and pop_front() are only used.
+    std::deque<packet> tx_queue_; ///< Transmit packets queue.
 
     unique_stream_id_t usid_,        ///< Unique stream ID.
                        parent_usid_; ///< Unique ID of parent stream.

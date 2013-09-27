@@ -640,7 +640,11 @@ void base_stream::tx_enqueue_packet(packet& p)
     // when they are queued, but without actually incrementing the TSN,
     // just to keep them in the right order with respect to segments.
     // (The assigned TSN is not transmitted in the datagram, of course).
-    tx_queue_.push(p);
+    auto it = tx_queue_.begin();
+    while (it != tx_queue_.end() and ((*it).tx_byte_seq - p.tx_byte_seq) <= 0)
+        ++it;
+    tx_queue_.insert(it, p);
+
     tx_enqueue_channel(/*immediately:*/true);
 }
 
@@ -714,7 +718,7 @@ void base_stream::tx_attach()
 void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
 {
     packet p = tx_queue_.front();
-    tx_queue_.pop();
+    tx_queue_.pop_front();
 
     assert(p.type == packet_type::data);
     assert(p.tx_byte_seq <= 0xffff);
