@@ -63,6 +63,58 @@ base_stream::base_stream(shared_ptr<host> host,
 base_stream::~base_stream()
 {
     logger::debug() << "Destructing internal stream";
+    clear();
+}
+
+template<class T, class C=std::deque<T> >
+struct pubqueue : std::queue<T, C> {
+  using std::queue<T, C>::c;
+
+  static C& get_c(std::queue<T, C> &s) {
+    return s.*&pubqueue::c;
+  }
+  static C const& get_c(std::queue<T, C> const &s) {
+    return s.*&pubqueue::c;
+  }
+};
+
+template<class T, class C>
+C& get_c(std::queue<T, C> &a) {
+  return pubqueue<T, C>::get_c(a);
+}
+template<class T, class C>
+C& get_c(std::queue<T, C> const &a) {
+  return pubqueue<T, C>::get_c(a);
+}
+
+void base_stream::clear()
+{
+    state_ = state::disconnected;
+    end_read_ = end_write_ = true;
+
+    // De-register us from our peer
+    if (peer_)
+    {
+        if (peer_->usid_streams_.at(usid_) == this)
+            peer_->usid_streams_.erase(usid_);
+        peer_->all_streams_.erase(this);
+        peer_ = nullptr;
+    }
+
+    // Clear any attachments we may have
+    for (int i = 0; i < max_attachments; ++i)
+    {
+        tx_attachments_[i].clear();
+        rx_attachments_[i].clear();
+    }
+
+    // Reset any unaccepted incoming substreams too
+    for (auto sub : get_c(received_substreams_))
+    {
+        sub->shutdown(stream::shutdown_mode::reset);
+        // should self-destruct automatically when done
+    }
+    get_c(received_substreams_).clear();
 }
 
 bool base_stream::is_attached()
@@ -1255,6 +1307,48 @@ void stream_tx_attachment::set_attaching(stream_channel* channel, stream_id_t si
 
     assert(!contains(channel_->transmit_sids_, stream_id_));
     channel_->transmit_sids_.insert(make_pair(stream_id_, this));
+}
+
+void stream_tx_attachment::clear()
+{
+    stream_channel* channel = channel_;
+    if (!channel)
+        return;
+
+    if (stream_->tx_current_attachment_ == this)
+        stream_->tx_current_attachment_ = nullptr;   // @fixme Send notification?
+
+    assert(contains(channel->transmit_sids_, stream_id_));
+    assert(channel->transmit_sids_[stream_id_] == this);
+
+    channel->transmit_sids_.erase(stream_id_);
+    channel_ = nullptr;
+    active_ = false;
+
+    // Remove the stream from the channel's waiting streams list
+    int rc = channel->dequeue_stream(stream_);
+    assert(rc <= 1);
+    stream_->tx_enqueued_channel_ = false;
+
+    // Clear out packets for this stream from channel's ackwait table
+    for (auto ackw : channel->waiting_ack_)
+    {
+        base_stream::packet& p = ackw.second;
+        assert(!p.is_empty());
+        assert(p.owner);
+
+        if (p.owner != stream_)
+            continue;
+
+        // Move the packet back to the stream's transmit queue
+        if (!p.late) {
+            p.late = true;
+            stream_->missed(channel, p);
+        } else {
+            stream_->expire(channel, p);
+        }
+        channel->waiting_ack_.erase(ackw.first); // @fixme Invalidates iterators?
+    }
 }
 
 //=================================================================================================
