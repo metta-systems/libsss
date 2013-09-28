@@ -375,6 +375,8 @@ public:
     bool missed(stream_channel* channel, packet const& pkt);
     void expire(stream_channel* channel, packet const& pkt);
 
+    void end_flight(packet const& pkt);
+
     //-------------------------------------------
     // Signals
     //-------------------------------------------

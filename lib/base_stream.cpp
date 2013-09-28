@@ -630,9 +630,6 @@ void base_stream::set_priority(int priority)
     }
 }
 
-void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq)
-{}
-
 bool base_stream::missed(stream_channel* channel, packet const& pkt)
 {
     return false;
@@ -924,6 +921,76 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 // its stream state as well. Stateless Reset responses always refer to the peer’s LSID space, 
 // since by definition the host itself does not have an LSID assigned to the unknown stream.
 }
+
+void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq)
+{
+    logger::debug() << this << " ACKed packet of size " << pkt.buf.size();
+
+    switch (pkt.type)
+    {
+        case packet_type::data:
+            // Mark the segment no longer "in flight".
+            end_flight(pkt);
+
+            // Record this TSN as having been ACKed (if not already),
+            // so that we don't spuriously resend it
+            // if another instance is back in our transmit queue.
+            if (contains(tx_waiting_ack_, pkt.tx_byte_seq))
+            {
+                tx_waiting_ack_.erase(pkt.tx_byte_seq);
+                tx_waiting_size_ -= pkt.payload_size();
+
+                logger::debug() << "tx_waiting_ack remove " << pkt.tx_byte_seq << " size " << pkt.payload_size()
+                         << " new wait count " << tx_waiting_ack_.size() << " waiting to ack " << tx_waiting_size_
+                         << " bytes";
+            }
+            assert(tx_waiting_size_ >= 0);
+            if (auto stream = owner_.lock())
+                stream->on_bytes_written(pkt.payload_size()); // XXX delay and coalesce signal
+
+            // fall through...
+
+        case packet_type::attach:
+            if (tx_current_attachment_ 
+                and tx_current_attachment_->channel_ == channel
+                and !tx_current_attachment_->is_acknowledged())
+            {
+                // We've gotten our first ack for a new attachment.
+                // Save the rxseq the ack came in on as the attachment's reference pktseq.
+                logger::debug() << this << " Got attach ack " << rx_seq;
+                tx_current_attachment_->set_active(rx_seq);
+                init_ = false;
+
+                // Normal data transmission may now proceed.
+                tx_enqueue_channel();
+
+                // Notify anyone interested that we're attached.
+                on_attached();
+                auto stream = owner_.lock();
+                if (stream and state_ == state::connected)
+                    stream->on_link_up();
+            }
+            break;
+
+        case packet_type::ack:
+            // nothing to do
+            break;
+
+        case packet_type::datagram:
+            tx_inflight_ -= pkt.payload_size();  // no longer "in flight"
+            assert(tx_inflight_ >= 0);
+            break;
+
+        case packet_type::detach:
+        case packet_type::reset:
+        default:
+            logger::warning() << "Got ACK for unknown packet type " << int(pkt.type);
+            break;
+    }
+}
+
+void base_stream::end_flight(packet const& pkt)
+{}
 
 //-------------------------------------------------------------------------------------------------
 // Packet reception
