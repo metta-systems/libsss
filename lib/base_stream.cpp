@@ -113,7 +113,25 @@ void base_stream::transmit_on(stream_channel* channel)
 
     tx_enqueued_channel_ = false; // Channel has just dequeued us.
 
+    // First garbage-collect any segments that have already been ACKed;
+    // this can happen if we retransmit a segment but an ACK for the original arrives late.
     packet* head_packet = &tx_queue_.front();
+
+    while (head_packet->type == packet_type::data
+        and !contains(tx_waiting_ack_, head_packet->tx_byte_seq))
+    {
+        // No longer waiting for this tsn - must have been ACKed.
+        tx_queue_.pop_front();
+        if (tx_queue_.empty())
+        {
+            if (auto stream = owner_.lock()) {
+                stream->on_ready_write();
+            }
+            return;
+        }
+        head_packet = &tx_queue_.front();
+    }
+
     int seg_size = head_packet->payload_size();
 
     // See if we can potentially use an optimized attach/data packet;
