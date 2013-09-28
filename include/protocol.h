@@ -98,8 +98,8 @@ public:
         data_all          = 0x7,  ///< All signal flags.
 
         // Flag bits for Datagram packets
-        dgram_begin       = 0x2,  ///< First fragment.
-        dgram_end         = 0x1,  ///< Last fragment.
+        datagram_begin    = 0x2,  ///< First fragment.
+        datagram_end      = 0x1,  ///< Last fragment.
 
         // Flag bits for Attach packets
         attach_init       = 0x8,  ///< Initiate stream.
