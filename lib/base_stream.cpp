@@ -134,6 +134,27 @@ void base_stream::transmit_on(stream_channel* channel)
 
     int seg_size = head_packet->payload_size();
 
+    // Ensure our attachment has been acknowledged before using the SID.
+    if (tx_current_attachment_->is_acknowledged())
+    {
+        // Our attachment has been acknowledged, send the data packets freely.
+        assert(!init_);
+        assert(tx_current_attachment_->is_active());
+
+        // Throttle data transmission if flow window is full
+        if (tx_inflight_ + seg_size > tx_window_)
+        {
+            logger::debug() << this << " Transmit window full - need " << (tx_inflight_ + seg_size)
+                << " have " << tx_window_;
+            // XXX query status if latest update is out-of-date!
+            //XXXreturn;
+        }
+
+        // Datagrams get special handling.
+        if (head_packet->type == packet_type::datagram)
+            return tx_datagram();
+    }
+
     // See if we can potentially use an optimized attach/data packet;
     // this only works for regular stream segments, not datagrams,
     // and only within the first 2^16 bytes of the stream.
@@ -790,6 +811,9 @@ void base_stream::tx_data(packet& p)
         tx_enqueue_channel();
     }
 }
+
+void base_stream::tx_datagram()
+{}
 
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
 {
