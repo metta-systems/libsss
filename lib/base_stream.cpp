@@ -157,7 +157,7 @@ void base_stream::transmit_on(stream_channel* channel)
         assert(!init_);
         assert(tx_current_attachment_->is_active());
 
-        // Throttle data transmission if flow window is full
+        // Throttle data transmission if channel window is full
         if (tx_inflight_ + seg_size > tx_window_)
         {
             logger::debug() << this << " Transmit window full - need " << (tx_inflight_ + seg_size)
@@ -219,7 +219,7 @@ void base_stream::transmit_on(stream_channel* channel)
                 and uint16_t(usid_.counter_) == tx_current_attachment_->stream_id_
             /* XXX  and parent->tx_inflight_ + seg_size <= parent->tx_window_*/)
         {
-            logger::debug() << "Sending optimized init packet with " << seg_size << " bytes of payload";
+            logger::debug() << "Sending optimized init packet with " << seg_size << " payload bytes";
 
             // Adjust the in-flight byte count for channel control.
             // Init packets get "charged" to the parent stream.
@@ -759,8 +759,10 @@ void base_stream::tx_attach()
     logger::debug() << "Internal stream tx_attach";
 
     stream_channel* chan = tx_current_attachment_->channel_;
-    int slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
+    unsigned slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
+    assert(slot < max_attachments);
 
+    // Build the Attach packet header
     packet p(this, packet_type::attach);
     auto header = p.header<attach_header>();
 
@@ -786,7 +788,7 @@ void base_stream::tx_attach()
     packet_seq_t pktseq;
     chan->channel_transmit(p.buf, pktseq);
 
-    // Save the attach packet in the channel's ackwait hash,
+    // Save the attach packet in the channel's waiting_ack_ hash,
     // so that we'll be notified when the attach packet gets acked.
     p.late = false;
     chan->waiting_ack_.insert(make_pair(pktseq, p));
@@ -832,8 +834,8 @@ void base_stream::tx_data(packet& p)
     // Re-queue us on our channel immediately if we still have more data to send.
     if (tx_queue_.empty())
     {
-        if (auto o = owner_.lock()) {
-            o->on_ready_write();
+        if (auto stream = owner_.lock()) {
+            stream->on_ready_write();
         }
     } else {
         tx_enqueue_channel();
