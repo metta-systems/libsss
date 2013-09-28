@@ -113,4 +113,6 @@ BOOST_AUTO_TEST_CASE(connect_wrong_service)
     my_stream->connect_to(other_host->host_identity().id(), "test", "simulator", other_host_address);
 
     sim->run();
+
+    logger::debug() << "<<< shutdown from this point on";
 }

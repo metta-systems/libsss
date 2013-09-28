@@ -108,6 +108,10 @@ public:
         , ack_timer_(host.get())
     {}
 
+    ~private_data() {
+        logger::debug() << "~channel::private_data";
+    }
+
     void reset_congestion_control();
 };
 
