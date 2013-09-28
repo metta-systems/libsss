@@ -843,7 +843,41 @@ void base_stream::tx_data(packet& p)
 }
 
 void base_stream::tx_datagram()
-{}
+{
+    logger::debug() << this << " base_stream::tx_datagram";
+
+    // Transmit the whole datagram immediately,
+    // so that all fragments get consecutive packet sequence numbers.
+    while (true)
+    {
+        assert(!tx_queue_.empty());
+        packet p = tx_queue_.front();
+        tx_queue_.pop_front();
+        assert(p.type == packet_type::datagram);
+
+        auto header = as_header<datagram_header>(p.buf);
+        bool at_end = (header->type_subtype & flags::datagram_end) != 0;
+        header->stream_id = tx_current_attachment_->stream_id_;
+        header->window = receive_window_byte();
+
+        // Adjust the in-flight byte count.
+        // We don't need to register datagram packets in tx_inflight_
+        // because we don't keep them around after they're "missed" -
+        // which is fortunate since we _can't_ register them
+        // because they don't have unique TSNs.
+        tx_inflight_ += p.payload_size();
+
+        // Transmit this datagram packet, but don't save it anywhere - just fire & forget.
+        packet_seq_t pktseq;
+        tx_current_attachment_->channel_->channel_transmit(p.buf, pktseq);
+
+        if (at_end)
+            break;
+    }
+
+    // Re-queue us on our flow immediately if we still have more data to send.
+    return tx_enqueue_channel();
+}
 
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
 {
