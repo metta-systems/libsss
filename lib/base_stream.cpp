@@ -800,8 +800,6 @@ void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
     assert(p.type == packet_type::data);
     assert(p.tx_byte_seq <= 0xffff);
 
-    logger::debug() << p;
-
     // Build the init_header.
     auto header = as_header<init_header>(p.buf);
     header->stream_id = tx_current_attachment_->stream_id_;
@@ -810,6 +808,8 @@ void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
     header->window = receive_window_byte();
     header->new_stream_id = ref_sid;
     header->tx_seq_no = p.tx_byte_seq; // Note: 16-bit TSN
+
+    logger::debug() << p;
 
     // Transmit
     return tx_data(p);
