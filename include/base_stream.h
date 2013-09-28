@@ -37,7 +37,7 @@ class stream_tx_attachment : public stream_attachment
 
 public:
     inline bool is_in_use()       const { return channel_ != nullptr; }
-    inline bool is_acknowledged() const { return sid_seq_ != -1ULL; }// todo fixme magic value
+    inline bool is_acknowledged() const { return sid_seq_ != ~0ULL; }// todo fixme magic value
     inline bool is_active()       const { return active_; }
     inline bool is_deprecated()   const { return deprecated_; }
 
@@ -413,7 +413,7 @@ inline std::ostream& operator << (std::ostream& os, ssu::base_stream::packet con
 
     os << "[packet txseq " << pkt.tx_byte_seq << ", type " << packet_type
        << ", owner " << pkt.owner << ", header " << pkt.header_len
-       << (pkt.late ? ", late" : ", not late") << ", data " << pkt.buf << "]";
+       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.buf << "]";
     return os;
 }
 

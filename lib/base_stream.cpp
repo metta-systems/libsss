@@ -666,14 +666,14 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
     logger::debug() << "Internal stream enqueue on channel";
 
     stream_channel* channel = tx_current_attachment_->channel_;
-    assert(channel && channel->is_active());
+    assert(channel and channel->is_active());
 
     if (!tx_enqueued_channel_)
     {
         if (tx_queue_.empty())
         {
-            if (auto o = owner_.lock()) {
-                o->on_ready_write();
+            if (auto stream = owner_.lock()) {
+                stream->on_ready_write();
             }
         }
         else
@@ -792,6 +792,7 @@ constexpr size_t reset_header_len_min    = channel::header_len + 4;
 constexpr size_t attach_header_len_min   = channel::header_len + 4;
 constexpr size_t detach_header_len_min   = channel::header_len + 4;
 
+// Main packet receive entry point, called from stream_channel::channel_receive()
 bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < header_len_min) {
@@ -1160,7 +1161,8 @@ base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* chan
     logger::debug() << "Accepting sub-stream " << usid << " as " << new_stream;
 
     // Extrapolate the sender's stream counter from the new SID it sent.
-    counter_t ctr = channel->received_sid_counter_ + (int16_t)(sid - (int16_t)channel->received_sid_counter_);
+    counter_t ctr = channel->received_sid_counter_ +
+        (int16_t)(sid - (int16_t)channel->received_sid_counter_);
     if (ctr > channel->received_sid_counter_)
         channel->received_sid_counter_ = ctr;
 
@@ -1183,13 +1185,14 @@ base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* chan
         received_substreams_.push(new_stream);
         new_stream->on_ready_read_message.connect(
             boost::bind(&base_stream::substream_read_message, this));
-        if (auto s = owner_.lock())
-            s->on_new_substream();
+        if (auto stream = owner_.lock())
+            stream->on_new_substream();
     }
 
     return new_stream;
 }
 
+// Helper function to enqueue useful data segments.
 void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed)
 {
     rx_segments_.push(seg);
