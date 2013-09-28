@@ -879,9 +879,50 @@ void base_stream::tx_datagram()
     return tx_enqueue_channel();
 }
 
+// @todo Complete the code.
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
 {
     logger::warning() << "base_stream::tx_reset UNIMPLEMENTED";
+
+    // Build the Reset packet header
+    packet p(nullptr, packet_type::reset);
+    auto header = p.header<reset_header>();
+
+    header->stream_id = sid;
+    header->type_subtype = type_and_subtype(packet_type::reset, flags);
+    header->window = 0;
+
+    // Transmit it on the current channel.
+    packet_seq_t pktseq;
+    channel->channel_transmit(p.buf, pktseq);
+
+    // Save the attach packet in the channel's waiting_ack_ hash,
+    // so that we'll be notified when the attach packet gets acked.
+    // XXX for the packets with O flag set, we don't need to ack??
+    if (!(flags & flags::reset_remote_sid))
+    {
+        p.late = false;
+        channel->waiting_ack_.insert(make_pair(pktseq, p));
+    }
+
+    logger::debug() << channel << " Reset packet sent, XXX garbage collect the stream!";
+
+    // abort the stream
+    // send RESET packet to the peer
+
+// as per the PDF:
+// As in TCP, either host may unilaterally terminate an SST stream in both directions and discard 
+// any buffered data. A host resets a stream by sending a Reset packet (Figure 6) containing 
+// an LSID in either the sender’s or receiver’s LSID space, and an O (Orientation) flag indicating
+// in which space the LSID is to be interpreted. When a host uses a Reset packet to terminate 
+// a stream it believes to be active, it uses its own LSID referring to the stream, and resends
+// the Reset packet as necessary until it obtains an acknowledgment. A host also sends a Reset
+// in response to a packet it receives referring to an unknown LSID or USID. This situation 
+// may occur if the host has closed and garbage collected its state for a stream but one of its
+// acknowledgments to its peer’s data segments is lost in transit, causing its peer to retransmit
+// those segments. The stateless Reset response indicates to the peer that it can garbage collect 
+// its stream state as well. Stateless Reset responses always refer to the peer’s LSID space, 
+// since by definition the host itself does not have an LSID assigned to the unknown stream.
 }
 
 //-------------------------------------------------------------------------------------------------
