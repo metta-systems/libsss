@@ -22,6 +22,22 @@ using namespace std;
 namespace ssu {
 
 //=================================================================================================
+// Helper functions.
+//=================================================================================================
+
+template <typename T>
+inline T const* as_header(byte_array const& v)
+{
+    return reinterpret_cast<T const*>(v.const_data() + channel::header_len);
+}
+
+template <typename T>
+inline T* as_header(byte_array& v)
+{
+    return reinterpret_cast<T*>(v.data() + channel::header_len);
+}
+
+//=================================================================================================
 // base_stream
 //=================================================================================================
 
@@ -667,18 +683,6 @@ void base_stream::dump()
 //-------------------------------------------------------------------------------------------------
 // Packet transmission
 //-------------------------------------------------------------------------------------------------
-
-template <typename T>
-inline T const* as_header(byte_array const& v)
-{
-    return reinterpret_cast<T const*>(v.const_data() + channel::header_len);
-}
-
-template <typename T>
-inline T* as_header(byte_array& v)
-{
-    return reinterpret_cast<T*>(v.data() + channel::header_len);
-}
 
 void base_stream::tx_enqueue_packet(packet& p)
 {
