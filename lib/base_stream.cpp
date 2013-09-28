@@ -945,10 +945,10 @@ bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, st
 
     // Look up the stream - if it already exists,
     // just dispatch it directly as if it were a data packet.
-    if (contains(channel->transmit_sids_, header->stream_id))
+    if (contains(channel->receive_sids_, header->stream_id))
     {
         logger::debug() << "rx_reply_packet: stream exists, dispatch data only";
-        stream_attachment* attach = channel->transmit_sids_[header->stream_id];
+        stream_attachment* attach = channel->receive_sids_[header->stream_id];
         if (pktseq < attach->sid_seq_) // earlier reply packet; that's OK.
             attach->sid_seq_ = pktseq;
 
