@@ -470,6 +470,13 @@ public:
     // Signals.
     //===============================================================
 
+    /**
+     * Emitted when some locally buffered data gets flushed
+     * after being delivered to the receiver and acknowledged.
+     */
+    typedef boost::signals2::signal<void (ssize_t)> bytes_written_signal;
+    bytes_written_signal on_bytes_written;
+
     typedef boost::signals2::signal<void (void)> ready_signal;
     ready_signal on_ready_read_message;
     ready_signal on_ready_read_datagram;
