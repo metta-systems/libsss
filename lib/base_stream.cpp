@@ -169,6 +169,30 @@ void base_stream::transmit_on(stream_channel* channel)
         // Datagrams get special handling.
         if (head_packet->type == packet_type::datagram)
             return tx_datagram();
+
+        // Register the segment as being in-flight.
+        tx_inflight_ += seg_size;
+
+        logger::debug() << this << " inflight data " << head_packet->tx_byte_seq
+            << ", bytes in flight " << tx_inflight_;
+
+        // Transmit the next segment in a regular Data packet.
+        packet p = tx_queue_.front();
+        tx_queue_.pop_front();
+
+        assert(p.type == packet_type::data);
+
+        logger::debug() << p;
+
+        auto header = as_header<data_header>(p.buf);
+        header->stream_id = tx_current_attachment_->stream_id_;
+        // Preserve flags already set.
+        header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype); //@fixme & dataAllFlags);
+        header->window = receive_window_byte();
+        header->tx_seq_no = p.tx_byte_seq; // Note: 32-bit TSN
+
+        // Transmit
+        return tx_data(p);
     }
 
     // See if we can potentially use an optimized attach/data packet;
