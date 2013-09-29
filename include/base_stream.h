@@ -137,6 +137,10 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     };
     friend std::ostream& operator << (std::ostream& os, packet const& pkt);
 
+    /**
+     * @internal
+     * Description of received data segment.
+     */
     struct rx_segment_t
     {
         int32_t rx_byte_seq{0}; ///< Logical byte position.
