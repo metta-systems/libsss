@@ -1235,9 +1235,32 @@ bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, str
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::warning() << "rx_data_packet UNIMPLEMENTED.";
-    // auto header = as_header<data_header>(pkt);
-    return false;
+    logger::warning() << "rx_data_packet ...";
+    auto header = as_header<data_header>(pkt);
+
+    if (!contains(channel->receive_sids_, header->stream_id))
+    {
+        // Respond with a reset for the unknown stream ID.
+        // Ack the pktseq first so peer won't ignore the reset!
+        logger::debug() << "rx_data_packet: unknown stream ID " << header->stream_id;
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+        return false;
+    }
+
+    stream_attachment* attach = channel->receive_sids_[header->stream_id];
+    if (pktseq < attach->sid_seq_)
+    {
+        logger::debug() << "rx_data_packet: stale packet - pktseq " << pktseq
+            << " sidseq " << attach->sid_seq_;
+        return false;   // silently drop stale packet
+    }
+
+    // Process the data, using the full 32-bit TSN.
+    channel->ack_sid_ = header->stream_id;
+    attach->stream_->recalculate_transmit_window(header->window);
+    attach->stream_->rx_data(pkt, header->tx_seq_no);
+    return true; // ACK the packet
 }
 
 bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
