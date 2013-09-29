@@ -37,6 +37,9 @@ struct transmit_event_t
     }
 };
 
+static constexpr unsigned CWND_MIN = 2;     // Min congestion window (packets/RTT)
+static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RTT)
+
 class channel::private_data
 {
 public:
@@ -70,8 +73,15 @@ public:
     uint32_t mark_acks_{0};
     /// Number of ACKs expected after last mark.
     uint32_t mark_sent_{0};
-    // uint32_t cwnd;       ///< Current congestion window
-    // bool cwndlim;       ///< We were cwnd-limited this round-trip
+
+    //-------------------------------------------
+    // Congestion control
+    // @todo Move this into CC strategy class.
+    //-------------------------------------------
+    // unique_ptr<cc_strategy> congestion_control;
+    uint32_t cwnd{CWND_MIN};       ///< Current congestion window
+    bool cwndlim{true};      ///< We were cwnd-limited this round-trip
+    bool nocc_{false};
 
     // Retransmit state
     async::timer retransmit_timer_;  ///< Retransmit timer.
@@ -99,7 +109,6 @@ public:
     // Channel statistics.
     //-------------------------------------------
 
-    // unique_ptr<cc_strategy> congestion_control;
     async::timer::duration_type cumulative_rtt_;
 
 public:
@@ -161,6 +170,8 @@ void channel::start(bool initiate)
     assert(armor_);
 
     super::start(initiate);
+
+    pimpl_->nocc_ = is_link_congestion_controlled();
 
     // We're ready to go!
     start_retransmit_timer();
