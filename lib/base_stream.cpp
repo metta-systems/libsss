@@ -983,7 +983,46 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
 
 bool base_stream::missed(stream_channel* channel, packet const& pkt)
 {
-    return false;
+    assert(pkt.late);
+
+    logger::debug() << this << " Missed seq " << pkt.tx_byte_seq << " of size " << pkt.buf.size();
+
+    switch (pkt.type)
+    {
+        case packet_type::data: {
+            logger::debug() << this << " Retransmit seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
+            // Mark the segment no longer "in flight".
+            end_flight(pkt);
+            // Retransmit reliable segments...
+            packet p = pkt;
+            tx_enqueue_packet(p); 
+            return true; // ...but keep the tx record until expiry in case it gets acked late!
+        }
+
+        case packet_type::attach:
+            logger::debug() << this << " Attach packet lost: trying again to attach";
+            tx_enqueue_channel();
+            return true;
+
+        case packet_type::datagram:
+            logger::debug() << this << "Datagram packet lost: oops, gone for good";
+
+            // Mark the segment no longer "in flight".
+            // We know we'll only do this once per DatagramPacket
+            // because we drop it immediately below ("return false");
+            // thus acked() cannot be called on it after this.
+            tx_inflight_ -= pkt.payload_size();  // no longer "in flight"
+            assert(tx_inflight_ >= 0);
+
+            return false;
+
+        case packet_type::ack:
+        case packet_type::detach:
+        case packet_type::reset:
+        default:
+            logger::warning() << "Missed unknown packet type " << int(pkt.type);
+            return false;
+    }
 }
 
 void base_stream::expire(stream_channel* channel, packet const& pkt)
