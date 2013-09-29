@@ -1031,8 +1031,28 @@ void base_stream::expire(stream_channel* channel, packet const& pkt)
     // @fixme
 }
 
+// Cancel its allocation in our or our parent stream's state,
+// according to the type of packet actually sent.
 void base_stream::end_flight(packet const& pkt)
-{}
+{
+    auto header = as_header<data_header>(pkt.buf);
+
+    if (type_from_header(header) == packet_type::init)
+    {
+        if (auto parent = parent_.lock())
+        {
+            parent->tx_inflight_ -= pkt.payload_size();
+            logger::debug() << this << " Endflight " << pkt.tx_byte_seq
+                << ", bytes in flight on parent " << parent->tx_inflight_;
+            assert(parent->tx_inflight_ >= 0);
+        }
+    } else {    // Reply or Data packet
+        tx_inflight_ -= pkt.payload_size();
+        logger::debug() << this << " Endflight " << pkt.tx_byte_seq
+            << ", bytes in flight " << tx_inflight_;
+        assert(tx_inflight_ >= 0);
+    }
+}
 
 //-------------------------------------------------------------------------------------------------
 // Packet reception
