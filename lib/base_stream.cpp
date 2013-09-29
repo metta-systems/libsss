@@ -651,11 +651,6 @@ bool base_stream::is_link_up() const
     return state_ == state::connected;
 }
 
-void base_stream::shutdown(stream::shutdown_mode mode)
-{
-    logger::debug() << "Shutting down internal stream";
-}
-
 void base_stream::set_receive_buffer_size(size_t size)
 {
     logger::debug() << "Setting internal stream receive buffer size " << size << " bytes";
@@ -664,6 +659,37 @@ void base_stream::set_receive_buffer_size(size_t size)
 void base_stream::set_child_receive_buffer_size(size_t size)
 {
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
+}
+
+void base_stream::shutdown(stream::shutdown_mode mode)
+{
+    logger::debug() << "Shutting down internal stream";
+
+    // @todo self-destruct when done, if appropriate
+
+    // @fixme clean this flag mess up
+    uint8_t fmode = to_underlying(mode);
+
+    if (fmode & to_underlying(stream::shutdown_mode::reset))
+        return disconnect();    // No graceful close necessary
+
+    if (is_link_up() && !end_read_ && (fmode & to_underlying(stream::shutdown_mode::read)))
+    {
+        // Shutdown for reading
+        rx_available_ = 0;
+        rx_record_available_ = 0;
+        rx_buffer_used_ = 0;
+        readahead_.clear();
+        rx_segments_.clear();
+        rx_record_sizes_.clear();
+        end_read_ = true;
+    }
+
+    if (is_link_up() && !end_write_ && (fmode & to_underlying(stream::shutdown_mode::write)))
+    {
+        // Shutdown for writing
+        write_data(nullptr, 0, flags::data_close);
+    }
 }
 
 void base_stream::disconnect()
