@@ -171,6 +171,7 @@ private:
     //-------------------------------------------
 
     void ack_timeout();
+    void retransmit_timeout(bool failed);
 };
 
 } // namespace ssu

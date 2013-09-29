@@ -140,6 +140,8 @@ channel::channel(shared_ptr<host> host)
 
     pimpl_->reset_congestion_control();
 
+    pimpl_->retransmit_timer_.on_timeout.connect(boost::bind(&channel::retransmit_timeout, this, _1));
+
     // Delayed ACK state
     pimpl_->ack_timer_.on_timeout.connect(boost::bind(&channel::ack_timeout, this));
 }
@@ -273,6 +275,52 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     // Ship it out
     return send(epkt);
 }
+
+void channel::retransmit_timeout(bool failed)
+{
+    logger::debug() << this << " Retransmit timeout" << (failed ? " - FAILED" : "")
+        << ", interval " << pimpl_->retransmit_timer_.interval().total_milliseconds() << "ms";
+
+    // Restart the retransmission timer
+    // with an exponentially increased backoff delay.
+    start_retransmit_timer();
+
+    // Assume that all in-flight data packets have been dropped,
+    // and notify the upper layer as such.
+    // Snapshot txseq first, because the missed() calls in the loop
+    // might cause more packets to be transmitted.
+    packet_seq_t seqlim = pimpl_->tx_sequence_;
+    for (packet_seq_t seq = pimpl_->tx_event_sequence_; seq < seqlim; ++seq)
+    {
+        transmit_event_t& e = pimpl_->tx_events_[seq - pimpl_->tx_event_sequence_];
+        if (e.pipe_)
+        {
+            e.pipe_ = false;
+            pimpl_->tx_inflight_count_--;
+            pimpl_->tx_inflight_size_ -= e.size_;
+            missed(seq, 1);
+            logger::debug() << this << "rtx timeout missed seq " << seq
+                << ", in flight " << pimpl_->tx_inflight_count_;
+        }
+    }
+    if (seqlim == pimpl_->tx_sequence_)
+    {
+        assert(pimpl_->tx_inflight_count_ == 0);
+        assert(pimpl_->tx_inflight_size_ == 0);
+    }
+
+    // Force at least one new packet transmission regardless of cwnd.
+    // This might not actually send a packet
+    // if there's nothing on our transmit queue -
+    // i.e., if no reliable sessions have outstanding data.
+    // In that case, rtxtimer stays disarmed until the next transmit.
+    on_ready_transmit();
+
+    // If we exceed a threshold timeout, signal a failed connection.
+    // The subclass has no obligation to do anything about this, however.
+    set_link_status(failed ? link::status::down : link::status::stalled);
+}
+
 
 constexpr int max_ack_count = 0xf;
 
