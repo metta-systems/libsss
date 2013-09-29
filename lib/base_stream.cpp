@@ -644,7 +644,16 @@ abstract_stream* base_stream::open_substream()
 abstract_stream* base_stream::accept_substream()
 {
     logger::debug() << "Internal stream accept substream";
-    return 0;
+
+    if (received_substreams_.empty())
+        return nullptr;
+
+    auto sub = received_substreams_.front();
+    received_substreams_.pop_front();
+
+    sub->on_ready_read_message.disconnect(boost::bind(&base_stream::substream_read_message, this));
+
+    return sub;
 }
 
 bool base_stream::is_link_up() const
