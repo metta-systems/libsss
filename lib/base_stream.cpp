@@ -259,9 +259,9 @@ void base_stream::transmit_on(stream_channel* channel)
     // we can't transmit any data until we get that ack!
 }
 
-//calcReceiveWindow
 void base_stream::recalculate_receive_window()
 {
+    assert(receive_buf_size_ > 0);
     logger::debug() << "Internal stream recalculate receive window";
     receive_window_byte_ = 0x1a;
 }
