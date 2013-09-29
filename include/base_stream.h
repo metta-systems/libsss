@@ -315,7 +315,7 @@ private:
 
     void channel_connected();
     void parent_attached();
-    void substream_read_message();
+    void substream_read_record();
 
 public:
     /**
@@ -380,11 +380,6 @@ public:
     //-------------------------------------------
     // Signals
     //-------------------------------------------
-
-    /**
-     * A complete message has been received.
-     */
-    boost::signals2::signal<void()> on_ready_read_message;
 
     /**
      * An active attachment attempt succeeded and was acked by receiver.

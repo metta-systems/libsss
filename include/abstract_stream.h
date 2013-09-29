@@ -216,6 +216,15 @@ public:
      */
     virtual void dump() = 0;
 
+    //-------------------------------------------
+    // Signals
+    //-------------------------------------------
+
+    /**
+     * A complete record has been received.
+     */
+    boost::signals2::signal<void()> on_ready_read_record;
+
 protected:
     inline int current_priority() const { return priority_; }
 

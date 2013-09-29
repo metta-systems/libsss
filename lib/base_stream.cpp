@@ -650,7 +650,7 @@ abstract_stream* base_stream::accept_substream()
     auto sub = received_substreams_.front();
     received_substreams_.pop_front();
 
-    sub->on_ready_read_message.disconnect(boost::bind(&base_stream::substream_read_message, this));
+    sub->on_ready_read_record.disconnect(boost::bind(&base_stream::substream_read_record, this));
 
     return sub;
 }
@@ -1543,9 +1543,9 @@ base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* chan
     else
     {
         new_stream->state_ = state::connected;
-        received_substreams_.push(new_stream);
-        new_stream->on_ready_read_message.connect(
-            boost::bind(&base_stream::substream_read_message, this));
+        received_substreams_.push_back(new_stream);
+        new_stream->on_ready_read_record.connect(
+            boost::bind(&base_stream::substream_read_record, this));
         if (auto stream = owner_.lock())
             stream->on_new_substream();
     }
@@ -1667,9 +1667,9 @@ void base_stream::parent_attached()
     attach_for_transmit();
 }
 
-void base_stream::substream_read_message()
+void base_stream::substream_read_record()
 {
-    // When one of our queued subs emits an on_ready_read_message() signal,
+    // When one of our queued subs emits an on_ready_read_record() signal,
     // we have to forward that via our on_ready_read_datagram() signal.
     // @fixme WHY?
     if (auto stream = owner_.lock())
