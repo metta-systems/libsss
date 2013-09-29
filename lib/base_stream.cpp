@@ -915,7 +915,7 @@ void base_stream::tx_datagram()
             break;
     }
 
-    // Re-queue us on our flow immediately if we still have more data to send.
+    // Re-queue us on our channel immediately if we still have more data to send.
     return tx_enqueue_channel();
 }
 
@@ -1466,14 +1466,16 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
     int seg_size = rseg.segment_size();
 
-    logger::warning() << "rx_data " << byte_seq << " payload size " << seg_size;
+    logger::warning() << "rx_data " << byte_seq << " payload size " << seg_size
+        << " flags " << rseg.flags() << " stream rx_seq " << rx_byte_seq_;
 
     // See where this packet fits in
     int rx_seq_diff = rseg.rx_byte_seq - rx_byte_seq_;
-    if (rx_seq_diff <= 0) {
+    if (rx_seq_diff <= 0)
+    {
         // The segment is at or before our current receive position.
         // How much of its data, if any, is actually useful?
-        // Note that we must process packets at our RSN with no data,
+        // Note that we must process packets at our rx_seq with no data,
         // because they might have important flags.
         int act_size = seg_size + rx_seq_diff;
 
