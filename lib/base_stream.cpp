@@ -1385,6 +1385,9 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
     return false;
 }
 
+/**
+ * @todo Received a detach packet, disconnect stream from the channel.
+ */
 bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < detach_header_len_min) {
