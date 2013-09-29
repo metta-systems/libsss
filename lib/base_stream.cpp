@@ -1574,6 +1574,8 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     }
     else if (rx_seq_diff > 0)
     {
+        // @todo Test this section
+
         // It's out of order beyond our current receive sequence -
         // stash it in a re-order buffer, sorted by rx_seq.
 
