@@ -201,8 +201,19 @@ void channel::start_retransmit_timer()
 
 int channel::may_transmit()
 {
-    logger::debug() << "channel: may_transmit UNIMPLEMENTED";
-    return 1;
+    logger::debug() << "channel: may_transmit";
+    if (pimpl_->nocc_)
+        return super::may_transmit();
+
+    if (pimpl_->cwnd > pimpl_->tx_inflight_count_) {
+        int allowance = pimpl_->cwnd - pimpl_->tx_inflight_count_;
+        logger::debug() << "channel: congestion window limits may_transmit to " << allowance;
+        return allowance;
+    }
+
+    logger::debug() << "channel: congestion window limits may_transmit to 0";
+    pimpl_->cwndlim = true;
+    return 0;
 }
 
 uint32_t channel::make_first_header_word(channel_number channel, uint32_t tx_sequence)
