@@ -309,13 +309,6 @@ void base_stream::connect_to(string const& service, string const& protocol)
     attach_for_transmit();
 }
 
-void base_stream::disconnect()
-{
-    logger::debug() << "Disconnecting internal stream";
-    state_ = state::disconnected;
-    // @todo bring down the connection
-}
-
 void base_stream::attach_for_transmit()
 {
     assert(!peerid_.is_empty());
@@ -671,6 +664,19 @@ void base_stream::set_receive_buffer_size(size_t size)
 void base_stream::set_child_receive_buffer_size(size_t size)
 {
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
+}
+
+void base_stream::disconnect()
+{
+    logger::debug() << "Disconnecting internal stream";
+    state_ = state::disconnected;
+    // @todo bring down the connection - clear()
+
+    if (auto stream = owner_.lock())
+    {
+        stream->on_link_down();
+        // @todo stream->reset()?
+    }
 }
 
 void base_stream::fail(string const& error)
