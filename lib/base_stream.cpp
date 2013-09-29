@@ -15,7 +15,6 @@
 #include "byte_array_wrap.h"
 #include "algorithm.h"
 #include "server.h"
-#include "pubqueue.h"
 
 using namespace std;
 
@@ -106,12 +105,12 @@ void base_stream::clear()
     }
 
     // Reset any unaccepted incoming substreams too
-    for (auto sub : get_c(received_substreams_))
+    for (auto sub : received_substreams_)
     {
         sub->shutdown(stream::shutdown_mode::reset);
         // should self-destruct automatically when done
     }
-    get_c(received_substreams_).clear();
+    received_substreams_.clear();
 }
 
 bool base_stream::is_attached()

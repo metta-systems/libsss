@@ -226,7 +226,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     uint8_t receive_window_byte_{0};
 
     /// Received out of order.
-    std::list<rx_segment_t> readahead_;
+    std::deque<rx_segment_t> readahead_;
     /// Received, waiting to be read.
     std::deque<rx_segment_t> rx_segments_;
     /// Sizes of received messages.
@@ -237,7 +237,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
     // Substream receive state
     /// Received, waiting substreams.
-    std::queue<abstract_stream*> received_substreams_;
+    std::deque<abstract_stream*> received_substreams_;
 
 private:
     void clear();
