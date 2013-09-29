@@ -182,7 +182,14 @@ void channel::start(bool initiate)
 
 void channel::stop()
 {
-    logger::debug() << "channel: stop UNIMPLEMENTED";
+    logger::debug() << "channel: stop";
+    pimpl_->retransmit_timer_.stop();
+    pimpl_->ack_timer_.stop();
+    // stats_timer_.stop();
+
+    super::stop();
+
+    set_link_status(link::status::down);
 }
 
 void channel::start_retransmit_timer()
