@@ -1568,6 +1568,32 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
             }
         }
     }
+    else if (rx_seq_diff > 0)
+    {
+        // It's out of order beyond our current receive sequence -
+        // stash it in a re-order buffer, sorted by rx_seq.
+
+        logger::debug() << this << " Received out-of-order segment at " << rseg.rx_byte_seq
+            << " size " << seg_size;
+
+        // Binary search for the correct position.
+        // lower_bound() because we want to see if there is the same element already in deque
+        auto it = lower_bound(readahead_.begin(), readahead_.end(), rx_seq_diff,
+            [this](rx_segment_t& itr, int val) { return (itr.rx_byte_seq - rx_byte_seq_) < val; } );
+
+        // Don't save duplicate segments
+        // (unless the duplicate actually has more data or new flags).
+        if (it != readahead_.end() and (*it).rx_byte_seq == rseg.rx_byte_seq
+                and seg_size <= (*it).segment_size()
+                and rseg.flags() == (*it).flags())
+        {
+            logger::debug() << "rxseg duplicate out-of-order segment - rx_seq " << rseg.rx_byte_seq;
+            return recalculate_receive_window();
+        }
+
+        rx_buffer_used_ += seg_size;
+        readahead_.insert(it, rseg);
+    }
 
     // Recalculate the receive window now that we've probably consumed some buffer space.
     recalculate_receive_window();
