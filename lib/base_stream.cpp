@@ -58,7 +58,8 @@ base_stream::base_stream(shared_ptr<host> host,
     {
         if (parent->listen_mode() & stream::listen_mode::inherit)
             listen(parent->listen_mode());
-        receive_buf_size_ = child_receive_buf_size_ = parent->child_receive_buf_size_;
+        set_receive_buffer_size(parent->child_receive_buf_size_);
+        set_child_receive_buffer_size(parent->child_receive_buf_size_);
     }
 
     recalculate_receive_window();
@@ -653,12 +654,22 @@ bool base_stream::is_link_up() const
 
 void base_stream::set_receive_buffer_size(size_t size)
 {
+    if (size < min_receive_buffer_size) {
+        logger::warning() << "Child receive buffer size " << size << " too small";
+        size = min_receive_buffer_size;
+    }
     logger::debug() << "Setting internal stream receive buffer size " << size << " bytes";
+    receive_buf_size_ = size;
 }
 
 void base_stream::set_child_receive_buffer_size(size_t size)
 {
+    if (size < min_receive_buffer_size) {
+        logger::warning() << "Child receive buffer size " << size << " too small";
+        size = min_receive_buffer_size;
+    }
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
+    child_receive_buf_size_ = size;
 }
 
 void base_stream::shutdown(stream::shutdown_mode mode)

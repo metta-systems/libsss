@@ -44,6 +44,7 @@ class stream_protocol
 {
 public:
     static constexpr size_t mtu = 1500; // @fixme This needs to be a per-link variable.
+    static constexpr size_t min_receive_buffer_size = mtu*2; // @fixme Should be dynamic based on mtu.
 
     // Control chunk magic value for the structured streams.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
