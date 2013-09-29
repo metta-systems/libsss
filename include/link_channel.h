@@ -44,6 +44,10 @@ public:
     inline bool is_active() const { return active_; }
     inline bool is_bound()  const { return link_ != nullptr; }
 
+    inline bool is_link_congestion_controlled() {
+        return link_->is_congestion_controlled(remote_ep_);
+    }
+
     /**
      * Set up for communication with specified remote endpoint,
      * allocating and binding a local channel number in the process.
@@ -79,6 +83,8 @@ public:
 
 protected:
     friend class link; // @fixme no need for extra friendliness
+
+    virtual int may_transmit();
 
     inline bool send(const byte_array& pkt) const {
         assert(active_);

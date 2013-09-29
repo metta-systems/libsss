@@ -78,4 +78,10 @@ void link_channel::unbind()
     }
 }
 
+int link_channel::may_transmit()
+{
+    assert(link_);
+    return link_->may_transmit(remote_ep_);
+}
+
 } // ssu namespace

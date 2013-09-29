@@ -207,6 +207,19 @@ public:
 
     bool bind_channel(endpoint const& ep, channel_number chan, link_channel* lc);
     void unbind_channel(endpoint const& ep, channel_number chan);
+
+    /**
+     * Returns true if this socket provides congestion control
+     * when communicating with the specified remote endpoint.
+     */
+    virtual bool is_congestion_controlled(endpoint const& ep);
+
+    /**
+     * For congestion-controlled sockets,
+     * returns the number of packets that may be transmitted now
+     * to a particular target endpoint.
+     */
+    virtual int may_transmit(endpoint const& ep);
 };
 
 /**

@@ -150,6 +150,19 @@ link::unbind_channel(endpoint const& ep, channel_number chan)
     channels_.erase(std::make_pair(ep, chan));
 }
 
+bool
+link::is_congestion_controlled(endpoint const&)
+{
+    return false;
+}
+
+int
+link::may_transmit(endpoint const&)
+{
+    logger::fatal() << "may_transmit() called on non-congestion-controlled link";
+    return -1;
+}
+
 //=================================================================================================
 // udp_link
 //=================================================================================================
