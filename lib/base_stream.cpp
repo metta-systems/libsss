@@ -1466,7 +1466,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
     int seg_size = rseg.segment_size();
 
-    logger::warning() << "rx_data " << byte_seq << " payload size " << seg_size
+    logger::debug() << "rx_data " << byte_seq << " payload size " << seg_size
         << " flags " << rseg.flags() << " stream rx_seq " << rx_byte_seq_;
 
     // See where this packet fits in
