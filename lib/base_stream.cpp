@@ -1333,7 +1333,11 @@ bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stre
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::warning() << "rx_ack_packet UNIMPLEMENTED.";
+    // Count this explicit ack packet as received,
+    // but do NOT send another ack just to ack this ack!
+    channel->acknowledge(pktseq, false);
+
+    logger::warning() << "rx_ack_packet ...";
     // auto header = as_header<ack_header>(pkt);
     return false;
 }
