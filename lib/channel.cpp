@@ -6,6 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <deque>
 #include "channel.h"
 #include "logging.h"
 #include "host.h"
@@ -48,7 +49,7 @@ public:
     /// Next sequence number to transmit.
     packet_seq_t tx_sequence_{1};
     /// Record of transmission events (XX data sizes).
-    queue<transmit_event_t> tx_events_;
+    deque<transmit_event_t> tx_events_;
     /// Seqno of oldest recorded tx event.
     packet_seq_t tx_event_sequence_{0};
     /// Highest transmit sequence number ACK'd.
@@ -133,7 +134,7 @@ channel::channel(shared_ptr<host> host)
     , pimpl_(make_unique<private_data>(host))
 {
     // Initialize transmit congestion control state
-    pimpl_->tx_events_.push(transmit_event_t(0, false));
+    pimpl_->tx_events_.push_back(transmit_event_t(0, false));
     assert(pimpl_->tx_events_.size() == 1);
     pimpl_->mark_time_ = host->current_time();
 
@@ -265,7 +266,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
         pimpl_->tx_inflight_count_++;
         pimpl_->tx_inflight_size_ += evt.size_;
     }
-    pimpl_->tx_events_.push(evt);
+    pimpl_->tx_events_.push_back(evt);
     assert(pimpl_->tx_event_sequence_ + pimpl_->tx_events_.size() == pimpl_->tx_sequence_);
     assert(pimpl_->tx_inflight_count_ <= (unsigned)pimpl_->tx_events_.size());
 

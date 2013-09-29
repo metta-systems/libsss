@@ -8,7 +8,6 @@
 //
 #pragma once
 
-#include <queue>
 #include "byte_array.h"
 #include "link.h"
 #include "link_channel.h"
