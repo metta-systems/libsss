@@ -442,7 +442,7 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
         assert(!end_read_);
         assert(!rx_segments_.empty());
         rx_segment_t rseg = rx_segments_.front();
-        rx_segments_.pop();
+        rx_segments_.pop_front();
 
         ssize_t size = rseg.segment_size();
         assert(size >= 0);
@@ -472,7 +472,7 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
 
             // Always stop at the next message boundary.
             if (headsize == 0) {
-                rx_record_sizes_.pop();
+                rx_record_sizes_.pop_front();
                 break;
             }
         }
@@ -1505,7 +1505,7 @@ base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* chan
 // Helper function to enqueue useful data segments.
 void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed)
 {
-    rx_segments_.push(seg);
+    rx_segments_.push_back(seg);
     rx_byte_seq_ += actual_size;
     rx_available_ += actual_size;
     rx_record_available_ += actual_size;
@@ -1514,7 +1514,7 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
     if ((seg.flags() & (flags::data_message | flags::data_close)) and (rx_record_available_ > 0))
     {
         logger::debug() << "Received record";
-        rx_record_sizes_.push(rx_record_available_);
+        rx_record_sizes_.push_back(rx_record_available_);
         rx_record_available_ = 0;
     }
     if (seg.flags() & flags::data_close)

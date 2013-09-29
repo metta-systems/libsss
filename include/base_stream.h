@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include <queue>
+#include <deque>
 #include <boost/signals2/signal.hpp>
 #include "abstract_stream.h"
 #include "channel.h"
@@ -228,9 +228,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Received out of order.
     std::list<rx_segment_t> readahead_;
     /// Received, waiting to be read.
-    std::queue<rx_segment_t> rx_segments_;
+    std::deque<rx_segment_t> rx_segments_;
     /// Sizes of received messages.
-    std::queue<int64_t> rx_record_sizes_;
+    std::deque<int64_t> rx_record_sizes_;
 
     int32_t receive_buf_size_{default_rx_buffer_size};         // Recv buf size for channel control
     int32_t child_receive_buf_size_{default_rx_buffer_size};   // Recv buf for child streams
