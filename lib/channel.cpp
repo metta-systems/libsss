@@ -241,16 +241,21 @@ uint32_t channel::make_second_header_word(uint8_t ack_count, uint32_t ack_sequen
 
 bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
 {
-    assert(packet.size() > header_len); // Must be non-empty packet.
+    assert(packet.size() > header_len); // Must be non-empty data packet.
 
     // Include implicit acknowledgment of the latest packet(s) we've acked
-    uint32_t ackseq = make_second_header_word(pimpl_->rx_ack_count_, pimpl_->rx_ack_sequence_);
+    uint32_t ack_seq = make_second_header_word(pimpl_->rx_ack_count_, pimpl_->rx_ack_sequence_);
+    if (pimpl_->rx_unacked_)
+    {
+        pimpl_->rx_unacked_ = 0;
+        pimpl_->ack_timer_.stop();
+    }
 
     // Send the packet
-    bool success = transmit(packet, ackseq, packet_seq, true);
+    bool success = transmit(packet, ack_seq, packet_seq, true);
 
     // If the retransmission timer is inactive, start it afresh.
-    // (If this was a retransmission, rtxTimeout() would have restarted it.)
+    // (If this was a retransmission, retransmit_timeout() would have restarted it).
     if (!pimpl_->retransmit_timer_.is_active()) {
         start_retransmit_timer();
     }
@@ -282,13 +287,14 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     // and timestamp if this packet is marked for RTT measurement
     // This is the "Point of no return" -
     // a failure after this still consumes sequence number space.
-    if (pimpl_->tx_sequence_ == pimpl_->mark_sequence_) {
+    if (pimpl_->tx_sequence_ == pimpl_->mark_sequence_)
+    {
         pimpl_->mark_time_ = pimpl_->host_->current_time();
         pimpl_->mark_acks_ = 0;
         pimpl_->mark_base_ = pimpl_->tx_ack_sequence_;
         pimpl_->mark_sent_ = pimpl_->tx_sequence_ - pimpl_->tx_ack_sequence_;
     }
-    pimpl_->tx_sequence_++;
+    pimpl_->tx_sequence_ += 1;
 
     // Record the transmission event
     transmit_event_t evt(packet.size(), is_data);
@@ -300,6 +306,9 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     pimpl_->tx_events_.push_back(evt);
     assert(pimpl_->tx_event_sequence_ + pimpl_->tx_events_.size() == pimpl_->tx_sequence_);
     assert(pimpl_->tx_inflight_count_ <= (unsigned)pimpl_->tx_events_.size());
+
+    logger::debug() << this << " channel.transmit tx seq " << pimpl_->tx_sequence_
+        << " size " << epkt.size();
 
     // Ship it out
     return send(epkt);
