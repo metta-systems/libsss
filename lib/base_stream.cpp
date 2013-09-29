@@ -1478,18 +1478,92 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
         // Note that we must process packets at our rx_seq with no data,
         // because they might have important flags.
         int act_size = seg_size + rx_seq_diff;
+        if (act_size < 0 or (act_size == 0 and !rseg.has_flags()))
+        {
+            // The packet is way out of date -
+            // its end doesn't even come up to our current RSN.
+            logger::debug() << this << " Duplicate segment at rx_seq " << rseg.rx_byte_seq
+                << " size " << seg_size;
+            return recalculate_receive_window();
+        }
+        rseg.header_len -= rx_seq_diff; // Merge useless data into "headers"
+        logger::debug() << this << " actual_size " << act_size << " flags " << rseg.flags();
 
         // It gives us exactly the data we want next - very good!
-        bool wasnomsgs = !has_pending_records();
+        bool was_empty = !has_bytes_available();
+        bool was_no_recs = !has_pending_records();
         bool closed = false;
 
         rx_enqueue_segment(rseg, act_size, /*inout*/closed);
 
-        if (wasnomsgs && has_pending_records()) {
-            if (state_ == state::connected) {
-            } else if (state_ == state::wait_service) {
+        // Then pull anything we can from the reorder buffer
+        for (; !readahead_.empty(); readahead_.pop_front())
+        {
+            rx_segment_t& read_seg = readahead_.front();
+            int seg_size = read_seg.segment_size();
+
+            int rx_seq_diff = read_seg.rx_byte_seq - rx_byte_seq_;
+            if (rx_seq_diff > 0) {
+                break;  // There's still a gap
+            }
+
+            // Account for removal of this segment from readhead_;
+            // below we'll re-add whatever part of it we use.
+            rx_buffer_used_ -= seg_size;
+
+            logger::debug() << this << " Pull readahead segment at " << read_seg.rx_byte_seq
+                << " of size " << seg_size << " from reorder buffer";
+
+            int act_size = seg_size + rx_seq_diff;
+            if (act_size < 0 or (act_size == 0 and !read_seg.has_flags())) {
+                continue;   // No useful data: drop
+            }
+
+            read_seg.header_len -= rx_seq_diff;
+
+            // Consume this segment too.
+            rx_enqueue_segment(read_seg, act_size, /*inout*/closed);
+        }
+
+        // If we're at the end of stream with no data to read,
+        // go into the end-of-stream state immediately.
+        // We must do this because readData() may never
+        // see our queued zero-length segment if rx_available_ == 0.
+        if (closed and rx_available_ == 0)
+        {
+            shutdown(stream::shutdown_mode::read);
+            on_ready_read_record();
+            auto stream = owner_.lock();
+            if (is_link_up() and stream)
+            {
+                stream->on_ready_read();
+                stream->on_ready_read_record();
+            }
+            return recalculate_receive_window();
+        }
+
+        // Notify the client if appropriate
+        if (was_empty) {
+            auto stream = owner_.lock();
+            if (state_ == state::connected and stream) {
+                stream->on_ready_read();
+            }
+        }
+
+        if (was_no_recs and has_pending_records()) {
+            if (state_ == state::connected)
+            {
+                on_ready_read_record();
+                if (auto stream = owner_.lock()) {
+                    stream->on_ready_read_record();
+                }
+            }
+            else if (state_ == state::wait_service)
+            {
                 got_service_reply();
-            } else if (state_ == state::accepting) {
+            }
+            else if (state_ == state::accepting)
+            {
                 got_service_request();
             }
         }
