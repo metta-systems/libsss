@@ -478,7 +478,8 @@ public:
     bytes_written_signal on_bytes_written;
 
     typedef boost::signals2::signal<void (void)> ready_signal;
-    ready_signal on_ready_read_message;
+    ready_signal on_ready_read; // QIODevice
+    ready_signal on_ready_read_record;
     ready_signal on_ready_read_datagram;
     ready_signal on_ready_write;
     ready_signal on_receive_blocked;
