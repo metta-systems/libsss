@@ -168,7 +168,7 @@ void base_stream::transmit_on(stream_channel* channel)
 
         logger::debug() << p;
 
-        auto header = as_header<data_header>(p.buf);
+        auto header = p.header<data_header>();
         header->stream_id = tx_current_attachment_->stream_id_;
         // Preserve flags already set.
         header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype); //@fixme & dataAllFlags);
@@ -827,7 +827,7 @@ void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
     assert(p.tx_byte_seq <= 0xffff);
 
     // Build the init_header.
-    auto header = as_header<init_header>(p.buf);
+    auto header = p.header<init_header>();
     header->stream_id = tx_current_attachment_->stream_id_;
     // Preserve flags already set.
     header->type_subtype = type_and_subtype(type, header->type_subtype); //@fixme & dataAllFlags);
@@ -879,7 +879,7 @@ void base_stream::tx_datagram()
         tx_queue_.pop_front();
         assert(p.type == packet_type::datagram);
 
-        auto header = as_header<datagram_header>(p.buf);
+        auto header = p.header<datagram_header>();
         bool at_end = (header->type_subtype & flags::datagram_end) != 0;
         header->stream_id = tx_current_attachment_->stream_id_;
         header->window = receive_window_byte();
@@ -1072,7 +1072,7 @@ void base_stream::expire(stream_channel* channel, packet const& pkt)
 // according to the type of packet actually sent.
 void base_stream::end_flight(packet const& pkt)
 {
-    auto header = as_header<data_header>(pkt.buf);
+    auto header = pkt.header<data_header>();
 
     if (type_from_header(header) == packet_type::init)
     {
