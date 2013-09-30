@@ -192,13 +192,6 @@ void channel::stop()
     set_link_status(link::status::down);
 }
 
-void channel::start_retransmit_timer()
-{
-    async::timer::duration_type timeout =
-        bp::milliseconds(pimpl_->cumulative_rtt_.total_milliseconds() * 2);
-    pimpl_->retransmit_timer_.start(timeout); // Wait for full round-trip time.
-}
-
 int channel::may_transmit()
 {
     logger::debug() << "channel: may_transmit";
@@ -312,6 +305,13 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
 
     // Ship it out
     return send(epkt);
+}
+
+void channel::start_retransmit_timer()
+{
+    async::timer::duration_type timeout =
+        bp::milliseconds(pimpl_->cumulative_rtt_.total_milliseconds() * 2);
+    pimpl_->retransmit_timer_.start(timeout); // Wait for full round-trip time.
 }
 
 void channel::retransmit_timeout(bool failed)
