@@ -104,6 +104,8 @@ public:
     uint8_t rx_unacked_{0};
     // bool delayack;      ///< Enable delayed acknowledgments
     async::timer ack_timer_;  ///< Delayed ACK timer.
+    unsigned miss_threshold_{3}; ///< Threshold at which to infer packets dropped
+    // @todo make adaptive for robustness to reordering
 
     //-------------------------------------------
     // Channel statistics.
@@ -123,6 +125,10 @@ public:
     }
 
     void reset_congestion_control();
+
+    inline async::timer::duration_type elapsed_since_mark() {
+        return host_->current_time() - mark_time_;
+    }
 };
 
 // @todo Move this to cc_strategy implementation.
@@ -622,10 +628,99 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
             }
         }
 
+        // Infer that packets left un-acknowledged sufficiently late
+        // have been dropped, and notify the upper layer as such.
+        // XX we could avoid some of this arithmetic if we just
+        // made sequence numbers start a bit higher.
+        packet_seq_t miss_lim = pimpl_->tx_ack_sequence_ - min(pimpl_->tx_ack_sequence_, (packet_seq_t)
+                    max(pimpl_->miss_threshold_, new_packets));
 
+        for (packet_seq_t miss_seq = pimpl_->tx_ack_sequence_ - min(pimpl_->tx_ack_sequence_, (packet_seq_t)
+                    (pimpl_->miss_threshold_ + ack_diff - 1));
+                miss_seq <= miss_lim;
+                ++miss_seq)
+        {
+            transmit_event_t& e = pimpl_->tx_events_[miss_seq - pimpl_->tx_event_sequence_];
+            if (e.pipe_)
+            {
+                logger::debug() << this << " seq " << pimpl_->tx_event_sequence_ << " inferred dropped";
+                e.pipe_ = false;
+                pimpl_->tx_inflight_count_--;
+                pimpl_->tx_inflight_size_ -= e.size_;
+                // ccMissed(miss_seq);
+                missed(miss_seq, 1);
+                logger::debug() << this << " infer-missed seq " << miss_seq << " tx inflight " << pimpl_->tx_inflight_count_;
+            }
+        }
 
+        // Finally, notice packets as they exit our ack window,
+        // and garbage collect their transmit records,
+        // since they can never be acknowledged after that.
+        if (pimpl_->tx_ack_sequence_ > maskBits)
+        {
+            while (pimpl_->tx_event_sequence_ <= pimpl_->tx_ack_sequence_ - maskBits)
+            {
+                logger::debug() << this << " seq " << pimpl_->tx_event_sequence_ << " expired";
+                assert(!pimpl_->tx_events_.front().pipe_);
+                pimpl_->tx_events_.pop_front();
+                pimpl_->tx_event_sequence_++;
+                expire(pimpl_->tx_event_sequence_ - 1, 1);
+            }
+        }
+        //---------------------------------------------------------------------
+
+        // Reset the retransmission timer, since we've made progress.
+        // Only re-arm it if there's still outstanding unACKed data.
+        set_link_status(link::status::up);
+        logger::debug() << "STILL INFLIGHT " << pimpl_->tx_inflight_count_;
+        if (pimpl_->tx_inflight_count_ > 0)
+        {
+            start_retransmit_timer();
+        }
+        else
+        {
+            logger::debug() << "Stopping retransmission timer";
+            pimpl_->retransmit_timer_.stop();
+        }
+
+        // Now that we've moved tx_ack_sequence_ forward to the packet's ackseq,
+        // they're now the same, which is important to the code below.
+        ack_diff = 0;
     }
-//-------------------------------------------------------------
+
+    assert(ack_diff <= 0);
+
+    // Handle acknowledgments for any straggling out-of-order packets
+    // (or an out-of-order acknowledgment for in-order packets).
+    // Set the appropriate bits in our tx_ack_mask_,
+    // and count newly acknowledged packets within our window.
+    uint32_t newmask = (1 << ackct) - 1;
+    if ((pimpl_->tx_ack_mask_ & newmask) != newmask) {
+        for (unsigned i = 0; i <= ackct; i++) {
+            int bit = -ack_diff + i;
+            if (bit >= maskBits)
+                break;
+            if (pimpl_->tx_ack_mask_ & (1 << bit))
+                continue;   // already ACKed
+            pimpl_->tx_ack_mask_ |= (1 << bit);
+
+            transmit_event_t &e = pimpl_->tx_events_[pimpl_->tx_ack_sequence_ - bit - pimpl_->tx_event_sequence_];
+            if (e.pipe_)
+            {
+                e.pipe_ = false;
+                pimpl_->tx_inflight_count_--;
+                pimpl_->tx_inflight_size_ -= e.size_;
+
+                acknowledged(pimpl_->tx_ack_sequence_ - bit, 1, pktseq);
+            }
+
+            new_packets++;
+        }
+    }
+
+    // Count the total number of acknowledged packets since the last mark.
+    pimpl_->mark_acks_ += new_packets;
+
 
     // Always clamp cwnd against CWND_MAX.
     pimpl_->cwnd = min(pimpl_->cwnd, CWND_MAX);
@@ -637,7 +732,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // XX should still replay-protect even if no ack!
 
     // Signal upper layer that we can transmit more, if appropriate
-    if (/*newpackets > 0 &&*/ may_transmit())
+    if (new_packets > 0 and may_transmit())
         on_ready_transmit();
 }
 
