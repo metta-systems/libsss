@@ -136,7 +136,17 @@ bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ackc
 
 void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
 {
-    logger::debug() << "stream_channel: acknowledged " << txseq;
+    for (; npackets > 0; txseq++, npackets--)
+    {
+        // find and remove the packet
+        if (!contains(waiting_ack_, txseq))
+            continue;
+
+        base_stream::packet p = waiting_ack_[txseq];
+
+        logger::debug() << "stream_channel: acknowledged packet " << txseq << " of size " << p.buf.size();
+        p.owner->acknowledged(this, p, rxackseq);
+    }
 }
 
 void stream_channel::missed(packet_seq_t txseq, int npackets)
