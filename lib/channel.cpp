@@ -321,7 +321,7 @@ void channel::retransmit_timeout(bool failed)
 
     // Restart the retransmission timer
     // with an exponentially increased backoff delay.
-    start_retransmit_timer();
+    pimpl_->retransmit_timer_.restart();
 
     // Assume that all in-flight data packets have been dropped,
     // and notify the upper layer as such.
