@@ -116,8 +116,15 @@ void stream_channel::stop()
 void stream_channel::enqueue_stream(base_stream* stream)
 {
     logger::debug() << "enqueue_stream " << stream;
-    // @todo Stream priorities.
-    sending_streams_.push_back(stream);
+
+    // Find the correct position at which to enqueue this stream,
+    // based on priority.
+    auto it = upper_bound(sending_streams_.begin(), sending_streams_.end(), stream->current_priority(),
+        [this](int prio, base_stream* str) {
+            return str->current_priority() >= prio;
+        });
+
+    sending_streams_.insert(it, stream);
 }
 
 void stream_channel::dequeue_stream(base_stream* stream)
