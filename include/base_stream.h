@@ -126,13 +126,19 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         }
 
         template <typename T>
-        T* header()
+        inline T* header()
         {
             header_len = channel::header_len + sizeof(T);
             if (buf.size() < size_t(header_len)) {
                 buf.resize(header_len);
             }
             return reinterpret_cast<T*>(buf.data() + channel::header_len);
+        }
+
+        template <typename T>
+        inline T const* header() const
+        {
+            return reinterpret_cast<T const*>(buf.const_data() + channel::header_len);
         }
     };
     friend std::ostream& operator << (std::ostream& os, packet const& pkt);
@@ -396,6 +402,10 @@ public:
     boost::signals2::signal<void()> on_detached;
 };
 
+//=================================================================================================
+// Helper functions.
+//=================================================================================================
+
 inline std::ostream& operator << (std::ostream& os, ssu::base_stream::packet const& pkt)
 {
     std::string packet_type = [](stream_protocol::packet_type type){
@@ -417,6 +427,18 @@ inline std::ostream& operator << (std::ostream& os, ssu::base_stream::packet con
        << ", owner " << pkt.owner << ", header " << pkt.header_len
        << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.buf << "]";
     return os;
+}
+
+template <typename T>
+inline T const* as_header(byte_array const& v)
+{
+    return reinterpret_cast<T const*>(v.const_data() + channel::header_len);
+}
+
+template <typename T>
+inline T* as_header(byte_array& v)
+{
+    return reinterpret_cast<T*>(v.data() + channel::header_len);
 }
 
 } // namespace ssu
