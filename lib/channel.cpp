@@ -597,10 +597,10 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // (Out-of-order ACKs are handled separately below.)
         new_packets = min(unsigned(ack_diff), ackct+1);
 
-        logger::debug() << this << " Advanced " << ack_diff
-            << " ackct " << ackct
-            << " new_packets " << new_packets
-            << " txackseq " << pimpl_->tx_ack_sequence_;
+        logger::debug() << this << " Advanced by " << ack_diff
+            << ", ack count " << ackct
+            << ", new packets " << new_packets
+            << ", tx ack seq " << pimpl_->tx_ack_sequence_;
 
         // Record the new in-sequence packets in tx_ack_mask_ as received.
         // (But note: ackct+1 may also include out-of-sequence pkts.)
