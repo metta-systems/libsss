@@ -189,8 +189,7 @@ void stream_channel::expire(packet_seq_t txseq, int npackets)
 bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
 {
     logger::debug() << "stream_channel: channel_receive " << pktseq;
-    base_stream::receive(pktseq, pkt, this);
-    return false;
+    return base_stream::receive(pktseq, pkt, this);
 }
 
 } // ssu namespace
