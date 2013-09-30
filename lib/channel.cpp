@@ -317,7 +317,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
 void channel::retransmit_timeout(bool failed)
 {
     logger::debug() << this << " Retransmit timeout" << (failed ? " - FAILED" : "")
-        << ", interval " << pimpl_->retransmit_timer_.interval().total_milliseconds() << "ms";
+        << ", interval " << pimpl_->retransmit_timer_.interval();
 
     // Restart the retransmission timer
     // with an exponentially increased backoff delay.
@@ -402,7 +402,7 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
                 pimpl_->ack_timer_.start(bp::milliseconds(0));
             }
         } else {
-            // But make sure we send an ack every 4 packets no matter what...
+            // But make sure we send an ack every max_ack_packets (4) no matter what...
             flush_ack();
         }
     }
@@ -474,17 +474,18 @@ bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_coun
 
 void channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
 {
-    logger::debug() << "channel: acknowledged UNIMPLEMENTED";
+    logger::debug() << this << " channel: tx seq "
+        << txseq << "-" << txseq+npackets-1 << " acknowledged";
 }
 
 void channel::missed(uint64_t txseq, int npackets)
 {
-    logger::debug() << "channel: missed UNIMPLEMENTED";
+    logger::debug() << this << "channel: tx seq " << txseq << " missed";
 }
 
 void channel::expire(uint64_t txseq, int npackets)
 {
-    logger::debug() << "channel: expire UNIMPLEMENTED";
+    logger::debug() << this << "channel: tx seq " << txseq << " expired";
 }
 
 void channel::receive(const byte_array& msg, const link_endpoint& src)
@@ -500,7 +501,7 @@ void channel::receive(const byte_array& msg, const link_endpoint& src)
                     >> 8;
 
     packet_seq_t pktseq = pimpl_->rx_sequence_ + seqdiff;
-    logger::debug() << "channel: receive - rxseq " << pktseq << ", size " << msg.size();
+    logger::debug() << "channel: receive - rxseq " << pktseq << ", size " << pkt.size();
 
     byte_array pkt = msg;
     // Authenticate and decrypt the packet

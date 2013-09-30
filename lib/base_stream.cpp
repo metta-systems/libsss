@@ -988,8 +988,9 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
                          << " bytes";
             }
             assert(tx_waiting_size_ >= 0);
-            if (auto stream = owner_.lock())
+            if (auto stream = owner_.lock()) {
                 stream->on_bytes_written(pkt.payload_size()); // XXX delay and coalesce signal
+            }
 
             // fall through...
 
@@ -1010,8 +1011,9 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
                 // Notify anyone interested that we're attached.
                 on_attached();
                 auto stream = owner_.lock();
-                if (stream and state_ == state::connected)
+                if (stream and state_ == state::connected) {
                     stream->on_link_up();
+                }
             }
             break;
 
@@ -1471,7 +1473,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     int seg_size = rseg.segment_size();
 
     logger::debug() << "rx_data " << byte_seq << " payload size " << seg_size
-        << " flags " << rseg.flags() << " stream rx_seq " << rx_byte_seq_;
+        << " flags " << int(rseg.flags()) << " stream rx_seq " << rx_byte_seq_;
 
     // See where this packet fits in
     int rx_seq_diff = rseg.rx_byte_seq - rx_byte_seq_;
@@ -1491,7 +1493,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
             return recalculate_receive_window();
         }
         rseg.header_len -= rx_seq_diff; // Merge useless data into "headers"
-        logger::debug() << this << " actual_size " << act_size << " flags " << rseg.flags();
+        logger::debug() << this << " actual_size " << act_size << " flags " << int(rseg.flags());
 
         // It gives us exactly the data we want next - very good!
         bool was_empty = !has_bytes_available();
