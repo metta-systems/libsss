@@ -135,10 +135,28 @@ void stream_channel::dequeue_stream(base_stream* stream)
     return ;
 }
 
-bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ackct)
+bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count)
 {
     logger::debug() << "stream_channel: transmit_ack " << ackseq;
-    return false;
+
+    // Pick a stream on which to send a window update -
+    // for now, just the most recent stream on which we received a segment.
+    stream_rx_attachment* attach{nullptr};
+    if (contains(receive_sids_, ack_sid_)) {
+        attach = receive_sids_[ack_sid_];
+    } else {
+        attach = receive_sids_[root_sid];
+    }
+    assert(attach);
+
+    // Build a bare Ack packet header
+    auto header = as_header<ack_header>(pkt);
+    header->stream_id = attach->stream_id_;
+    header->type_subtype = type_and_subtype(packet_type::ack, 0);
+    header->window = attach->stream_->receive_window_byte();
+
+    // Let channel protocol put together its part of the packet and send it.
+    return super::transmit_ack(pkt, ackseq, ack_count);
 }
 
 void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
