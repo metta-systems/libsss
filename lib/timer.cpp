@@ -34,9 +34,10 @@ timer::timer(ssu::timer_host_state* host)
 	engine_ = host->create_timer_engine_for(this);
 }
 
-void timer::start(duration_type interval)
+void timer::start(duration_type interval, duration_type fail_interval)
 {
 	interval_ = interval;
+	fail_interval_ = fail_interval;
 	active_ = true;
 	engine_->start(interval_);
 }
@@ -53,9 +54,10 @@ void timer::restart()
 	start(interval_);
 }
 
-bool timer::has_failed() const
+void timer::timeout_calculations()
 {
-	return false;
+	fail_interval_ -= interval_;
+	failed_ = (fail_interval_ <= bp::milliseconds(0));
 }
 
 //=========================================================
@@ -98,7 +100,8 @@ void default_timer_engine::stop()
 
 void timer_engine::timeout()
 {
-	origin_->on_timeout(false);
+	origin_->timeout_calculations();
+	origin_->on_timeout(origin_->has_failed());
 }
 
 } // namespace async

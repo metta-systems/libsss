@@ -35,16 +35,22 @@ public:
 private:
     std::unique_ptr<timer_engine> engine_{nullptr};
     duration_type interval_{retry_min};
+    duration_type fail_interval_{fail_max};
     // boost::asio::deadline_timer::time_type deadline_;
     bool active_{false};
+    bool failed_{false};
 
 public:
-	void start(duration_type interval); // @todo: support deadline timers too
-	bool has_failed() const;
     timer(ssu::timer_host_state* host);
 
+    /// @todo: support deadline timers too
+    void start(duration_type interval, duration_type fail_interval = fail_max);
     void stop();
     void restart();
+
+    bool has_failed() const {
+        return failed_;
+    }
 
     inline bool is_active() const {
         return active_;
@@ -53,6 +59,8 @@ public:
         return interval_;
     }
 
+    // Accessed only by timer engine on timeouts. @fixme
+    void timeout_calculations();
 
     /**
      * Signaled when the timer expires.
