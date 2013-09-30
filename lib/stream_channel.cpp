@@ -152,6 +152,26 @@ void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t
 void stream_channel::missed(packet_seq_t txseq, int npackets)
 {
     logger::debug() << "stream_channel: missed " << txseq;
+    for (; npackets > 0; txseq++, npackets--)
+    {
+        // find but don't remove (common case for missed packets)
+        if (!contains(waiting_ack_, txseq))
+        {
+            logger::warning() << "Missed packet " << txseq << " but can't find it!";
+            continue;
+        }
+
+        base_stream::packet p = waiting_ack_[txseq];
+
+        logger::debug() << "stream_channel: missed packet " << txseq << " of size " << p.buf.size();
+        if (!p.late)
+        {
+            p.late = true;
+            if (!p.owner->missed(this, p)) {
+                waiting_ack_.erase(txseq);
+            }
+        }
+    }
 }
 
 void stream_channel::expire(packet_seq_t txseq, int npackets)
