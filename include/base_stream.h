@@ -438,6 +438,10 @@ inline T const* as_header(byte_array const& v)
 template <typename T>
 inline T* as_header(byte_array& v)
 {
+    size_t header_len = channel::header_len + sizeof(T);
+    if (v.size() < header_len) {
+        v.resize(header_len);
+    }
     return reinterpret_cast<T*>(v.data() + channel::header_len);
 }
 
