@@ -29,10 +29,10 @@ class channel : public link_channel
     class private_data;
     std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
 
-    std::unique_ptr<channel_armor> armor_; ///< Armors cannot be shared.
-    byte_array   tx_channel_id_;           ///< Transmit ID of the channel.
-    byte_array   rx_channel_id_;           ///< Receive ID of the channel.
-    link::status link_status_;             ///< Link online status.
+    std::unique_ptr<channel_armor> armor_;         ///< Armors cannot be shared.
+    byte_array   tx_channel_id_;                   ///< Transmit ID of the channel.
+    byte_array   rx_channel_id_;                   ///< Receive ID of the channel.
+    link::status link_status_{link::status::down}; ///< Link online status.
 
     static constexpr packet_seq_t max_packet_sequence = ~0ULL;
 

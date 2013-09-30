@@ -64,7 +64,7 @@ public:
     packet_seq_t mark_base_{0};
     /// Time at which marked packet was sent.
     bp::ptime mark_time_;
-    uint32_t tx_ack_mask_;  ///< Mask of packets transmitted and ACK'd
+    uint32_t tx_ack_mask_{1};  ///< Mask of packets transmitted and ACK'd (fictitious packet 0 already received)
     /// Data packets currently in flight.
     uint32_t tx_inflight_count_{0};
     /// Data bytes currently in flight.
@@ -92,7 +92,7 @@ public:
 
     /// Highest sequence number received so far.
     packet_seq_t rx_sequence_{0};
-    uint32_t rx_mask_{0};     ///< Mask of packets received so far
+    uint32_t rx_mask_{1};     ///< Mask of packets received so far (1 = fictitious packet 0)
 
     // Receive-side ACK state
     /// Highest sequence number acknowledged so far.
@@ -116,9 +116,16 @@ public:
 public:
     private_data(shared_ptr<host> host)
         : host_(host)
+        , mark_time_(host->current_time())
         , retransmit_timer_(host.get())
         , ack_timer_(host.get())
-    {}
+    {
+        // Initialize transmit congestion control state
+        tx_events_.push_back(transmit_event_t(0, false));
+        assert(tx_events_.size() == 1);
+
+        reset_congestion_control();
+    }
 
     ~private_data() {
         logger::debug() << "~channel::private_data";
@@ -148,13 +155,6 @@ channel::channel(shared_ptr<host> host)
     : link_channel()
     , pimpl_(make_unique<private_data>(host))
 {
-    // Initialize transmit congestion control state
-    pimpl_->tx_events_.push_back(transmit_event_t(0, false));
-    assert(pimpl_->tx_events_.size() == 1);
-    pimpl_->mark_time_ = host->current_time();
-
-    pimpl_->reset_congestion_control();
-
     pimpl_->retransmit_timer_.on_timeout.connect(boost::bind(&channel::retransmit_timeout, this, _1));
 
     // Delayed ACK state
