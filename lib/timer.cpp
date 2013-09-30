@@ -10,12 +10,14 @@
 #include "timer_engine.h"
 #include "make_unique.h"
 
+namespace bp = boost::posix_time;
+
 namespace ssu {
 namespace async {
 
-const timer::duration_type timer::retry_min = boost::posix_time::milliseconds(500);
-const timer::duration_type timer::retry_max = boost::posix_time::minutes(1);
-const timer::duration_type timer::fail_max  = boost::posix_time::seconds(20);
+const timer::duration_type timer::retry_min = bp::milliseconds(500);
+const timer::duration_type timer::retry_max = bp::minutes(1);
+const timer::duration_type timer::fail_max  = bp::seconds(20);
 
 //=========================================================
 // timer
