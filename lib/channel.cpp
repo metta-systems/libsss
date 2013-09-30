@@ -64,7 +64,7 @@ public:
     packet_seq_t mark_base_{0};
     /// Time at which marked packet was sent.
     bp::ptime mark_time_;
-    // uint32_t txackmask;  ///< Mask of packets transmitted and ACK'd
+    uint32_t tx_ack_mask_;  ///< Mask of packets transmitted and ACK'd
     /// Data packets currently in flight.
     uint32_t tx_inflight_count_{0};
     /// Data bytes currently in flight.
@@ -92,7 +92,7 @@ public:
 
     /// Highest sequence number received so far.
     packet_seq_t rx_sequence_{0};
-    // quint32 rxmask;     ///< Mask of packets received so far
+    uint32_t rx_mask_{0};     ///< Mask of packets received so far
 
     // Receive-side ACK state
     /// Highest sequence number acknowledged so far.
@@ -488,10 +488,21 @@ void channel::expire(uint64_t txseq, int npackets)
     logger::debug() << this << "channel: tx seq " << txseq << " expired";
 }
 
-void channel::receive(const byte_array& msg, const link_endpoint& src)
+constexpr int maskBits = 32;
+
+void channel::receive(byte_array const& pkt, link_endpoint const& src)
 {
+    if (!is_active()) {
+        logger::warning() << this << " receive: inactive channel";
+        return;
+    }
+    if (pkt.size() < header_len) {
+        logger::warning() << this << " receive: runt packet";
+        return;
+    }
+
     // Determine the full 64-bit packet sequence number
-    uint32_t tx_seq = msg.as<big_uint32_t>()[0];
+    uint32_t tx_seq = pkt.as<big_uint32_t>()[0];
 
     channel_number pktchan = tx_seq >> 24;
     assert(pktchan == local_channel());    // Enforced by link
@@ -503,21 +514,131 @@ void channel::receive(const byte_array& msg, const link_endpoint& src)
     packet_seq_t pktseq = pimpl_->rx_sequence_ + seqdiff;
     logger::debug() << "channel: receive - rxseq " << pktseq << ", size " << pkt.size();
 
-    byte_array pkt = msg;
+    // Immediately drop too-old or already-received packets
+    static_assert(sizeof(pimpl_->rx_mask_)*8 == maskBits, "Invalid rx_mask size");
+
+    if (seqdiff > 0) {
+        if (pktseq < pimpl_->rx_sequence_) {
+            logger::warning() << "Channel receive: 64-bit wraparound detected!";
+            return;
+        }
+    } else if (seqdiff <= -maskBits) {
+        logger::debug() << "Channel receive: too-old packet dropped";
+        return;
+    } else if (seqdiff <= 0) {
+        if (pimpl_->rx_mask_ & (1 << -seqdiff)) {
+            logger::debug() << "Channel receive: duplicate packet dropped";
+            return;
+        }
+    }
+
+    byte_array msg = pkt;
     // Authenticate and decrypt the packet
-    if (!armor_->receive_decode(pktseq, pkt)) {
+    if (!armor_->receive_decode(pktseq, msg)) {
         logger::warning() << "Received packet auth failed on rx " << pktseq;
         return;
     }
 
     {
         // Log decoded packet.
-        logger::file_dump decoded(pkt);
+        logger::file_dump decoded(msg);
     }
 
-    if (channel_receive(pktseq, pkt))
+    // Record this packet as received for replay protection
+    if (seqdiff > 0) {
+        // Roll rxseq and rxmask forward appropriately.
+        pimpl_->rx_sequence_ = pktseq;
+        // @fixme This if is not necessary...
+        if (seqdiff < maskBits)
+            pimpl_->rx_mask_ = (pimpl_->rx_mask_ << seqdiff) | 1;
+        else
+            pimpl_->rx_mask_ = 1; // bit 0 = packet just received
+    } else {
+        // Set appropriate bit in rx_mask_
+        assert(seqdiff < 0 and seqdiff > -maskBits);
+        pimpl_->rx_mask_ |= (1 << -seqdiff);
+    }
+
+    // Decode the rest of the channel header
+    // This word is encrypted so take it from already decrypted byte array
+    uint32_t ack_seq = msg.as<big_uint32_t>()[1];
+
+    // Update our transmit state with the ack info in this packet
+    unsigned ackct = (ack_seq >> 24) & 0xf;
+
+    int32_t ack_diff = ((int32_t)(ack_seq << 8)
+                    - ((int32_t)pimpl_->tx_ack_sequence_ << 8))
+                    >> 8;
+    packet_seq_t ackseq = pimpl_->tx_ack_sequence_ + ack_diff;
+    logger::debug() << "channel: receive - ack seq " << ackseq;
+
+    if (ackseq >= pimpl_->tx_sequence_)
+    {
+        logger::warning() << "Channel receive: got ACK for packet seq " << ackseq
+            << " not transmitted yet";
+        return;
+    }
+
+    // Account for newly acknowledged packets
+    unsigned new_packets = 0;
+
+    if (ack_diff > 0)
+    {
+        // Received acknowledgment for one or more new packets.
+        // Roll forward tx_ack_sequence_ and tx_ack_mask_.
+        pimpl_->tx_ack_sequence_ = ackseq;
+        if (ack_diff < maskBits)
+            pimpl_->tx_ack_mask_ <<= ack_diff;
+        else
+            pimpl_->tx_ack_mask_ = 0;
+
+        // Determine the number of newly-acknowledged packets
+        // since the highest previously acknowledged sequence number.
+        // (Out-of-order ACKs are handled separately below.)
+        new_packets = min(unsigned(ack_diff), ackct+1);
+
+        logger::debug() << this << " Advanced " << ack_diff
+            << " ackct " << ackct
+            << " new_packets " << new_packets
+            << " txackseq " << pimpl_->tx_ack_sequence_;
+
+        // Record the new in-sequence packets in tx_ack_mask_ as received.
+        // (But note: ackct+1 may also include out-of-sequence pkts.)
+        pimpl_->tx_ack_mask_ |= (1 << new_packets) - 1;
+
+        // Notify the upper layer of newly-acknowledged data packets
+        for (packet_seq_t seq = pimpl_->tx_ack_sequence_ - new_packets + 1;
+                seq <= pimpl_->tx_ack_sequence_;
+                ++seq)
+        {
+            transmit_event_t& e = pimpl_->tx_events_[seq - pimpl_->tx_event_sequence_];
+            if (e.pipe_)
+            {
+                e.pipe_ = false;
+                pimpl_->tx_inflight_count_--;
+                pimpl_->tx_inflight_size_ -= e.size_;
+
+                acknowledged(seq, 1, pktseq);
+            }
+        }
+
+
+
+    }
+//-------------------------------------------------------------
+
+    // Always clamp cwnd against CWND_MAX.
+    pimpl_->cwnd = min(pimpl_->cwnd, CWND_MAX);
+
+    // Pass the received packet to the upper layer for processing.
+    // It'll return true if it wants us to ack the packet, false otherwise.
+    if (channel_receive(pktseq, msg))
         acknowledge(pktseq, true);
         // XX should still replay-protect even if no ack!
+
+    // Signal upper layer that we can transmit more, if appropriate
+    if (/*newpackets > 0 &&*/ may_transmit())
+        on_ready_transmit();
 }
 
 } // ssu namespace
