@@ -180,6 +180,7 @@ void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t
             continue;
 
         base_stream::packet p = waiting_ack_[txseq];
+        waiting_ack_.erase(txseq);
 
         logger::debug() << "stream_channel: acknowledged packet " << txseq << " of size " << p.buf.size();
         p.owner->acknowledged(this, p, rxackseq);
