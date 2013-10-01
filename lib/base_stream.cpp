@@ -760,7 +760,7 @@ void base_stream::shutdown(stream::shutdown_mode mode)
     if (fmode & to_underlying(stream::shutdown_mode::reset))
         return disconnect();    // No graceful close necessary
 
-    if (is_link_up() && !end_read_ && (fmode & to_underlying(stream::shutdown_mode::read)))
+    if (is_link_up() and !end_read_ and (fmode & to_underlying(stream::shutdown_mode::read)))
     {
         // Shutdown for reading
         rx_available_ = 0;
@@ -772,7 +772,7 @@ void base_stream::shutdown(stream::shutdown_mode mode)
         end_read_ = true;
     }
 
-    if (is_link_up() && !end_write_ && (fmode & to_underlying(stream::shutdown_mode::write)))
+    if (is_link_up() and !end_write_ and (fmode & to_underlying(stream::shutdown_mode::write)))
     {
         // Shutdown for writing
         write_data(nullptr, 0, flags::data_close);
@@ -858,7 +858,7 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
         }
     }
 
-    if (tx_immediately && channel->may_transmit())
+    if (tx_immediately and channel->may_transmit())
         channel->got_ready_transmit();
 }
 
