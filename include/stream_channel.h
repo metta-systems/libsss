@@ -41,9 +41,9 @@ class stream_channel : public channel, public stream_protocol
 
     std::unordered_map<stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace
     std::unordered_map<stream_id_t, stream_rx_attachment*> receive_sids_; // Peer's SID namespace
-    counter_t transmit_sid_counter_{0}; // Next stream counter to assign.
+    counter_t transmit_sid_counter_{1}; // Next stream counter to assign.
     counter_t transmit_sid_acked_{0};   // Last acknowledged stream counter.
-    counter_t received_sid_counter_{0};   // Last stream counter received.
+    counter_t received_sid_counter_{0}; // Last stream counter received.
 
     /// Closed stream IDs waiting for close acknowledgment.
     std::unordered_set<stream_id_t> closed_streams_;
