@@ -17,7 +17,6 @@ StreamProtocol     | stream_protocol       | proto.h        | protocol.h
 StreamAttachment   | stream_attachment     | base.h         | base_stream.h
 StreamTxAttachment | stream_tx_attachment  | base.h         | base_stream.h
 StreamRxAttachment | stream_rx_attachment  | base.h         | base_stream.h
-StreamTxRec        |                       | base.h         |
 BaseStream         | base_stream           | base.h         | base_stream.h
 StreamFlow         | stream_channel        | sflow.h        | stream_channel.h
 StreamPeer         | stream_peer           | peer.h         | private/stream_peer.h
