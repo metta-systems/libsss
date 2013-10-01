@@ -198,6 +198,20 @@ void stream_channel::missed(packet_seq_t txseq, int npackets)
 void stream_channel::expire(packet_seq_t txseq, int npackets)
 {
     logger::debug() << "stream_channel: expire " << txseq;
+    for (; npackets > 0; txseq++, npackets--)
+    {
+        // find and unconditionally remove packet when it expires
+        base_stream::packet p = waiting_ack_[txseq];
+        waiting_ack_.erase(txseq);
+
+        if (p.is_null()) {
+            logger::debug() << "Missed packet " << txseq << " but can't find it!";
+            continue;
+        }
+
+        logger::debug() << "Missed packet " << txseq << " of size " << p.payload_size();
+        p.owner->expire(this, p);
+    }
 }
 
 bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
