@@ -245,9 +245,29 @@ void base_stream::transmit_on(stream_channel* channel)
 
 void base_stream::recalculate_receive_window()
 {
-    assert(receive_buf_size_ > 0);
     logger::debug() << "Internal stream recalculate receive window";
-    receive_window_byte_ = 0x1a;
+
+    assert(receive_buf_size_ > 0);
+
+    // Calculate the current receive window size
+    size_t rwin = max(0, receive_buf_size_ - rx_buffer_used_);
+
+    // If all of our buffer usage consists of out-of-order packets,
+    // ensure that the sender can make progress toward filling the gaps.
+    // This should only ever be an issue if we shrink the receive window abruptly,
+    // leaving gaps in a formerly-large window.
+    // (It's best just to avoid shrinking the receive window abruptly.)
+    if (rx_available_ == 0 and rx_buffer_used_ > 0)
+        rwin = max(rwin, min_receive_buffer_size);
+
+    // Calculate the conservative receive window exponent
+    int i = 0;
+    while (size_t((2 << i) - 1) <= rwin)
+        i++;
+    receive_window_byte_ = i;
+
+    logger::debug() << this << " buffered " << rx_available_ << "+" << (rx_buffer_used_ - rx_available_) 
+        << ", new receive window " << rwin << ", exp " << i;
 }
 
 void base_stream::recalculate_transmit_window(uint8_t window_byte)
