@@ -108,6 +108,20 @@ void stream_channel::stop()
 {
     logger::debug() << "stream_channel: stop";
     super::stop();
+
+    // XXX clean up sending_streams_, waiting_ack_
+
+    // Detach and notify all affected streams.
+    for (auto it : transmit_sids_)
+    {
+        assert(it.second->channel_ == this);
+        it.second->clear();
+    }
+    for (auto it : receive_sids_)
+    {
+        assert(it.second->channel_ == this);
+        it.second->clear();
+    }
 }
 
 void stream_channel::enqueue_stream(base_stream* stream)
