@@ -584,9 +584,70 @@ ssize_t base_stream::read_datagram(char* data, ssize_t max_size)
     return 0;
 }
 
-ssize_t base_stream::write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable)
+ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
 {
-    return 0;
+    if (is_reliable == stream::datagram_type::reliable
+        or total_size > (ssize_t)mtu /* @fixme max_stateless_datagram_size */ )
+    {
+        // Datagram too large to send using the stateless optimization:
+        // just send it as a regular substream.
+        logger::debug() << this << " sending large datagram, size " << total_size;
+        abstract_stream *sub = open_substream();
+        if (sub == nullptr)
+            return -1;
+
+        return sub->write_data(data, total_size, flags::data_close);
+        // sub will self-destruct when sent and acked.
+    }
+
+    ssize_t remain = total_size;
+    uint8_t flags = flags::datagram_begin;
+    do {
+        // Choose the size of this fragment.
+        ssize_t size = mtu;
+        if (remain <= size) {
+            flags |= flags::datagram_end;
+            size = remain;
+        }
+
+        // Build the appropriate packet header.
+        packet p(this, packet_type::datagram);
+
+        // Assign this packet an ASN as if it were a data segment,
+        // but don't actually allocate any TSN bytes to it -
+        // this positions the datagram in FIFO order in tx_queue_.
+        // XX is this necessarily what we actually want?
+        p.tx_byte_seq = tx_byte_seq_;
+
+        // Build the datagram header.
+        p.buf.resize(channel::header_len + sizeof(datagram_header) + size);
+        auto header = p.header<datagram_header>();
+
+        // header->stream_id - later
+        header->type_subtype = type_and_subtype(packet_type::datagram, flags);
+        // header->window - later
+
+        // Copy in the application payload
+        char* payload = reinterpret_cast<char*>(header + 1);
+        memcpy(payload, data, size);
+
+        // Queue up the packet
+        tx_enqueue_packet(p);
+
+        // On to the next fragment...
+        data += size;
+        remain -= size;
+        flags &= ~flags::datagram_begin;
+    } while (remain > 0);
+
+    assert(flags & flags::datagram_end);
+
+    // Once we've enqueued all the fragments of the datagram,
+    // add our stream to our flow's transmit queue,
+    // and start transmitting immediately if possible.
+    tx_enqueue_channel(/*tx_immediately:*/true);
+
+    return total_size;
 }
 
 byte_array base_stream::read_datagram(ssize_t max_size)
