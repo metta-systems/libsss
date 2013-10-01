@@ -1086,7 +1086,7 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
 {
     assert(pkt.late);
 
-    logger::debug() << this << " Missed seq " << pkt.tx_byte_seq << " of size " << pkt.buf.size();
+    logger::debug() << this << " Missed seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
 
     switch (pkt.type)
     {
