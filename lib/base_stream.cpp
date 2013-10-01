@@ -443,7 +443,7 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
         if (has_pending_records())
         {
             // We're reading data from a queued message.
-            int64_t& headsize = rx_record_sizes_.front();
+            ssize_t& headsize = rx_record_sizes_.front();
             headsize -= size;
             assert(headsize >= 0);
 
