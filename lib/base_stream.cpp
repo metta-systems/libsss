@@ -1442,6 +1442,9 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
     auto header = as_header<attach_header>(pkt);
     bool init = (header->type_subtype & flags::attach_init) != 0;
     int slot = header->type_subtype & flags::attach_slot_mask;
+
+    static_assert(flags::attach_slot_mask == max_attachments - 1, "max_attachments value changed, need to fix some other code too.");
+
     unique_stream_id_t usid, parent_usid;
 
     logger::debug() << "Received attach packet, " << (init ? "init" : "non-init") << " attach on slot " << slot;
