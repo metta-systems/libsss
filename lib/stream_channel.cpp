@@ -129,7 +129,6 @@ void stream_channel::dequeue_stream(base_stream* stream)
     logger::debug() << "dequeue_stream " << stream;
     sending_streams_.erase(
         remove(sending_streams_.begin(), sending_streams_.end(), stream), sending_streams_.end());
-    return ;
 }
 
 bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count)
