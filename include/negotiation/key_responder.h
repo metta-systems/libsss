@@ -89,7 +89,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     friend class key_responder; // still some coupling between the two classes...
 
     std::shared_ptr<host> host_;
-    channel*              channel_;   ///< Channel for which we initiated key exchange.
+    channel*              channel_{nullptr}; ///< Channel for which we initiated key exchange.
     link_endpoint         target_;    ///< Remote endpoint we're trying to contact.
     peer_id               remote_id_; ///< Target's host id (empty if unspecified).
 
@@ -105,13 +105,13 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
      */
     enum class state {
         init1, init2, done
-    } state_;
+    } state_{state::init1};
 
     ssu::async::timer retransmit_timer_;
 
     // AES/SHA256 with DH key agreement
 
-    ssu::negotiation::dh_group_type            dh_group_;
+    ssu::negotiation::dh_group_type            dh_group_{dh_group_type::dh_group_3072};
     int                                        key_min_length_{0};
 
     // Protocol state set up before sending init1
