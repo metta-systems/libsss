@@ -541,25 +541,28 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
         p.tx_byte_seq = tx_byte_seq_;
 
         // Prepare the header
+        // Accomodate buffer space for payload
+        p.buf.resize(channel::header_len + sizeof(data_header) + size);
         auto header = p.header<data_header>();
-        p.buf.resize(p.buf.size() + size); // Accomodate buffer space for payload
-        header = p.header<data_header>(); ///@fixme resize may have moved the buffer - do it before
 
-        // header->sid - later
+        // header->stream_id - later
         header->type_subtype = flags;  // Major type filled in later
-        // header->win - later
-        // header->tsn - later
+        // header->window - later
+        // header->tx_byte_seq - later
 
-        // Advance the BSN to account for this data.
+        // Advance the byte sequence to account for this data.
         tx_byte_seq_ += size;
 
         // Copy in the application payload
-        char *payload = reinterpret_cast<char*>(header + 1);
+        char* payload = reinterpret_cast<char*>(header + 1);
         memcpy(payload, data, size);
 
         // Hold onto the packet data until it gets ACKed
         tx_waiting_ack_.insert(p.tx_byte_seq);
         tx_waiting_size_ += size;
+
+        logger::debug() << "write_data inserted " << p.tx_byte_seq << " into waiting ack, size "
+            << size << ", new count " << tx_waiting_ack_.size() << ", twaitsize " << tx_waiting_size_;
 
         // Queue up the segment for transmission ASAP
         tx_enqueue_packet(p);
@@ -568,7 +571,7 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
         data += size;
         total_size -= size;
         actual_size += size;
-    } while (total_size != 0);
+    } while (total_size > 0);
 
     if (endflags & flags::data_close)
         end_write_ = true;
