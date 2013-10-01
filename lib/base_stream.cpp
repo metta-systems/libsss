@@ -1488,21 +1488,24 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
         return true;
     }
 
-    // Stream doesn't exist - lookup parent if it's an init-attach.
-    base_stream* parent_stream{nullptr};
-
     for (auto x : channel->peer_->usid_streams_) {
         logger::debug() << "known usid " << x.first;
     }
 
-    if (init && contains(channel->peer_->usid_streams_, parent_usid)) {
+    // Stream doesn't exist - lookup parent if it's an init-attach.
+    base_stream* parent_stream{nullptr};
+
+    if (init and contains(channel->peer_->usid_streams_, parent_usid))
+    {
         parent_stream = channel->peer_->usid_streams_[parent_usid];
     }
-    if (parent_stream != NULL)
+
+    if (parent_stream)
     {
         // Found it: create and attach a child stream.
         channel->ack_sid_ = header->stream_id;
         parent_stream->rx_substream(pktseq, channel, header->stream_id, slot, usid);
+        // @todo: rx_substream() may fail to create the stream...
         return false;   // Already acked in rx_substream()
     }
 
