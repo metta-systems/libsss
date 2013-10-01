@@ -388,7 +388,7 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
         // ACK the received packet if appropriate.
         // Delay our ACK for up to min_ack_packets received non-ACK-only packets,
         // or up to max_ack_packets continuous ack-only packets.
-        ++pimpl_->rx_unacked_;
+        pimpl_->rx_unacked_ += 1;
         if (!send_ack and pimpl_->rx_unacked_ < max_ack_packets) {
             // Only ack acks occasionally,
             // and don't start the ack timer for them.
