@@ -612,9 +612,23 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
     return actual_size;
 }
 
+//-------------------------------------------------------------------------------------------------
+// Unreliable datagrams
+//-------------------------------------------------------------------------------------------------
+
+abstract_stream* base_stream::get_datagram()
+{
+    return nullptr;
+}
+
 ssize_t base_stream::read_datagram(char* data, ssize_t max_size)
 {
     return 0;
+}
+
+byte_array base_stream::read_datagram(ssize_t max_size)
+{
+    return byte_array();
 }
 
 ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
@@ -683,10 +697,7 @@ ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream
     return total_size;
 }
 
-byte_array base_stream::read_datagram(ssize_t max_size)
-{
-    return byte_array();
-}
+//-------------------------------------------------------------------------------------------------
 
 void base_stream::set_priority(int priority)
 {

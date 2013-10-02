@@ -383,6 +383,7 @@ public:
     abstract_stream* accept_substream() override;
 
     // Send and receive unordered, unreliable datagrams on this stream.
+    abstract_stream* get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
     ssize_t write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable) override;
