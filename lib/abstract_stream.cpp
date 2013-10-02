@@ -15,11 +15,8 @@ abstract_stream::abstract_stream(std::shared_ptr<host> h)
 {}
 
 void abstract_stream::set_priority(int priority)
-{}
-
-int abstract_stream::priority() const
 {
-    return 0;
+    priority_ = priority;
 }
 
 } // ssu namespace

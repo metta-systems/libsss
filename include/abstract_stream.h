@@ -195,7 +195,7 @@ public:
     /**
      * Returns the stream's current priority level.
      */
-    virtual int priority() const;
+    inline int current_priority() const { return priority_; }
 
     /**
      * Begin graceful or forceful shutdown of the stream.
@@ -226,8 +226,6 @@ public:
     boost::signals2::signal<void()> on_ready_read_record;
 
 protected:
-    inline int current_priority() const { return priority_; }
-
     void set_error(const std::string& error) {
         if (auto strm = owner_.lock()) {
             strm->set_error(error);
