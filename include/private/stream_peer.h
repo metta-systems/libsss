@@ -99,7 +99,7 @@ class stream_peer : public stream_protocol
 
 public:
     /// Supply an endpoint hint that may be useful for finding this peer.
-    void add_location_hint(const endpoint& hint);
+    void add_location_hint(endpoint const& hint);
 
     typedef boost::signals2::signal<void (void)> channel_state_signal;
     channel_state_signal on_channel_connected; ///< Primary channel connection attempt succeeded.
