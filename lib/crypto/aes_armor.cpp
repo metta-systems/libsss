@@ -85,15 +85,11 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     // @todo: wrap this into a hmac_verify() kind of helper
     crypto::hash hmac(rx_mac_key_.as_vector());
     hmac.update(byte_array::wrap((const char*)ivec.bytes.data(), 8).as_vector()); // XXX inefficient
-    hmac.update(byte_array::wrap((const char*)pkt.data(), pkt.size() - crypto::HMACLEN).as_vector()); // XXX inefficient
+    hmac.update(pkt.left(pkt.size() - crypto::HMACLEN).as_vector()); // XXX inefficient
     crypto::hash::value result;
     hmac.finalize(result);
 
-    byte_array expected_hmac;
-    expected_hmac.resize(crypto::HMACLEN);
-    std::copy(pkt.end() - crypto::HMACLEN,
-              pkt.end(),
-              expected_hmac.begin());
+    byte_array expected_hmac = pkt.right(crypto::HMACLEN);
 
     if (byte_array(result) != expected_hmac)
     {
