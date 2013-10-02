@@ -82,6 +82,7 @@ public:
      */
     enum listen_mode
     {
+        // @todo Clean up these values
         reject         = 0,    ///< Reject incoming substreams.
         buffer_limit   = 2,    ///< Accept subs up to receive buffer size.
         unlimited      = 3,    ///< Accept substreams of any size.
