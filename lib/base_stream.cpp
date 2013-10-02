@@ -503,16 +503,6 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
     return actual_size;
 }
 
-int base_stream::pending_records() const
-{
-    return rx_record_sizes_.size();
-}
-
-ssize_t base_stream::pending_record_size() const
-{
-    return has_pending_records() ? rx_record_sizes_.front() : -1;
-}
-
 ssize_t base_stream::read_record(char* data, ssize_t max_size)
 {
     if (!has_pending_records()) {
@@ -796,11 +786,6 @@ void base_stream::set_child_receive_buffer_size(size_t size)
     }
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
     child_receive_buf_size_ = size;
-}
-
-bool base_stream::is_link_up() const
-{
-    return state_ == state::connected;
 }
 
 void base_stream::shutdown(stream::shutdown_mode mode)

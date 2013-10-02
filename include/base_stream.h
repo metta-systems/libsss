@@ -100,6 +100,10 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         disconnected   ///< Connection terminated.
     };
 
+    //-------------------------------------------
+    // Helper types
+    //-------------------------------------------
+
     /**
      * @internal
      * Unit of data transmission on SSU stream.
@@ -179,29 +183,29 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         }
     };
 
+    //-------------------------------------------
+    // Connection state
+    //-------------------------------------------
+
     std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
     state state_{state::created};
     bool init_{true};
     bool top_level_{false}; ///< This is a top-level stream.
-    bool end_write_{false}; ///< Stream has closed for writing.
-    bool end_read_{false};  ///< Stream has closed for reading.
-
-    // Use deque for queues, with the limitation that push_back() and pop_front() are only used.
-    std::deque<packet> tx_queue_; ///< Transmit packets queue.
+    bool end_read_{false};  ///< Seen or forced EOF for reading.
+    bool end_write_{false}; ///< We've written EOF marker.
 
     unique_stream_id_t usid_,        ///< Unique stream ID.
                        parent_usid_; ///< Unique ID of parent stream.
+    stream_peer* peer_;              ///< Information about the other side of this connection.
 
+    //-------------------------------------------
     // Channel attachment state
+    //-------------------------------------------
+
     static constexpr int  max_attachments = 2;
     stream_tx_attachment  tx_attachments_[max_attachments];  // Our channel attachments
     stream_rx_attachment  rx_attachments_[max_attachments];  // Peer's channel attachments
     stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
-
-    /// Default receive buffer size for new top-level streams
-    static constexpr size_t default_rx_buffer_size = 65536;
-
-    stream_peer* peer_;             ///< Information about the other side of this connection.
 
     //-------------------------------------------
     // Byte transmit state
@@ -217,6 +221,8 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     bool tx_enqueued_channel_{false};
     /// Segments waiting to be ACKed.
     std::unordered_set<int32_t> tx_waiting_ack_;
+    ///< Transmit packets queue.
+    std::deque<packet> tx_queue_;
     /// Cumulative size of all segments waiting to be ACKed.
     size_t tx_waiting_size_{0};
 
@@ -224,7 +230,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     // Byte receive state
     //-------------------------------------------
 
-    // Byte-stream receive state
+    /// Default receive buffer size for new top-level streams
+    static constexpr int default_rx_buffer_size = 65536;
+
     /// Next SSN expected to arrive.
     int32_t rx_byte_seq_{0};
     /// Received bytes available.
@@ -243,27 +251,27 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Sizes of received messages.
     std::deque<ssize_t> rx_record_sizes_;
 
-    int32_t receive_buf_size_{default_rx_buffer_size};         // Recv buf size for channel control
-    int32_t child_receive_buf_size_{default_rx_buffer_size};   // Recv buf for child streams
+    int receive_buf_size_{default_rx_buffer_size};       // Recv buf size for channel control
+    int child_receive_buf_size_{default_rx_buffer_size}; // Recv buf for child streams
 
+    //-------------------------------------------
     // Substream receive state
+    //-------------------------------------------
+
     /// Received, waiting substreams.
     std::deque<abstract_stream*> received_substreams_;
 
 private:
+    // Clear out this stream's state as if preparing for deletion,
+    // without actually deleting the object yet.
     void clear();
 
+    // Connection
     void got_service_request();
     void got_service_reply();
 
-    void recalculate_receive_window();
-    void recalculate_transmit_window(uint8_t window_byte);
-
-    inline uint8_t receive_window_byte() const {
-        return receive_window_byte_;
-    }
-
     bool is_attached();
+    // Actively initiate a transmit-attachment
     void attach_for_transmit();
 
     void set_usid(unique_stream_id_t new_usid);
@@ -320,12 +328,38 @@ private:
     // Helper function to enqueue useful rx segment data.
     void rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed);
 
+    // Return the next receive window update byte
+    // for some packet we are transmitting on this stream.
+    // XX alternate between byte-window and substream-window updates.
+    inline uint8_t receive_window_byte() const {
+        return receive_window_byte_;
+    }
+
+    void recalculate_receive_window();
+    void recalculate_transmit_window(uint8_t window_byte);
+
     //-------------------------------------------
     // Signal handlers.
     //-------------------------------------------
 
+    /**
+     * We connect this signal to our stream_peer's on_channel_connected()
+     * while waiting for a channel to attach to.
+     */
     void channel_connected();
+
+    /**
+     * We connect this signal to our parent stream's on_attached() signal
+     * while we're waiting for it to attach so we can init.
+     */
     void parent_attached();
+
+    /**
+     * We connect this to the on_ready_read_record() signals
+     * of any substreams queued in our received_substreams_ list waiting to be accepted,
+     * in order to forward the indication to the client
+     * via the parent stream's on_ready_read_datagram() signal.
+     */
     void substream_read_record();
 
 public:
@@ -352,22 +386,43 @@ public:
      * @param protocol the application protocol name to connect to.
      */
     void connect_to(std::string const& service, std::string const& protocol);
+
+    /**
+     * Immediately reset a stream to the disconnected state.
+     * Outstanding buffered data may be lost.
+     */
     void disconnect();
 
+    /**
+     * Disconnect and set an error condition.
+     * @param error Error message.
+     */
     void fail(std::string const& error);
 
-    bool is_link_up() const override;
+    /**
+     * Returns true if the underlying link is currently connected and usable for data transfer.
+     */
+    inline bool is_link_up() const override {
+        return state_ == state::connected;
+    }
+
     void shutdown(stream::shutdown_mode mode) override;
 
     //-------------------------------------------
     // Reading and writing application data.
     //-------------------------------------------
 
+    // ssize_t bytes_to_write() { return tx_waiting_size_; } //XXX QIODevice relic
     ssize_t bytes_available() const override;
     bool at_end() const override; //XXX QIODevice relic
 
-    int pending_records() const override;
-    ssize_t pending_record_size() const override;
+    inline int pending_records() const override {
+        return rx_record_sizes_.size();
+    }
+
+    inline ssize_t pending_record_size() const override {
+        return has_pending_records() ? rx_record_sizes_.front() : -1;
+    }
 
     ssize_t read_record(char* data, ssize_t max_size) override;
     byte_array read_record(ssize_t max_size) override;
@@ -392,6 +447,9 @@ public:
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
 
+    /**
+     * Dump the state of this stream, for debugging purposes.
+     */
     void dump() override;
 
     /**
