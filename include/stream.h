@@ -421,7 +421,7 @@ public:
     /**
      * Returns the stream's current priority level.
      */
-    int priority() const;
+    int current_priority() const;
 
     /**
      * Begin graceful or forceful shutdown of the stream.
