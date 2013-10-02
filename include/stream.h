@@ -17,7 +17,7 @@
 namespace ssu {
 
 class host;
-class base_stream;
+class abstract_stream;
 class stream_peer;
 class channel;
 class server;
@@ -67,13 +67,10 @@ class server;
  */
 class stream : public std::enable_shared_from_this<stream>
 {
-    friend class abstract_stream; // @todo get rid of this. only used for set_error()
-    friend class base_stream; // @todo get rid of this.
-
     std::shared_ptr<host> host_;
-    base_stream* stream_{nullptr};
+    abstract_stream* stream_{nullptr};
 
-    stream(base_stream* other_stream); friend class server;
+    stream(abstract_stream* other_stream, stream* parent = nullptr); friend class server;
 
 public:
     /**
@@ -202,7 +199,7 @@ public:
      * the available data if there are message/record markers present in the read stream.
      * @return Number of bytes available.
      */
-    size_t bytes_available() const;
+    ssize_t bytes_available() const;
 
     /// Returns true if at least one byte is available for reading.
     inline bool has_bytes_available() const {
@@ -235,18 +232,23 @@ public:
      *      Returns zero if there is no error condition
      *      but no bytes are immediately available for reading.
      */
-    ssize_t read_data(char* data, size_t max_size);
+    ssize_t read_data(char* data, ssize_t max_size);
 
     /**
      * Read up to maxSize bytes of data into a QByteArray.
      * @overload
      */
-    byte_array read_data(size_t max_size = 1 << 30);
+    byte_array read_data(ssize_t max_size = 1 << 30);
 
     /**
      * Return number of complete records currently available for reading.
      */
     int pending_records() const;
+
+    /**
+     * Return size of the first available record.
+     */
+    ssize_t pending_record_size() const;
 
     /**
      * Return true if at least one complete record is currently available for reading.
@@ -268,7 +270,7 @@ public:
      *      Returns zero if there is no error condition
      *      but no complete message is available for reading.
      */
-    ssize_t read_record(char* data, size_t max_size);
+    ssize_t read_record(char* data, ssize_t max_size);
 
     /**
      * Read a complete message into a new QByteArray.
@@ -279,7 +281,7 @@ public:
      *      or there are no messages to receive.
      * @overload
      */
-    byte_array read_record(size_t max_size = 1 << 30);
+    byte_array read_record(ssize_t max_size = 1 << 30);
 
     //===============================================================
     // Byte-oriented data transfer.
@@ -294,7 +296,7 @@ public:
      * @return the number of bytes written (same as the size parameter),
      *      or -1 if an error occurred.
      */
-    ssize_t write_data(const char* data, size_t size);
+    ssize_t write_data(const char* data, ssize_t size);
 
     /** Write a message to a stream.
      * Writes the data in the supplied buffer
@@ -312,7 +314,7 @@ public:
      * @return the number of bytes written (same as the size parameter),
      *      or -1 if an error occurred.
      */
-    ssize_t write_record(const char* data, size_t size);
+    ssize_t write_record(const char* data, ssize_t size);
 
     /** Write a message to a stream.
      * @param msg a QByteArray containing the message to write.
@@ -449,9 +451,9 @@ public:
     inline void close() { shutdown(shutdown_mode::close); }
 
     /// Control the receive buffer size for this stream.
-    void set_receive_buffer_size(size_t size);
+    void set_receive_buffer_size(ssize_t size);
     /// Control the initial receive buffer size for new child streams.
-    void set_child_receive_buffer_size(size_t size);
+    void set_child_receive_buffer_size(ssize_t size);
 
     /**
      * Give the stream layer a location hint for a specific EID,
@@ -495,7 +497,6 @@ public:
     error_signal on_error_notify;
     error_signal on_reset_notify;
 
-protected:
     // Set an error condition on this stream and emit the error_notify signal.
     void set_error(const std::string& error);
 };
