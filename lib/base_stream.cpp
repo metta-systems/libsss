@@ -1517,8 +1517,35 @@ bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stre
     channel->acknowledge(pktseq, false);
 
     logger::warning() << "rx_ack_packet ...";
-    // auto header = as_header<ack_header>(pkt);
-    return false;
+    auto header = as_header<ack_header>(pkt);
+
+    // Look up the stream the data packet belongs to.
+    // The SID field in an Ack packet is in our transmit SID space,
+    // because it reflects data our peer is receiving.
+    if (!contains(channel->transmit_sids_, header->stream_id))
+    {
+        // The reference SID supposedly in our own space is invalid!
+        // Respond with a reset indicating that SID in our space.
+        // Ack the pktseq first so peer won't ignore the reset!
+        logger::debug() << "rx_ack_packet: unknown stream ID " << header->stream_id;
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+        return false;
+    }
+
+    stream_attachment* attach = channel->transmit_sids_[header->stream_id];
+
+    if (pktseq < attach->sid_seq_)
+    {
+        logger::debug() << "rx_ack_packet: stale packet - pktseq " << pktseq
+            << " sidseq " << attach->sid_seq_;
+        return false;   // silently drop stale packet
+    }
+
+    // Process the transmit window update.
+    attach->stream_->recalculate_transmit_window(header->window);
+
+    return false; // Do not acknowledge.
 }
 
 /**
