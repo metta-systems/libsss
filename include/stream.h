@@ -425,20 +425,18 @@ public:
 
     /**
      * Begin graceful or forceful shutdown of the stream.
-     * If this internal stream control object is lingering -
-     * i.e., if its 'owner' back-pointer is NULL -
-     * then it should self-destruct once the shutdown is complete.
+     * If this internal stream control object is lingering - i.e., if its 'owner_'
+     * back-pointer is NULL - then it should self-destruct once the shutdown is complete.
      *
-     * To close the stream gracefully in either or both directions,
-     * specify read, write, or read|write for the @a mode argument.
-     * Closing the stream in the write direction 
-     * writes the end-of-stream marker to our end of the stream,
-     * indicating to our peer that no more data will arrive from us.
-     * Closing the stream in the read direction discards any data
-     * waiting to be read or subsequently received from the peer.
+     * To close the stream gracefully in either or both directions, specify read, write,
+     * or read|write for the @a mode argument.
+     * Closing the stream in the write direction writes the end-of-stream marker to our
+     * end of the stream, indicating to our peer that no more data will arrive from us.
+     * Closing the stream in the read direction discards any data waiting to be read or
+     * subsequently received from the peer.
      * Specify a mode of @a reset to shutdown the stream immediately;
      * written data that is still queued or in transit may be lost.
-     * 
+     *
      * @param mode which part of the stream to close:
      *      either read, write, close (read|write), or reset.
      */
