@@ -9,6 +9,7 @@ set(simulator_SOURCES
 add_library(ssu STATIC 
     abstract_stream.cpp
     base_stream.cpp
+    datagram_stream.cpp
     channel.cpp
     crypto/aes_armor.cpp
     crypto/aes_128_ctr.cpp
