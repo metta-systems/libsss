@@ -9,6 +9,7 @@
 #include "server.h"
 #include "stream.h"
 #include "logging.h"
+#include "base_stream.h"
 
 namespace ssu {
 
