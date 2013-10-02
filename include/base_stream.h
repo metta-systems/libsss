@@ -24,9 +24,9 @@ class stream_channel;
 class stream_attachment : public stream_protocol
 {
 public:
-    base_stream*     stream_{0};    ///< Our stream.
-    stream_channel*  channel_{0};   ///< Channel our stream is attached to.
-    stream_id_t      stream_id_{0}; ///< Our stream ID in this channel.
+    base_stream*     stream_{nullptr};  ///< Our stream.
+    stream_channel*  channel_{nullptr}; ///< Channel our stream is attached to.
+    stream_id_t      stream_id_{0};     ///< Our stream ID in this channel.
     packet_seq_t     sid_seq_{~0ULL};   ///< Reference packet sequence for stream ID.
 };
 
@@ -198,6 +198,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     stream_rx_attachment  rx_attachments_[max_attachments];  // Peer's channel attachments
     stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
 
+    /// Default receive buffer size for new top-level streams
     static constexpr size_t default_rx_buffer_size = 65536;
 
     stream_peer* peer_;             ///< Information about the other side of this connection.
