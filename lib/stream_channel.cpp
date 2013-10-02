@@ -33,6 +33,8 @@ stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const p
     // Listen on the root stream for top-level application streams
     root_->listen(stream::listen_mode::unlimited);
 
+    // @todo Channel IDs
+
     on_ready_transmit.connect(boost::bind(&stream_channel::got_ready_transmit, this));
     on_link_status_changed.connect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
 }

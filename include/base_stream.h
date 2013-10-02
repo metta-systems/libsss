@@ -316,7 +316,7 @@ private:
     base_stream* rx_substream(packet_seq_t pktseq, stream_channel* channel,
         stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
 
-    /// Helper function to enqueue useful rx segment data.
+    // Helper function to enqueue useful rx segment data.
     void rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed);
 
     //-------------------------------------------
@@ -339,7 +339,9 @@ public:
     base_stream(std::shared_ptr<host> h, peer_id const& peer, std::shared_ptr<base_stream> parent);
     virtual ~base_stream();
 
-    void fail(std::string const& error);
+    //-------------------------------------------
+    // Stream online status.
+    //-------------------------------------------
 
     /**
      * Connect to a given service on a remote host.
@@ -351,24 +353,45 @@ public:
     void connect_to(std::string const& service, std::string const& protocol);
     void disconnect();
 
-    ssize_t bytes_available() const override;
-    bool at_end() const override; //XXX QIODevice relic
-    ssize_t read_data(char* data, ssize_t max_size) override;
-    int pending_records() const override;
-    ssize_t pending_record_size() const override;
-    ssize_t read_record(char* data, ssize_t max_size) override;
-    byte_array read_record(ssize_t max_size) override;
-    ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) override;
-    ssize_t read_datagram(char* data, ssize_t max_size) override;
-    ssize_t write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable) override;
-    byte_array read_datagram(ssize_t max_size) override;
-    abstract_stream* open_substream() override;
-    abstract_stream* accept_substream() override;
+    void fail(std::string const& error);
+
     bool is_link_up() const override;
     void shutdown(stream::shutdown_mode mode) override;
+
+    //-------------------------------------------
+    // Reading and writing application data.
+    //-------------------------------------------
+
+    ssize_t bytes_available() const override;
+    bool at_end() const override; //XXX QIODevice relic
+
+    int pending_records() const override;
+    ssize_t pending_record_size() const override;
+
+    ssize_t read_record(char* data, ssize_t max_size) override;
+    byte_array read_record(ssize_t max_size) override;
+
+    ssize_t read_data(char* data, ssize_t max_size) override;
+    ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) override;
+
+    //-------------------------------------------
+    // Substreams.
+    //-------------------------------------------
+
+    // Initiate or accept substreams
+    abstract_stream* open_substream() override;
+    abstract_stream* accept_substream() override;
+
+    // Send and receive unordered, unreliable datagrams on this stream.
+    ssize_t read_datagram(char* data, ssize_t max_size) override;
+    byte_array read_datagram(ssize_t max_size) override;
+    ssize_t write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable) override;
+
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
+
     void dump() override;
+
     /**
      * Set the stream's transmit priority level.
      * This method overrides abstract_stream's default method

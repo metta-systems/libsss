@@ -196,7 +196,9 @@ void base_stream::transmit_on(stream_channel* channel)
 
         shared_ptr<base_stream> parent = parent_.lock();
 
-        if (init_ and parent and parent->tx_current_attachment_
+        if (init_
+                and parent
+                and parent->tx_current_attachment_
                 and parent->tx_current_attachment_->channel_ == channel
                 and parent->tx_current_attachment_->is_active()
                 and usid_.half_channel_id_ == channel->tx_channel_id()
@@ -266,7 +268,8 @@ void base_stream::recalculate_receive_window()
         i++;
     receive_window_byte_ = i;
 
-    logger::debug() << this << " buffered " << rx_available_ << "+" << (rx_buffer_used_ - rx_available_) 
+    logger::debug() << this << " buffered "
+        << rx_available_ << "+" << (rx_buffer_used_ - rx_available_) 
         << ", new receive window " << rwin << ", exp " << i;
 }
 
@@ -325,8 +328,9 @@ void base_stream::attach_for_transmit()
     }
 
     // If we're disconnected, we'll never need to attach again...
-    if (state_ == state::disconnected)
+    if (state_ == state::disconnected) {
         return;
+    }
 
     logger::debug() << "Internal stream attaching for transmission";
 
@@ -404,8 +408,9 @@ void base_stream::attach_for_transmit()
 
     assert(!contains(channel->sending_streams_, this));
     tx_enqueue_channel();
-    if (channel->may_transmit())
+    if (channel->may_transmit()) {
         channel->on_ready_transmit();
+    }
 }
 
 void base_stream::set_usid(unique_stream_id_t new_usid)
@@ -413,21 +418,26 @@ void base_stream::set_usid(unique_stream_id_t new_usid)
     assert(usid_.is_empty());
     assert(!new_usid.is_empty());
 
-    if (contains(peer_->usid_streams_, new_usid))
+    if (contains(peer_->usid_streams_, new_usid)) {
         logger::warning() << "Internal stream set_usid passed a duplicate stream USID " << new_usid;
+    }
 
     usid_ = new_usid;
     peer_->usid_streams_.insert(make_pair(usid_, this));
 }
 
+//-------------------------------------------------------------------------------------------------
+// Reading and writing application data.
+//-------------------------------------------------------------------------------------------------
+
 ssize_t base_stream::bytes_available() const
 {
-    return 0;
+    return rx_available_;
 }
 
 bool base_stream::at_end() const
 {
-    return true;
+    return end_read_; // @todo separate read and write end markers?
 }
 
 ssize_t base_stream::read_data(char* data, ssize_t max_size)
@@ -444,7 +454,7 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
         ssize_t size = rseg.segment_size();
         assert(size >= 0);
 
-        // XXX BUG: this breaks if we try to read a partial segment!
+        // @fixme BUG: this breaks if we try to read a partial segment!
         assert(max_size >= size);
 
         // Copy the data (or just drop it if data == nullptr).
@@ -481,8 +491,9 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
         }
 
         // If this segment has the end-marker set, that's it...
-        if (rseg.flags() & flags::data_close)
+        if (rseg.flags() & flags::data_close) {
             shutdown(stream::shutdown_mode::read);
+        }
     }
 
     // Recalculate the receive window, now that we've (presumably) freed some buffer space.
@@ -503,8 +514,9 @@ ssize_t base_stream::pending_record_size() const
 
 ssize_t base_stream::read_record(char* data, ssize_t max_size)
 {
-    if (!has_pending_records())
+    if (!has_pending_records()) {
         return -1;  // No complete records available
+    }
 
     // Read as much of the next queued message as we have room for
     size_t rx_message_count_before = rx_record_sizes_.size();
@@ -525,8 +537,9 @@ ssize_t base_stream::read_record(char* data, ssize_t max_size)
 byte_array base_stream::read_record(ssize_t max_size)
 {
     ssize_t rec_size = pending_record_size();
-    if (rec_size <= 0)
+    if (rec_size <= 0) {
         return byte_array(); // No complete messages available
+    }
 
     // Read the next message into a new byte array
     byte_array buf;
@@ -691,6 +704,10 @@ void base_stream::set_priority(int priority)
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+// Substreams.
+//-------------------------------------------------------------------------------------------------
+
 // @todo Return unique_ptr?
 abstract_stream* base_stream::open_substream()
 {
@@ -723,10 +740,7 @@ abstract_stream* base_stream::accept_substream()
     return sub;
 }
 
-bool base_stream::is_link_up() const
-{
-    return state_ == state::connected;
-}
+//-------------------------------------------------------------------------------------------------
 
 void base_stream::set_receive_buffer_size(size_t size)
 {
@@ -746,6 +760,11 @@ void base_stream::set_child_receive_buffer_size(size_t size)
     }
     logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
     child_receive_buf_size_ = size;
+}
+
+bool base_stream::is_link_up() const
+{
+    return state_ == state::connected;
 }
 
 void base_stream::shutdown(stream::shutdown_mode mode)

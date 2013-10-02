@@ -70,6 +70,8 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     // my_stream->write_data("test1", 6);
 
     sim->run();
+
+    logger::debug() << "<<< shutdown from this point on";
 }
 
 BOOST_AUTO_TEST_CASE(connect_wrong_service)
