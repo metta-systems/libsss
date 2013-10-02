@@ -333,9 +333,9 @@ public:
         reliable = 1
     };
 
-    ssize_t read_datagram(char* data, size_t max_size);
-    byte_array read_datagram(size_t max_size = 1 << 30);
-    ssize_t write_datagram(const char* data, size_t size,
+    ssize_t read_datagram(char* data, ssize_t max_size);
+    byte_array read_datagram(ssize_t max_size = 1 << 30);
+    ssize_t write_datagram(const char* data, ssize_t size,
         datagram_type is_reliable);
     inline ssize_t write_datagram(const byte_array& dgm,
         datagram_type is_reliable)
