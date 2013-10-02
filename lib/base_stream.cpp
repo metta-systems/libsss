@@ -1411,7 +1411,7 @@ bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, str
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::warning() << "rx_data_packet ...";
+    logger::debug() << "rx_data_packet ...";
     auto header = as_header<data_header>(pkt);
 
     if (!contains(channel->receive_sids_, header->stream_id))
@@ -1446,7 +1446,7 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::warning() << "rx_datagram_packet ...";
+    logger::debug() << "rx_datagram_packet ...";
     auto header = as_header<datagram_header>(pkt);
 
     // Look up the stream for which the datagram is a substream.
@@ -1516,7 +1516,7 @@ bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stre
     // but do NOT send another ack just to ack this ack!
     channel->acknowledge(pktseq, false);
 
-    logger::warning() << "rx_ack_packet ...";
+    logger::debug() << "rx_ack_packet ...";
     auto header = as_header<ack_header>(pkt);
 
     // Look up the stream the data packet belongs to.
