@@ -48,8 +48,12 @@ public:
         return pos_ >= size();
     }
 
-    int pending_records() const override;
-    ssize_t pending_record_size() const override;
+    int pending_records() const override {
+        return (size() > pos_) ? 1 : 0;
+    }
+    ssize_t pending_record_size() const override {
+        return remain();
+    }
 
     ssize_t read_record(char* data, ssize_t max_size) override;
     byte_array read_record(ssize_t max_size) override;

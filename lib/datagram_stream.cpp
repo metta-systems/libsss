@@ -18,31 +18,47 @@ namespace ssu {
 //=================================================================================================
 
 void datagram_stream::shutdown(stream::shutdown_mode mode)
-{}
-
-int datagram_stream::pending_records() const
 {
-    return 0;
-}
+    if (mode != stream::shutdown_mode::write)
+        pos_ = size();
 
-ssize_t datagram_stream::pending_record_size() const
-{
-    return 0;
+    if (owner_.expired())
+    {
+        logger::fatal() << this << " datagram_stream self-destructing";
+        // delete this; // @fixme properly delete the object
+    }
 }
 
 ssize_t datagram_stream::read_record(char* data, ssize_t max_size)
 {
-    return -1;
+    // A datagram can contain only one message by definition.
+    // So read whatever of it the caller wants and discard the rest.
+    int actual_size = datagram_stream::read_data(data, max_size);
+    pos_ = size();
+    return actual_size;
 }
 
 byte_array datagram_stream::read_record(ssize_t max_size)
 {
-    return byte_array();
+    if (pos_ == 0 and max_size >= size())
+    {
+        // The quick and easy case...
+        pos_ = size();
+        return payload_;
+    }
+
+    ssize_t actual_size = min(remain(), max_size);
+    byte_array buf(payload_.mid(pos_, actual_size));
+    pos_ += actual_size;
+    return buf;
 }
 
 ssize_t datagram_stream::read_data(char* data, ssize_t max_size)
 {
-    return -1;
+    ssize_t actual_size = min(remain(), max_size);
+    memcpy(data, payload_.const_data() + pos_, actual_size);
+    pos_ += actual_size;
+    return actual_size;
 }
 
 ssize_t datagram_stream::write_data(const char* data, ssize_t size, uint8_t endflags)
