@@ -47,35 +47,43 @@ ssize_t datagram_stream::read_data(char* data, ssize_t max_size)
 
 ssize_t datagram_stream::write_data(const char* data, ssize_t size, uint8_t endflags)
 {
+    set_error("Can't write to ephemeral datagram-streams");
     return -1;
 }
 
 abstract_stream* datagram_stream::open_substream()
 {
+    set_error("Ephemeral datagram-streams cannot have substreams");
     return nullptr;
 }
 
 abstract_stream* datagram_stream::accept_substream()
 {
+    set_error("Ephemeral datagram-streams cannot have substreams");
     return nullptr;
 }
 
 ssize_t datagram_stream::read_datagram(char* data, ssize_t max_size)
 {
+    set_error("Ephemeral datagram-streams cannot have sub-datagrams");
     return -1;
 }
 
 byte_array datagram_stream::read_datagram(ssize_t max_size)
 {
+    set_error("Ephemeral datagram-streams cannot have sub-datagrams");
     return byte_array();
 }
 
 ssize_t datagram_stream::write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable)
 {
+    set_error("Ephemeral datagram-streams cannot have sub-datagrams");
     return -1;
 }
 
 void datagram_stream::dump()
-{}
+{
+    logger::debug() << this << " datagram_stream - size " << size() << ", pos " << pos_;
+}
 
 } // ssu namespace
