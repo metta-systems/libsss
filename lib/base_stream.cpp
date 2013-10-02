@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "base_stream.h"
+#include "datagram_stream.h"
 #include "logging.h"
 #include "host.h"
 #include "private/stream_peer.h"
@@ -618,17 +619,41 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
 
 abstract_stream* base_stream::get_datagram()
 {
+    // Scan through the list of queued substreams
+    // for one with a complete record waiting to be read.
+    for (size_t i = 0; i < received_substreams_.size(); i++)
+    {
+        abstract_stream* sub = received_substreams_[i];
+        if (!sub->has_pending_records())
+            continue;
+        received_substreams_.erase(received_substreams_.begin() + i);
+        return sub;
+    }
+
+    set_error("No datagrams available for reading");
     return nullptr;
 }
 
 ssize_t base_stream::read_datagram(char* data, ssize_t max_size)
 {
-    return 0;
+    abstract_stream* sub = get_datagram();
+    if (!sub)
+        return -1;
+
+    ssize_t actual_size = sub->read_data(data, max_size);
+    sub->shutdown(stream::shutdown_mode::reset);   // sub will self-destruct
+    return actual_size;
 }
 
 byte_array base_stream::read_datagram(ssize_t max_size)
 {
-    return byte_array();
+    abstract_stream* sub = get_datagram();
+    if (!sub)
+        return byte_array();
+
+    byte_array data = sub->read_record(max_size);
+    sub->shutdown(stream::shutdown_mode::reset);   // sub will self-destruct
+    return data;
 }
 
 ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
@@ -1421,9 +1446,63 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::warning() << "rx_datagram_packet UNIMPLEMENTED.";
-    // auto header = as_header<datagram_header>(pkt);
-    return false;
+    logger::warning() << "rx_datagram_packet ...";
+    auto header = as_header<datagram_header>(pkt);
+
+    // Look up the stream for which the datagram is a substream.
+    if (!contains(channel->receive_sids_, header->stream_id))
+    {
+        // Respond with a reset for the unknown stream ID.
+        // Ack the pktseq first so peer won't ignore the reset!
+        logger::debug() << "rx_datagram_packet: unknown stream ID " << header->stream_id;
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+        return false;
+    }
+
+    stream_attachment* attach = channel->receive_sids_[header->stream_id];
+
+    channel->ack_sid_ = header->stream_id; // @fixme Why do we update ack_sid here?
+
+    if (pktseq < attach->sid_seq_)
+    {
+        logger::debug() << "rx_datagram_packet: stale packet - pktseq " << pktseq
+            << " sidseq " << attach->sid_seq_;
+        return false;   // silently drop stale packet
+    }
+
+    base_stream* base = attach->stream_;
+
+    if (base->state_ != state::connected)
+    {
+        // Only accept datagrams while connected
+        channel->acknowledge(pktseq, false);
+        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+        return false;
+    }
+
+    int flags = header->type_subtype;
+
+    if (!(flags & flags::datagram_begin) or !(flags & flags::datagram_end))
+    {
+        // @todo Fix datagram reassembly.
+        logger::fatal() << "OOPS, don't yet know how to reassemble datagrams";
+        return false;
+    }
+
+    // Build a pseudo-Stream object encapsulating the datagram.
+    datagram_stream* dgram = new datagram_stream(base->host_, pkt, datagram_header_len_min);
+    base->received_substreams_.push_back(dgram);
+
+    // Don't need to connect to the sub's on_ready_read_record() signal
+    // because we already know the sub is completely received...
+    if (auto stream = base->owner_.lock())
+    {
+        stream->on_new_substream();
+        stream->on_ready_read_datagram();
+    }
+
+    return true;    // Acknowledge the packet
 }
 
 bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
