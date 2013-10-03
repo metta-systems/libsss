@@ -102,18 +102,27 @@ bool stream::connect_to(peer_id const& destination,
         assert(!eid.is_empty());
     }
 
-    logger::debug() << "Connecting to peer with id " << eid;
-
     disconnect();
 
+    logger::debug() << "Connecting to peer with id " << eid;
+
+    // Create a top-level application stream object for this connection.
     auto base = make_shared<base_stream>(host_, eid, nullptr);
     base->owner_ = shared_from_this();
     base->self_ = base; // Self-reference for the base_stream to stay around until finished.
     stream_ = base;
 
+    // Get our link status signal hooked up, if it needs to be.
+    connect_link_status_signal();
+
     // Start the actual network connection process
     base->connect_to(service, protocol);
 
+    // We allow the client to start "sending" data immediately
+    // even before the stream has fully connected.
+    // setOpenMode(ReadWrite | Unbuffered);
+
+    // If we were given a location hint, record it for setting up channels.
     if (destination_endpoint_hint != endpoint())
         connect_at(destination_endpoint_hint);
 
