@@ -652,7 +652,7 @@ byte_array base_stream::read_datagram(ssize_t max_size)
 ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
 {
     if (is_reliable == stream::datagram_type::reliable
-        or total_size > (ssize_t)mtu /* @fixme max_stateless_datagram_size */ )
+        or total_size > (ssize_t)max_stateless_datagram_size)
     {
         // Datagram too large to send using the stateless optimization:
         // just send it as a regular substream.
