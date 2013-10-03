@@ -33,7 +33,7 @@ class stream_peer;
  * compatibility, and makes it easy to implement service/protocol negotiation
  * for top-level application streams by extending this class.
  *
- * @see base_stream, connect_stream
+ * @see base_stream
  */
 class abstract_stream : public stream_protocol
 {
@@ -46,8 +46,8 @@ protected:
     peer_id peerid_;                ///< EID of peer we're connected to.
 
 private:
-    int                 priority_;    ///< Current priority level
-    stream::listen_mode listen_mode_; ///< Listen for substreams.
+    int                 priority_{0};    ///< Current priority level
+    stream::listen_mode listen_mode_{stream::listen_mode::reject}; ///< Listen for substreams.
 
 public:
     /**
@@ -55,19 +55,93 @@ public:
      */
     abstract_stream(std::shared_ptr<host> h);
 
+    /**
+     * Returns the endpoint identifier of the local host
+     * as used in connecting the current stream.
+     * Only valid if the stream is connected.
+     */
+    peer_id local_host_id() const;
+
+    /**
+     * Returns the endpoint identifier of the remote host
+     * to which this stream is connected.
+     */
+    peer_id remote_host_id() const;
+
+    /**
+     * Returns true if the underlying link is currently connected
+     * and usable for data transfer.
+     */
+    virtual bool is_link_up() const = 0;
+
+    /** 
+     * Set the stream's transmit priority level.
+     * When the application has multiple streams
+     * with data ready to transmit to the same remote host,
+     * SST uses the respective streams' priority levels
+     * to determine which data to transmit first.
+     * SST gives strict preference to streams with higher priority
+     * over streams with lower priority,
+     * but it divides available transmit bandwidth evenly
+     * among streams with the same priority level.
+     * All streams have a default priority of zero on creation.
+     * @param priority the new priority level for the stream,
+     *  higher values of priority mean higher transmit preference.
+     *  e.g. stream with priority 1 has higher preference than stream
+     *  with default priority 0.
+     */
+    virtual void set_priority(int priority);
+
+    /**
+     * Returns the stream's current priority level.
+     */
+    inline int current_priority() const { return priority_; }
+
     //===============================================================
     // Byte-oriented data transfer.
     // Reading data.
     //===============================================================
 
+    /**
+     * Read up to max_size bytes of data from the stream.
+     * This method only returns data that has already been received
+     * and is waiting to be read:
+     * it never blocks waiting for new data to arrive on the network.
+     * A single read_data() call never crosses a record boundary:
+     * if it encounters a record marker in the incoming byte stream,
+     * it returns only the bytes up to that record marker
+     * and leaves any further data for subsequent read_data() calls.
+     *
+     * @param data the buffer into which to read.
+     *      This parameter may be NULL,
+     *      in which case the data read is simply discarded.
+     * @param max_size the maximum number of bytes to read.
+     * @return the number of bytes read, or -1 if an error occurred.
+     *      Returns zero if there is no error condition
+     *      but no bytes are immediately available for reading.
+     */
+    virtual ssize_t read_data(char* data, ssize_t max_size) = 0;
+
+    /**
+     * Determine the number of bytes currently available to be read via read_data().
+     * Note that calling read_data() with a buffer this large may not read all the available data
+     * if there are record markers present in the read stream.
+     */
     virtual ssize_t bytes_available() const = 0;
+
+    /**
+     * Returns true if at least one byte is available for reading.
+     */
     inline bool has_bytes_available() const {
         return bytes_available() > 0;
     }
 
+    /**
+     * Returns true if all data has been read from the stream
+     * and the remote host has closed its end:
+     * no more data will ever be available for reading on this stream.
+     */
     virtual bool at_end() const = 0; //XXX QIODevice relic
-
-    virtual ssize_t read_data(char* data, ssize_t max_size) = 0;
 
     /**
      * Return number of complete records currently available for reading.
@@ -81,9 +155,28 @@ public:
         return pending_records() > 0;
     }
 
+    /**
+     * Determine the number of message/record markers
+     * that have been received over the network but not yet read.
+     */
     virtual ssize_t pending_record_size() const = 0;
 
+    /**
+     * Read a complete record all at once.
+     * Reads up to the next record marker (or end of stream).
+     * If no record marker has arrived yet, just returns without reading anything.
+     * If the next record to be read is larger than max_size,
+     * this method simply discards the record data beyond max_size.
+     * @param data the buffer into which to read the record.
+     * @param max_size the maximum size of the record to read.
+     * @return the size of the record read, or -1 if an error occurred.
+     *      Returns zero if there is no error condition
+     *      but no complete record is available for reading.
+     */
     virtual ssize_t read_record(char* data, ssize_t max_size) = 0;
+    /**
+     * @overload
+     */
     virtual byte_array read_record(ssize_t max_size) = 0;
 
     //===============================================================
@@ -91,6 +184,16 @@ public:
     // Writing data.
     //===============================================================
 
+    /**
+     * Write data bytes to a stream.
+     * If not all the supplied data can be transmitted immediately,
+     * it is queued locally until ready to transmit.
+     * @param data the buffer containing the bytes to write.
+     * @param size the number of bytes to write.
+     * @param endflags flags to finish transmission.
+     * @return the number of bytes written (same as the size parameter),
+     *      or -1 if an error occurred.
+     */
     virtual ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) = 0;
 
     virtual ssize_t write_record(const char* data, ssize_t size) {
@@ -147,55 +250,13 @@ public:
     /**
      * Accept a waiting incoming substream.
      *
-     * @return NULL if no incoming substreams are waiting.
+     * @return Null shared_ptr if no incoming substreams are waiting.
      */
     virtual std::shared_ptr<abstract_stream> accept_substream() = 0;
 
     //===============================================================
     // Stream control.
     //===============================================================
-
-    /**
-     * Returns the endpoint identifier of the local host
-     * as used in connecting the current stream.
-     * Only valid if the stream is connected.
-     */
-    peer_id local_host_id() const;
-
-    /**
-     * Returns the endpoint identifier of the remote host
-     * to which this stream is connected.
-     */
-    peer_id remote_host_id() const;
-
-    /**
-     * Returns true if the underlying link is currently connected
-     * and usable for data transfer.
-     */
-    virtual bool is_link_up() const = 0;
-
-    /** 
-     * Set the stream's transmit priority level.
-     * When the application has multiple streams
-     * with data ready to transmit to the same remote host,
-     * SST uses the respective streams' priority levels
-     * to determine which data to transmit first.
-     * SST gives strict preference to streams with higher priority
-     * over streams with lower priority,
-     * but it divides available transmit bandwidth evenly
-     * among streams with the same priority level.
-     * All streams have a default priority of zero on creation.
-     * @param priority the new priority level for the stream,
-     *  higher values of priority mean higher transmit preference.
-     *  e.g. stream with priority 1 has higher preference than stream
-     *  with default priority 0.
-     */
-    virtual void set_priority(int priority);
-
-    /**
-     * Returns the stream's current priority level.
-     */
-    inline int current_priority() const { return priority_; }
 
     /**
      * Begin graceful or forceful shutdown of the stream.
@@ -226,9 +287,12 @@ public:
     boost::signals2::signal<void()> on_ready_read_record;
 
 protected:
-    void set_error(const std::string& error) {
-        if (auto strm = owner_.lock()) {
-            strm->set_error(error);
+    /**
+     * Set an error condition including an error description string.
+     */
+    inline void set_error(const std::string& error) {
+        if (auto stream = owner_.lock()) {
+            stream->set_error(error);
         }
     }
 };
