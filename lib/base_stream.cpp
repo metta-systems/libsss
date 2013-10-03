@@ -1853,8 +1853,9 @@ base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
         received_substreams_.push_back(new_stream);
         new_stream->on_ready_read_record.connect(
             boost::bind(&base_stream::substream_read_record, this));
-        if (auto stream = owner_.lock())
+        if (auto stream = owner_.lock()) {
             stream->on_new_substream();
+        }
     }
 
     return new_stream;
