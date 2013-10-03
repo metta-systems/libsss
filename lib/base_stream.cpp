@@ -76,7 +76,7 @@ void base_stream::clear()
     // De-register us from our peer
     if (peer_)
     {
-        if (peer_->usid_streams_.at(usid_) == this)
+        if (peer_->usid_streams_.at(usid_) == this) //@fixme at() may throw...
             peer_->usid_streams_.erase(usid_);
         peer_->all_streams_.erase(this);
         peer_ = nullptr;
