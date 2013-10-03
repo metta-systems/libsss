@@ -21,7 +21,7 @@ namespace ssu {
 class base_stream;
 class stream_channel;
 
-// namespace private_ {
+// namespace internal {
 
 /**
  * Private helper class to keep information about a peer we are trying to establish connection with.
@@ -49,12 +49,12 @@ class stream_peer : public stream_protocol
     std::shared_ptr<host> host_;               ///< Per-host state.
     const peer_id         remote_id_;          ///< Host ID of target.
     stream_channel*       primary_channel_{0}; ///< Current primary channel.
-    int                   stall_warnings_{0};
+    int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
 
     // Routing state:
-    //lookups_;
-    //reconnect_timer_;
-    //connected_routing_clients_;
+    // std::unordered_set<RegClient*> lookups_;   ///< Outstanding lookups in progress
+    // async::timer reconnect_timer_;           ///< For persistent lookup requests
+    // std::unordered_set<RegClient*> connected_routing_clients_; // Set of RegClients we've connected to so far
 
     // For channels under construction:
     std::unordered_set<endpoint> locations_; ///< Potential locations known
@@ -72,9 +72,6 @@ class stream_peer : public stream_protocol
 
     inline peer_id remote_host_id() const { return remote_id_; }
 
-    // connect to routing change signals to find peer endpoints:
-    // void observe_routing(ssu::routing::client* client);
-
     /**
      * Initiate a connection attempt to target host by any means possible,
      * hopefully at some point resulting in an active primary channel.
@@ -82,33 +79,59 @@ class stream_peer : public stream_protocol
      */
     void connect_channel();
 
-    // Initiate a key exchange attempt to a given endpoint,
-    // if such an attempt isn't already in progress.
+    /**
+     * Connect to routing change signals to find peer endpoints.
+     */
+    // void observe_routing(ssu::routing::client* client);
+
+    /**
+     * Initiate a key exchange attempt to a given endpoint,
+     * if such an attempt isn't already in progress.
+     */
     void initiate_key_exchange(link* l, const endpoint& ep);
 
-    // Called by stream_channel::start() whenever a new channel
-    // (either incoming or outgoing) successfully starts.
+    /**
+     * Called by stream_channel::start() whenever a new channel
+     * (either incoming or outgoing) successfully starts.
+     */
     void channel_started(stream_channel* channel);
 
-    // Clear the peer's current primary channel.
+    /**
+     * Clear the peer's current primary channel.
+     */
     void clear_primary_channel();
 
     // Handlers.
     void completed(bool success);
     void primary_status_changed(link::status new_status);
 
+    // Routing client handlers @todo
+    // void lookupDone(const SST::PeerId &id, const Endpoint &loc, const RegInfo &info);
+    // void regClientDestroyed(QObject *obj);
+    // void retryTimeout();
+
 public:
-    /// Supply an endpoint hint that may be useful for finding this peer.
+    /**
+     * Supply an endpoint hint that may be useful for finding this peer.
+     */
     void add_location_hint(endpoint const& hint);
 
     typedef boost::signals2::signal<void (void)> channel_state_signal;
-    channel_state_signal on_channel_connected; ///< Primary channel connection attempt succeeded.
-    channel_state_signal on_channel_failed; ///< Connection attempt or the primary channel failed.
-
     typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
-    /// Indicates when this stream peer observes a change in link status.
+
+    /**
+     * Primary channel connection attempt succeeded.
+     */
+    channel_state_signal on_channel_connected;
+    /**
+     * Connection attempt or the primary channel failed.
+     */
+    channel_state_signal on_channel_failed;
+    /**
+     * Indicates when this stream peer observes a change in link status.
+     */
     link_status_changed_signal on_link_status_changed;
 };
 
-// } // private_ namespace
+// } // internal namespace
 } // ssu namespace

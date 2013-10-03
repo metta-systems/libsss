@@ -43,28 +43,21 @@ typedef uint64_t packet_seq_t;
 class stream_protocol
 {
 public:
-    static constexpr size_t mtu = 1500; // @fixme This needs to be a per-link variable.
-    static constexpr size_t min_receive_buffer_size = mtu*2; // @fixme Should be dynamic based on mtu.
+    static constexpr size_t mtu = 1200; // @fixme This needs to be a per-link variable.
+    static constexpr size_t min_receive_buffer_size = mtu * 2; // @fixme Should be dynamic based on mtu.
+
+    // Maximum size of datagram to send using the stateless optimization.
+    // @fixme Should be dynamic.
+    // Datagram reassembly not yet supported, when done it could be around 2x-4x MTU size?
+    static constexpr size_t max_stateless_datagram_size = mtu;
 
     // Control chunk magic value for the structured streams.
+    // Top byte is channel number and must be zero.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
     static constexpr magic_t magic_id = 0x00535355;
 
     typedef uint64_t counter_t;    ///< Counter for SID assignment.
     typedef uint16_t stream_id_t;  ///< Stream ID within channel.
-    typedef uint32_t byteseq_t;    ///< Stream byte sequence number.
-
-    enum class packet_type : uint8_t {
-    	invalid  = 0x0,
-    	init     = 0x1,
-    	reply    = 0x2,
-    	data     = 0x3,
-    	datagram = 0x4,
-    	ack      = 0x5,
-    	reset    = 0x6,
-    	attach   = 0x7,
-    	detach   = 0x8,
-    };
 
     struct stream_header
     {
@@ -90,24 +83,45 @@ public:
     typedef stream_header attach_header;
     typedef stream_header detach_header;
 
+    /**
+     * Major packet type codes (4 bits).
+     */
+    enum class packet_type : uint8_t {
+        invalid  = 0x0, ///< Always invalid
+        init     = 0x1, ///< Initiate new stream
+        reply    = 0x2, ///< Reply to new stream
+        data     = 0x3, ///< Regular data packet
+        datagram = 0x4, ///< Best-effort datagram
+        ack      = 0x5, ///< Explicit acknowledgment
+        reset    = 0x6, ///< Reset stream
+        attach   = 0x7, ///< Attach stream
+        detach   = 0x8, ///< Detach stream
+        /// 0x9-0xf are reserved for future extension and should not be used.
+    };
+
     enum flags : uint8_t
     {
-        // Subtype/flag bits for Init, Reply, and Data packets
+        // Subtype/flag bits for init, reply, and data packets
         data_close        = 0x1,  ///< End of stream.
         data_message      = 0x2,  ///< End of message. (@fixme record)
         data_push         = 0x4,  ///< Push to application.
         data_all          = 0x7,  ///< All signal flags.
 
-        // Flag bits for Datagram packets
+        // Flag bits for datagram packets
         datagram_begin    = 0x2,  ///< First fragment.
         datagram_end      = 0x1,  ///< Last fragment.
 
-        // Flag bits for Attach packets
+        // Flag bits for attach packets
         attach_init       = 0x8,  ///< Initiate stream.
         attach_slot_mask  = 0x1,  ///< Slot to use.
 
-        // Flag bits for Reset packets
+        // Flag bits for reset packets
         reset_remote_sid  = 0x1,  ///< SID orientation (set: sent LSID is in remote space)
+
+        // The Window field consists of some flags and a 5-bit exponent.
+        // @fixme Currently unused.
+        window_substream  = 0x80, ///< Substream window
+        window_inherit    = 0x40, ///< Inherited window
     };
 
     static inline uint8_t type_and_subtype(packet_type type, uint8_t subtype) {
