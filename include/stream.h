@@ -68,9 +68,7 @@ class server;
 class stream : public std::enable_shared_from_this<stream>
 {
     std::shared_ptr<host> host_;
-    abstract_stream* stream_{nullptr};
-
-    stream(abstract_stream* other_stream, stream* parent = nullptr); friend class server;
+    std::shared_ptr<abstract_stream> stream_;
 
 public:
     /**
@@ -99,6 +97,10 @@ public:
     };
 
     stream(std::shared_ptr<host> h);
+    /**
+     * Internal constructor for creating sub-streams from abstract_streams.
+     */
+    stream(std::shared_ptr<abstract_stream> other_stream, stream* parent = nullptr);
     virtual ~stream();
 
     //===============================================================
@@ -364,7 +366,7 @@ public:
      *
      * @return A stream object representing the new substream.
      */
-    stream* open_substream();
+    std::shared_ptr<stream> open_substream();
 
     /**
      * Listen for incoming substreams on this stream.
@@ -381,7 +383,7 @@ public:
      *
      * @return NULL if no incoming substreams are waiting.
      */
-    stream* accept_substream();
+    std::shared_ptr<stream> accept_substream();
 
     //===============================================================
     // Stream control.

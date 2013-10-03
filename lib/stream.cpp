@@ -30,12 +30,13 @@ stream::stream(shared_ptr<host> h)
 }
 
 // @fixme Ignore parent for now...
-stream::stream(abstract_stream* other_stream, stream* parent)
-    : host_(other_stream->host_)
-    , stream_(other_stream)
+stream::stream(shared_ptr<abstract_stream> other_stream, stream* parent)
+    : stream(other_stream->host_) // Run another constructor - this completes object initialization.
+    // , stream_(other_stream)
 {
-    assert(other_stream->owner_.lock() == nullptr);
-    other_stream->owner_ = shared_from_this(); // @fixme CALLED IN CONSTRUCTOR!!
+    stream_ = other_stream;
+    assert(stream_->owner_.lock() == nullptr);
+    stream_->owner_ = shared_from_this(); // @fixme CALLED IN CONSTRUCTOR!!
 
     // @todo set stream i/o mode to read-writable and no buffering
 }
@@ -44,46 +45,6 @@ stream::~stream()
 {
     disconnect();
     assert(stream_ == nullptr);
-}
-
-bool stream::connect_to(peer_id const& destination, 
-    string service, string protocol,
-    endpoint const& destination_endpoint_hint)
-{
-    // Determine a suitable target EID.
-    // If the caller didn't specify one (doesn't know the target's EID),
-    // then use the location hint as a surrogate peer identity.
-    byte_array eid = destination.id();
-    if (eid.is_empty()) {
-        eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
-        assert(!eid.is_empty());
-    }
-
-    logger::debug() << "Connecting to peer with id " << eid;
-
-    disconnect();
-
-    base_stream* base = new base_stream(host_, eid, nullptr);
-    stream_ = base;
-
-    // Start the actual network connection process
-    base->connect_to(service, protocol);
-
-    if (destination_endpoint_hint != endpoint())
-        connect_at(destination_endpoint_hint);
-
-    return true;
-}
-
-bool stream::add_location_hint(peer_id const& eid, endpoint const& hint)
-{
-    if (eid.is_empty()) {
-        set_error("No target EID for location hint");
-        return false;
-    }
-
-    host_->stream_peer(eid)->add_location_hint(hint);
-    return true;
 }
 
 void stream::disconnect()
@@ -128,10 +89,51 @@ bool stream::is_link_up() const
     return stream_->is_link_up();
 }
 
+bool stream::connect_to(peer_id const& destination, 
+    string service, string protocol,
+    endpoint const& destination_endpoint_hint)
+{
+    // Determine a suitable target EID.
+    // If the caller didn't specify one (doesn't know the target's EID),
+    // then use the location hint as a surrogate peer identity.
+    byte_array eid = destination.id();
+    if (eid.is_empty()) {
+        eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
+        assert(!eid.is_empty());
+    }
+
+    logger::debug() << "Connecting to peer with id " << eid;
+
+    disconnect();
+
+    auto base = make_shared<base_stream>(host_, eid, nullptr);
+    base->owner_ = shared_from_this();
+    stream_ = base;
+
+    // Start the actual network connection process
+    base->connect_to(service, protocol);
+
+    if (destination_endpoint_hint != endpoint())
+        connect_at(destination_endpoint_hint);
+
+    return true;
+}
+
 void stream::connect_at(endpoint const& ep)
 {
     if (!stream_) return;
     host_->stream_peer(stream_->peerid_)->add_location_hint(ep);
+}
+
+bool stream::add_location_hint(peer_id const& eid, endpoint const& hint)
+{
+    if (eid.is_empty()) {
+        set_error("No target EID for location hint");
+        return false;
+    }
+
+    host_->stream_peer(eid)->add_location_hint(hint);
+    return true;
 }
 
 void stream::set_priority(int priority)
@@ -302,36 +304,36 @@ void stream::dump()
 // Substream management.
 //-------------------------------------------------------------------------------------------------
 
-stream* stream::accept_substream()
+shared_ptr<stream> stream::accept_substream()
 {
     if (!stream_) {
         set_error("Stream not connected");
         return nullptr;
     }
 
-    abstract_stream* new_stream = stream_->accept_substream();
+    auto new_stream = stream_->accept_substream();
     if (!new_stream) {
         set_error("No waiting substreams");
         return nullptr;
     }
-
-    return new stream(new_stream, this);
+ 
+    return make_shared<stream>(new_stream, this);
 }
 
-stream* stream::open_substream()
+shared_ptr<stream> stream::open_substream()
 {
     if (!stream_) {
         set_error("Stream not connected");
         return nullptr;
     }
 
-    abstract_stream* new_stream = stream_->open_substream();
+    auto new_stream = stream_->open_substream();
     if (!new_stream) {
         set_error("Unable to create substream"); // @todo Forward stream_'s error?
         return nullptr;
     }
 
-    return new stream(new_stream, this);
+    return make_shared<stream>(new_stream, this);
 }
 
 void stream::listen(listen_mode mode)

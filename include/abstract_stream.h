@@ -124,7 +124,7 @@ public:
      *
      * @return A stream object representing the new substream.
      */
-    virtual abstract_stream* open_substream() = 0;
+    virtual std::shared_ptr<abstract_stream> open_substream() = 0;
 
     /**
      * Listen for incoming substreams on this stream.
@@ -149,7 +149,7 @@ public:
      *
      * @return NULL if no incoming substreams are waiting.
      */
-    virtual abstract_stream* accept_substream() = 0;
+    virtual std::shared_ptr<abstract_stream> accept_substream() = 0;
 
     //===============================================================
     // Stream control.

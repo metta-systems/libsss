@@ -32,7 +32,7 @@ class server : public stream_protocol
     friend class base_stream; /// @fixme for enqueueing streams to accept
 
     std::shared_ptr<host> host_;
-    std::queue<base_stream*> received_connections_; // Received connection stream queue
+    std::queue<std::shared_ptr<base_stream>> received_connections_; // Received connection stream queue
     std::string service_name_, service_description_;
     std::string protocol_name_, protocol_description_;
     std::string error_string_;
@@ -85,7 +85,7 @@ public:
      *
      * @todo return unique_ptr<stream*>
      */
-    stream* accept();
+    std::shared_ptr<stream> accept();
 
     typedef boost::signals2::signal<void(void)> connection_notify_signal;
     connection_notify_signal on_new_connection;

@@ -607,13 +607,13 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
 // Unreliable datagrams
 //-------------------------------------------------------------------------------------------------
 
-abstract_stream* base_stream::get_datagram()
+shared_ptr<abstract_stream> base_stream::get_datagram()
 {
     // Scan through the list of queued substreams
     // for one with a complete record waiting to be read.
     for (size_t i = 0; i < received_substreams_.size(); i++)
     {
-        abstract_stream* sub = received_substreams_[i];
+        auto sub = received_substreams_[i];
         if (!sub->has_pending_records())
             continue;
         received_substreams_.erase(received_substreams_.begin() + i);
@@ -626,7 +626,7 @@ abstract_stream* base_stream::get_datagram()
 
 ssize_t base_stream::read_datagram(char* data, ssize_t max_size)
 {
-    abstract_stream* sub = get_datagram();
+    auto sub = get_datagram();
     if (!sub)
         return -1;
 
@@ -637,7 +637,7 @@ ssize_t base_stream::read_datagram(char* data, ssize_t max_size)
 
 byte_array base_stream::read_datagram(ssize_t max_size)
 {
-    abstract_stream* sub = get_datagram();
+    auto sub = get_datagram();
     if (!sub)
         return byte_array();
 
@@ -654,7 +654,7 @@ ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream
         // Datagram too large to send using the stateless optimization:
         // just send it as a regular substream.
         logger::debug() << this << " sending large datagram, size " << total_size;
-        abstract_stream *sub = open_substream();
+        auto sub = open_substream();
         if (sub == nullptr)
             return -1;
 
@@ -734,15 +734,14 @@ void base_stream::set_priority(int priority)
 // Substreams.
 //-------------------------------------------------------------------------------------------------
 
-// @todo Return unique_ptr?
-abstract_stream* base_stream::open_substream()
+shared_ptr<abstract_stream> base_stream::open_substream()
 {
     logger::debug() << "Internal stream open substream";
 
     // Create a new sub-stream.
     // Note that the parent doesn't have to be attached yet:
     // the substream will attach and wait for the parent if necessary.
-    base_stream* new_stream = new base_stream(host_, peerid_, shared_from_this());
+    auto new_stream = make_shared<base_stream>(host_, peerid_, shared_from_this());
     new_stream->state_ = state::connected;
 
     // Start trying to attach the new stream, if possible.
@@ -751,7 +750,7 @@ abstract_stream* base_stream::open_substream()
     return new_stream;
 }
 
-abstract_stream* base_stream::accept_substream()
+shared_ptr<abstract_stream> base_stream::accept_substream()
 {
     logger::debug() << "Internal stream accept substream";
 
@@ -1316,7 +1315,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     logger::debug() << "rx_init_packet: parent attach stream " << parent_attach->stream_;
 
     // Create the new substream.
-    base_stream* new_stream = parent_attach->stream_->rx_substream(pktseq, channel, header->stream_id, 0, usid);
+    auto new_stream = parent_attach->stream_->rx_substream(pktseq, channel, header->stream_id, 0, usid);
     if (!new_stream)
         return false;
 
@@ -1476,7 +1475,7 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt,
     }
 
     // Build a pseudo-Stream object encapsulating the datagram.
-    datagram_stream* dgram = new datagram_stream(base->host_, pkt, datagram_header_len_min);
+    auto dgram = make_shared<datagram_stream>(base->host_, pkt, datagram_header_len_min);
     base->received_substreams_.push_back(dgram);
 
     // Don't need to connect to the sub's on_ready_read_record() signal
@@ -1802,8 +1801,9 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     recalculate_receive_window();
 }
 
-base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
-            stream_id_t sid, unsigned slot, unique_stream_id_t const& usid)
+shared_ptr<base_stream>
+base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
+    stream_id_t sid, unsigned slot, unique_stream_id_t const& usid)
 {
     // Make sure we're allowed to create a child stream.
     if (!is_listening()) {
@@ -1821,7 +1821,7 @@ base_stream* base_stream::rx_substream(packet_seq_t pktseq, stream_channel* chan
     channel->acknowledge(pktseq, true);
 
     // Create the child stream.
-    base_stream* new_stream = new base_stream(channel->get_host(), peerid_, shared_from_this());
+    auto new_stream = make_shared<base_stream>(channel->get_host(), peerid_, shared_from_this());
 
     // We'll accept the new stream: this is the point of no return.
     logger::debug() << "Accepting sub-stream " << usid << " as " << new_stream;
@@ -1916,7 +1916,7 @@ void base_stream::got_service_request()
 
     // Hand off the new stream to the chosen service
     state_ = state::connected;
-    srv->received_connections_.push(this);
+    srv->received_connections_.push(shared_from_this());
     srv->on_new_connection();
 }
 

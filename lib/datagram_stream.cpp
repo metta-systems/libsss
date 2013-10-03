@@ -67,13 +67,13 @@ ssize_t datagram_stream::write_data(const char* data, ssize_t size, uint8_t endf
     return -1;
 }
 
-abstract_stream* datagram_stream::open_substream()
+shared_ptr<abstract_stream> datagram_stream::open_substream()
 {
     set_error("Ephemeral datagram-streams cannot have substreams");
     return nullptr;
 }
 
-abstract_stream* datagram_stream::accept_substream()
+shared_ptr<abstract_stream> datagram_stream::accept_substream()
 {
     set_error("Ephemeral datagram-streams cannot have substreams");
     return nullptr;

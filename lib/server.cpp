@@ -11,15 +11,17 @@
 #include "logging.h"
 #include "base_stream.h"
 
+using namespace std;
+
 namespace ssu {
 
-server::server(std::shared_ptr<host> h)
+server::server(shared_ptr<host> h)
     : host_(h)
 {
 }
 
-bool server::listen(std::string const& service_name, std::string const& service_desc,
-                    std::string const& protocol_name, std::string const& protocol_desc)
+bool server::listen(string const& service_name, string const& service_desc,
+                    string const& protocol_name, string const& protocol_desc)
 {
     assert(!service_name.empty());
     assert(!service_desc.empty());
@@ -51,14 +53,13 @@ bool server::listen(std::string const& service_name, std::string const& service_
     return true;
 }
 
-//todo: unique_ptr<stream>?
-stream* server::accept()
+shared_ptr<stream> server::accept()
 {
     if (received_connections_.empty())
         return nullptr;
-    base_stream* bs = received_connections_.front();
+    auto bs = received_connections_.front();
     received_connections_.pop();
-    return new stream(bs);
+    return make_shared<stream>(bs);
 }
 
 } // ssu namespace

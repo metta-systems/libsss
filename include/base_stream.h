@@ -259,7 +259,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //-------------------------------------------
 
     /// Received, waiting substreams.
-    std::deque<abstract_stream*> received_substreams_;
+    std::deque<std::shared_ptr<abstract_stream>> received_substreams_;
 
 private:
     // Clear out this stream's state as if preparing for deletion,
@@ -322,7 +322,7 @@ private:
     static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
     void rx_data(byte_array const& pkt, uint32_t byte_seq);
 
-    base_stream* rx_substream(packet_seq_t pktseq, stream_channel* channel,
+    std::shared_ptr<base_stream> rx_substream(packet_seq_t pktseq, stream_channel* channel,
         stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
 
     // Helper function to enqueue useful rx segment data.
@@ -435,11 +435,11 @@ public:
     //-------------------------------------------
 
     // Initiate or accept substreams
-    abstract_stream* open_substream() override;
-    abstract_stream* accept_substream() override;
+    std::shared_ptr<abstract_stream> open_substream() override;
+    std::shared_ptr<abstract_stream> accept_substream() override;
 
     // Send and receive unordered, unreliable datagrams on this stream.
-    abstract_stream* get_datagram();
+    std::shared_ptr<abstract_stream> get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
     ssize_t write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable) override;

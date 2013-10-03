@@ -61,8 +61,8 @@ public:
     ssize_t read_data(char* data, ssize_t max_size) override;
     ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) override;
 
-    abstract_stream* open_substream() override;
-    abstract_stream* accept_substream() override;
+    std::shared_ptr<abstract_stream> open_substream() override;
+    std::shared_ptr<abstract_stream> accept_substream() override;
 
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
