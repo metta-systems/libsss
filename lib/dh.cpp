@@ -211,7 +211,12 @@ dh_host_state::dh_host_state()
 {}
 
 dh_host_state::~dh_host_state()
-{}
+{
+    logger::debug() << "Destructing host key state";
+    for (auto key : dh_keys_) {
+        key.reset();
+    }
+}
 
 std::shared_ptr<negotiation::dh_hostkey_t>
 dh_host_state::_generate_dh_key(negotiation::dh_group_type group, DH *(*groupfunc)())
