@@ -48,6 +48,8 @@ public:
         return link_->is_congestion_controlled(remote_ep_);
     }
 
+    inline endpoint remote_endpoint() const { return remote_ep_; }
+
     /**
      * Set up for communication with specified remote endpoint,
      * allocating and binding a local channel number in the process.
