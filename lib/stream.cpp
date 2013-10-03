@@ -108,6 +108,7 @@ bool stream::connect_to(peer_id const& destination,
 
     auto base = make_shared<base_stream>(host_, eid, nullptr);
     base->owner_ = shared_from_this();
+    base->self_ = base; // Self-reference for the base_stream to stay around until finished.
     stream_ = base;
 
     // Start the actual network connection process

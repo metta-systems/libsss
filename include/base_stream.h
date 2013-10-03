@@ -89,6 +89,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 {
     typedef abstract_stream super;
 
+    friend class stream; // access to self_...
     friend class stream_channel;
     friend class stream_tx_attachment; // access to tx_current_attachment_
 
@@ -188,6 +189,12 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //-------------------------------------------
 
     std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
+    /**
+     * Self-reference to keep this stream around until it is done.
+     * It is initialized from stream::connect_to() or stream private constructor.
+     * @fixme This is nasty, think of a better implementation.
+     */
+    std::shared_ptr<base_stream> self_;
     state state_{state::created};
     bool init_{true};
     bool top_level_{false}; ///< This is a top-level stream.

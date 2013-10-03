@@ -743,6 +743,7 @@ shared_ptr<abstract_stream> base_stream::open_substream()
     // the substream will attach and wait for the parent if necessary.
     auto new_stream = make_shared<base_stream>(host_, peerid_, shared_from_this());
     new_stream->state_ = state::connected;
+    new_stream->self_ = new_stream; // UGH! :(
 
     // Start trying to attach the new stream, if possible.
     new_stream->attach_for_transmit();
@@ -1822,6 +1823,7 @@ base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
 
     // Create the child stream.
     auto new_stream = make_shared<base_stream>(channel->get_host(), peerid_, shared_from_this());
+    new_stream->self_ = new_stream; // UGH :(
 
     // We'll accept the new stream: this is the point of no return.
     logger::debug() << "Accepting sub-stream " << usid << " as " << new_stream;
