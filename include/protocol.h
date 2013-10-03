@@ -94,7 +94,7 @@ public:
     {
         // Subtype/flag bits for Init, Reply, and Data packets
         data_close        = 0x1,  ///< End of stream.
-        data_message      = 0x2,  ///< End of message. (@fixme record)
+        data_record       = 0x2,  ///< End of record.
         data_push         = 0x4,  ///< Push to application.
         data_all          = 0x7,  ///< All signal flags.
 
