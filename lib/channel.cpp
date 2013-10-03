@@ -721,6 +721,68 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     // Count the total number of acknowledged packets since the last mark.
     pimpl_->mark_acks_ += new_packets;
 
+    //-------------------------------------------------------------
+    // cc code will be here - should be some function in cc_strategy?
+    //-------------------------------------------------------------
+
+    // When ackseq passes mark_sequence_, we've observed a round-trip,
+    // so update our round-trip statistics.
+    // if (ackseq >= pimpl_->mark_sequence_)
+    // {
+    //     // 'rtt' is the total round-trip delay in microseconds before
+    //     // we receive an ACK for a packet at or beyond the mark.
+    //     // Fold this into 'rtt' to determine avg round-trip time,
+    //     // and restart the timer to measure the next round-trip.
+    //     int rtt = pimpl_->elapsed_since_mark().total_microseconds();
+    //     rtt = max(1, min(RTT_MAX, rtt));
+    //     pimpl_->cumulative_rtt_ = ((pimpl_->cumulative_rtt_ * 7.0) + rtt) / 8.0;
+
+    //     // Compute an RTT variance measure
+    //     float rttvar = fabsf(rtt - pimpl_->cumulative_rtt_);
+    //     cumrttvar = ((cumrttvar * 7.0) + rttvar) / 8.0;
+
+    //     // 'mark_acks_' is the number of unique packets ACKed
+    //     // by the receiver during the time since the last mark.
+    //     // Use this to guage throughput during this round-trip.
+    //     float pps = (float)pimpl_->mark_acks_ * 1000000.0 / rtt;
+    //     cumpps = ((cumpps * 7.0) + pps) / 8.0;
+
+    //     // "Power" measures network efficiency
+    //     // in the sense of both minimizing rtt and maximizing pps.
+    //     float pwr = pps / rtt;
+    //     cumpwr = ((cumpwr * 7.0) + pwr) / 8.0;
+
+    //     // Compute a PPS variance measure
+    //     float ppsvar = fabsf(pps - cumpps);
+    //     cumppsvar = ((cumppsvar * 7.0) + ppsvar) / 8.0;
+
+    //     // Calculate loss rate during this last round-trip,
+    //     // and a cumulative loss ratio.
+    //     // Could go out of (0.0,1.0) range due to out-of-order acks.
+    //     float loss = (float)(pimpl_->mark_sent_ - pimpl_->mark_acks_) / (float)pimpl_->mark_sent_;
+    //     loss = max(0.0f, min(1.0f, loss));
+    //     cumloss = ((cumloss * 7.0) + loss) / 8.0;
+
+    //     // Reset pimpl_->mark_sequence_ to be the next packet transmitted.
+    //     // The new timestamp will be taken when that packet is sent.
+    //     pimpl_->mark_sequence_ = txseq;
+
+    //     //------------------------------------------------------------------
+    //     //more cc code here - should be some other function in cc_strategy?
+    //     //------------------------------------------------------------------
+
+    //     if (pimpl_->nocc_) {
+    //         logger::debug() << "End-to-end rtt " << rtt << " cumulative rtt " << pimpl_->cumulative_rtt_;
+    //     }
+    //     else {
+    //         auto logline = boost::format("Cumulative: rtt %.3f[±%.3f] pps %.3f[±%.3f] pwr %.3f loss %.3f",
+    //             pimpl_->cumulative_rtt_, cumrttvar, cumpps, cumppsvar, cumpwr, cumloss).str();
+    //         logger::debug() << logline;
+    //     }
+
+    //     lastrtt = rtt;
+    //     lastpps = pps;
+    // }
 
     // Always clamp cwnd against CWND_MAX.
     pimpl_->cwnd = min(pimpl_->cwnd, CWND_MAX);
