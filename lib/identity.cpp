@@ -113,9 +113,18 @@ identity::scheme identity::key_scheme() const
 
 identity identity::from_endpoint(endpoint const& ep)
 {
-    identity ident;
-    ident.id_ = byte_array();
+    byte_array buf;
 
+    if (ep.address().is_v4())
+        buf.append({scheme::ipv4});
+    else
+        buf.append({scheme::ipv6});
+
+    buf.append(byte_array::wrap((const char*)ep.data(), ep.size()));
+    // @todo Append port
+    // buf.append(ep.port());
+
+    identity ident(buf);
     return ident;
 }
 
