@@ -5,7 +5,7 @@
 using namespace std;
 
 namespace ssu {
-// namespace private_ {
+// namespace internal {
 
 constexpr int stream_peer::stall_warnings_max;
 
@@ -145,5 +145,5 @@ void stream_peer::primary_status_changed(link::status new_status)
     on_link_status_changed(new_status);
 }
 
-// } // private_ namespace
+// } // internal namespace
 } // ssu namespace
