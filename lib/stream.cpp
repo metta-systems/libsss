@@ -99,13 +99,11 @@ void stream::disconnect()
     //     peer->on_link_status_changed.disconnect(boost::bind(&stream::on_link_status_changed, this));
 
     // Clear the back-link from the base_stream.
-    assert(stream_->owner_.lock() == shared_from_this());
     stream_->owner_.reset();
 
     // Start the graceful close process on the internal state.
     // With the back-link gone, the base_stream self-destructs when done.
     stream_->shutdown(shutdown_mode::close);
-    // delete stream_;
 
     // We're now officially closed.
     stream_ = nullptr;
