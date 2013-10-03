@@ -5,7 +5,7 @@
 using namespace std;
 
 namespace ssu {
-// namespace private_ {
+// namespace internal {
 
 constexpr int stream_peer::stall_warnings_max;
 
@@ -17,7 +17,16 @@ stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id)
 {}
 
 stream_peer::~stream_peer()
-{}
+{
+    logger::debug() << this << " ~stream_peer";
+    // Clear the state of all streams associated with this peer.
+    for (auto v : all_streams_)
+    {
+        v->clear();
+    }
+    assert(all_streams_.empty());
+    assert(usid_streams_.empty());
+}
 
 void stream_peer::connect_channel()
 {
@@ -136,5 +145,5 @@ void stream_peer::primary_status_changed(link::status new_status)
     on_link_status_changed(new_status);
 }
 
-// } // private_ namespace
+// } // internal namespace
 } // ssu namespace

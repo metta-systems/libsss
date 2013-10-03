@@ -18,8 +18,8 @@ constexpr stream_protocol::stream_id_t root_sid = 0x0000;
 
 stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const peer_id& id)
     : channel(host)
-    , root_(make_shared<base_stream>(host, id, nullptr))
     , peer_(peer)
+    , root_(make_shared<base_stream>(host, id, nullptr))
 {
     root_->state_ = base_stream::state::connected;
 
@@ -69,6 +69,27 @@ void stream_channel::got_ready_transmit()
 void stream_channel::got_link_status_changed(link::status new_status)
 {
     logger::debug() << "stream_channel: link status changed, new status " << int(new_status);
+
+    if (new_status != link::status::down)
+        return;
+
+    // Link went down indefinitely - self-destruct.
+    auto peer = target_peer();
+    assert(peer);
+
+    // If we were our target's primary flow, disconnect us.
+    if (peer->primary_channel_ == this)
+    {
+        logger::debug() << "Primary channel to host ID " << peer->remote_host_id()
+            << " on endpoint " << remote_endpoint()
+            << " failed";
+        peer->clear_primary_channel();
+    }
+
+    // Stop and destroy this flow.
+    stop();
+    // deleteLater();
+    logger::debug() << "stream_channel: @todo MUST DELETE HERE";
 }
 
 stream_protocol::counter_t stream_channel::allocate_transmit_sid()
@@ -113,7 +134,7 @@ void stream_channel::stop()
     logger::debug() << "stream_channel: stop";
     super::stop();
 
-    // XXX clean up sending_streams_, waiting_ack_
+    // XXX clean up sending_streams_, waiting_ack_ -- detach_all() cleans up waiting_ack_
 
     // Detach and notify all affected streams.
     for (auto it : transmit_sids_)
@@ -147,6 +168,37 @@ void stream_channel::dequeue_stream(base_stream* stream)
     logger::debug() << "dequeue_stream " << stream;
     sending_streams_.erase(
         remove(sending_streams_.begin(), sending_streams_.end(), stream), sending_streams_.end());
+}
+
+void stream_channel::detach_all()
+{
+    // Save off and clear the channel's entire waiting_ack_ table -
+    // it'll be more efficient to go through it once
+    // and send all the waiting packets back to their streams,
+    // than for each stream to pull out its packets individually.
+    auto ack_backup = waiting_ack_;
+    waiting_ack_.clear();
+
+    // Detach all the streams with transmit-attachments to this flow.
+    for (auto v : transmit_sids_)
+    {
+        v.second->clear();
+    }
+    assert(transmit_sids_.empty());
+
+    // Finally, send back all the waiting packets to their streams.
+    logger::debug() << this << " Returning " << ack_backup.size() << " packets for retransmission";
+    for (auto v : ack_backup)
+    {
+        base_stream::packet& p = v.second;
+        assert(!p.is_null());
+        if (!p.late) {
+            p.late = true;
+            p.owner->missed(this, p);
+        } else {
+            p.owner->expire(this, p);
+        }
+    }
 }
 
 bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count)

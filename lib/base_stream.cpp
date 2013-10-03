@@ -76,8 +76,11 @@ void base_stream::clear()
     // De-register us from our peer
     if (peer_)
     {
-        if (peer_->usid_streams_.at(usid_) == this) //@fixme at() may throw...
-            peer_->usid_streams_.erase(usid_);
+        if (contains(peer_->usid_streams_, usid_)) {
+            if (peer_->usid_streams_[usid_] == this) {
+                peer_->usid_streams_.erase(usid_);
+            }
+        }
         peer_->all_streams_.erase(this);
         peer_ = nullptr;
     }
@@ -649,7 +652,7 @@ byte_array base_stream::read_datagram(ssize_t max_size)
 ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
 {
     if (is_reliable == stream::datagram_type::reliable
-        or total_size > (ssize_t)mtu /* @fixme max_stateless_datagram_size */ )
+        or total_size > (ssize_t)max_stateless_datagram_size)
     {
         // Datagram too large to send using the stateless optimization:
         // just send it as a regular substream.
