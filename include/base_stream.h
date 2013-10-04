@@ -269,10 +269,6 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     std::deque<std::shared_ptr<abstract_stream>> received_substreams_;
 
 private:
-    // Clear out this stream's state as if preparing for deletion,
-    // without actually deleting the object yet.
-    void clear();
-
     // Connection
     void got_service_request();
     void got_service_reply();
@@ -399,6 +395,10 @@ public:
      * Outstanding buffered data may be lost.
      */
     void disconnect();
+
+    // Clear out this stream's state as if preparing for deletion,
+    // without actually deleting the object yet.
+    void clear();
 
     /**
      * Disconnect and set an error condition.
