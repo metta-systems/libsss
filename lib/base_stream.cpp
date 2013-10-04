@@ -1873,7 +1873,7 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
     rx_record_available_ += actual_size;
     rx_buffer_used_ += actual_size;
 
-    if ((seg.flags() & (flags::data_message | flags::data_close)) and (rx_record_available_ > 0))
+    if ((seg.flags() & (flags::data_record | flags::data_close)) and (rx_record_available_ > 0))
     {
         logger::debug() << "Received record";
         rx_record_sizes_.push_back(rx_record_available_);

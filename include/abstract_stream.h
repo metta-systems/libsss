@@ -197,7 +197,7 @@ public:
     virtual ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) = 0;
 
     virtual ssize_t write_record(const char* data, ssize_t size) {
-        return write_data(data, size, flags::data_message);
+        return write_data(data, size, flags::data_record);
     }
 
     virtual ssize_t write_record(const byte_array& rec) {
