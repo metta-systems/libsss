@@ -138,9 +138,23 @@ void stream_peer::clear_primary_channel()
     old_primary->detach_all();
 }
 
-void stream_peer::add_location_hint(const endpoint& hint)
+void stream_peer::add_location_hint(endpoint const& hint)
 {
+    assert(!remote_id_.is_empty());
+    // assert(!hint.empty());
+
+    if (contains(locations_, hint))
+        return; // We already know; sit down...
+
+    logger::debug() << "Found endpoint " << hint << " for target " << remote_id_;
+
+    // Add this endpoint to our set
     locations_.insert(hint);
+
+    // Attempt a connection to this endpoint
+    for (auto link : host_->active_links()) {
+        initiate_key_exchange(link, hint);
+    }
 }
 
 void stream_peer::completed(bool success)
