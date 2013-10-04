@@ -14,7 +14,11 @@ const async::timer::duration_type stream_peer::connect_retry_period = boost::pos
 stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id)
     : host_(host)
     , remote_id_(remote_id)
-{}
+    // , reconnect_timer_(host)
+{
+    assert(!remote_id.is_empty());
+
+}
 
 stream_peer::~stream_peer()
 {
