@@ -70,6 +70,8 @@ class stream : public std::enable_shared_from_this<stream>
     std::shared_ptr<host> host_;
     std::shared_ptr<abstract_stream> stream_;
 
+    void connect_link_status_signal();
+
 public:
     /**
      * Flag bits used as arguments to the listen() method, indicating when and

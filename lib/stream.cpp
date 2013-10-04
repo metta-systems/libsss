@@ -129,6 +129,9 @@ bool stream::connect_to(peer_id const& destination,
     return true;
 }
 
+void stream::connect_link_status_signal()
+{}
+
 void stream::connect_at(endpoint const& ep)
 {
     if (!stream_) return;
