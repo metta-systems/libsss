@@ -119,8 +119,19 @@ void stream_peer::channel_started(stream_channel* channel)
 
 void stream_peer::clear_primary_channel()
 {
-    // @todo channel cleanup
+    if (!primary_channel_)
+        return;
+
+    auto old_primary = primary_channel_;
     primary_channel_ = nullptr;
+
+    // Avoid getting further primary link status notifications from it
+    old_primary->on_link_status_changed.disconnect(
+        boost::bind(&stream_peer::primary_status_changed, this, _1));
+
+    // Clear all transmit-attachments
+    // and return outstanding packets to the streams they came from.
+    old_primary->detach_all();
 }
 
 void stream_peer::add_location_hint(const endpoint& hint)
