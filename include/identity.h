@@ -105,6 +105,10 @@ public:
     scheme key_scheme() const;
     bool has_private_key() const;
 
+    inline bool is_ip_key_scheme() const {
+        return key_scheme() == identity::scheme::ipv4 or key_scheme() == identity::scheme::ipv6;
+    }
+
     /// Get this identity's binary-encoded public key.
     byte_array public_key() const;
 
