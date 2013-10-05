@@ -35,7 +35,7 @@ class identity
     peer_id           id_;
 
 public:
-    class bad_key : public std::runtime_error {
+    class bad_key final : public std::runtime_error {
     public:
         explicit inline bad_key() : std::runtime_error("bad identity key") {}
     };
