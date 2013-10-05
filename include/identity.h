@@ -125,6 +125,7 @@ public:
      * @return the resulting signature, in a byte_array.
      */
     inline byte_array sign(byte_array const& digest) {
+        assert(key_);
         return key_->sign(digest);
     }
 
