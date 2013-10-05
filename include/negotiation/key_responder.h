@@ -92,6 +92,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     channel*              channel_{nullptr}; ///< Channel for which we initiated key exchange.
     link_endpoint         target_;    ///< Remote endpoint we're trying to contact.
     peer_id               remote_id_; ///< Target's host id (empty if unspecified).
+    bool                  early_{true}; ///< This initiator can still be canceled.
 
     magic_t               magic_{0};
     uint32_t              allowed_methods_{0}; ///< Bitwise set of below method flags
@@ -159,8 +160,12 @@ public:
      */
     void exchange_keys();
 
+    inline endpoint remote_endpoint() const { return target_; }
     inline ssu::negotiation::dh_group_type group() const { return dh_group_; }
     inline bool is_done() const { return state_ == state::done; }
+    inline bool is_early() const { return early_; }
+
+    void cancel();
 
     void send_dh_init1();
     void send_dh_response1();

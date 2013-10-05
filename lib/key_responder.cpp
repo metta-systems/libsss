@@ -777,6 +777,9 @@ void key_initiator::retransmit(bool fail)
     retransmit_timer_.restart();
 }
 
+void key_initiator::cancel()
+{}
+
 void key_initiator::send_dh_init1()
 {
     logger::debug() << "Send dh_init1 to " << target_;
@@ -806,6 +809,9 @@ void key_initiator::send_dh_init2()
 {
     logger::debug() << "Send dh_init2 to " << target_;
     state_ = state::init2;
+
+    // Once our peer receives dh_init2 he will create channel state.
+    early_ = false;
 
     dh_init2_chunk init;
     init.group = dh_group_;
