@@ -165,12 +165,55 @@ void stream_peer::completed(bool success)
 
 void stream_peer::primary_status_changed(link::status new_status)
 {
+    assert(primary_channel_);
+
     if (new_status == link::status::up)
     {
         stall_warnings_ = 0;
-        return;
+        // Now that we (again?) have a working primary channel, cancel and delete all
+        // outstanding key_initiators that are still in an early enough stage not
+        // to have possibly created receiver state.
+        // (If we were to kill a non-early key_initiator, the receiver might pick one
+        // of those streams as _its_ primary and be left with a dangling channel!)
+        // For Multipath-SSU to work we rather should not destroy them here and set up
+        // multiple channels at once.
+        std::vector<link_endpoint> delete_later;
+
+        for (auto ki : key_exchanges_initiated_)
+        {
+            auto initiator = ki.second;
+            if (!initiator->is_early())
+                continue;   // too late - let it finish
+            logger::debug() << "Deleting " << initiator << " for " << remote_id_
+                << " to " << initiator->remote_endpoint();
+
+            assert(ki.first == initiator->remote_endpoint());
+            delete_later.push_back(ki.first);
+            initiator->cancel();
+            initiator.reset();//->deleteLater();
+        }
+
+        for (auto k : delete_later) {
+            key_exchanges_initiated_.erase(k);
+        }
+
+        return on_link_status_changed(new_status);
     }
-    // @todo Stall counts...
+
+    if (new_status == link::status::stalled)
+    {
+        if (++stall_warnings_ < stall_warnings_max) {
+            logger::warning() << this << " Primary channel stall "
+                << stall_warnings_ << " of " << stall_warnings_max;
+            return on_link_status_changed(new_status);
+        }
+    }
+
+    // Primary is at least stalled, perhaps permanently failed -
+    // start looking for alternate paths right away for quick response.
+    connect_channel();
+
+    // Pass the signal on to all streams connected to this peer.
     on_link_status_changed(new_status);
 }
 
