@@ -200,6 +200,7 @@ public:
 
     void register_dh_initiator(byte_array const& nonce, endpoint const& ep,
         std::shared_ptr<ssu::negotiation::key_initiator> ki);
+    void unregister_dh_initiator(byte_array const& nonce, endpoint const& ep);
 };
 
 } // namespace ssu

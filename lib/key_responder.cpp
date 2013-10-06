@@ -742,7 +742,9 @@ key_initiator::key_initiator(shared_ptr<host> host,
 }
 
 key_initiator::~key_initiator()
-{}
+{
+    cancel();
+}
 
 void key_initiator::exchange_keys()
 {
@@ -778,7 +780,10 @@ void key_initiator::retransmit(bool fail)
 }
 
 void key_initiator::cancel()
-{}
+{
+    logger::debug() << this << " Done initiating to " << target_;
+    host_->unregister_dh_initiator(initiator_hashed_nonce_, target_);
+}
 
 void key_initiator::send_dh_init1()
 {
@@ -849,6 +854,13 @@ key_host_state::register_dh_initiator(byte_array const& nonce,
 {
     dh_initiators_.insert(make_pair(nonce, ki));
     ep_initiators_.insert(make_pair(ep, ki));
+}
+
+void
+key_host_state::unregister_dh_initiator(byte_array const& nonce, endpoint const& ep)
+{
+    dh_initiators_.erase(nonce);
+    ep_initiators_.erase(ep);
 }
 
 } // ssu namespace
