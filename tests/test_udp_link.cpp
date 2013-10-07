@@ -23,7 +23,8 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
 {
     shared_ptr<host> host(make_shared<host>());
     endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
+    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    link->bind(local_ep);
 
     byte_array msg({'a', 'b', 'c'});
     link_endpoint le;
@@ -35,7 +36,8 @@ BOOST_AUTO_TEST_CASE(bound_link_is_active)
 {
     shared_ptr<host> host(make_shared<host>());
     endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
+    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    link->bind(local_ep);
     BOOST_CHECK(link->is_active() == true);
 }
 
@@ -43,7 +45,8 @@ BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 {
     shared_ptr<host> host(make_shared<host>());
     endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-    shared_ptr<udp_link> link(make_shared<udp_link>(local_ep, *host));
+    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    link->bind(local_ep);
 
     // Add key responder to link. - this is done automagically when server::listen()s
 

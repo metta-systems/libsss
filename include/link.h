@@ -148,7 +148,7 @@ public:
  */
 class link //: public std::enable_shared_from_this<link>
 {
-    link_host_state& host_;
+    std::shared_ptr<host> host_;
 
     /**
      * Channels working through this link at the moment.
@@ -168,19 +168,11 @@ public:
         up
     };
 
-    link(link_host_state& h) : host_(h) {}
+    link(std::shared_ptr<host> host) : host_(host) {}
     ~link();
 
     inline bool is_active() const { return active_; }
-    inline void set_active(bool active) { 
-        active_ = active;
-        if (active_) {
-            host_.activate_link(this);
-        }
-        else {
-            host_.deactivate_link(this);
-        }
-    }
+    void set_active(bool active);
 
     /**
      * Open the underlying socket and bind it to given endpoint.
@@ -243,7 +235,7 @@ class udp_link : public link
     link_endpoint received_from;
 
 public:
-    udp_link(const endpoint& ep, link_host_state& h);
+    udp_link(std::shared_ptr<host> host);
 
     bool bind(endpoint const& ep) override;
     void unbind() override;

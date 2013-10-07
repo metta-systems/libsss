@@ -7,19 +7,24 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "link.h"
+#include "host.h"
+
+using namespace std;
+using namespace ssu;
 
 int main()
 {
 	try
 	{
-		ssu::link_host_state state;
-		ssu::endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
-		ssu::udp_link l(local_ep, state);
+		shared_ptr<host> host(make_shared<host>());
+		endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+		udp_link l(host);
+		l.bind(local_ep);
 		l.send(local_ep, "\0SSUohai!", 10);
-		state.run_io_service();
+		host->run_io_service();
 	}
-	catch (std::exception& e)
+	catch (exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		cerr << e.what() << endl;
 	}
 }

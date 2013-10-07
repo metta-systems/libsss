@@ -95,6 +95,18 @@ link::~link()
 {
 }
 
+void
+link::set_active(bool active)
+{
+    active_ = active;
+    if (active_) {
+        host_->activate_link(this);
+    }
+    else {
+        host_->deactivate_link(this);
+    }
+}
+
 /**
  * Two packet types we could receive are stream packet (multiple types), starting with channel header
  * with non-zero channel number. It is handled by specific link_channel.
@@ -143,7 +155,7 @@ link::receive(const byte_array& msg, const link_endpoint& src)
     try {
         big_uint32_t magic = msg.as<big_uint32_t>()[0];
 
-        link_receiver* recv = host_.receiver(magic);
+        link_receiver* recv = host_->receiver(magic);
         if (recv)
         {
             return recv->receive(msg, src);
@@ -192,10 +204,10 @@ link::may_transmit(endpoint const&)
 // udp_link
 //=================================================================================================
 
-udp_link::udp_link(const endpoint& ep, link_host_state& h)
-    : link(h)
-    , udp_socket(h.get_io_service())
-    , received_from(this, ep)
+udp_link::udp_link(shared_ptr<host> host)
+    : link(host)
+    , udp_socket(host->get_io_service())
+    , received_from(this, endpoint()) // @fixme Dummy endpoint initializer here... init in bind()?
 {}
 
 void

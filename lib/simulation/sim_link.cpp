@@ -8,7 +8,7 @@ namespace ssu {
 namespace simulation {
 
 sim_link::sim_link(shared_ptr<sim_host> host)
-    : link(*host)
+    : link(host)
     , simulator_(host->get_simulator())
     , host_(host)
 {}
