@@ -172,7 +172,7 @@ link::receive(const byte_array& msg, const link_endpoint& src)
                             << hex(magic, 8, true) << " buffer contents " << msg;
         }
     }
-    catch (std::exception& e)
+    catch (exception& e)
     {
         logger::debug() << "Error deserializing received message: '" << e.what()
                         << "' buffer contents " << msg;
@@ -183,14 +183,14 @@ link::receive(const byte_array& msg, const link_endpoint& src)
 bool
 link::bind_channel(endpoint const& ep, channel_number chan, link_channel* lc)
 {
-    channels_.insert(std::make_pair(std::make_pair(ep, chan), lc));
+    channels_.insert(make_pair(make_pair(ep, chan), lc));
     return true;
 }
 
 void
 link::unbind_channel(endpoint const& ep, channel_number chan)
 {
-    channels_.erase(std::make_pair(ep, chan));
+    channels_.erase(make_pair(ep, chan));
 }
 
 bool
@@ -228,7 +228,7 @@ udp_link::prepare_async_receive()
           boost::asio::placeholders::bytes_transferred));
 }
 
-std::vector<endpoint>
+vector<endpoint>
 udp_link::local_endpoints()
 {
     return {udp_socket.local_endpoint()};
@@ -237,6 +237,7 @@ udp_link::local_endpoints()
 bool
 udp_link::bind(endpoint const& ep)
 {
+    logger::debug() << "udp_link bind on endpoint " << ep;
     boost::system::error_code ec;
     udp_socket.open(ep.protocol(), ec);
     if (ec) {
@@ -250,6 +251,7 @@ udp_link::bind(endpoint const& ep)
     }
     // once bound, can start receiving datagrams.
     prepare_async_receive();
+    logger::debug() << "Bound udp_link on " << ep;
     set_active(true);
     return true;
 }
@@ -257,6 +259,7 @@ udp_link::bind(endpoint const& ep)
 void
 udp_link::unbind()
 {
+    logger::debug() << "udp_link unbind";
     udp_socket.shutdown(boost::asio::ip::udp::socket::shutdown_both);
     udp_socket.close();
     set_active(false);
@@ -269,7 +272,7 @@ udp_link::send(const endpoint& ep, const char *data, size_t size)
 }
 
 void
-udp_link::udp_ready_read(const boost::system::error_code& error, std::size_t bytes_transferred)
+udp_link::udp_ready_read(const boost::system::error_code& error, size_t bytes_transferred)
 {
     if (!error)
     {
