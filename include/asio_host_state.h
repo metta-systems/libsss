@@ -12,6 +12,8 @@
 
 namespace ssu {
 
+class host;
+
 /**
  * Host state incapsulating asio run loop and possibly other related variables.
  */
@@ -26,6 +28,8 @@ protected:
 public:
 	inline void run_io_service() { io_service.run(); }
 	inline boost::asio::io_service& get_io_service() { return io_service; }
+
+    virtual std::shared_ptr<host> get_host() = 0;
 };
 
 } // namespace ssu
