@@ -22,8 +22,11 @@
 #include "flurry.h"
 #include "algorithm.h"
 
+class settings_provider;
+
 namespace ssu {
 
+class host;
 class link;
 class link_channel;
 
@@ -105,6 +108,12 @@ class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
      * Repeated calls will return already initialized link instance.
      */
     virtual std::shared_ptr<link> create_link() { return nullptr; } // @fixme
+    /**
+     * Initialize primary link state.
+     * @param settings     Settings provider for port number.
+     * @param default_port Default port number if not found in settings.
+     */
+    void init_link(settings_provider* settings, uint16_t default_port);
 
 public:
     /**

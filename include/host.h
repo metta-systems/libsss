@@ -16,6 +16,8 @@
 #include "private/stream_host_state.h"
 #include "logging.h"
 
+class settings_provider;
+
 namespace ssu {
 
 /**
@@ -47,6 +49,8 @@ public:
      * and activate one or more network links before using ssu.
      */
     host() {}
+    host(settings_provider* settings, uint16_t default_port);
+
     ~host() { logger::debug() << this << " ~host"; }
 
     inline std::shared_ptr<host> get_host() override { return shared_from_this(); }

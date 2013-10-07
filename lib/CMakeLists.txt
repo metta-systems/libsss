@@ -19,6 +19,7 @@ add_library(ssu STATIC
     crypto/dsa160_key.cpp
     crypto/utils.cpp
     dh.cpp
+    host.cpp
     identity.cpp
     key_responder.cpp
     link.cpp

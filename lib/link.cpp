@@ -12,6 +12,10 @@
 #include "logging.h"
 #include "flurry.h"
 #include "byte_array_wrap.h"
+#include "settings_provider.h"
+#include "host.h"
+
+using namespace std;
 
 namespace ssu {
 
@@ -45,6 +49,27 @@ link_host_state::receiver(magic_t magic)
         return 0;
     }
     return it->second;
+}
+
+void
+link_host_state::init_link(settings_provider* settings, uint16_t default_port)
+{
+    if (primary_link_ and primary_link_->is_active())
+        return;
+
+    // @fixme not ipv6-ready!!
+    // This binds only to ipv4 local address.
+    boost::asio::ip::udp::endpoint local_ep(boost::asio::ip::address_v4::any(), default_port);
+
+    primary_link_ = create_link();
+    if (!primary_link_->bind(local_ep))
+    {
+        local_ep.port(0);
+        if (!primary_link_->bind(local_ep))
+        {
+            logger::fatal() << "Couldn't bind the link";
+        }
+    }
 }
 
 //=================================================================================================
