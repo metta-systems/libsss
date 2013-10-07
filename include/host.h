@@ -48,8 +48,10 @@ public:
      * Client must establish a host identity via set_host_ident()
      * and activate one or more network links before using ssu.
      */
-    host() {}
-    host(settings_provider* settings, uint16_t default_port);
+    explicit host() {}
+
+    static std::shared_ptr<host> create();
+    static std::shared_ptr<host> create(settings_provider* settings, uint16_t default_port);
 
     ~host() { logger::debug() << this << " ~host"; }
 

@@ -21,7 +21,8 @@ namespace ssu {
 namespace simulation {
 
 sim_host::sim_host(std::shared_ptr<simulator> sim)
-    : simulator_(sim)
+    : host()
+    , simulator_(sim)
 {}
 
 sim_host::~sim_host()
