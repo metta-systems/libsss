@@ -102,12 +102,15 @@ class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
 {
     std::unordered_map<magic_t, link_receiver*> receivers_;
     std::unordered_set<link*> active_links_;
+    std::shared_ptr<link> primary_link_;
 
+protected:
     /**
      * Initialize and return the link this host instance uses to communicate.
      * Repeated calls will return already initialized link instance.
      */
-    virtual std::shared_ptr<link> create_link() { return nullptr; } // @fixme
+    virtual std::shared_ptr<link> create_link();
+
     /**
      * Initialize primary link state.
      * @param settings     Settings provider for port number.

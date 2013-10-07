@@ -51,6 +51,12 @@ link_host_state::receiver(magic_t magic)
     return it->second;
 }
 
+shared_ptr<link>
+link_host_state::create_link()
+{
+    return make_shared<udp_link>(get_host()); // @fixme
+}
+
 void
 link_host_state::init_link(settings_provider* settings, uint16_t default_port)
 {
