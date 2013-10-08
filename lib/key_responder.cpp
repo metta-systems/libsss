@@ -109,6 +109,16 @@ byte_array send(key_message& m, link_endpoint const& target)
     return msg;
 }
 
+/**
+ * Send a dummy "probing" packet to punch a hole in the NAT.
+ */
+void send_r0(magic_t magic, link_endpoint const& to)
+{
+    key_message m;
+    m.magic = magic;
+    send(m, to);
+}
+
 void send(magic_t magic, dh_init1_chunk& r, link_endpoint const& to)
 {
     key_message m;
@@ -716,6 +726,16 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
     // Our job is done
     initiator->channel_->start(true);
     initiator->done();
+}
+
+void key_responder::send_probe0(endpoint const& dest)
+{
+    logger::debug() << this << " Send probe0 to " << dest;
+    for (link *l : get_host()->active_links())
+    {
+        link_endpoint ep(l, dest);
+        send_r0(magic(), ep);
+    }
 }
 
 //=================================================================================================
