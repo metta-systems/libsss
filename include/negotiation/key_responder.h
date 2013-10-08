@@ -237,7 +237,10 @@ class key_host_state
     std::unordered_multimap<endpoint, std::shared_ptr<negotiation::key_initiator>> ep_initiators_;
 
 public:
+    typedef std::unordered_multimap<endpoint, std::shared_ptr<negotiation::key_initiator>>::iterator ep_iterator;
+
     std::shared_ptr<negotiation::key_initiator> get_initiator(byte_array nonce);
+    std::pair<ep_iterator, ep_iterator> get_initiators(endpoint const& ep);
 
     void register_dh_initiator(byte_array const& nonce, endpoint const& ep,
         std::shared_ptr<ssu::negotiation::key_initiator> ki);

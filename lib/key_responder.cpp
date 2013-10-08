@@ -871,9 +871,15 @@ key_host_state::get_initiator(byte_array nonce)
 {
     auto it = dh_initiators_.find(nonce);
     if (it == dh_initiators_.end()) {
-        return 0;
+        return nullptr;
     }
     return it->second;
+}
+
+pair<key_host_state::ep_iterator, key_host_state::ep_iterator>
+key_host_state::get_initiators(endpoint const& ep)
+{
+    return ep_initiators_.equal_range(ep);
 }
 
 void
