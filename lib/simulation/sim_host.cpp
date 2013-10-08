@@ -70,6 +70,7 @@ void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
 
 void sim_host::dequeue_packet(shared_ptr<sim_packet> packet)
 {
+    // @todo Replace with .erase(packet)?
     for (auto it = find(packet_queue_.begin(), packet_queue_.end(), packet); it != packet_queue_.end();)
     {
         packet_queue_.erase(it);
