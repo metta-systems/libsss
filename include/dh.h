@@ -53,6 +53,8 @@ class dh_hostkey_t
 
 public:
     dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_group_type group, DH *dh);
+
+    size_t dh_size() const;
 };
 
 } // namespace negotiation

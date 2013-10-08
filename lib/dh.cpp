@@ -13,7 +13,7 @@
 
 /*
  * The Diffie-Hellman parameter setup has been taken unaltered
- * from SST implementation in Netsteria.
+ * from SST implementation in Netsteria. @fixme
  */
 
 //=================================================================================================
@@ -193,13 +193,19 @@ dh_hostkey_t::calc_key(byte_array const& other_public_key)
     BIGNUM* other_bn = crypto::utils::ba2bn(other_public_key);
 
     byte_array secret;
-    secret.resize(DH_size(dh_));
+    secret.resize(dh_size());
     int rc = DH_compute_key((unsigned char*)secret.data(), other_bn, dh_);
-    assert(rc <= DH_size(dh_));
+    assert(size_t(rc) <= dh_size());
     secret.resize(rc);
 
     BN_free(other_bn);
     return secret;
+}
+
+size_t
+dh_hostkey_t::dh_size() const
+{
+    return DH_size(dh_);
 }
 
 } // negotiation namespace
