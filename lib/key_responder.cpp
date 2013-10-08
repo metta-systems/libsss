@@ -578,8 +578,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     byte_array rx_enc_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, 'E', 128/8);
     byte_array rx_mac_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, 'A', 256/8);
 
-    // @todo: where did make_unique go?
-    chan->set_armor(unique_ptr<aes_armor>(new aes_armor(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key)));
+    chan->set_armor(make_unique<aes_armor>(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key));
 
     // Set up the new channel IDs
     byte_array tx_chan_id = calc_key(master_secret, data.responder_nonce, initiator_hashed_nonce, 'I', 128/8);
