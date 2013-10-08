@@ -30,6 +30,37 @@ using namespace ssu;
 namespace {
 
 /**
+ * Verify HMAC authenticated block of data.
+ * @param  hmac_key      HMAC key
+ * @param  data          Data block to check
+ * @param  expected_hmac Expected HMAC signature
+ * @return               true if signature matches calculated HMAC, false otherwise.
+ */
+bool
+hmac_verify(byte_array const& hmac_key, byte_array const& data, byte_array const& expected_hmac)
+{
+    crypto::hash hmac(hmac_key.as_vector());
+    hmac.update(data.as_vector());
+    crypto::hash::value result;
+    hmac.finalize(result);
+
+    return byte_array(result) == expected_hmac;
+}
+
+/**
+ * Calculate keyed MAC over data and append it to data.
+ */
+void
+hmac_append(byte_array const& hmac_key, byte_array& data)
+{
+    crypto::hash hmac(hmac_key.as_vector());
+    hmac.update(data.as_vector());
+    crypto::hash::value result;
+    hmac.finalize(result);
+    data.append(result);
+}
+
+/**
  * Calculate SHA-256 hash of the key response message.
  */
 byte_array
@@ -367,14 +398,7 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
         initiator->responder_nonce_,
         '2', 256/8);
 
-    // @todo: wrap this into a hmac_calc_append() kind of helper
-    crypto::hash hmac(mac_key.as_vector());
-    // int hmac_size = crypto::HMACLEN;
-    hmac.update(encrypted_initiator_info.as_vector());
-    crypto::hash::value result;
-    hmac.finalize(result);
-
-    encrypted_initiator_info.append(result);
+    hmac_append(mac_key, encrypted_initiator_info);
 
     initiator->encrypted_identity_info_ = encrypted_initiator_info;
 
@@ -448,22 +472,10 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
 
     logger::debug() << "Verifying HMAC.";
 
-    // @todo: wrap this into a hmac_verify() kind of helper
-    crypto::hash hmac(mac_key.as_vector());
-    int hmac_size = crypto::HMACLEN;
-    byte_array block = data.initiator_info;
-    block.resize(block.size() - hmac_size);
-    hmac.update(block.as_vector());
-    crypto::hash::value result;
-    hmac.finalize(result);
+    byte_array block = data.initiator_info.left(data.initiator_info.size() - crypto::HMACLEN);
+    byte_array expected_hmac = data.initiator_info.right(crypto::HMACLEN);
 
-    byte_array expected_hmac;
-    expected_hmac.resize(hmac_size);
-    std::copy(data.initiator_info.end() - hmac_size,
-              data.initiator_info.end(),
-              expected_hmac.begin());
-
-    if (byte_array(result) != expected_hmac)
+    if (!hmac_verify(mac_key, block, expected_hmac))
     {
         logger::warning() << "Received dh_init2 with bad initiator identity MAC.";
         return; // XXX generate cached error response instead
@@ -565,13 +577,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     // Encrypt and authenticate our identity
     encrypted_responder_info = aes_256_cbc(aes_256_cbc::type::encrypt, enc_key).encrypt(encrypted_responder_info);
 
-    // @todo: wrap this into a hmac_calc_append() kind of helper
-    crypto::hash hmac2(mac_key.as_vector());
-    hmac2.update(encrypted_responder_info.as_vector());
-    crypto::hash::value result2;
-    hmac2.finalize(result2);
-
-    encrypted_responder_info.append(result2);
+    hmac_append(mac_key, encrypted_responder_info);
 
     // Build, send, and cache our dh_response2.
     dh_response2_chunk response;
@@ -628,22 +634,10 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
 
     logger::debug() << "Verifying HMAC.";
 
-    // @todo: wrap this into a hmac_verify() kind of helper
-    crypto::hash hmac(mac_key.as_vector());
-    int hmac_size = crypto::HMACLEN;
-    byte_array block = data.responder_info;
-    block.resize(block.size() - hmac_size);
-    hmac.update(block.as_vector());
-    crypto::hash::value result;
-    hmac.finalize(result);
+    byte_array block = data.responder_info.left(data.responder_info.size() - crypto::HMACLEN);
+    byte_array expected_hmac = data.responder_info.right(crypto::HMACLEN);
 
-    byte_array expected_hmac;
-    expected_hmac.resize(hmac_size);
-    std::copy(data.responder_info.end() - hmac_size,
-              data.responder_info.end(),
-              expected_hmac.begin());
-
-    if (byte_array(result) != expected_hmac)
+    if (!hmac_verify(mac_key, block, expected_hmac))
     {
         logger::warning() << "Received dh_response2 with bad responder identity MAC.";
         return;
