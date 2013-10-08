@@ -37,16 +37,28 @@ class dh_hostkey_t;
  */
 class key_responder : public link_receiver
 {
-    void got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src);
-    void got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src);
-    void got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src);
-    void got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src);
+public:
+    /**
+     * Create a key_responder and set it listening on a particular link
+     * for control messages with the specified magic protocol identifier.
+     * @fixme The new key_responder becomes a child of the link.
+     */
+    key_responder(std::shared_ptr<host> host, magic_t magic);
 
-    byte_array
-    calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
-        const byte_array& responder_nonce,
-        const byte_array& initiator_hashed_nonce,
-        const ssu::link_endpoint& src);
+    /**
+     * Link calls this with control messages intended for us.
+     * @param msg [description]
+     * @param src [description]
+     */
+    void receive(const byte_array& msg, const link_endpoint& src) override;
+
+    /**
+     * Send an R0 chunk to some network address,
+     * presumably a client we've discovered somehow is trying to reach us,
+     * in order to punch a hole in any NATs we may be behind
+     * and prod the client into (re-)sending us its I1 immediately.
+     */
+    void send_probe0(endpoint const& dest);
 
 protected:
     /**
@@ -70,28 +82,18 @@ protected:
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out) = 0;
 
-public:
-    /**
-     * Create a key_responder and set it listening on a particular link
-     * for control messages with the specified magic protocol identifier.
-     * @fixme The new key_responder becomes a child of the link.
-     */
-    key_responder(std::shared_ptr<host> host, magic_t magic);
+private:
+    void got_probe0(const link_endpoint& src);
+    void got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src);
+    void got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src);
+    void got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src);
+    void got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src);
 
-    /**
-     * Link calls this with control messages intended for us.
-     * @param msg [description]
-     * @param src [description]
-     */
-    void receive(const byte_array& msg, const link_endpoint& src) override;
-
-    /**
-     * Send an R0 chunk to some network address,
-     * presumably a client we've discovered somehow is trying to reach us,
-     * in order to punch a hole in any NATs we may be behind
-     * and prod the client into (re-)sending us its I1 immediately.
-     */
-    void send_probe0(endpoint const& dest);
+    byte_array
+    calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
+        const byte_array& responder_nonce,
+        const byte_array& initiator_hashed_nonce,
+        const ssu::link_endpoint& src);
 };
 
 /**

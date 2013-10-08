@@ -257,37 +257,60 @@ void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 
     assert(m.magic == stream_protocol::magic_id);
 
+    // Find and process the first recognized primary chunk.
     for (auto chunk : m.chunks)
     {
         switch (chunk.type)
         {
-            case ssu::negotiation::key_chunk_type::dh_init1:
+            case key_chunk_type::dh_init1:
                 return got_dh_init1(*chunk.dh_init1, src);
-            case ssu::negotiation::key_chunk_type::dh_init2:
-                return got_dh_init2(*chunk.dh_init2, src);
-            case ssu::negotiation::key_chunk_type::dh_response1:
+            case key_chunk_type::dh_response1:
                 return got_dh_response1(*chunk.dh_response1, src);//key_initiator method?
-            case ssu::negotiation::key_chunk_type::dh_response2:
+            case key_chunk_type::dh_init2:
+                return got_dh_init2(*chunk.dh_init2, src);
+            case key_chunk_type::dh_response2:
                 return got_dh_response2(*chunk.dh_response2, src);//key_initiator method?
             default:
                 logger::warning() << "Unknown negotiation chunk type " << uint32_t(chunk.type);
                 break;
         }
     }
-};
+
+    // If there were no recognized primary chunks, it might be just
+    // a responder's ping packet for hole punching.
+    return got_probe0(src);
+}
+
+void key_responder::got_probe0(link_endpoint const& src)
+{
+    // Trigger a retransmission of the dh_init1 packet
+    // for each outstanding initiation attempt to the given target.
+    auto pairs = get_host()->get_initiators(src);
+    while (pairs.first != pairs.second)
+    {
+        auto initiator = (*pairs.first).second;
+        ++pairs.first;
+        if (!initiator or initiator->state_ != key_initiator::state::init1)
+            continue;
+
+        initiator->send_dh_init1();
+    }
+}
 
 void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src)
 {
-    logger::debug() << "Got dh_init1";
+    logger::debug() << "Got dh_init1 from " << src;
+
+    // Find or generate the appropriate host key
 
     if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
-        return warning("invalid minimum AES key length");
+        return warning("Invalid minimum AES key length");
 
-    shared_ptr<dh_hostkey_t> hostkey(get_host()->get_dh_key(data.group)); // get or generate a host key
+    shared_ptr<dh_hostkey_t> hostkey(get_host()->get_dh_key(data.group));
     if (!hostkey)
-        return warning("unrecognized DH key group");
-    // if (i1.dhi.size() > DH_size(hk->dh))
-        // return;     // Public key too large
+        return warning("Unrecognized DH key group");
+    if (data.initiator_dh_public_key.size() > hostkey->dh_size())
+        return warning("Public key too large");
 
     // Generate an unpredictable responder's nonce
     assert(crypto::prng_ok());
@@ -310,7 +333,6 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
 
     logger::debug() << "Send dh_response1 to " << src;
     send(magic(), response, src);
-    // retransmit_timer_.restart();
 }
 
 /**
@@ -318,6 +340,8 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
  */
 void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src)
 {
+    logger::debug() << "Got dh_response1 from " << src;
+
     shared_ptr<key_initiator> initiator = get_host()->get_initiator(data.initiator_hashed_nonce);
     if (!initiator or initiator->group() != data.group)
         return warning("Got dh_response1 for unknown dh_init1");
@@ -327,17 +351,17 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
     assert(initiator->initiator_hashed_nonce_ == data.initiator_hashed_nonce);
     assert(initiator->channel_ != nullptr);
 
-    logger::debug() << "Got dh_response1";
-
+    // Validate the responder's group number
     if (data.group >= dh_group_type::dh_group_max)
-        return warning("invalid group type");
+        return warning("Invalid group type");
     if (data.group < initiator->dh_group_)
-        return warning("key group less than required minimum");
+        return warning("Key group less than required minimum");
 
+    // Validate the responder's specified AES key length
     if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
-        return warning("invalid minimum AES key length");
+        return warning("Invalid minimum AES key length");
     if (data.key_min_length < initiator->key_min_length_)
-        return warning("key length less than required minimum");
+        return warning("Key length less than required minimum");
 
     // If the group changes or our public key expires, revert to dh_init1 phase.
     if (initiator->dh_group_ != data.group)
@@ -350,23 +374,25 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
         return initiator->send_dh_init1();
 
     // Always use the latest responder parameters received,
-    // even if we've already received an R1 response.
+    // even if we've already received a dh_response1.
     // XXX to be really DoS-protected from active attackers,
-    // we should cache some number of the last R1 responses we get
-    // until we receive a valid R2 response with the correct identity.
+    // we should cache some number of the last dh_response1s we get
+    // until we receive a valid dh_response2 with the correct identity.
     initiator->key_min_length_ = data.key_min_length;
     initiator->responder_nonce_ = data.responder_nonce;
     initiator->responder_public_key_ = data.responder_dh_public_key;
     initiator->responder_challenge_cookie_ = data.responder_challenge_cookie;
     // XX ignore any public responder identity in the dh_response1 for now.
 
+    // Compute the shared master secret
     initiator->shared_master_secret_ = hostkey->calc_key(data.responder_dh_public_key);
 
     // Sign the key parameters to prove our identity
     byte_array signature_hash = calc_signature_hash(initiator->dh_group_,
-        initiator->key_min_length_, initiator->initiator_hashed_nonce_,
-        initiator->responder_nonce_, initiator->initiator_public_key_,
-        initiator->responder_public_key_, byte_array(/*no eid yet*/));
+        initiator->key_min_length_,
+        initiator->initiator_hashed_nonce_, initiator->responder_nonce_,
+        initiator->initiator_public_key_, initiator->responder_public_key_,
+        byte_array(/*no eid yet*/));
     byte_array signature = get_host()->host_identity().sign(signature_hash);
 
     // Build encrypted part of init2 message.
@@ -411,16 +437,16 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
  */
 void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src)
 {
-    logger::debug() << "Got dh_init2";
+    logger::debug() << "Got dh_init2 from " << src;
 
     // We'll need the originator's hashed nonce as well...
     byte_array initiator_hashed_nonce = sha256::hash(data.initiator_nonce);
 
     if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
-        return warning("invalid minimum AES key length");
+        return warning("Invalid minimum AES key length");
 
     // Find the appropriate host key
-    shared_ptr<dh_hostkey_t> hostkey(get_host()->get_dh_key(data.group)); // get or generate a host key
+    shared_ptr<dh_hostkey_t> hostkey(get_host()->get_dh_key(data.group));
     if (!hostkey or data.responder_dh_public_key != hostkey->public_key_)
     {
         // Key mismatch, probably due to a timeout and key change.
@@ -439,7 +465,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
 
     // See if we've already responded to this particular dh_init2 - if so,
     // just return our previous cached response.
-    // Use hhkr as the index, as per the JFK spec.
+    // Use challenge cookie as the index, as per the JFK spec.
     if (contains(hostkey->r2_cache_, data.responder_challenge_cookie))
     {
         logger::debug() << "Received duplicate dh_init2 packet, replying with cached response.";
@@ -458,6 +484,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     //----------------------------------
     // Compute the shared master secret
     //----------------------------------
+
     logger::debug() << "Computing master secret.";
 
     byte_array master_secret = hostkey->calc_key(data.initiator_dh_public_key);
@@ -545,7 +572,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     channel* chan = create_channel(src, iic.initiator_eid, iic.user_data_in, user_data_out);
     if (!chan)
     {
-        logger::debug() << "Rejecting dh_init2 due to null return from create_channel()";
+        logger::warning() << "Rejecting dh_init2 due to null return from create_channel()";
         return; // XXX generate cached error response instead
     }
     assert(chan->is_bound());
@@ -560,7 +587,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     byte_array responder_signature = get_host()->host_identity().sign(signature_hash);
 
     // Build the part of the dh_response2 message to be encrypted.
-    // (XX should we include anything for the 'sa' in the JFK spec?)
+    // (@fixme should we include anything for the 'sa' in the JFK spec?)
     responder_identity_chunk resp_ic;
     resp_ic.responder_channel_number = chan->local_channel();
     resp_ic.responder_eid = responder_eid;
@@ -610,7 +637,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
 void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src)
 {
     shared_ptr<key_initiator> initiator = get_host()->get_initiator(data.initiator_hashed_nonce);
-    if (!initiator)
+    if (!initiator or initiator->state_ != key_initiator::state::init2)
         return warning("Got dh_response2 for unknown dh_init2");
     if (initiator->is_done())
         return warning("Got duplicate dh_response2 for completed initiator");
@@ -620,7 +647,7 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
     assert(initiator->initiator_hashed_nonce_ == data.initiator_hashed_nonce);
     assert(initiator->channel_ != nullptr);
 
-    logger::debug() << "Got dh_response2";
+    logger::debug() << "Got dh_response2 from " << src;
 
     // Make sure our host key hasn't expired in the meantime
     // XXX but reverting here leaves the responder with a hung channel! <---
@@ -629,8 +656,8 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
         return initiator->send_dh_init1();
 
     // Check and strip the MAC field on the responder's encrypted identity
-    byte_array mac_key = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
-        initiator->responder_nonce_, '2', 256/8);
+    byte_array mac_key = calc_key(initiator->shared_master_secret_,
+        initiator->initiator_hashed_nonce_, initiator->responder_nonce_, '2', 256/8);
 
     logger::debug() << "Verifying HMAC.";
 
@@ -643,11 +670,11 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
         return;
     }
 
-    logger::debug() << "Decrypting responder info.";
-
     // Decrypt it with AES-256-CBC
-    byte_array enc_key = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
-        initiator->responder_nonce_, '1', 256/8);
+    byte_array enc_key = calc_key(initiator->shared_master_secret_,
+        initiator->initiator_hashed_nonce_, initiator->responder_nonce_, '1', 256/8);
+
+    logger::debug() << "Decrypting responder info.";
 
     byte_array responder_info = aes_256_cbc(aes_256_cbc::type::decrypt, enc_key).decrypt(data.responder_info);
 
@@ -665,11 +692,11 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
     // Make sure the responder is who we actually wanted to talk to
     if (!initiator->remote_id_.is_empty() and resp_ic.responder_eid != initiator->remote_id_)
     {
-        logger::warning() << "Received dh_response2 from responder with wrong identity.";
+        logger::warning() << "Received dh_response2 from responder we didn't want to talk to!";
         return;
     }
 
-    // Verify the initiator's identity
+    // Verify the responder's identity
     identity responder_id(resp_ic.responder_eid);
     if (!responder_id.set_key(resp_ic.responder_id_public_key))
     {
@@ -678,9 +705,10 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
     }
 
     byte_array signature_hash = calc_signature_hash(initiator->dh_group_,
-        initiator->key_min_length_, initiator->initiator_hashed_nonce_,
-        initiator->responder_nonce_, initiator->initiator_public_key_,
-        initiator->responder_public_key_, get_host()->host_identity().id().id());
+        initiator->key_min_length_,
+        initiator->initiator_hashed_nonce_, initiator->responder_nonce_,
+        initiator->initiator_public_key_, initiator->responder_public_key_,
+        get_host()->host_identity().id().id());
 
     if (!responder_id.verify(signature_hash, resp_ic.responder_signature))
     {
@@ -718,8 +746,8 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
     initiator->channel_->set_remote_channel(resp_ic.responder_channel_number);
 
     // Our job is done
-    initiator->channel_->start(true);
     initiator->done();
+    initiator->channel_->start(true);
 }
 
 void key_responder::send_probe0(endpoint const& dest)
@@ -778,7 +806,6 @@ void key_initiator::exchange_keys()
 
 void key_initiator::retransmit(bool fail)
 {
-    logger::debug() << "Time to retransmit the key exchange packet.";
     if (fail)
     {
         logger::debug() << "Key exchange failed";
@@ -786,6 +813,8 @@ void key_initiator::retransmit(bool fail)
         retransmit_timer_.stop();
         return on_completed(false);
     }
+
+    logger::debug() << "Time to retransmit the key exchange packet.";
 
     if (state_ == state::init1) {
         send_dh_init1();
@@ -799,7 +828,7 @@ void key_initiator::retransmit(bool fail)
 void key_initiator::done()
 {
     bool send_signal = (state_ != state::done);
-    logger::debug() << this << " Done initiating to " << target_ << (send_signal ? "(signaling upper layer)" : "");
+    logger::debug() << this << " Key exchange completed with " << target_ << (send_signal ? " (signaling upper layer)" : "");
     state_ = state::done;
     cancel();
     if (send_signal) {
@@ -825,7 +854,7 @@ void key_initiator::send_dh_init1()
     responder_challenge_cookie_.clear();
     shared_master_secret_.clear();
 
-    // Construct dh_init1 frame from the current state.
+    // Construct dh_init1 from the current state.
     shared_ptr<dh_hostkey_t> hostkey = host_->get_dh_key(dh_group_); // get or generate a host key
     initiator_public_key_ = hostkey->public_key_;
 
@@ -834,7 +863,7 @@ void key_initiator::send_dh_init1()
     init.key_min_length = key_min_length_;//?
     init.initiator_hashed_nonce = initiator_hashed_nonce_;
     init.initiator_dh_public_key = initiator_public_key_;
-    init.responder_eid.clear();
+    init.responder_eid.clear(); // @fixme (only if the server's identity is public!)
 
     send(magic(), init, target_);
 }
