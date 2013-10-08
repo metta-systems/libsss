@@ -66,7 +66,7 @@ calc_key(byte_array const& master,
     byte_array master_hash = sha256::hash(master);
     assert(master_hash.size() == crypto::HMACKEYLEN);
 
-    crypto::hash hmac(master_hash.as_vector());
+    crypto::hash hmac(master_hash.as_vector()); // Use master_hash as hmac key
     hmac.update(initiator_hashed_nonce.as_vector());
     hmac.update(responder_nonce.as_vector());
     hmac.update(byte_array({which}).as_vector());
