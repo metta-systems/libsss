@@ -498,6 +498,8 @@ constexpr int maskBits = 32;
 
 void channel::receive(byte_array const& pkt, link_endpoint const& src)
 {
+    logger::debug() << this << "channel::receive from " << src;
+
     if (!is_active()) {
         logger::warning() << this << " receive: inactive channel";
         return;

@@ -35,7 +35,7 @@ base_stream::base_stream(shared_ptr<host> host,
 {
     assert(!peer_id.is_empty());
 
-    logger::debug() << "Constructing internal stream for peer " << peer_id;
+    logger::debug() << "Constructing internal stream " << this << " for peer " << peer_id;
 
     // Initialize inherited parameters
     if (parent)
@@ -793,7 +793,7 @@ void base_stream::set_child_receive_buffer_size(size_t size)
 
 void base_stream::shutdown(stream::shutdown_mode mode)
 {
-    logger::debug() << "Shutting down internal stream";
+    logger::debug() << "Shutting down internal stream " << this;
 
     // @todo self-destruct when done, if appropriate
 

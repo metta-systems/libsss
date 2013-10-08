@@ -208,6 +208,8 @@ key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey
 
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
 {
+    logger::debug() << "key_responder::receive " << dec << msg.size() << " bytes from " << src;
+
     byte_array_iwrap<flurry::iarchive> read(msg);
 	key_message m;
 	read.archive() >> m;
