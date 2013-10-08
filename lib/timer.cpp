@@ -6,6 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <boost/asio.hpp>
 #include "timer.h"
 #include "timer_engine.h"
 #include "make_unique.h"
@@ -68,6 +69,8 @@ class default_timer_engine : public timer_engine
 {
 	boost::asio::deadline_timer interval_timer;
 
+	void asio_timeout(boost::system::error_code const& error);
+
 public:
 	default_timer_engine(timer* t, boost::asio::io_service& io_service);
 	~default_timer_engine();
@@ -90,12 +93,26 @@ default_timer_engine::~default_timer_engine()
 void default_timer_engine::start(duration_type interval)
 {
 	interval_timer.expires_from_now(interval);
-	interval_timer.async_wait(std::bind(&default_timer_engine::timeout, this));
+	interval_timer.async_wait(
+		boost::bind(&default_timer_engine::asio_timeout, this, boost::asio::placeholders::error));
 }
 
 void default_timer_engine::stop()
 {
 	interval_timer.cancel();
+}
+
+/**
+ * Boost.asio deadline_timer will call this function even when timer is cancelled.
+ * Check the error code and do NOT call on_timeout() if this invocation is due to
+ * timer cancellation.
+ */
+void default_timer_engine::asio_timeout(boost::system::error_code const& error)
+{
+	if (error == boost::asio::error::operation_aborted)
+		return;
+
+	timeout();
 }
 
 void timer_engine::timeout()
