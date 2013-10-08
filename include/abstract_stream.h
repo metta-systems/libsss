@@ -113,7 +113,7 @@ public:
      * and leaves any further data for subsequent read_data() calls.
      *
      * @param data the buffer into which to read.
-     *      This parameter may be NULL,
+     *      This parameter may be nullptr,
      *      in which case the data read is simply discarded.
      * @param max_size the maximum number of bytes to read.
      * @return the number of bytes read, or -1 if an error occurred.
@@ -261,7 +261,7 @@ public:
     /**
      * Begin graceful or forceful shutdown of the stream.
      * If this internal stream control object is lingering -
-     * i.e., if its 'owner' back-pointer is NULL -
+     * i.e., if its 'owner' back-pointer is null -
      * then it should self-destruct once the shutdown is complete.
      *
      * @param mode which part of the stream to close:

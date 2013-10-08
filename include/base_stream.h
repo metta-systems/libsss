@@ -372,7 +372,7 @@ public:
      * @param peer the endpoint identifier (EID) of the remote host with which this stream
      *        will be used to communicate. The destination may be either a cryptographic EID
      *        or a non-cryptographic legacy address as defined by the Ident class.
-     * @param parent the parent stream, or NULL if none (yet).
+     * @param parent the parent stream, or nullptr if none (yet).
      */
     base_stream(std::shared_ptr<host> h, peer_id const& peer, std::shared_ptr<base_stream> parent);
     virtual ~base_stream();

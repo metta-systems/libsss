@@ -148,7 +148,7 @@ public:
         , digest_(EVP_sha256())
         , md_context_(EVP_MD_CTX_create())
     {
-        internal::api("digest initialization", EVP_DigestInit_ex(md_context_, digest_, NULL));
+        internal::api("digest initialization", EVP_DigestInit_ex(md_context_, digest_, nullptr));
     }
 
     /// The keyed hash constructor. Initializes the underlying hash context.
@@ -160,7 +160,7 @@ public:
     {
         HMAC_CTX_init(&hmac_context_);
         internal::raw<const void *> k(boost::asio::buffer(key));
-        internal::api("mac initialization", HMAC_Init_ex(&hmac_context_, k.ptr, k.len, digest_, NULL));
+        internal::api("mac initialization", HMAC_Init_ex(&hmac_context_, k.ptr, k.len, digest_, nullptr));
     }
 
     /// Add the  contents of the passed  container to the  underlying context. This method  can be
@@ -187,11 +187,11 @@ public:
         internal::api("finalization of hash",
                       (keyed_ ?
                        HMAC_Final(&hmac_context_, d.ptr, 0)
-                       : EVP_DigestFinal_ex(md_context_, d.ptr, NULL)));
+                       : EVP_DigestFinal_ex(md_context_, d.ptr, nullptr)));
         internal::api("reinitialization of hash",
                       (keyed_ ?
-                       HMAC_Init_ex(&hmac_context_, NULL, 0, NULL, NULL)
-                       : EVP_DigestInit_ex(md_context_, digest_, NULL)));
+                       HMAC_Init_ex(&hmac_context_, nullptr, 0, nullptr, nullptr)
+                       : EVP_DigestInit_ex(md_context_, digest_, nullptr)));
     }
 
     /// Cleans up the underlying context.
@@ -266,7 +266,7 @@ public:
         if (a.len > 0)
         {
             int outl;
-            internal::api("associated data", EVP_CipherUpdate(&context_, NULL, &outl, a.ptr, a.len));
+            internal::api("associated data", EVP_CipherUpdate(&context_, nullptr, &outl, a.ptr, a.len));
         }
         return *this;
     }
@@ -281,7 +281,7 @@ public:
         int outl;
         assert(encrypt_);
         internal::raw<void *> t(boost::asio::buffer(seal));
-        internal::api("seal", EVP_CipherFinal_ex(&context_, NULL, &outl));
+        internal::api("seal", EVP_CipherFinal_ex(&context_, nullptr, &outl));
         internal::api("get tag", EVP_CIPHER_CTX_ctrl(&context_, EVP_CTRL_GCM_GET_TAG, t.len, t.ptr));
     }
 
@@ -293,7 +293,7 @@ public:
     {
         int outl;
         assert(!encrypt_);
-        internal::api("verify", EVP_CipherFinal_ex(&context_, NULL, &outl));
+        internal::api("verify", EVP_CipherFinal_ex(&context_, nullptr, &outl));
     }
 
     ~cipher()
@@ -309,11 +309,11 @@ private:
         internal::raw<const unsigned char *>iv(i);
         internal::raw<const unsigned char *>key(k);
         internal::api("initialize - i",
-                      EVP_CipherInit_ex(&context_, EVP_aes_128_gcm(), NULL, NULL, NULL, encrypt_));
+                      EVP_CipherInit_ex(&context_, EVP_aes_128_gcm(), nullptr, nullptr, nullptr, encrypt_));
         internal::api("set iv length",
-                      EVP_CIPHER_CTX_ctrl(&context_, EVP_CTRL_GCM_SET_IVLEN, iv.len, NULL));
+                      EVP_CIPHER_CTX_ctrl(&context_, EVP_CTRL_GCM_SET_IVLEN, iv.len, nullptr));
         internal::api("initialize - ii",
-                      EVP_CipherInit_ex(&context_, NULL, NULL, key.ptr, iv.ptr, encrypt_));
+                      EVP_CipherInit_ex(&context_, nullptr, nullptr, key.ptr, iv.ptr, encrypt_));
     }
 };
 

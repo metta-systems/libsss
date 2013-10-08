@@ -66,14 +66,14 @@ DSA *get_dsa1024()
 
     DSA *dsa{0};
 
-    if ((dsa = DSA_new()) == NULL) return NULL;
-    dsa->p = BN_bin2bn(dsa1024_p, sizeof(dsa1024_p), NULL);
-    dsa->q = BN_bin2bn(dsa1024_q, sizeof(dsa1024_q), NULL);
-    dsa->g = BN_bin2bn(dsa1024_g, sizeof(dsa1024_g), NULL);
-    if ((dsa->p == NULL) || (dsa->q == NULL) || (dsa->g == NULL))
+    if ((dsa = DSA_new()) == nullptr) return nullptr;
+    dsa->p = BN_bin2bn(dsa1024_p, sizeof(dsa1024_p), nullptr);
+    dsa->q = BN_bin2bn(dsa1024_q, sizeof(dsa1024_q), nullptr);
+    dsa->g = BN_bin2bn(dsa1024_g, sizeof(dsa1024_g), nullptr);
+    if ((dsa->p == nullptr) || (dsa->q == nullptr) || (dsa->g == nullptr))
     {
         DSA_free(dsa);
-        return NULL;
+        return nullptr;
     }
     return dsa;
 }
@@ -136,14 +136,14 @@ DSA *get_dsa2048()
 
     DSA *dsa{0};
 
-    if ((dsa = DSA_new()) == NULL) return NULL;
-    dsa->p = BN_bin2bn(dsa2048_p, sizeof(dsa2048_p), NULL);
-    dsa->q = BN_bin2bn(dsa2048_q, sizeof(dsa2048_q), NULL);
-    dsa->g = BN_bin2bn(dsa2048_g, sizeof(dsa2048_g), NULL);
-    if ((dsa->p == NULL) || (dsa->q == NULL) || (dsa->g == NULL))
+    if ((dsa = DSA_new()) == nullptr) return nullptr;
+    dsa->p = BN_bin2bn(dsa2048_p, sizeof(dsa2048_p), nullptr);
+    dsa->q = BN_bin2bn(dsa2048_q, sizeof(dsa2048_q), nullptr);
+    dsa->g = BN_bin2bn(dsa2048_g, sizeof(dsa2048_g), nullptr);
+    if ((dsa->p == nullptr) || (dsa->q == nullptr) || (dsa->g == nullptr))
     {
         DSA_free(dsa);
-        return NULL;
+        return nullptr;
     }
     return dsa;
 }
@@ -226,14 +226,14 @@ DSA *get_dsa3072()
 
     DSA *dsa{0};
 
-    if ((dsa = DSA_new()) == NULL) return NULL;
-    dsa->p = BN_bin2bn(dsa3072_p, sizeof(dsa3072_p), NULL);
-    dsa->q = BN_bin2bn(dsa3072_q, sizeof(dsa3072_q), NULL);
-    dsa->g = BN_bin2bn(dsa3072_g, sizeof(dsa3072_g), NULL);
-    if ((dsa->p == NULL) || (dsa->q == NULL) || (dsa->g == NULL))
+    if ((dsa = DSA_new()) == nullptr) return nullptr;
+    dsa->p = BN_bin2bn(dsa3072_p, sizeof(dsa3072_p), nullptr);
+    dsa->q = BN_bin2bn(dsa3072_q, sizeof(dsa3072_q), nullptr);
+    dsa->g = BN_bin2bn(dsa3072_g, sizeof(dsa3072_g), nullptr);
+    if ((dsa->p == nullptr) || (dsa->q == nullptr) || (dsa->g == nullptr))
     {
         DSA_free(dsa);
-        return NULL;
+        return nullptr;
     }
     return dsa;
 }
@@ -257,7 +257,7 @@ dsa160_key::dsa160_key(byte_array const& key)
     } else {
         set_type(public_only);
         BN_free(dsa_->priv_key);
-        dsa_->priv_key = NULL;
+        dsa_->priv_key = nullptr;
     }
 }
 
@@ -285,7 +285,7 @@ dsa160_key::dsa160_key(int bits)
     // Generate a new DSA key given those parameters
     int rc = DSA_generate_key(dsa_);
     assert(rc == 1);
-    assert(dsa_->priv_key != NULL);
+    assert(dsa_->priv_key != nullptr);
 
     set_type(public_and_private);
 }
@@ -294,7 +294,7 @@ dsa160_key::~dsa160_key()
 {
     if (dsa_) {
         DSA_free(dsa_);
-        dsa_ = NULL;
+        dsa_ = nullptr;
     }
 }
 

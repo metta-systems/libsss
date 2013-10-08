@@ -229,7 +229,7 @@ public:
      * for subsequent readData() calls.
      *
      * @param data the buffer into which to read.
-     *      This parameter may be NULL,
+     *      This parameter may be nullptr,
      *      in which case the data read is simply discarded.
      * @param maxSize the maximum number of bytes to read.
      * @return the number of bytes read, or -1 if an error occurred.
@@ -383,7 +383,7 @@ public:
     /**
      * Accept a waiting incoming substream.
      *
-     * @return NULL if no incoming substreams are waiting.
+     * @return nullptr if no incoming substreams are waiting.
      */
     std::shared_ptr<stream> accept_substream();
 
@@ -433,7 +433,7 @@ public:
     /**
      * Begin graceful or forceful shutdown of the stream.
      * If this internal stream control object is lingering - i.e., if its 'owner_'
-     * back-pointer is NULL - then it should self-destruct once the shutdown is complete.
+     * back-pointer is null - then it should self-destruct once the shutdown is complete.
      *
      * To close the stream gracefully in either or both directions, specify read, write,
      * or read|write for the @a mode argument.

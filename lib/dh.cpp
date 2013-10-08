@@ -50,12 +50,12 @@ DH *get_dh1024()
     };
     DH *dh{0};
 
-    if ((dh = DH_new()) == NULL) return NULL;
-    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    if ((dh = DH_new()) == nullptr) return nullptr;
+    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), nullptr);
+    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), nullptr);
+    if ((dh->p == nullptr) || (dh->g == nullptr)) {
         DH_free(dh);
-        return NULL;
+        return nullptr;
     }
     return dh;
 }
@@ -91,12 +91,12 @@ DH *get_dh2048()
     };
     DH *dh{0};
 
-    if ((dh = DH_new()) == NULL) return NULL;
-    dh->p = BN_bin2bn(dh2048_p, sizeof(dh2048_p), NULL);
-    dh->g = BN_bin2bn(dh2048_g, sizeof(dh2048_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    if ((dh = DH_new()) == nullptr) return nullptr;
+    dh->p = BN_bin2bn(dh2048_p, sizeof(dh2048_p), nullptr);
+    dh->g = BN_bin2bn(dh2048_g, sizeof(dh2048_g), nullptr);
+    if ((dh->p == nullptr) || (dh->g == nullptr)) {
         DH_free(dh);
-        return NULL;
+        return nullptr;
     }
     return dh;
 }
@@ -142,12 +142,12 @@ DH *get_dh3072()
     };
     DH *dh{0};
 
-    if ((dh = DH_new()) == NULL) return NULL;
-    dh->p = BN_bin2bn(dh3072_p, sizeof(dh3072_p), NULL);
-    dh->g = BN_bin2bn(dh3072_g, sizeof(dh3072_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    if ((dh = DH_new()) == nullptr) return nullptr;
+    dh->p = BN_bin2bn(dh3072_p, sizeof(dh3072_p), nullptr);
+    dh->g = BN_bin2bn(dh3072_g, sizeof(dh3072_g), nullptr);
+    if ((dh->p == nullptr) || (dh->g == nullptr)) {
         DH_free(dh);
-        return NULL;
+        return nullptr;
     }
     return dh;
 }
@@ -222,11 +222,11 @@ std::shared_ptr<negotiation::dh_hostkey_t>
 dh_host_state::_generate_dh_key(negotiation::dh_group_type group, DH *(*groupfunc)())
 {
     DH* dh = groupfunc();
-    if (dh == NULL)
-        return NULL;
+    if (dh == nullptr)
+        return nullptr;
 
     if (!DH_generate_key(dh))
-        return NULL;
+        return nullptr;
 
     assert(dh_keys_[int(group)] == nullptr);
     dh_keys_[int(group)] = std::make_shared<negotiation::dh_hostkey_t>(get_host(), group, dh);
