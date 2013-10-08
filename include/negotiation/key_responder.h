@@ -37,8 +37,6 @@ class dh_hostkey_t;
  */
 class key_responder : public link_receiver
 {
-    std::shared_ptr<host> host_;
-
     void got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src);
     void got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src);
     void got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src);
@@ -51,8 +49,6 @@ class key_responder : public link_receiver
         const ssu::link_endpoint& src);
 
 protected:
-    inline std::shared_ptr<host> get_host() { return host_; }
-
     /**
      * key_responder calls this to check whether to accept a connection,
      * before actually bothering to verify the initiator's identity.

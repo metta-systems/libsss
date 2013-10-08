@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <memory>
 #include "protocol.h"
 
 class byte_array;
@@ -15,7 +16,7 @@ class byte_array;
 namespace ssu {
 
 class link_endpoint;
-class link_host_state;
+class host;
 
 /**
  * Abstract base class for control protocol receivers.
@@ -26,18 +27,25 @@ class link_host_state;
  */
 class link_receiver
 {
-    link_host_state& host_;
+    std::shared_ptr<host> host_;
     magic_t magic_{0};
 
 protected:
     void bind();
     void unbind();
 
-    inline link_receiver(link_host_state& host) : host_(host) {}
-    inline link_receiver(link_host_state& host, magic_t magic) : host_(host), magic_(magic) { bind(); }
+    inline link_receiver(std::shared_ptr<host> host) : host_(host)
+    {}
+
+    inline link_receiver(std::shared_ptr<host> host, magic_t magic) : host_(host), magic_(magic) {
+        bind();
+    }
+
     inline ~link_receiver() { unbind(); }
 
     inline magic_t magic() const { return magic_; }
+
+    virtual std::shared_ptr<host> get_host() { return host_; }
 
     // @fixme Possibly set_magic() might set a magic on default link_receiver and bind() it.
 

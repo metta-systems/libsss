@@ -26,13 +26,13 @@ namespace ssu {
 void link_receiver::bind()
 {
     logger::debug() << "Link receiver " << this << " binds for magic " << hex(magic_, 8, true);
-    host_.bind_receiver(magic_, this);
+    host_->bind_receiver(magic_, this);
 }
 
 void link_receiver::unbind()
 {
     logger::debug() << "Link receiver " << this << " unbinds magic " << hex(magic_, 8, true);
-    host_.unbind_receiver(magic_);
+    host_->unbind_receiver(magic_);
 }
 
 //=================================================================================================
