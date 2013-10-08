@@ -125,8 +125,8 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
      * Current phase of the protocol negotiation.
      */
     enum class state {
-        init1, init2, done
-    } state_{state::init1};
+        idle, init1, init2, done
+    } state_{state::idle};
 
     ssu::async::timer retransmit_timer_;
 
