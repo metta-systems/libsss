@@ -779,9 +779,21 @@ void key_initiator::retransmit(bool fail)
     retransmit_timer_.restart();
 }
 
+void key_initiator::done()
+{
+    bool send_signal = (state_ != state::done);
+    logger::debug() << this << " Done initiating to " << target_ << (send_signal ? "(signaling upper layer)" : "");
+    state_ = state::done;
+    cancel();
+    if (send_signal) {
+        on_completed(true);
+    }
+}
+
 void key_initiator::cancel()
 {
-    logger::debug() << this << " Done initiating to " << target_;
+    logger::debug() << this << " Stop initiating to " << target_;
+    retransmit_timer_.stop();
     host_->unregister_dh_initiator(initiator_hashed_nonce_, target_);
 }
 

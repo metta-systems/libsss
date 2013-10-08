@@ -137,15 +137,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
 
     void retransmit(bool fail);
 
-    inline void done()
-    {
-        bool send_signal = (state_ != state::done);
-        state_ = state::done;
-        retransmit_timer_.stop();
-        if (send_signal) {
-            on_completed(true);
-        }
-    }
+    void done();
 
 protected:
     inline magic_t magic() const { return magic_; }
