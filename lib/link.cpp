@@ -146,7 +146,8 @@ link::receive(const byte_array& msg, const link_endpoint& src)
     }
 
     {
-        logger::file_dump dump(msg);
+        logger::file_dump(msg, "received_raw.bin");
+        logger::file_dump(msg, "dump.bin");
     }
 
     // First byte should be a channel number.
