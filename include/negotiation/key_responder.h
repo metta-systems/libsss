@@ -171,8 +171,7 @@ public:
     /// so that if it is deleted the incomplete channel will be too.
     /// The client must therefore re-parent the channel
     /// after successful key exchange before deleting the key_initiator.
-    key_initiator(std::shared_ptr<host> host, channel* chn, 
-                    link_endpoint const& target, magic_t magic, peer_id const& target_peer);
+    key_initiator(channel* chn, magic_t magic, peer_id const& target_peer);
     ~key_initiator();
 
     /**

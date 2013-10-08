@@ -742,21 +742,24 @@ void key_responder::send_probe0(endpoint const& dest)
 // key_initiator
 //=================================================================================================
 
-key_initiator::key_initiator(shared_ptr<host> host,
-                             channel* channel,
-                             link_endpoint const& target,
+key_initiator::key_initiator(channel* channel,
                              magic_t magic,
                              peer_id const& target_peer)
-    : host_(host)
+    : host_(channel->get_host())
     , channel_(channel)
-    , target_(target)
+    , target_(channel->remote_endpoint())
     , remote_id_(target_peer)
     , magic_(magic)
-    , retransmit_timer_(host_.get())
+    , retransmit_timer_(channel->get_host().get())
     , key_min_length_(128/8)
 {
+    assert(target_ != endpoint());
+    assert(channel->is_bound());
+    assert(!channel->is_active());
+
     allowed_methods_ = key_method_aes;
 
+    // DH/AES key agreement state
     crypto::fill_random(initiator_nonce_.as_vector());
     initiator_hashed_nonce_ = sha256::hash(initiator_nonce_);
 }
