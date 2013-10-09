@@ -1,2 +1,30 @@
-* Implement basic settings_provider for storing host key and friend list.
-* Implement basic DHT in 'routing' to let nodes find each other.
+ ☐ Implement basic settings_provider for storing host key and friend list.
+ ☐ Implement basic DHT in 'routing' to let nodes find each other.
+
+ ✔ PlistCpp for a platform-independent settings_provider implementation... @done (13-10-09 13:22)
+ ☐ Implement user-facing stream interface. Maybe mimic after an iostreams interface, but most probably not;
+  ☐ make own version of QIODevice-style interface,
+  ☐ an iostreams interface maybe a nice add-on.
+ ☐ Implement deterministic packet loss. e.g. connection->lose_packet(3); or delay certain packets
+ ☐ And yes, it would really awesome if people stopped fiddling with 1024-bit RSA keys and moved to elliptic curve crypto.
+  ☐ make rsa/dsa keylength 3072 by default, remove 1024 from options
+  ☐ check if new openssl supports 4096 bits and longer than 160 bits keylengths for signing
+ ☐ host identity management
+  ☐ peer_id from identity
+ ☐ sketch workings of the streams/substreams
+ ☐ clean up base stream properly when user-facing stream disconnected/destroyed.
+ ☐ Support is needed for real-time non-reliable streams, akin to UDP. Should not be separate datagrams (?), just a regular stream that can survive the loss of some packets and does not need to retransmit.
+ ✔ Streams should be passed via shared_ptrs to enable shared_from_this() in certain places, but also the substreams should live on for a while and destruct only when they have no owner. Owner does not control their lifetime though! @done (13-10-03 15:30)
+    instead of deleteLater() it should hold a shared_ptr to itself and do reset() for cleanup.
+    owner would instead hold a weak_ptr<> to internal stream...
+
+ ☐ Consult professional cryptoanalysts for code review.
+
+Some links to the professional cryptoanalysts:
+  Ronald Volgers
+  https://github.com/saltstack/salt/commit/5dd304276ba5745ec21fc1e6686a0b28da29e6fc#commitcomment-3525158
+
+  http://blog.cryptographyengineering.com/
+  matasano.com
+
+  http://en.citizendium.org/wiki/Opportunistic_encryption
