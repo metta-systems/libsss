@@ -1,0 +1,2 @@
+* Implement basic settings_provider for storing host key and friend list.
+* Implement basic DHT in 'routing' to let nodes find each other.
