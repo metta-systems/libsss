@@ -50,6 +50,9 @@ public:
      */
     explicit host() {}
 
+    /**
+     * Factory functions. Use those to create host instance.
+     */
     static std::shared_ptr<host> create();
     static std::shared_ptr<host> create(settings_provider* settings, uint16_t default_port);
 
