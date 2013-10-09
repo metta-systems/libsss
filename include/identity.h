@@ -14,6 +14,8 @@
 #include "peer_id.h"
 #include "crypto/sign_key.h"
 
+class settings_provider;
+
 namespace ssu {
 
 /** 
@@ -149,6 +151,15 @@ public:
      * Create if necessary and return the host's cryptographic identity.
      */
     identity host_identity();
+
+    /**
+     * Set host identity from the outside. Given identity must have a private key,
+     * otherwise this host will be impossible to connect to or from.
+     * @param ident Replacement host identity.
+     */
+    void set_host_identity(identity const& ident);
+
+    void init_identity(settings_provider* settings);
 };
 
 } // ssu namespace

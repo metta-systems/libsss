@@ -16,6 +16,7 @@ host::create(settings_provider* settings, uint16_t default_port)
 {
     shared_ptr<host> host(make_shared<host>());
     host->init_link(settings, default_port);
+    host->init_identity(settings);
     return host;
 }
 

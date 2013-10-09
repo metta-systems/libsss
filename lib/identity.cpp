@@ -10,6 +10,7 @@
 #include "crypto/dsa160_key.h"
 #include "crypto/rsa160_key.h"
 #include "logging.h"
+#include "settings_provider.h"
 
 namespace ssu {
 
@@ -163,6 +164,46 @@ identity identity_host_state::host_identity()
         host_identity_ = identity::generate();
     }
     return host_identity_;
+}
+
+void identity_host_state::set_host_identity(identity const& ident)
+{
+    if (ident.has_private_key()) {
+        logger::warning() << "Using a host identity with no private key!";
+    }
+    host_identity_ = ident;
+}
+
+void identity_host_state::init_identity(settings_provider* settings)
+{
+    if (host_identity_.has_private_key())
+        return; // Already initialized.
+    if (!settings)
+    {
+        host_identity(); // No persistence available.
+        return;
+    }
+
+    // Find and decode the host's existing key, if any.
+    byte_array id = settings->get_byte_array("id");
+    byte_array key = settings->get_byte_array("key");
+
+    if (!id.is_empty() and !key.is_empty())
+    {
+        host_identity_.set_id(id);
+        if (host_identity_.set_key(key) && host_identity_.has_private_key())
+            return;     // Success
+    }
+
+    logger::warning() << "Invalid host identity in settings: generating new identity";
+
+    // Generate a new key pair
+    host_identity_ = identity::generate();
+
+    // Save it in our host settings
+    settings->set("id", host_identity_.id().id());
+    settings->set("key", host_identity_.private_key());
+    settings->sync();
 }
 
 } // ssu namespace

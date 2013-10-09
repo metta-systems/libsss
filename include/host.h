@@ -45,7 +45,7 @@ class host
 public:
     /**
      * Create a "bare-bones" host state object with no links or identity.
-     * Client must establish a host identity via set_host_ident()
+     * Client must establish a host identity via set_host_identity()
      * and activate one or more network links before using ssu.
      */
     explicit host() {}
