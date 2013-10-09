@@ -100,30 +100,80 @@ public:
     static identity from_endpoint(endpoint const& ep);
 
     /**
-     * Get this identity's EID part.
+     * Get this identity's short binary EID.
+     * @return the binary identifier as a byte_array.
      */
     peer_id id() const {
         return id_;
     }
+    /**
+     * Set the identity's short binary EID.
+     * Clears any associated key information.
+     * @param id the binary identifier.
+     */
     inline void set_id(peer_id const& id) {
         id_ = id;
+        clear_key();
     }
 
+    /**
+     * Determine the scheme number this ID uses.
+     * @return the scheme number.
+     */
     scheme key_scheme() const;
-    bool has_private_key() const;
+
+    /**
+     * Determine whether this identifier contains an associated key
+     * usable for signature verification.
+     * @return true if this identity contains a public key.
+     */
+    inline bool has_key() const {
+        return key_ and key_->type() != crypto::sign_key::invalid;
+    }
+
+    /**
+     * Determine whether this identifier contains a private key
+     * usable for both signing and verification.
+     * @return true if this identity contains a private key.
+     */
+    inline bool has_private_key() const {
+        return key_ and key_->type() == crypto::sign_key::public_and_private;
+    }
+
+    /**
+     * Check for the distinguished "null identity".
+     * @return true if this is a null identity.
+     */
+    inline bool is_null() const {
+        return key_scheme() == scheme::null;
+    }
 
     inline bool is_ip_key_scheme() const {
         return key_scheme() == identity::scheme::ipv4 or key_scheme() == identity::scheme::ipv6;
     }
 
-    /// Get this identity's binary-encoded public key.
+    /**
+     * Get this identity's binary-encoded public key.
+     * @return the key serialized into a byte_array.
+     */
     byte_array public_key() const;
 
-    /// Get this identity's binary-encoded private key.
+    /**
+     * Get this identity's binary-encoded public and private keys.
+     * @return the key serialized into a byte_array.
+     */
     byte_array private_key() const;
 
-    void clear_key();
+    /**
+     * Set the public or private key associated with this identity.
+     * Note: set the identity first, as it clears the key.
+     * @param key the binary-encoded public or private key.
+     * @return true if the encoded key was recognized, valid,
+     *     and the correct key for this identifier.
+     */
     bool set_key(byte_array const& key);
+
+    void clear_key();
 
     /**
      * Sign a message.
@@ -153,7 +203,9 @@ class identity_host_state
     identity host_identity_;
 public:
     /**
-     * Create if necessary and return the host's cryptographic identity.
+     * Create if necessary and return the host's global cryptographic identity.
+     * Generates a new identity and private key if one isn't already set.
+     * @return the primary host identity.
      */
     identity host_identity();
 
@@ -164,6 +216,21 @@ public:
      */
     void set_host_identity(identity const& ident);
 
+    /**
+     * Initialize our primary host identity using a settings_provider for persistence.
+     * Looks for the tags 'id' and 'key' in the provided @a settings, and if they contain
+     * a valid host identity and private key, uses them to set the primary host identity.
+     * Otherwise, generates a new primary host identity and encodes them into the provided
+     * @a settings for future invocations of the application.
+     *
+     * This function does nothing if the primary host identity is already initialized and
+     * contains a valid private key.
+     *
+     * If no settings registry is specified, generates a new primary identity if not already
+     * generated.
+     *
+     * @param settings the settings registry to use for persistence.
+     */
     void init_identity(settings_provider* settings);
 };
 

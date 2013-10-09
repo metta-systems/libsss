@@ -108,7 +108,9 @@ identity identity::generate(scheme sch, int bits)
 
 identity::scheme identity::key_scheme() const
 {
-    assert(!id_.is_empty());
+    if(id_.is_empty())
+        return scheme::null;
+
     return scheme(id_.id()[0] >> 3);
 }
 
@@ -127,11 +129,6 @@ identity identity::from_endpoint(endpoint const& ep)
 
     identity ident(buf);
     return ident;
-}
-
-bool identity::has_private_key() const
-{
-    return key_ and key_->type() == crypto::sign_key::public_and_private;
 }
 
 byte_array identity::public_key() const
