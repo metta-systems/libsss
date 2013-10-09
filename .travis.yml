@@ -1,0 +1,10 @@
+language: cpp
+compiler: clang
+before_install:
+  - sudo add-apt-repository -y ppa:h-rayflood/llvm
+  - sudo add-apt-repository -y ppa:28msec/utils
+  - sudo apt-get update
+  - sudo apt-get install -qq --fix-missing clang-3.3 cmake
+script: cmake -G "Ninja" -DBUILD_TESTING=YES . && ninja && ctest
+notifications:
+  email: false
