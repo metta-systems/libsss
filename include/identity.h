@@ -102,7 +102,12 @@ public:
     /**
      * Get this identity's EID part.
      */
-    peer_id id() const;
+    peer_id id() const {
+        return id_;
+    }
+    inline void set_id(peer_id const& id) {
+        id_ = id;
+    }
 
     scheme key_scheme() const;
     bool has_private_key() const;

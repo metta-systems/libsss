@@ -129,11 +129,6 @@ identity identity::from_endpoint(endpoint const& ep)
     return ident;
 }
 
-peer_id identity::id() const
-{
-    return id_;
-}
-
 bool identity::has_private_key() const
 {
     return key_ and key_->type() == crypto::sign_key::public_and_private;
