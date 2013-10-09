@@ -11,6 +11,8 @@
 #include "host.h"
 #include "crypto/utils.h"
 
+using namespace std;
+
 /*
  * The Diffie-Hellman parameter setup has been taken unaltered
  * from SST implementation in Netsteria. @fixme
@@ -161,7 +163,7 @@ DH *get_dh3072()
 namespace ssu {
 namespace negotiation {
 
-dh_hostkey_t::dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_group_type group, DH *dh)
+dh_hostkey_t::dh_hostkey_t(shared_ptr<ssu::host> host, negotiation::dh_group_type group, DH *dh)
     : host_(host)
     , expiration_timer_(host.get())
     , group_(group)
@@ -179,6 +181,12 @@ dh_hostkey_t::dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_grou
     // Force key refresh every hour.
     expiration_timer_.on_timeout.connect(boost::bind(&dh_hostkey_t::timeout, this));
     expiration_timer_.start(boost::posix_time::hours(1));
+}
+
+dh_hostkey_t::~dh_hostkey_t()
+{
+    expiration_timer_.stop();
+    DH_free(dh_);
 }
 
 void dh_hostkey_t::timeout()
@@ -213,34 +221,35 @@ dh_hostkey_t::dh_size() const
 //=================================================================================================
 // dh_host_state
 //=================================================================================================
-dh_host_state::dh_host_state()
-{}
 
 dh_host_state::~dh_host_state()
 {
     logger::debug() << "Destructing host key state";
-    for (auto key : dh_keys_) {
+    for (auto& key : dh_keys_) {
         key.reset();
     }
 }
 
-std::shared_ptr<negotiation::dh_hostkey_t>
-dh_host_state::_generate_dh_key(negotiation::dh_group_type group, DH *(*groupfunc)())
+shared_ptr<negotiation::dh_hostkey_t>
+dh_host_state::internal_generate_dh_key(negotiation::dh_group_type group, DH *(*groupfunc)())
 {
     DH* dh = groupfunc();
     if (dh == nullptr)
         return nullptr;
 
     if (!DH_generate_key(dh))
+    {
+        DH_free(dh);
         return nullptr;
+    }
 
     assert(dh_keys_[int(group)] == nullptr);
-    dh_keys_[int(group)] = std::make_shared<negotiation::dh_hostkey_t>(get_host(), group, dh);
+    dh_keys_[int(group)] = make_shared<negotiation::dh_hostkey_t>(get_host(), group, dh);
 
     return dh_keys_[int(group)];
 }
 
-std::shared_ptr<negotiation::dh_hostkey_t>
+shared_ptr<negotiation::dh_hostkey_t>
 dh_host_state::get_dh_key(negotiation::dh_group_type group)
 {
     if (group >= negotiation::dh_group_type::dh_group_max)
@@ -252,11 +261,11 @@ dh_host_state::get_dh_key(negotiation::dh_group_type group)
     switch (group)
     {
         case negotiation::dh_group_type::dh_group_1024:
-            return _generate_dh_key(group, get_dh1024);
+            return internal_generate_dh_key(group, get_dh1024);
         case negotiation::dh_group_type::dh_group_2048:
-            return _generate_dh_key(group, get_dh2048);
+            return internal_generate_dh_key(group, get_dh2048);
         case negotiation::dh_group_type::dh_group_3072:
-            return _generate_dh_key(group, get_dh3072);
+            return internal_generate_dh_key(group, get_dh3072);
         default:
             logger::warning() << "Unknown DH host key group " << int(group) << " specified.";
             return nullptr;

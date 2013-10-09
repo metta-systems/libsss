@@ -32,7 +32,7 @@ class dh_hostkey_t
     std::shared_ptr<ssu::host> host_;    // Host to which this key is attached.
     ssu::async::timer expiration_timer_; // Expiration timer for DH master key.
     negotiation::dh_group_type group_;
-    DH *dh_; // Does this point into static memory? Might need cleanup. XXX memory leak
+    DH *dh_; // Diffie-Hellman state
     byte_array public_key_; // Host's public key.
     byte_array hmac_secret_key_; // HMAC key for responder's challenge.
 
@@ -53,6 +53,7 @@ class dh_hostkey_t
 
 public:
     dh_hostkey_t(std::shared_ptr<ssu::host> host, negotiation::dh_group_type group, DH *dh);
+    ~dh_hostkey_t();
 
     size_t dh_size() const;
 };
@@ -61,15 +62,13 @@ public:
 
 class dh_host_state
 {
-    friend class negotiation::dh_hostkey_t; // @fixme remove
-
     std::array<std::shared_ptr<negotiation::dh_hostkey_t>, /*dh_group_max*/3> dh_keys_;
 
     std::shared_ptr<negotiation::dh_hostkey_t>
-    _generate_dh_key(negotiation::dh_group_type group, DH *(*groupfunc)());
+    internal_generate_dh_key(negotiation::dh_group_type group, DH *(*groupfunc)());
 
 public:
-    dh_host_state();
+    dh_host_state() = default;
     virtual ~dh_host_state();
 
     std::shared_ptr<negotiation::dh_hostkey_t> get_dh_key(negotiation::dh_group_type group);
