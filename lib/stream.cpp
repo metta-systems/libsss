@@ -31,14 +31,20 @@ stream::stream(shared_ptr<host> h)
 
 // @fixme Ignore parent for now...
 stream::stream(shared_ptr<abstract_stream> other_stream, stream* parent)
-    : stream(other_stream->host_) // Run another constructor - this completes object initialization.
-    // , stream_(other_stream)
+    : host_(other_stream->host_)
+    , stream_(other_stream)
 {
     stream_ = other_stream;
     assert(stream_->owner_.lock() == nullptr);
-    stream_->owner_ = shared_from_this(); // @fixme CALLED IN CONSTRUCTOR!!
 
     // @todo set stream i/o mode to read-writable and no buffering
+}
+
+shared_ptr<stream> stream::create(shared_ptr<abstract_stream> other_stream)
+{
+    auto st = make_shared<stream>(other_stream);
+    other_stream->owner_ = st;
+    return st;
 }
 
 stream::~stream()

@@ -59,7 +59,7 @@ shared_ptr<stream> server::accept()
         return nullptr;
     auto bs = received_connections_.front();
     received_connections_.pop();
-    return make_shared<stream>(bs);
+    return stream::create(bs);
 }
 
 } // ssu namespace

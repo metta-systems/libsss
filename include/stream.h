@@ -98,6 +98,14 @@ public:
         reset   = 4,    ///< Forceful reset.
     };
 
+    /**
+     * Use this factory function to create new streams.
+     */
+    static std::shared_ptr<stream> create(std::shared_ptr<abstract_stream> other_stream);
+
+    /**
+     * This constructor is ok to use, the next one requires some extra setup.
+     */
     stream(std::shared_ptr<host> h);
     /**
      * Internal constructor for creating sub-streams from abstract_streams.
