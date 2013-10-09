@@ -1,5 +1,6 @@
  ☐ Implement basic settings_provider for storing host key and friend list.
  ☐ Implement basic DHT in 'routing' to let nodes find each other.
+ ☐ Check if Urbit terminology can be adopted for the user profiles.
 
  ✔ PlistCpp for a platform-independent settings_provider implementation... @done (13-10-09 13:22)
  ☐ Implement user-facing stream interface. Maybe mimic after an iostreams interface, but most probably not;
