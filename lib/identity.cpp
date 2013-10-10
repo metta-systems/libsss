@@ -99,9 +99,8 @@ identity identity::generate(scheme sch, int bits)
     id[0] = (id[0] & 7) | (sch << 3); // replace top 5 bits of ID with scheme used
     logger::debug() << "Generated key id " << id;
 
-    identity ident;
-    ident.key_ = key;
-    ident.id_ = id;
+    identity ident(id);
+    ident.set_key(key);
 
     return ident;
 }

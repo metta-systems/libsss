@@ -96,8 +96,14 @@ public:
 
     /**
      * Construct a non-cryptographic EID from an endpoint IP address.
+     * Non-cryptographic identifiers cannot have signing keys.
      */
     static identity from_endpoint(endpoint const& ep);
+
+    // @todo:
+    // from_mac_address()
+    // from_ip_address(address_v4)
+    // from_ip_address(address_v6)
 
     /**
      * Get this identity's short binary EID.
@@ -194,6 +200,7 @@ public:
      * @return true if signature verification succeeds.
      */
     inline bool verify(byte_array const& digest, byte_array const& sig) const {
+        assert(key_);
         return key_->verify(digest, sig);
     }
 };
