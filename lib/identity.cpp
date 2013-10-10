@@ -114,21 +114,107 @@ identity::scheme identity::key_scheme() const
     return scheme(id_.id()[0] >> 3);
 }
 
-identity identity::from_endpoint(endpoint const& ep)
+identity identity::from_mac_address(byte_array const& mac)
+{
+    assert(mac.size() == 6);
+
+    byte_array id({scheme::mac << 3});
+    id.append(mac);
+    return move(identity(id));
+}
+
+byte_array identity::mac_address() const
+{
+    if (key_scheme() != scheme::mac or id_.id().size() != 1+6)
+        return byte_array();
+    return id_.id().mid(1);
+}
+
+identity identity::from_ip_address(boost::asio::ip::address const& addr, uint16_t port)
 {
     byte_array buf;
 
-    if (ep.address().is_v4())
-        buf.append({scheme::ipv4});
-    else
-        buf.append({scheme::ipv6});
+    if (addr.is_v4()) {
+        buf.append({scheme::ipv4 << 3});
+        buf.append(addr.to_v4().to_bytes());
+    }
+    else if (addr.is_v6()) {
+        buf.append({scheme::ipv6 << 3});
+        buf.append(addr.to_v6().to_bytes());
+    }
+    else {
+        logger::warning() << "identity.from_ip_address - unknown IP protocol specified!";
+        return std::move(identity()); // Unknown IP type
+    }
 
-    buf.append(byte_array::wrap((const char*)ep.data(), ep.size()));
-    // @todo Append port
-    // buf.append(ep.port());
+    if (port)
+    {
+        big_uint16_t bport(port);
+        buf.append(byte_array::wrap(reinterpret_cast<char const*>(&bport), 2));
+    }
 
-    identity ident(buf);
-    return ident;
+    return std::move(identity(buf));
+}
+
+boost::asio::ip::address identity::ip_address(uint16_t* out_port) const
+{
+    if (out_port) {
+        *out_port = 0;
+    }
+    if (id_.is_empty()) {
+        return boost::asio::ip::address();
+    }
+
+    boost::asio::ip::address address;
+    size_t port_offset = ~0;
+
+    switch (key_scheme())
+    {
+        case scheme::ipv4:
+            if (id_.size() < 1+4) {
+                return boost::asio::ip::address();
+            }
+            address = boost::asio::ip::address_v4(id_.id().mid(1,4).as<big_uint32_t>()[0]);
+            port_offset = 1+4;
+            break;
+        case scheme::ipv6: {
+            if (id_.size() < 1+16) {
+                return boost::asio::ip::address();
+            }
+            boost::asio::ip::address_v6::bytes_type bytes;
+            byte_array sub(id_.id().mid(1,16));
+            std::copy(sub.as_vector().begin(), sub.as_vector().end(), bytes.begin());
+            address = boost::asio::ip::address_v6(bytes);
+            port_offset = 1+16;
+            break;
+        }
+        default:
+            logger::warning() << "identity.ip_address - unknown IP protocol!";
+            return boost::asio::ip::address();
+    }
+
+    if (out_port and id_.size() >= port_offset+2) {
+        *out_port = id_.id().mid(port_offset, 2).as<big_uint16_t>()[0];
+    }
+
+    return address;
+}
+
+uint16_t identity::ip_port() const
+{
+    uint16_t port;
+    ip_address(&port);
+    return port;
+}
+
+identity identity::from_endpoint(endpoint const& ep)
+{
+    return from_ip_address(ep.address(), ep.port());
+}
+
+endpoint identity::get_endpoint() const
+{
+    return endpoint(ip_address(), ip_port());
 }
 
 byte_array identity::public_key() const

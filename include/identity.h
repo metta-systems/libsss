@@ -88,7 +88,8 @@ public:
     identity(byte_array const& id, byte_array const& key);
 
     /**
-     * Generate a new identity with unique private key, using reasonable default parameters.
+     * Generate a new cryptographic identity with unique private key, using reasonable
+     * default parameters.
      * @param scheme the signing scheme to use.
      * @param bits the desired key strength in bits, or 0 to use the selected scheme's default.
      * @return the generated identity.
@@ -96,15 +97,50 @@ public:
     static identity generate(scheme sch = rsa160, int bits = 0);
 
     /**
+     * Create an identity representing a non-cryptographic IEEE MAC address.
+     * Non-cryptographic identities cannot have signing keys.
+     * @param mac the 6-byte MAC address.
+     * @return the resulting identity.
+     */
+    static identity from_mac_address(byte_array const& mac);
+
+    /**
+     * Extract the IEEE MAC address from an identifier with the MAC scheme.
+     * @return the 6-byte MAC address.
+     */
+    byte_array mac_address() const;
+
+    /**
+     * Create an identity representing a non-cryptographic IP address.
+     * Non-cryptographic identifiers cannot have signing keys.
+     * @param addr the IP address.
+     * @param port an optional transport-layer port number.
+     */
+    static identity from_ip_address(boost::asio::ip::address const& addr, uint16_t port = 0);
+
+    /**
+     * Extract the host address part of an identifier in the IP scheme.
+     * @param out_port if non-NULL, location to receive optional port number.
+     * @return an IPv4 or an IPv6 address.
+     */
+    boost::asio::ip::address ip_address(uint16_t* out_port = nullptr) const;
+
+    /**
+     * Extract the port number part of an identifier in the IP scheme.
+     * @return the 16-bit port number, 0 if the EID contains no port.
+     */
+    uint16_t ip_port() const;
+
+    /**
      * Construct a non-cryptographic EID from an endpoint IP address.
      * Non-cryptographic identifiers cannot have signing keys.
      */
     static identity from_endpoint(endpoint const& ep);
 
-    // @todo:
-    // from_mac_address()
-    // from_ip_address(address_v4)
-    // from_ip_address(address_v6)
+    /**
+     * Extract the endpoint (IP address and port pair) from an EID that describes an endpoint.
+     */
+    endpoint get_endpoint() const; /// Actually @todo Rename endpoint to endpoint_t?
 
     /**
      * Get this identity's short binary EID.
@@ -187,7 +223,7 @@ public:
      * to be signed using this identity's private key.
      * @return the new secure_hash object.
      */
-    inline std::unique_ptr<secure_hash> create_hash() const {
+    inline std::unique_ptr<crypto::secure_hash> create_hash() const {
         assert(key_);
         return key_->create_hash();
     }
