@@ -72,9 +72,10 @@ public:
      * Upon receiving the on_new_connection signal, the application must call accept() in a loop
      * until there are no more incoming connections to accept.
      *
+     * @snippet doc/snippets.cpp Accepting a connection
+     *
      * @return a new stream representing ths incoming connection,
      *         or nullptr if no connections are currently waiting.
-     *
      */
     std::shared_ptr<stream> accept();
 
