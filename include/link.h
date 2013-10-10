@@ -104,24 +104,42 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, link_endpoint& ep)
 
 /**
  * This mixin class encapsulates link-related part of host state.
+ * @see host
  */
 class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
 {
+    /**
+     * Lookup table of all registered link_receivers for this host,
+     * keyed on their 24-bit magic control packet type.
+     */
     std::unordered_map<magic_t, link_receiver*> receivers_;
+    /**
+     * List of all currently-active links.
+     */
     std::unordered_set<link*> active_links_;
+    /**
+     * Link created by init_link(), if any.
+     */
     std::shared_ptr<link> primary_link_;
 
 protected:
     /**
-     * Initialize and return the link this host instance uses to communicate.
-     * Repeated calls will return already initialized link instance.
+     * Create a new network link.
+     * The default implementation creates a udp_link,
+     * but this may be overridden to virtualize the network.
      */
     virtual std::shared_ptr<link> create_link();
 
     /**
-     * Initialize primary link state.
-     * @param settings     Settings provider for port number.
-     * @param default_port Default port number if not found in settings.
+     * Initialize and return the link this host instance uses to communicate.
+     * Repeated calls will return already initialized link instance.
+     * It exits the application via abort() if socket creation fails.
+     * @param settings     Settings provider for port number. If not null, init_link() looks
+     *                     for a 'port' key and uses it in place of the specified default
+     *                     port if found. In any case, sets the 'port' key to the port
+     *                     actually used.
+     * @param default_port Default port number to bind to if 'port' key not found in @a settings.
+     * @return the created link (during this or a previous call).
      */
     void init_link(settings_provider* settings, uint16_t default_port);
 
@@ -145,9 +163,29 @@ public:
      */
     virtual link_receiver* receiver(magic_t magic);
 
-    inline void activate_link(link* l)   { active_links_.insert(l); }
-    inline void deactivate_link(link* l) { active_links_.erase(l); }
+    inline void activate_link(link* l)   { active_links_.insert(l); on_active_links_changed(); }
+    inline void deactivate_link(link* l) { active_links_.erase(l); on_active_links_changed(); }
+
+    /**
+     * Obtain a list of all currently active links.
+     * Used by upper-level protocols (e.g., key exchange, registration)
+     * to send out initial discovery messages on all available links.
+     * Subsequent messages normally get sent only to
+     * the specific link a discovery response was seen on.
+     * @return a set of pointers to each currently active link.
+     */
     inline std::unordered_set<link*> active_links() const { return active_links_; }
+
+    /**
+     * Get a set of all known local endpoints for all active links.
+     */
+    std::unordered_set<endpoint> active_local_endpoints();
+
+    typedef boost::signals2::signal<void(void)> active_links_changed_signal;
+    /**
+     * This signal is sent whenever the host's set of active sockets changes.
+     */
+    active_links_changed_signal on_active_links_changed;
 };
 
 /**
@@ -169,13 +207,10 @@ class link //: public std::enable_shared_from_this<link>
 
 public:
     // ssu expresses current link status as one of three states:
-    // - up: apparently alive, all's well as far as we know.
-    // - stalled: briefly lost connectivity, but may be temporary.
-    // - down: definitely appears to be down.
     enum class status {
-        down,
-        stalled,
-        up
+        down,    ///< definitely appears to be down.
+        stalled, ///< briefly lost connectivity, but may be temporary.
+        up       ///< apparently alive, all's well as far as we know.
     };
 
     link(std::shared_ptr<host> host) : host_(host) {}
@@ -231,9 +266,6 @@ public:
      * to a particular target endpoint.
      */
     virtual int may_transmit(endpoint const& ep);
-
-    typedef boost::signals2::signal<void(void)> active_links_changed_signal;
-    active_links_changed_signal on_active_links_changed;
 };
 
 /**

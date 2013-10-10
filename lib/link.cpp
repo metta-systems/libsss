@@ -54,7 +54,7 @@ link_host_state::receiver(magic_t magic)
 shared_ptr<link>
 link_host_state::create_link()
 {
-    return make_shared<udp_link>(get_host()); // @fixme
+    return make_shared<udp_link>(get_host());
 }
 
 void
@@ -62,6 +62,18 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
 {
     if (primary_link_ and primary_link_->is_active())
         return;
+
+    // See if a port number is recorded in our settings;
+    // if so, use that instead of the specified default port.
+    if (settings) {
+        auto s_port = settings->get("port");
+        if (!s_port.empty()) {
+            int port = boost::any_cast<long long>(s_port);
+            if (port > 0 && port <= 65535) {
+                default_port = port;
+            }
+        }
+    }
 
     // @fixme not ipv6-ready!!
     // This binds only to ipv4 local address.
@@ -76,6 +88,25 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
             logger::fatal() << "Couldn't bind the link";
         }
     }
+
+    // Remember the port number we ended up using.
+    if (settings) {
+        settings->set("port", default_port);
+    }
+}
+
+std::unordered_set<endpoint>
+link_host_state::active_local_endpoints()
+{
+    std::unordered_set<endpoint> result;
+    for (link* l : active_links())
+    {
+        assert(l->is_active());
+        for (auto ep : l->local_endpoints()) {
+            result.insert(ep);
+        }
+    }
+    return result;
 }
 
 //=================================================================================================
@@ -111,7 +142,6 @@ link::set_active(bool active)
     else {
         host_->deactivate_link(this);
     }
-    on_active_links_changed();
 }
 
 /**
