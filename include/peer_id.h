@@ -32,6 +32,7 @@ public:
     inline peer_id(byte_array id) : id_(id) {}
 
     inline byte_array id() const { return id_; }
+    inline size_t size() const { return id_.size(); }
     inline std::string to_string() const { return encode::to_base32(id_); }
     inline bool is_empty() const { return id_.is_empty(); }
 };
