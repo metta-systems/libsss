@@ -8,13 +8,14 @@
 //
 #include "stream.h"
 #include "stream_channel.h"
-#include "stream_responder.h"
+// #include "stream_responder.h"
 #include "private/stream_peer.h"
 #include "base_stream.h"
 #include "identity.h"
 #include "logging.h"
 #include "host.h"
 #include "algorithm.h"
+#include "negotiation/key_responder.h"
 
 using namespace std;
 
@@ -385,6 +386,20 @@ bool stream::is_listening() const
 // stream_responder
 //=================================================================================================
 
+/**
+ * Private helper class, to register with link layer to receive key exchange packets.
+ * Only one instance ever created per host.
+ */
+class stream_responder : public negotiation::key_responder, public stream_protocol
+{
+    channel* create_channel(link_endpoint const& initiator_ep,
+            byte_array const& initiator_eid,
+            byte_array const& user_data_in, byte_array& user_data_out) override;
+
+public:
+    stream_responder(std::shared_ptr<host> host);
+};
+
 stream_responder::stream_responder(shared_ptr<host> host)
     : key_responder(host, magic_id)
 {}
@@ -410,13 +425,10 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
 // Stream host state.
 //=================================================================================================
 
-stream_host_state::~stream_host_state()
-{}
-
 void stream_host_state::instantiate_stream_responder()
 {
     if (!responder_)
-        responder_ = new stream_responder(get_host());
+        responder_ = make_shared<stream_responder>(get_host());
     assert(responder_);
 }
 

@@ -45,13 +45,13 @@ class server;
  */
 class stream_host_state
 {
-    stream_responder* responder_{nullptr};
+    std::shared_ptr<stream_responder> responder_{nullptr};
     std::unordered_map<peer_id, stream_peer*> peers_;
     std::unordered_map<std::pair<std::string, std::string>, server*> listeners_;
 
 public:
-    inline stream_host_state() = default;
-    virtual ~stream_host_state();
+    stream_host_state() = default;
+    virtual ~stream_host_state() = default;
 
     virtual std::shared_ptr<host> get_host() = 0;
 

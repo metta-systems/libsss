@@ -12,7 +12,6 @@
 #include "byte_array.h"
 #include "peer_id.h"
 #include "link.h"
-#include "negotiation/key_responder.h"
 
 namespace ssu {
 
@@ -522,21 +521,6 @@ public:
     error_signal on_reset_notify;
 
     /**@}*/
-};
-
-/**
- * Private helper class, to register with link layer to receive key exchange packets.
- * Only one instance ever created per host.
- */
-class stream_responder : public negotiation::key_responder, public stream_protocol
-{
-    friend class stream_host_state;
-
-    stream_responder(std::shared_ptr<host> host);
-
-    channel* create_channel(link_endpoint const& initiator_ep,
-            byte_array const& initiator_eid,
-            byte_array const& user_data_in, byte_array& user_data_out) override;
 };
 
 } // ssu namespace
