@@ -18,6 +18,8 @@ namespace crypto {
 class secure_hash;
 
 /**
+ * Abstract base class for public-key cryptographic signing methods.
+ *
  * NOTE:
  * A key should not be reused for multiple purposes; that may open up various subtle attacks.
  *
@@ -28,10 +30,6 @@ class secure_hash;
  * one for signing and one for encryption/decryption.
  *
  * from http://security.stackexchange.com/questions/2202/lessons-learned
- */
-
-/**
- * Abstract base class for public-key cryptographic signing methods.
  */
 class sign_key
 {
@@ -44,27 +42,49 @@ public:
 
     virtual ~sign_key();
 
-    /// Get the type of this key (public or private).
+    /**
+     * Get the type of this key (public or private).
+     * @return Key category (public, public and private, invalid).
+     */
     inline key_type type() const { return type_; }
 
-    /// Get the short hash ID of this public or private key,
-    /// which is usable only for uniquely identifying the key.
+    /**
+     * Get the short hash ID of this public or private key,
+     * which is usable only for uniquely identifying the key.
+     */
     virtual byte_array id() const = 0;
 
-    /// Get this Ident's binary-encoded public key.
+    /**
+     * Get binary-encoded public key.
+     * @return Serialized public key data.
+     */
     virtual byte_array public_key() const = 0;
 
-    /// Get this Ident's binary-encoded private key.
+    /**
+     * Get binary-encoded public and private keys.
+     * @return Serialized public and private key data.
+     */
     virtual byte_array private_key() const = 0;
 
-    /// Create a new SecureHash object suitable for hashing messages
-    /// to be signed using this identity's private key.
+    /**
+     * Create a new secure_hash object suitable for hashing messages
+     * to be signed using private key.
+     */
     virtual std::unique_ptr<secure_hash> create_hash() const = 0;
 
-    /// Generate signature
+    /**
+     * Generate signature
+     * @param  digest Digest of the message to be signed.
+     * @return        Message digital signature.
+     */
     virtual byte_array sign(byte_array const& digest) const = 0;
 
-    /// Verify a signature
+    /**
+     * Verify a signature
+     * @param  digest    Digest of the signed message.
+     * @param  signature Message signature.
+     * @return           true if signature verification succeeded, false otherwise.
+     */
     virtual bool verify(byte_array const& digest, byte_array const& signature) const = 0;
 
 protected:
