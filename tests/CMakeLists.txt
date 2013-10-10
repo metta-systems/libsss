@@ -1,3 +1,5 @@
+create_test(identity LIBS ssu support plist ${OPENSSL_LIBRARIES})
+
 create_test(host LIBS ssu support plist ${OPENSSL_LIBRARIES})
 create_test(channel LIBS ssu support plist)
 create_test(stream_user LIBS ssu support plist ${OPENSSL_LIBRARIES})
