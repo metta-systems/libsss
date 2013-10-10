@@ -40,17 +40,17 @@ class server : public stream_protocol
 public:
     /**
      * Create a server instance.
-     * The application must call listen()
-     * before the server will actually accept incoming connections.
+     * The application must call listen() before the server will actually
+     * accept incoming connections.
+     * @param host the host object containing hostwide SSU state.
      */
     server(std::shared_ptr<host> host);
 
     /** 
-     * Listen for incoming connections to a particular service
-     * using a particular application protocol.
-     * This method may only be called once on a server instance.
-     * An error occurs if another server object is already listening
-     * on the specified service/protocol name pair on this host.
+     * Listen for incoming connections to a particular service using a particular
+     * application protocol. This method may only be called once on a server instance.
+     * An error occurs if another server object is already listening on the specified
+     * service/protocol name pair on this host.
      * @param service_name the service name on which to listen.
      *      Clients must specify the same service name via connect_to() to connect to this server.
      * @param service_desc a short human-readable service description
@@ -65,6 +65,9 @@ public:
     bool listen(std::string const& service_name, std::string const& service_desc,
                 std::string const& protocol_name, std::string const& protocol_desc);
 
+    /**
+     * Returns true if this server is currently listening.
+     */
     inline bool is_listening() const { return active_; }
 
     /**

@@ -34,6 +34,7 @@ bool server::listen(string const& service_name, string const& service_desc,
     // Make sure the stream_responder is initialized and listening.
     host_->instantiate_stream_responder();
 
+    // Register us to handle the indicated service name
     auto svcpair = make_pair(service_name, protocol_name);
 
     if (host_->is_listening(svcpair))

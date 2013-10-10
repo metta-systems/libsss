@@ -35,9 +35,9 @@ class sign_key
 {
 public:
     enum key_type {
-        invalid = 0,
-        public_only = 1,
-        public_and_private = 2,
+        invalid = 0,            ///< Uninitialized or invalid key.
+        public_only = 1,        ///< Public key only.
+        public_and_private = 2, ///< Public and private key.
     };
 
     virtual ~sign_key();
