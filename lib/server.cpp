@@ -6,6 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <boost/format.hpp>
 #include "server.h"
 #include "stream.h"
 #include "logging.h"
@@ -39,7 +40,9 @@ bool server::listen(string const& service_name, string const& service_desc,
 
     if (host_->is_listening(svcpair))
     {
-        // error_string_ = boost::format("Service %$1$ with protocol %$2$ already registered.");
+        error_string_ = str(boost::format("Service %1% with protocol %2% already registered.")
+            % service_name % protocol_name);
+        logger::warning() << error_string_;
         return false;
     }
 
