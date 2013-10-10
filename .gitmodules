@@ -1,3 +1,6 @@
 [submodule "cmake"]
 	path = cmake
 	url = https://berkus@github.com/berkus/cmake-setup.git
+[submodule "travis-ci"]
+	path = travis-ci
+	url = https://berkus@github.com/berkus/travis-scripts.git
