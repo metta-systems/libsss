@@ -23,6 +23,8 @@ class channel;
 class server;
 
 /**
+ * @nosubgrouping
+ *
  * User-space interface to the stream.
  *
  * This is the primary high-level class that client applications use to communicate over
@@ -113,9 +115,9 @@ public:
     stream(std::shared_ptr<abstract_stream> other_stream, stream* parent = nullptr);
     virtual ~stream();
 
-    //===============================================================
-    // Connection-related services.
-    //===============================================================
+    //-------------------------------------------
+    /** @name Connection-related services. */
+    /**@{*///------------------------------------
     
     /**
      * Connect to a given service and protocol on a remote host.
@@ -200,10 +202,10 @@ public:
      */
     void connect_at(endpoint const& ep);
 
-    //===============================================================
-    // Byte-oriented data transfer.
-    // Reading data.
-    //===============================================================
+    /**@}*/
+    //---------------------------------------------------------------
+    /** @name Byte-oriented data transfer. Reading data. */
+    /**@{*///--------------------------------------------------------
 
     /**
      * Determine the number of bytes currently available to be read via readData().
@@ -213,7 +215,9 @@ public:
      */
     ssize_t bytes_available() const;
 
-    /// Returns true if at least one byte is available for reading.
+    /**
+     * Returns true if at least one byte is available for reading.
+     */
     inline bool has_bytes_available() const {
         return bytes_available() > 0;
     }
@@ -295,10 +299,10 @@ public:
      */
     byte_array read_record(ssize_t max_size = 1 << 30);
 
-    //===============================================================
-    // Byte-oriented data transfer.
-    // Writing data.
-    //===============================================================
+    /**@}*/
+    //---------------------------------------------------------------
+    /** @name Byte-oriented data transfer. Writing data. */
+    /**@{*///--------------------------------------------------------
 
     /** Write data bytes to a stream.
      * If not all the supplied data can be transmitted immediately,
@@ -336,10 +340,10 @@ public:
         return write_record(rec.data(), rec.size());
     }
 
-    //===============================================================
-    // Datagram protocol.
-    // Send and receive unordered, unreliable datagrams on this stream.
-    //===============================================================
+    /**@}*/
+    //--------------------------------------------
+    /** @name Datagram protocol. Send and receive unordered, unreliable datagrams on this stream. */
+    /**@{*///------------------------------------
 
     enum class datagram_type
     {
@@ -361,9 +365,9 @@ public:
     bool has_pending_datagrams() const;
     ssize_t pending_datagram_size() const;
 
-    //===============================================================
-    // Substreams management.
-    //===============================================================
+    /**@}*///--------------------------------------------------------
+    /** @name Substreams management. */
+    /**@{*///------------------------------------
 
     /**
      * Initiate a new substream as a child of this stream.
@@ -395,9 +399,9 @@ public:
      */
     std::shared_ptr<stream> accept_substream();
 
-    //===============================================================
-    // Stream control.
-    //===============================================================
+    /**@}*///------------------------------------
+    /** @name Stream control. */
+    /**@{*///------------------------------------
 
     /**
      * Returns the endpoint identifier of the local host
@@ -476,18 +480,26 @@ public:
      */
     bool add_location_hint(peer_id const& eid, endpoint const& hint);
 
-    /// Dump the state of this stream, for debugging purposes.
+    /**
+     * Set an error condition on this stream and emit the error_notify signal.
+     * @param error Textual description of the error.
+     */
+    void set_error(const std::string& error);
+
+    /**
+     * Dump the state of this stream, for debugging purposes.
+     */
     void dump();
 
-    //===============================================================
-    // Signals.
-    //===============================================================
+    /**@}*///------------------------------------
+    /** @name Signals. */
+    /**@{*///------------------------------------
 
+    typedef boost::signals2::signal<void (ssize_t)> bytes_written_signal;
     /**
      * Emitted when some locally buffered data gets flushed
      * after being delivered to the receiver and acknowledged.
      */
-    typedef boost::signals2::signal<void (ssize_t)> bytes_written_signal;
     bytes_written_signal on_bytes_written;
 
     typedef boost::signals2::signal<void (void)> ready_signal;
@@ -509,8 +521,7 @@ public:
     error_signal on_error_notify;
     error_signal on_reset_notify;
 
-    // Set an error condition on this stream and emit the error_notify signal.
-    void set_error(const std::string& error);
+    /**@}*/
 };
 
 /**

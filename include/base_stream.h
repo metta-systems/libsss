@@ -30,6 +30,9 @@ public:
     packet_seq_t     sid_seq_{~0ULL};   ///< Reference packet sequence for stream ID.
 };
 
+/**
+ * Helper class for transmit attachments.
+ */
 class stream_tx_attachment : public stream_attachment
 {
     bool active_{false};     ///< Currently active and usable.
@@ -61,6 +64,9 @@ public:
     void clear();
 };
 
+/**
+ * Helper class for receive attachments.
+ */
 class stream_rx_attachment : public stream_attachment
 {
 public:
@@ -74,7 +80,8 @@ public:
 };
 
 /**
- * @internal
+ * @nosubgrouping
+ *
  * Basic internal implementation of the abstract stream.
  * The separation between the internal stream control object and the
  * application-visible stream object is primarily needed so that SSU can
@@ -185,8 +192,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     };
 
     //-------------------------------------------
-    // Connection state
+    /** @name Connection state */
     //-------------------------------------------
+    /**@{*/
 
     std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
     /**
@@ -205,18 +213,22 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
                        parent_usid_; ///< Unique ID of parent stream.
     stream_peer* peer_;              ///< Information about the other side of this connection.
 
+    /**@}*/
     //-------------------------------------------
-    // Channel attachment state
+    /** @name Channel attachment state */
     //-------------------------------------------
+    /**@{*/
 
     static constexpr int  max_attachments = 2;
     stream_tx_attachment  tx_attachments_[max_attachments];  // Our channel attachments
     stream_rx_attachment  rx_attachments_[max_attachments];  // Peer's channel attachments
     stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
 
+    /**@}*/
     //-------------------------------------------
-    // Byte transmit state
+    /** @name Byte transmit state */
     //-------------------------------------------
+    /**@{*/
 
     /// Next transmit byte sequence number to assign.
     int32_t tx_byte_seq_{0};
@@ -233,9 +245,11 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /// Cumulative size of all segments waiting to be ACKed.
     size_t tx_waiting_size_{0};
 
+    /**@}*/
     //-------------------------------------------
-    // Byte receive state
+    /** @name Byte receive state */
     //-------------------------------------------
+    /**@{*/
 
     /// Default receive buffer size for new top-level streams
     static constexpr int default_rx_buffer_size = 65536;
@@ -261,13 +275,16 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     int receive_buf_size_{default_rx_buffer_size};       // Recv buf size for channel control
     int child_receive_buf_size_{default_rx_buffer_size}; // Recv buf for child streams
 
+    /**@}*/
     //-------------------------------------------
-    // Substream receive state
+    /** @name Substream receive state */
     //-------------------------------------------
+    /**@{*/
 
     /// Received, waiting substreams.
     std::deque<std::shared_ptr<abstract_stream>> received_substreams_;
 
+    /**@}*/
 private:
     // Connection
     void got_service_request();
@@ -478,8 +495,8 @@ public:
     void end_flight(packet const& pkt);
 
     //-------------------------------------------
-    // Signals
-    //-------------------------------------------
+    /** @name Signals */
+    /**@{*///------------------------------------
 
     /**
      * An active attachment attempt succeeded and was acked by receiver.
@@ -490,6 +507,7 @@ public:
      * An active detachment attempt succeeded and was acked by receiver.
      */
     boost::signals2::signal<void()> on_detached;
+    /**@}*/
 };
 
 //=================================================================================================
