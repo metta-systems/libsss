@@ -16,16 +16,28 @@ namespace bp = boost::posix_time;
 namespace ssu {
 namespace async {
 
+/**
+ * Default initial retry time: 500 ms
+ */
 const timer::duration_type timer::retry_min = bp::milliseconds(500);
+/**
+ * Default max retry period: 1 minute
+ */
 const timer::duration_type timer::retry_max = bp::minutes(1);
+/**
+ * Default hard failure deadline: 20 seconds
+ */
 const timer::duration_type timer::fail_max  = bp::seconds(20);
 
-//=========================================================
+//=================================================================================================
 // timer
-//=========================================================
+//=================================================================================================
 
-static timer::duration_type backoff(timer::duration_type interval,
-									timer::duration_type max_interval = timer::fail_max)
+/**
+ * Exponential backoff function for retry.
+ */
+static timer::duration_type
+backoff(timer::duration_type interval, timer::duration_type max_interval = timer::fail_max)
 {
 	return std::min(interval * 3 / 2, max_interval);
 }
@@ -61,10 +73,13 @@ void timer::timeout_calculations()
 	failed_ = (fail_interval_ <= bp::milliseconds(0));
 }
 
-//=========================================================
+//=================================================================================================
 // default_timer_engine
-//=========================================================
+//=================================================================================================
 
+/**
+ * Default boost.asio implementation of the timer_engine.
+ */
 class default_timer_engine : public timer_engine
 {
 	boost::asio::deadline_timer interval_timer;
@@ -115,6 +130,10 @@ void default_timer_engine::asio_timeout(boost::system::error_code const& error)
 	timeout();
 }
 
+//=================================================================================================
+// timer_engine
+//=================================================================================================
+
 void timer_engine::timeout()
 {
 	origin_->timeout_calculations();
@@ -122,6 +141,10 @@ void timer_engine::timeout()
 }
 
 } // namespace async
+
+//=================================================================================================
+// timer_host_state
+//=================================================================================================
 
 boost::posix_time::ptime timer_host_state::current_time()
 {

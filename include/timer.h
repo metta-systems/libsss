@@ -21,7 +21,10 @@ class timer_host_state;
 namespace async {
 
 /**
- * Interval timer supporting usual packet resend timeouts and such.
+ * Implements interval timers suitable for network protocols.
+ * Supports exponential backoff computations for retransmissions and retries,
+ * as well as an optional "hard" failure deadline.
+ * Also can be virtualized for simulation purposes.
  */
 class timer
 {
@@ -36,32 +39,63 @@ private:
     std::unique_ptr<timer_engine> engine_{nullptr};
     duration_type interval_{retry_min};
     duration_type fail_interval_{fail_max};
-    // boost::asio::deadline_timer::time_type deadline_;
+    // boost::asio::deadline_timer::time_type deadline_; @todo For deadline timers.
     bool active_{false};
     bool failed_{false};
 
 public:
+    /**
+     * Create a timer.
+     * @param host Host state is used to create a new timer_engine for this timer.
+     */
     timer(ssu::timer_host_state* host);
 
-    /// @todo: support deadline timers too
-    void start(duration_type interval, duration_type fail_interval = fail_max);
+    /**
+     * Start or restart the timer at a specified interval.
+     * @todo Add support for default interval.
+     * @todo Support deadline timers too.
+     * @param interval the initial timer interval.
+     * @param fail_interval the hard failure interval.
+     */
+   void start(duration_type interval, duration_type fail_interval = fail_max);
+    /**
+     * Stop the timer if it is currently running.
+     */
     void stop();
+    /**
+     * Restart the timer with a longer interval after a retry.
+     */
     void restart();
 
+    /**
+     * Determine if we've reached the hard failure deadline.
+     * @return true if the failure deadline has passed.
+     */
     bool has_failed() const {
         return failed_;
     }
 
+    /**
+     * Determine if the timer is currently active.
+     * @return true if the timer is ticking.
+     */
     inline bool is_active() const {
         return active_;
     }
+    /**
+     * Obtain the timer's current interval.
+     * @return the current timeout interval as set by call to start() or restart().
+     */
     inline duration_type interval() const {
         return interval_;
     }
 
-    // Accessed only by timer engine on timeouts. @fixme
+    /**
+     * Accessed only by timer engine on timeouts. @fixme
+     */
     void timeout_calculations();
 
+    typedef boost::signals2::signal<void (bool)> timeout_signal;
     /**
      * Signaled when the timer expires.
      *
@@ -70,12 +104,17 @@ public:
      * 
      * Argument 'failed' is true if the hard failure deadline has been reached.
      */
-    typedef boost::signals2::signal<void (bool)> timeout_signal;
     timeout_signal on_timeout;
 };
 
 } // namespace async
 
+/**
+ * Base class providing hooks for time virtualization.
+ * @todo The application may create a timer_host_state object and activate it using
+ * time::set_timer_host_state(). The SSU protocol will then call the time factory's methods
+ * whenever it needs to obtain the current system time or create timers.
+ */
 class timer_host_state : virtual public asio_host_state
 {
 public:

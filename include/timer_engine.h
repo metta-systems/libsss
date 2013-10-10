@@ -26,9 +26,21 @@ class timer_engine
 public:
 	typedef boost::posix_time::time_duration duration_type;
 
+	/**
+	 * Create a new timer engine.
+	 */
 	timer_engine(timer* t) : origin_(t) {}
 
+	/**
+	 * Start the timer.
+	 * The implementation subclass provides this method.
+	 * @param interval the timer interval.
+	 */
 	virtual void start(duration_type interval) = 0;
+	/**
+	 * Stop the timer.
+	 * The implementation subclass provides this method.
+	 */
 	virtual void stop() = 0;
 
 	/**
