@@ -40,7 +40,7 @@ Features of SSU:
 
 There can be multiple servers and streams connected to multiple endpoints.
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/berkus/libssu/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+[![Build Status](https://travis-ci.org/berkus/libssu.png?branch=develop)](https://travis-ci.org/berkus/libssu) [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/berkus/libssu/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
   [1]: http://pdos.csail.mit.edu/uia/ "UIA"
   [2]: https://github.com/berkus/mettanode "MettaNode"
