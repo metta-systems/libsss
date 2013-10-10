@@ -7,6 +7,8 @@ using namespace std;
 namespace ssu {
 // namespace internal {
 
+constexpr int DEFAULT_PORT = 9660; /// @todo
+
 constexpr int stream_peer::stall_warnings_max;
 
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
@@ -18,6 +20,16 @@ stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id)
 {
     assert(!remote_id.is_empty());
 
+    // If the remote_id is just an encapsulated IP endpoint,
+    // then also use it as a destination address hint.
+    identity ident(remote_id_.id());
+    if (ident.is_ip_key_scheme()) {
+        endpoint ep(ident.get_endpoint());
+        if (ep.port() == 0) {
+            ep.port(DEFAULT_PORT);
+        }
+        locations_.insert(ep);
+    }
 }
 
 stream_peer::~stream_peer()
