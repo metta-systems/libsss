@@ -13,10 +13,10 @@
 #include "byte_array.h"
 #include "host.h"
 #include "peer_id.h"
+#include "stream.h"
 
 namespace ssu {
 
-class stream;
 class base_stream;
 
 /**
@@ -82,8 +82,58 @@ public:
      */
     std::shared_ptr<stream> accept();
 
+    /**
+     * Accept an incoming connection, and obtain the EID of the originating host.
+     * @overload
+     */
+    inline std::shared_ptr<stream> accept(peer_id& from_host)
+    {
+        auto stream = accept();
+        if (stream) from_host = stream->remote_host_id();
+        return stream;
+    }
+
+    /**
+     * Returns the service name previously supplied to listen().
+     */
+    inline std::string service_name() { return service_name_; }
+
+    /**
+     * Returns the service description previously supplied to listen().
+     */
+    inline std::string service_description() { return service_description_; }
+
+    /**
+     * Returns the protocol name previously supplied to listen().
+     */
+    inline std::string protocol_name() { return protocol_name_; }
+
+    /**
+     * Returns the protocol description previously supplied to listen().
+     */
+    inline std::string protocol_description() { return protocol_description_; }
+
+    /**
+     * Returns a string describing the last error that occurred, if any.
+     */
+    inline std::string error_string() { return error_string_; }
+
+    /** @name Signals. */
+    /**@{*/
     typedef boost::signals2::signal<void(void)> connection_notify_signal;
+    /**
+     * Emitted when a new connection arrives. To prevent races accept
+     * all incoming streams in the handler function as described in accept() documentation.
+     */
     connection_notify_signal on_new_connection;
+    /**@}*/
+
+protected:
+    /**
+     * Set the current error description string.
+     * @param err Textual error description.
+     */
+    inline void set_error_string(std::string const& err) { error_string_ = err; }
 };
 
 } // namespace ssu
