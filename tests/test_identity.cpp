@@ -22,7 +22,11 @@ BOOST_AUTO_TEST_CASE(mac_identity)
 {
 }
 
-BOOST_AUTO_TEST_CASE(ip_identity)
+BOOST_AUTO_TEST_CASE(ipv4_identity)
+{
+}
+
+BOOST_AUTO_TEST_CASE(ipv6_identity)
 {
 }
 
