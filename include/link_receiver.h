@@ -31,19 +31,20 @@ class link_receiver
     magic_t magic_{0};
 
 protected:
-    void bind();
-    void unbind();
-
     inline link_receiver(std::shared_ptr<host> host) : host_(host)
     {}
 
-    inline link_receiver(std::shared_ptr<host> host, magic_t magic) : host_(host), magic_(magic) {
-        bind();
+    inline link_receiver(std::shared_ptr<host> host, magic_t magic) : host_(host) {
+        bind(magic);
     }
 
     inline ~link_receiver() { unbind(); }
 
+    void bind(magic_t magic);
+    void unbind();
+
     inline magic_t magic() const { return magic_; }
+    inline bool is_bound() const { return magic_ != 0; }
 
     virtual std::shared_ptr<host> get_host() { return host_; }
 

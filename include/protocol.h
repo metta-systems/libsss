@@ -24,7 +24,7 @@ typedef uint32_t magic_t;
 
 /**
  * An 8-bit channel number distinguishes different channels
- * between the same pair of socket-layer endpoints. Channel number 0 is always invalid.
+ * between the same pair of link-layer endpoints. Channel number 0 is always invalid.
  * Up to 255 simultaneous channels possible.
  */
 typedef uint8_t channel_number;
