@@ -144,6 +144,13 @@ byte_array identity::private_key() const
     return key_->private_key();
 }
 
+byte_array identity::hash(void const* data, int len) const
+{
+    auto hsh = create_hash();
+    hsh->update(data, len);
+    return hsh->final();
+}
+
 //=================================================================================================
 // identity_host_state
 //=================================================================================================
