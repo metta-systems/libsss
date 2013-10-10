@@ -200,7 +200,7 @@ public:
      * @return the resulting hash, in a byte_array.
      * @see create_hash
      */
-    byte_array hash(void const* data, int len) const;
+    byte_array hash(char const* data, int len) const;
 
     /**
      * Hash a byte_array using this identity scheme's hash function.
