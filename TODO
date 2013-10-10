@@ -1,4 +1,5 @@
- ☐ Implement basic settings_provider for storing host key and friend list.
+ ✔ Implement basic settings_provider for storing host key @done (13-10-10 00:12)
+   ☐ and friend list.
  ☐ Implement basic DHT in 'routing' to let nodes find each other.
  ☐ Check if Urbit terminology can be adopted for the user profiles.
 
