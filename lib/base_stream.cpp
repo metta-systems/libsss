@@ -656,7 +656,7 @@ ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream
     {
         // Datagram too large to send using the stateless optimization:
         // just send it as a regular substream.
-        logger::debug() << this << " sending large datagram, size " << total_size;
+        logger::debug() << "Sending large datagram, size " << total_size;
         auto sub = open_substream();
         if (sub == nullptr)
             return -1;
