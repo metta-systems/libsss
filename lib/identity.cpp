@@ -12,6 +12,8 @@
 #include "logging.h"
 #include "settings_provider.h"
 
+using namespace std;
+
 namespace ssu {
 
 //=================================================================================================
@@ -36,8 +38,7 @@ identity::identity(byte_array const& id, byte_array const& key)
 
 void identity::clear_key()
 {
-    delete key_;
-    key_ = nullptr;
+    key_.reset();
 }
 
 bool identity::set_key(byte_array const& key)
@@ -47,10 +48,10 @@ bool identity::set_key(byte_array const& key)
     scheme ksch = key_scheme();
     switch (ksch) {
         case dsa160:
-            key_ = new crypto::dsa160_key(key);
+            key_ = make_shared<crypto::dsa160_key>(key);
             break;
         case rsa160:
-            key_ = new crypto::rsa160_key(key);
+            key_ = make_shared<crypto::rsa160_key>(key);
             break;
         default:
             logger::warning() << "Unknown identity key scheme " << ksch;
@@ -81,15 +82,15 @@ bool identity::set_key(byte_array const& key)
 
 identity identity::generate(scheme sch, int bits)
 {
-    crypto::sign_key* key{nullptr};
+    shared_ptr<crypto::sign_key> key{nullptr};
     switch (sch) {
         case dsa160:
             logger::debug() << "Generating new DSA160 sign key";
-            key = new crypto::dsa160_key(bits);
+            key = make_shared<crypto::dsa160_key>(bits);
             break;
         case rsa160:
             logger::debug() << "Generating new RSA160 sign key";
-            key = new crypto::rsa160_key(bits);
+            key = make_shared<crypto::rsa160_key>(bits);
             break;
         default:
             logger::fatal() << "Unsupported signing scheme " << sch;
@@ -100,9 +101,9 @@ identity identity::generate(scheme sch, int bits)
     logger::debug() << "Generated key id " << id;
 
     identity ident(id);
-    ident.set_key(key);
+    ident.key_ = key;
 
-    return ident;
+    return std::move(ident);
 }
 
 identity::scheme identity::key_scheme() const

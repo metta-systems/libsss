@@ -34,8 +34,8 @@ namespace ssu {
  */
 class identity
 {
-    crypto::sign_key* key_{0};
-    peer_id           id_;
+    std::shared_ptr<crypto::sign_key> key_{nullptr};
+    peer_id                           id_;
 
 public:
     class bad_key final : public std::runtime_error {
