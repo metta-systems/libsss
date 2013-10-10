@@ -318,6 +318,7 @@ public:
      */
     virtual int may_transmit(endpoint const& ep);
 
+protected:
     /**
      * Implementation subclass calls this method with received packets.
      * @param msg the packet received.
@@ -360,12 +361,7 @@ public:
      *              or accepted.
      */
     bool send(endpoint const& ep, char const* data, size_t size) override;
-
-    // Is this a problem with override or overrides in general?
-    // send() overload from parent scope is not visible.
-    inline bool send(endpoint const& ep, byte_array const& msg) {
-        return send(ep, msg.const_data(), msg.size());
-    }
+    using link::send;
 
     /**
      * Return a description of any error detected on bind() or send().

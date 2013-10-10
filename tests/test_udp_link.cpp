@@ -27,9 +27,8 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
     link->bind(local_ep);
 
     byte_array msg({'a', 'b', 'c'});
-    link_endpoint le;
 
-    link->receive(msg, le);
+    link->send(local_ep, msg);
 }
 
 BOOST_AUTO_TEST_CASE(bound_link_is_active)

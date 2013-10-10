@@ -35,6 +35,13 @@ public:
     bool send(const endpoint& ep, const char *data, size_t size) override;
 
     std::vector<endpoint> local_endpoints() override;
+    inline uint16_t local_port() override {
+        return port_;
+    }
+    inline std::string error_string() override {
+        return "";
+    }
+    using link::receive;
 };
 
 } // simulation namespace
