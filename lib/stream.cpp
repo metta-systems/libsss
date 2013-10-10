@@ -435,15 +435,15 @@ void stream_host_state::instantiate_stream_responder()
 stream_peer* stream_host_state::stream_peer(peer_id const& id)
 {
     if (!contains(peers_, id))
-        peers_[id] = new class stream_peer(get_host(), id);
-    return peers_[id];
+        peers_[id] = make_shared<class stream_peer>(get_host(), id, stream_peer::private_tag{});
+    return peers_[id].get();
 }
 
 class stream_peer* stream_host_state::stream_peer_if_exists(peer_id const& id)
 {
     if (!contains(peers_, id))
         return nullptr;
-    return peers_[id];
+    return peers_[id].get();
 }
 
 } // ssu namespace

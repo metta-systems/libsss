@@ -46,7 +46,7 @@ class server;
 class stream_host_state
 {
     std::shared_ptr<stream_responder> responder_{nullptr};
-    std::unordered_map<peer_id, stream_peer*> peers_;
+    std::unordered_map<peer_id, std::shared_ptr<stream_peer>> peers_;
     std::unordered_map<std::pair<std::string, std::string>, server*> listeners_;
 
 public:

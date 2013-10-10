@@ -13,7 +13,7 @@ constexpr int stream_peer::stall_warnings_max;
 
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
-stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id)
+stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id, stream_peer::private_tag)
     : host_(host)
     , remote_id_(remote_id)
     // , reconnect_timer_(host)

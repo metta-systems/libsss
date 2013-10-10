@@ -66,10 +66,7 @@ class stream_peer : public stream_protocol
     // @todo change into weak_ptrs<base_stream>
     std::unordered_map<unique_stream_id_t, base_stream*> usid_streams_;
 
-
-    stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id);
-    ~stream_peer();
-
+private:
     inline peer_id remote_host_id() const { return remote_id_; }
 
     /**
@@ -110,7 +107,12 @@ class stream_peer : public stream_protocol
     // void regClientDestroyed(QObject *obj);
     // void retryTimeout();
 
+    struct private_tag {};
+
 public:
+    stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id, private_tag);
+    ~stream_peer();
+
     /**
      * Supply an endpoint hint that may be useful for finding this peer.
      */
