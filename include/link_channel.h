@@ -15,7 +15,7 @@
 namespace ssu {
 
 /**
- * Base class for socket-based channels,
+ * Base class for link-based channels,
  * for dispatching received packets based on endpoint and channel number.
  * May be used as an abstract base by overriding the receive() method,
  * or used as a concrete class by connecting to the on_received signal.
@@ -29,27 +29,42 @@ class link_channel
     bool           active_{false};            ///< True if we're sending and accepting packets.
 
 public:
-    virtual ~link_channel();
+    inline virtual ~link_channel() {
+        unbind();
+    }
 
     /**
      * Start the channel.
      * @param initiate Initiate the key exchange using key_initiator.
      */
-    virtual void start(bool initiate);
+    inline virtual void start(bool initiate) {
+        assert(remote_channel_number_);
+        active_ = true;
+    }
+
     /**
      * Stop the channel.
      */
-    virtual void stop();
+    inline virtual void stop() {
+        active_ = false;
+    }
 
     inline bool is_active() const { return active_; }
     inline bool is_bound()  const { return link_ != nullptr; }
 
+    /**
+     * Test whether underlying link is already congestion controlled.
+     */
     inline bool is_link_congestion_controlled() {
         return link_->is_congestion_controlled(remote_ep_);
     }
 
-    // Return the remote endpoint we're bound to, if any
-    inline link_endpoint remote_endpoint() const { return link_endpoint(link_, remote_ep_); }
+    /**
+     * Return the remote endpoint we're bound to, if any.
+     */
+    inline link_endpoint remote_endpoint() const {
+        return link_endpoint(link_, remote_ep_);
+    }
 
     /**
      * Set up for communication with specified remote endpoint,
@@ -57,6 +72,12 @@ public:
      * @returns 0 if no channels are available for specified endpoint.
      */
     channel_number bind(link* link, const endpoint& remote_ep);
+    /**
+     * Set up for communication with specified remote endpoint,
+     * allocating and binding a local channel number in the process.
+     * @returns 0 if no channels are available for specified endpoint.
+     * @override
+     */
     inline channel_number bind(const link_endpoint& remote_ep) {
         return bind(remote_ep.link(), remote_ep);
     }
@@ -72,21 +93,41 @@ public:
      */
     void unbind();
 
-    channel_number local_channel() const { return local_channel_number_; }
-    channel_number remote_channel() const { return remote_channel_number_; }
-    void set_remote_channel(channel_number ch) { remote_channel_number_ = ch; }
+    /**
+     * Return current local channel number.
+     */
+    inline channel_number local_channel() const { return local_channel_number_; }
+    /**
+     * Return current remote channel number.
+     */
+    inline channel_number remote_channel() const { return remote_channel_number_; }
 
+    /**
+     * Set the channel number to direct packets to the remote endpoint.
+     * This MUST be done before a new channel can be activated.
+     */
+    inline void set_remote_channel(channel_number ch) { remote_channel_number_ = ch; }
+
+    /** @name Signals. */
+    /**@{*/
     // Provide access to signal types for clients
     typedef boost::signals2::signal<void (byte_array const&, link_endpoint const&)> received_signal;
     typedef boost::signals2::signal<void ()> ready_transmit_signal;
 
     received_signal on_received;
-    // Signalled when channel congestion control may allow new transmission.
+    /**
+     * Signalled when channel congestion control may allow new transmission.
+     */
     ready_transmit_signal on_ready_transmit;
+    /**@}*/
 
 protected:
     friend class link; // @fixme no need for extra friendliness
 
+    /**
+     * When the underlying link is already congestion-controlled, this function returns
+     * the number of packets that channel control says we may transmit now, 0 if none.
+     */
     virtual int may_transmit();
 
     inline bool send(const byte_array& pkt) const {
@@ -97,7 +138,7 @@ protected:
         return false;
     }
 
-    virtual void receive(byte_array const& msg, link_endpoint const& src) {
+    inline virtual void receive(byte_array const& msg, link_endpoint const& src) {
         on_received(msg, src);
     }
 };

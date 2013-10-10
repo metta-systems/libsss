@@ -11,26 +11,11 @@
 
 namespace ssu {
 
-link_channel::~link_channel()
-{
-    unbind();
-}
-
-void link_channel::start(bool initiate)
-{
-    active_ = true;
-}
-
-void link_channel::stop()
-{
-    active_ = false;
-}
-
 channel_number link_channel::bind(link* link, const endpoint& remote_ep)
 {
     assert(link);
-    assert(!active_); // can't bind while channel is active
-    assert(!link_);   // can't bind again if already bound
+    assert(!is_active()); // can't bind while channel is active
+    assert(!is_bound());  // can't bind again if already bound
 
     // Find a free channel number for this remote endpoint.
     // Never assign channel zero - that's reserved for control packets.
@@ -50,14 +35,14 @@ channel_number link_channel::bind(link* link, const endpoint& remote_ep)
 bool link_channel::bind(link* link, const endpoint& remote_ep, channel_number chan)
 {
     assert(link);
-    assert(!active_); // can't bind while channel is active
-    assert(!link_);   // can't bind again if already bound
+    assert(!is_active()); // can't bind while channel is active
+    assert(!is_bound());  // can't bind again if already bound
 
     if (link->channel_for(remote_ep, chan) != nullptr) {
         return false;
     }
 
-    logger::debug() << "Bind " << remote_ep << " channel " << int(chan) << " to " << link;
+    logger::debug() << "Bind local channel " << int(chan) << " for " << remote_ep << " to " << link;
     remote_ep_ = remote_ep;
     local_channel_number_ = chan;
     if (!link->bind_channel(remote_ep_, local_channel_number_, this)) {
@@ -71,6 +56,7 @@ bool link_channel::bind(link* link, const endpoint& remote_ep, channel_number ch
 void link_channel::unbind()
 {
     stop();
+    assert(!is_active());
     if (link_) {
         link_->unbind_channel(remote_ep_, local_channel_number_);
         link_ = nullptr;
