@@ -40,11 +40,12 @@ typedef boost::asio::ip::udp::endpoint endpoint;
 // See below for the implementation of hash function for endpoint.
 
 /**
- * Add an association with particular link to the endpoint.
+ * Add an association from endpoint with particular link.
  */
 class link_endpoint : public endpoint
 {
     link* link_{nullptr}; ///< Associated link, if any.
+
 public:
     link_endpoint() {}
     link_endpoint(link_endpoint const& other) : endpoint(other), link_(other.link_) {}
@@ -56,14 +57,20 @@ public:
      */
     link_endpoint(link* l, endpoint const& other) : endpoint(other), link_(l) {}
 
-    // Send a message to this endpoint on this link
+    /**@{*/
+    /**
+     * Send a message to this endpoint on this link.
+     * @return true if send succeeded, false if there are problems with sending.
+     */
     bool send(const char *data, int size) const;
     inline bool send(const byte_array& msg) const {
         return send(msg.const_data(), msg.size());
     }
+    /**@}*/
 
-    // Obtain a pointer to this endpoint's link.
-    // ??? FIXME
+    /**
+     * Obtain a pointer to this endpoint's link.
+     */
     link* link() const { return link_; }
 };
 
@@ -224,6 +231,9 @@ public:
      * to a particular target endpoint.
      */
     virtual int may_transmit(endpoint const& ep);
+
+    typedef boost::signals2::signal<void(void)> active_links_changed_signal;
+    active_links_changed_signal on_active_links_changed;
 };
 
 /**

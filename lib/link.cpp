@@ -89,7 +89,7 @@ link_endpoint::send(const char *data, int size) const
     {
         return l->send(*this, data, size);
     }
-    logger::debug() << "Trying to send on a nonexistent socket";
+    logger::debug() << "Trying to send on a nonexistent link";
     return false;
 }
 
@@ -111,6 +111,7 @@ link::set_active(bool active)
     else {
         host_->deactivate_link(this);
     }
+    on_active_links_changed();
 }
 
 /**
