@@ -158,6 +158,10 @@ public:
         receivers_.erase(magic);
     }
 
+    bool has_receiver_for(magic_t magic) {
+        return contains(receivers_, magic);
+    }
+
     /**
      * Find and return a receiver for given control channel magic value.
      */
@@ -196,13 +200,17 @@ public:
  */
 class link //: public std::enable_shared_from_this<link>
 {
+    /**
+     * Host state instance this link is attached to.
+     */
     std::shared_ptr<host> host_;
-
     /**
      * Channels working through this link at the moment.
      */
     std::map<std::pair<endpoint, channel_number>, link_channel*> channels_;
-
+    /**
+     * True if this link is fair game for use by upper level protocols.
+     */
     bool active_{false};
 
 public:
@@ -214,15 +222,26 @@ public:
     };
 
     link(std::shared_ptr<host> host) : host_(host) {}
-    ~link();
+    virtual ~link();
 
+    /**
+     * Determine whether this link is active.
+     * Only active link are returned by link_host_state::active_links().
+     * @return true if link is active.
+     */
     inline bool is_active() const { return active_; }
+
+    /**
+     * Activate or deactivate this link.
+     * Only active link are returned by link_host_state::active_links().
+     * @param active true if the link should be marked active.
+     */
     void set_active(bool active);
 
     /**
-     * Open the underlying socket and bind it to given endpoint.
+     * Open the underlying socket, bind it to given endpoint and activate it if successful.
      * @param  ep Endpoint on the local machine to bind the link to.
-     * @return    True if bind successfull, false otherwise.
+     * @return    true if bind successfull, false otherwise.
      */
     virtual bool bind(endpoint const& ep) = 0;
     /**
@@ -230,13 +249,45 @@ public:
      */
     virtual void unbind() = 0;
 
-    virtual bool send(endpoint const& ep, const char* data, size_t size) { return false; }
+    /**
+     * Send a packet on this link.
+     * @param ep the destination address to send the packet to.
+     * @param data the packet data.
+     * @param size the packet size.
+     * @return true if send was successful.
+     */
+    virtual bool send(endpoint const& ep, const char* data, size_t size) = 0;
+
+    /**
+     * Send a packet on this link.
+     * This is an overridden function provided for convenience.
+     * @param ep the destination address to send the packet to.
+     * @param msg the packet data.
+     * @return true if send was successful.
+     */
     inline bool send(endpoint const& ep, byte_array const& msg) {
         return send(ep, msg.const_data(), msg.size());
     }
 
+    /**
+     * Find all known local endpoints referring to this link.
+     * @return a list of endpoint objects.
+     */
     virtual std::vector<endpoint> local_endpoints() = 0;
+    /**
+     * Return local port number at which this link is bound on the host.
+     * @return local open port number.
+     */
+    virtual uint16_t local_port() = 0;
 
+    /**
+     * Return a description of any error detected on bind() or send().
+     */
+    virtual std::string error_string() = 0;
+
+    /**
+     * Find channel associations attached to this socket.
+     */
     link_channel* channel_for(endpoint const& src, channel_number cn) {
         auto key = std::make_pair(src, cn);
         if (!contains(channels_, key))
@@ -245,48 +296,62 @@ public:
     }
 
     /**
+     * Bind a new link_channel to this link.
+     * Called by link_channel::bind() to register in the table of channels.
+     */
+    bool bind_channel(endpoint const& ep, channel_number chan, link_channel* lc);
+    /**
+     * Unbind a link_channel associated with endpoint @a ep and channel number @a chan.
+     * Called by link_channel::unbind() to unregister from the table of channels.
+     */
+    void unbind_channel(endpoint const& ep, channel_number chan);
+
+    /**
+     * Returns true if this link provides congestion control
+     * when communicating with the specified remote endpoint.
+     */
+    virtual bool is_congestion_controlled(endpoint const& ep);
+
+    /**
+     * For congestion-controlled links, returns the number of packets that may
+     * be transmitted now to a particular target endpoint.
+     */
+    virtual int may_transmit(endpoint const& ep);
+
+    /**
      * Implementation subclass calls this method with received packets.
      * @param msg the packet received.
      * @param src the source from which the packet arrived.
      */
     void receive(const byte_array& msg, const link_endpoint& src);
 
-    bool bind_channel(endpoint const& ep, channel_number chan, link_channel* lc);
-    void unbind_channel(endpoint const& ep, channel_number chan);
-
-    /**
-     * Returns true if this socket provides congestion control
-     * when communicating with the specified remote endpoint.
-     */
-    virtual bool is_congestion_controlled(endpoint const& ep);
-
-    /**
-     * For congestion-controlled sockets,
-     * returns the number of packets that may be transmitted now
-     * to a particular target endpoint.
-     */
-    virtual int may_transmit(endpoint const& ep);
 };
 
 /**
  * Class for UDP connection between two endpoints.
- * Multiplexes between channel-setup/key exchange traffic (which goes to key.cpp)
- * and per-channel data traffic (which goes to channel.cpp).
+ * Multiplexes between channel-setup/key exchange traffic (which goes to ssu::key_responder)
+ * and per-channel data traffic (which goes to ssu::channel).
  */
 class udp_link : public link
 {
     boost::asio::ip::udp::socket udp_socket;
     boost::asio::streambuf received_buffer;
     link_endpoint received_from;
+    std::string error_string_;
 
 public:
     udp_link(std::shared_ptr<host> host);
 
+    /**
+     * Bind this UDP link to a port and activate it if successful.
+     * @param  ep Local endpoint to bind to.
+     * @return    true if bind successful and link has been activated, false otherwise.
+     */
     bool bind(endpoint const& ep) override;
     void unbind() override;
 
     /**
-     * Send a packet on this UDP socket.
+     * Send a packet on this UDP link.
      * @param  ep   Target endpoint - intended receiver of the packet.
      * @param  data Packet data.
      * @param  size Packet size.
@@ -296,15 +361,23 @@ public:
      */
     bool send(endpoint const& ep, char const* data, size_t size) override;
 
-    // Need to duplicate it here for some reason, otherwise clients cannot use this overload. WHY?
+    // Is this a problem with override or overrides in general?
+    // send() overload from parent scope is not visible.
     inline bool send(endpoint const& ep, byte_array const& msg) {
         return send(ep, msg.const_data(), msg.size());
     }
 
     /**
+     * Return a description of any error detected on bind() or send().
+     */
+    inline std::string error_string() override { return error_string_; }
+
+    /**
      * Return all known local endpoints referring to this link.
      */
     std::vector<endpoint> local_endpoints() override;
+
+    uint16_t local_port() override;
 
 private:
     void prepare_async_receive();

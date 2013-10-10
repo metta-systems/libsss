@@ -23,16 +23,26 @@ namespace ssu {
 // link_receiver
 //=================================================================================================
 
-void link_receiver::bind()
+void link_receiver::bind(magic_t magic)
 {
+    assert(!is_bound());
+    // Receiver's magic value must leave the upper byte 0
+    // to distinguish control packets from channel data packets.
+    assert(magic <= 0xffffff);
+    assert(!host_->has_receiver_for(magic));
+
+    magic_ = magic;
     logger::debug() << "Link receiver " << this << " binds for magic " << hex(magic_, 8, true);
     host_->bind_receiver(magic_, this);
 }
 
 void link_receiver::unbind()
 {
-    logger::debug() << "Link receiver " << this << " unbinds magic " << hex(magic_, 8, true);
-    host_->unbind_receiver(magic_);
+    if (is_bound()) {
+        logger::debug() << "Link receiver " << this << " unbinds magic " << hex(magic_, 8, true);
+        host_->unbind_receiver(magic_);
+        magic_ = 0;
+    }
 }
 
 //=================================================================================================
@@ -75,19 +85,43 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
         }
     }
 
-    // @fixme not ipv6-ready!!
-    // This binds only to ipv4 local address.
+    boost::asio::ip::udp::endpoint local_ep6(boost::asio::ip::address_v6::any(), default_port);
     boost::asio::ip::udp::endpoint local_ep(boost::asio::ip::address_v4::any(), default_port);
 
+    // Create and bind the main link.
     primary_link_ = create_link();
-    if (!primary_link_->bind(local_ep))
-    {
-        local_ep.port(0);
-        if (!primary_link_->bind(local_ep))
-        {
-            logger::fatal() << "Couldn't bind the link";
+
+    // Try IPv6 bind first, if that doesn't work bind to IPv4.
+    // @todo Should be able to bind to both at the same time...
+
+    do {
+        if (primary_link_->bind(local_ep6)) {
+            break;
         }
-    }
+        logger::warning() << "Can't bind to port " << default_port << " ("
+            << primary_link_->error_string() << ") - trying another";
+
+        local_ep6.port(0);
+        if (primary_link_->bind(local_ep6)) {
+            break;
+        }
+        logger::warning() << "Couldn't bind the link on ipv6 ("
+            << primary_link_->error_string() << "), trying ipv4";
+
+        if (primary_link_->bind(local_ep)) {
+            break;
+        }
+        logger::warning() << "Can't bind to port " << default_port << " ("
+            << primary_link_->error_string() << ") - trying another";
+
+        local_ep.port(0);
+        if (primary_link_->bind(local_ep)) {
+            break;
+        }
+        logger::fatal() << "Couldn't bind the link on ipv4 - " << primary_link_->error_string();
+    } while(0);
+
+    default_port = primary_link_->local_port();
 
     // Remember the port number we ended up using.
     if (settings) {
@@ -266,6 +300,12 @@ udp_link::local_endpoints()
     return {udp_socket.local_endpoint()};
 }
 
+uint16_t
+udp_link::local_port()
+{
+    return udp_socket.local_endpoint().port();
+}
+
 bool
 udp_link::bind(endpoint const& ep)
 {
@@ -273,15 +313,18 @@ udp_link::bind(endpoint const& ep)
     boost::system::error_code ec;
     udp_socket.open(ep.protocol(), ec);
     if (ec) {
+        error_string_ = ec.message();
         logger::warning() << ec;
         return false;
     }
     udp_socket.bind(ep, ec);
     if (ec) {
+        error_string_ = ec.message();
         logger::warning() << ec;
         return false;
     }
     // once bound, can start receiving datagrams.
+    error_string_ = "";
     prepare_async_receive();
     logger::debug() << "Bound udp_link on " << ep;
     set_active(true);
@@ -300,7 +343,12 @@ udp_link::unbind()
 bool
 udp_link::send(const endpoint& ep, const char *data, size_t size)
 {
-    return udp_socket.send_to(boost::asio::buffer(data, size), ep);
+    boost::system::error_code ec;
+    size_t sent = udp_socket.send_to(boost::asio::buffer(data, size), ep, 0, ec);
+    if (ec or sent < size) {
+        error_string_ = ec.message();
+    }
+    return sent == size;
 }
 
 void
@@ -313,6 +361,11 @@ udp_link::udp_ready_read(const boost::system::error_code& error, size_t bytes_tr
         receive(b, received_from);
         received_buffer.consume(bytes_transferred);
         prepare_async_receive();
+    }
+    else
+    {
+        error_string_ = error.message();
+        logger::warning() << "UDP read error - " << error_string_;
     }
 }
 
