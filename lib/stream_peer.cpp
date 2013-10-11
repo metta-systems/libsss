@@ -16,7 +16,7 @@ const async::timer::duration_type stream_peer::connect_retry_period = boost::pos
 stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id, stream_peer::private_tag)
     : host_(host)
     , remote_id_(remote_id)
-    // , reconnect_timer_(host)
+    , reconnect_timer_(host.get())
 {
     assert(!remote_id.is_empty());
 
@@ -30,6 +30,8 @@ stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id,
         }
         locations_.insert(ep);
     }
+
+    reconnect_timer_.on_timeout.connect([this](bool failed){ retry_timeout(); });
 }
 
 stream_peer::~stream_peer()
@@ -65,6 +67,23 @@ void stream_peer::connect_channel()
             initiate_key_exchange(link, endpoint);
         }
     }
+
+    // Keep firing off connection attempts periodically
+    reconnect_timer_.start(connect_retry_period);
+}
+
+void stream_peer::retry_timeout()
+{
+    // If we actually have an active flow now, do nothing.
+    if (primary_channel_ and primary_channel_->link_status() == link::status::up)
+        return;
+
+    // Notify any waiting streams of failure
+    if (lookups_.empty() and key_exchanges_initiated_.empty())
+        on_channel_failed();
+
+    // If there are (still) any waiting streams, fire off a new batch of connection attempts.
+    connect_channel();
 }
 
 void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)

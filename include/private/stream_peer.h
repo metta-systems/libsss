@@ -53,8 +53,8 @@ class stream_peer : public stream_protocol
 
     // Routing state:
     // std::unordered_set<RegClient*> lookups_;   ///< Outstanding lookups in progress
-    // async::timer reconnect_timer_;           ///< For persistent lookup requests
     // std::unordered_set<RegClient*> connected_routing_clients_; // Set of RegClients we've connected to so far
+    async::timer reconnect_timer_;                      ///< For persistent lookup requests
 
     // For channels under construction:
     std::unordered_set<endpoint> locations_; ///< Potential locations known
@@ -105,7 +105,7 @@ private:
     // Routing client handlers @todo
     // void lookupDone(const SST::PeerId &id, const Endpoint &loc, const RegInfo &info);
     // void regClientDestroyed(QObject *obj);
-    // void retryTimeout();
+    void retry_timeout();
 
     struct private_tag {};
 
