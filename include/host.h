@@ -30,7 +30,7 @@ namespace ssu {
  * is not destroyed while any ssu objects still refer to it.
  *
  * Example: it is customary to create a shared_ptr to host.
- * shared_ptr<host> my_host(make_shared<host>());
+ * @snippet doc/snippets.cpp Creating a host
  */
 class host
     : public std::enable_shared_from_this<host>
