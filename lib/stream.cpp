@@ -174,7 +174,7 @@ int stream::current_priority() const
 
 void stream::set_error(string const& error)
 {
-    // @todo: set error string
+    error_string_ = error;
     on_error_notify(error);
 }
 

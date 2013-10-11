@@ -72,6 +72,7 @@ class stream : public std::enable_shared_from_this<stream>
     std::shared_ptr<host> host_;              ///< Per-host SSU state
     std::shared_ptr<abstract_stream> stream_; ///< Internal stream control object
     bool status_signal_connected_{false};     ///< on_link_status_changed signal connected
+    std::string error_string_;
 
     /**
      * Connect the *linkStatusNotify* signal to the current peer's -
