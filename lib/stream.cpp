@@ -15,8 +15,10 @@
 #include "host.h"
 #include "algorithm.h"
 #include "negotiation/key_responder.h"
+#include "routing_client.h"
 
 using namespace std;
+namespace ur = uia::routing;
 
 namespace ssu {
 
@@ -401,6 +403,17 @@ bool stream::is_listening() const
  */
 class stream_responder : public negotiation::key_responder, public stream_protocol
 {
+    /** @name Routing protocol */
+    /**@{*/
+    /// Set of routing clients we've connected to so far.
+    unordered_set<ur::client*> connected_clients_;
+    void connect_routing_client(ur::client* client);
+    // Handlers:
+    void connected_client(ur::client *rc);
+    void clientStateChanged(int);
+    // void lookupNotify(peer_id const& id, endpoint const& loc, ur::peer_info const& info);
+    /**@}*/
+
     channel* create_channel(link_endpoint const& initiator_ep,
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out) override;

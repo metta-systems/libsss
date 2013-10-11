@@ -16,6 +16,12 @@
 #include "host.h"
 #include "peer_id.h"
 
+namespace uia {
+namespace routing {
+class client;
+} // routing namespace
+} // uia namespace
+
 namespace ssu {
 
 class base_stream;
@@ -52,9 +58,9 @@ class stream_peer : public stream_protocol
     int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
 
     // Routing state:
-    // std::unordered_set<RegClient*> lookups_;   ///< Outstanding lookups in progress
-    // std::unordered_set<RegClient*> connected_routing_clients_; // Set of RegClients we've connected to so far
+    std::unordered_set<uia::routing::client*> lookups_; ///< Outstanding lookups in progress
     async::timer reconnect_timer_;                      ///< For persistent lookup requests
+    // std::unordered_set<uia::routing::client*> connected_routing_clients_; // Set of RegClients we've connected to so far
 
     // For channels under construction:
     std::unordered_set<endpoint> locations_; ///< Potential locations known

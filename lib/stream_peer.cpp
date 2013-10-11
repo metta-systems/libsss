@@ -62,7 +62,23 @@ void stream_peer::connect_channel()
 
     // @todo Ask routing to figure out other possible endpoints for this peer.
 
-    // Try to establish connection to all known endpoint addresses.
+    // // Send a lookup request to each known registration server.
+    // foreach (RegClient *rc, h->regClients()) {
+    //     if (!rc->registered())
+    //         continue;   // Can't poll an inactive regserver
+    //     if (lookups.contains(rc))
+    //         continue;   // Already polling this regserver
+
+    //     // Make sure we're hooked up to this client's signals
+    //     conncli(rc);
+
+    //     // Start the lookup, with hole punching
+    //     lookups.insert(rc);
+    //     rc->lookup(remote_id_, true);
+    // }
+
+    // Initiate key exchange attempts to all already-known endpoints
+    // using each of the network links we have available.
     for (auto link : host_->active_links())
     {
         for (auto endpoint : locations_)
