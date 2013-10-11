@@ -44,7 +44,7 @@ std::vector<ssu::endpoint> local_endpoints()
     if (!socket.bind())
         logger::fatal() << "Can't bind local UDP socket";
 
-    int sockfd = socket.native_handle();
+    SOCKET sockfd = socket.native_handle();
     assert(sockfd != INVALID_SOCKET);
 
     // Get the local host's interface list from Winsock via WSAIoctl().
