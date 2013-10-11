@@ -165,6 +165,11 @@ link_endpoint::send(const char *data, int size) const
 
 link::~link()
 {
+    // Unbind all channels - @todo this should be automatic, use shared_ptr<link_channel>s?
+    for (auto v : channels_)
+    {
+        v.second->unbind();
+    }
 }
 
 void
@@ -211,10 +216,8 @@ link::receive(const byte_array& msg, const link_endpoint& src)
         return;
     }
 
-    {
-        logger::file_dump(msg, "received_raw.bin");
-        logger::file_dump(msg, "dump.bin");
-    }
+    logger::file_dump(msg, "received_raw.bin");
+    logger::file_dump(msg, "dump.bin");
 
     // First byte should be a channel number.
     // Try to find an endpoint-specific channel.
@@ -225,13 +228,15 @@ link::receive(const byte_array& msg, const link_endpoint& src)
         return chan->receive(msg, src);
     }
 
+    // If that doesn't work, it may be a global control packet:
+    // if so, pass it to the appropriate link_receiver.
     try {
-        big_uint32_t magic = msg.as<big_uint32_t>()[0];
+        magic_t magic = msg.as<big_uint32_t>()[0];
 
-        link_receiver* recv = host_->receiver(magic);
-        if (recv)
+        link_receiver* recvr = host_->receiver(magic);
+        if (recvr)
         {
-            return recv->receive(msg, src);
+            return recvr->receive(msg, src);
         }
         else
         {
@@ -243,13 +248,13 @@ link::receive(const byte_array& msg, const link_endpoint& src)
     {
         logger::debug() << "Error deserializing received message: '" << e.what()
                         << "' buffer contents " << msg;
-        return;
     }
 }
 
 bool
 link::bind_channel(endpoint const& ep, channel_number chan, link_channel* lc)
 {
+    assert(channel_for(ep, chan) == nullptr);
     channels_.insert(make_pair(make_pair(ep, chan), lc));
     return true;
 }
@@ -269,7 +274,7 @@ link::is_congestion_controlled(endpoint const&)
 int
 link::may_transmit(endpoint const&)
 {
-    logger::fatal() << "may_transmit() called on non-congestion-controlled link";
+    logger::fatal() << "may_transmit() called on a non-congestion-controlled link";
     return -1;
 }
 
