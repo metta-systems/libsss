@@ -811,7 +811,7 @@ void key_initiator::retransmit(bool fail)
         logger::debug() << "Key exchange failed";
         state_ = state::done;
         retransmit_timer_.stop();
-        return on_completed(false);
+        return on_completed(shared_from_this(), false);
     }
 
     logger::debug() << "Time to retransmit the key exchange packet.";
@@ -832,7 +832,7 @@ void key_initiator::done()
     state_ = state::done;
     cancel();
     if (send_signal) {
-        on_completed(true);
+        on_completed(shared_from_this(), true);
     }
 }
 

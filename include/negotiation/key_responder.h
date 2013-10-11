@@ -181,7 +181,7 @@ public:
      */
     void exchange_keys();
 
-    inline endpoint remote_endpoint() const { return target_; }
+    inline link_endpoint remote_endpoint() const { return target_; }
     inline ssu::negotiation::dh_group_type group() const { return dh_group_; }
     inline bool is_done() const { return state_ == state::done; }
 
@@ -217,7 +217,7 @@ public:
     /**
      * Send completion signal, indicating success when true or failure when false.
      */
-    typedef boost::signals2::signal<void (bool)> completion_signal;
+    typedef boost::signals2::signal<void (std::shared_ptr<key_initiator>, bool)> completion_signal;
     completion_signal on_completed;
 };
 

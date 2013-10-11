@@ -92,8 +92,14 @@ void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
     }
 
     // Start the key exchange process for the channel.
-    shared_ptr<negotiation::key_initiator> init = make_shared<negotiation::key_initiator>(chan, magic_id, remote_id_);
-    init->on_completed.connect(boost::bind(&stream_peer::completed, this, _1));
+    shared_ptr<negotiation::key_initiator> init =
+        make_shared<negotiation::key_initiator>(chan, magic_id, remote_id_);
+
+    init->on_completed.connect([this](std::shared_ptr<negotiation::key_initiator> ki, bool success)
+    {
+        completed(ki, success);
+    });
+
     key_exchanges_initiated_.insert(make_pair(lep, init));
     init->exchange_keys();
 }
@@ -169,10 +175,39 @@ void stream_peer::add_location_hint(endpoint const& hint)
     }
 }
 
-void stream_peer::completed(bool success)
+void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool success)
 {
-    logger::debug() << "Stream peer key exchange completed " << (success ? "successfully" : "erroneously");
-    // @todo Detach and remove key_initiator(s)
+    assert(ki and ki->is_done());
+
+    // Remove and schedule the key initiator for deletion, in case it wasn't removed already
+    // (e.g., if key agreement failed).
+    // 
+    // @todo Delete channel automatically if key_initiator failed...
+    link_endpoint lep = ki->remote_endpoint();
+
+    logger::debug() << "Stream peer key exchange for ID " << remote_id_ << " to " << lep
+        << " completed " << (success ? "successfully" : "erroneously");
+
+    assert(!contains(key_exchanges_initiated_, lep) or key_exchanges_initiated_[lep] == ki);
+    key_exchanges_initiated_.erase(lep);
+
+    ki->cancel();
+    ki.reset();
+
+    // If unsuccessful, notify waiting streams.
+    if (!success)
+    {
+        if (lookups_.empty() and key_exchanges_initiated_.empty())
+            return on_channel_failed();
+        return; // There's still hope
+    }
+
+    // We should have an active primary channel at this point,
+    // since stream_channel::start() attaches the channel if there isn't one.
+    // Note: the reason we don't just set the primary right here
+    // is because stream_channel::start() gets called on incoming streams too,
+    // so servers don't have to initiate back-channels to their clients.
+    assert(primary_channel_ and primary_channel_->link_status() == link::status::up);
 }
 
 void stream_peer::primary_status_changed(link::status new_status)

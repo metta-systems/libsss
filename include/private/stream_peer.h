@@ -99,7 +99,7 @@ private:
     void clear_primary_channel();
 
     // Handlers.
-    void completed(bool success);
+    void completed(std::shared_ptr<negotiation::key_initiator> ki, bool success);
     void primary_status_changed(link::status new_status);
 
     // Routing client handlers @todo
