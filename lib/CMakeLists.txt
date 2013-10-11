@@ -11,6 +11,10 @@ if (UNIX)
     list(APPEND platform_SOURCES
         platform-unix.cpp)
 endif()
+if (WIN32)
+    list(APPEND platform_SOURCES
+        platform-win.cpp)
+endif()
 
 add_library(ssu STATIC 
     abstract_stream.cpp
