@@ -8,7 +8,6 @@
 //
 #include "stream.h"
 #include "stream_channel.h"
-// #include "stream_responder.h"
 #include "private/stream_peer.h"
 #include "base_stream.h"
 #include "identity.h"
