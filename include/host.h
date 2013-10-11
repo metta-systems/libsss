@@ -41,24 +41,35 @@ class host
     , public stream_host_state
     , public virtual asio_host_state
     , public timer_host_state
+    //, public routing_host_state
 {
 public:
+    // @todo Hide the constructor.
+    explicit host() {}
+    ~host() { logger::debug() << this << " ~host"; }
+    inline std::shared_ptr<host> get_host() override { return shared_from_this(); }
+
+    /**
+     * @name Factory functions.
+     * Use those to create host instance.
+     */
+    /**@{*/
     /**
      * Create a "bare-bones" host state object with no links or identity.
      * Client must establish a host identity via set_host_identity()
      * and activate one or more network links before using ssu.
      */
-    explicit host() {}
-
-    /**
-     * Factory functions. Use those to create host instance.
-     */
     static std::shared_ptr<host> create();
+    /**
+     * Create an easy-to-use default Host object. Uses the provided setting_provider
+     * registry to locate, or create if necessary, a persistent host identity,
+     * as described for identity_host_state::init_identity().
+     * Also creates and binds to at least one UDP link, using a UDP port number specified
+     * in the settings_provider, or defaulting to @a default_port if none.
+     * If the desired UDP port cannot be bound, just picks an arbitrary UDP port instead.
+     */
     static std::shared_ptr<host> create(settings_provider* settings, uint16_t default_port);
-
-    ~host() { logger::debug() << this << " ~host"; }
-
-    inline std::shared_ptr<host> get_host() override { return shared_from_this(); }
+    /**@{*/
 };
 
 }
