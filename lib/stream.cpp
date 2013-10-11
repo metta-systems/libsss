@@ -413,9 +413,9 @@ stream_responder::stream_responder(shared_ptr<host> host)
     : key_responder(host, magic_id)
 {}
 
+/// @todo Return unique_ptr<channel>?
 channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
-            byte_array const& initiator_eid,
-            byte_array const& user_data_in, byte_array& user_data_out)
+            byte_array const& initiator_eid, byte_array const&, byte_array&)
 {
     stream_peer* peer = get_host()->stream_peer(initiator_eid);
 

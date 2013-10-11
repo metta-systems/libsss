@@ -51,9 +51,12 @@ void stream_peer::connect_channel()
     assert(!remote_id_.is_empty());
 
     if (primary_channel_ and primary_channel_->link_status() == link::status::up)
-        return;
+        return; // Already have a working channel; don't need another yet.
 
-    // @todo: if no streams waiting to send on this channel, don't even bother...
+    // @todo Need a way to determine if streams need to send. If no streams waiting to send
+    // on this channel, don't even bother.
+    //
+    //if (receivers(SIGNAL(flowConnected())) == 0) return;
 
     logger::debug() << "Trying to connect channel with peer " << remote_id_;
 
@@ -88,10 +91,14 @@ void stream_peer::retry_timeout()
 
 void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
 {
+    assert(ep != endpoint());
+
+    // No need to initiate new channels if we already have a working one.
     if (primary_channel_ and primary_channel_->link_status() == link::status::up)
         return;
 
-    // Don't simultaneously initiate multiple channels to the same endpoint. @todo
+    // Don't simultaneously initiate multiple channels to the same endpoint.
+    // @todo Eventually multipath support is needed.
     link_endpoint lep(l, ep);
     if (contains(key_exchanges_initiated_, lep))
     {
@@ -101,8 +108,11 @@ void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
 
     logger::debug() << "Initiating key exchange from link " << l << " to remote endpoint " << ep;
 
+    // Make sure our stream_responder exists to receive and dispatch incoming
+    // key exchange control packets.
     host_->instantiate_stream_responder();
 
+    // Create and bind a new channel.
     channel* chan = new stream_channel(host_, this, remote_id_);
     if (!chan->bind(l, ep)) {
         logger::warning() << "Could not bind new channel to target " << ep;
@@ -131,7 +141,8 @@ void stream_peer::channel_started(stream_channel* channel)
     assert(channel->target_peer() == this);
     assert(channel->link_status() == link::status::up);
 
-    if (primary_channel_) {
+    if (primary_channel_)
+    {
         // If we already have a working primary channel, we don't need a new one.
         if (primary_channel_->link_status() == link::status::up)
             return; 
@@ -146,12 +157,10 @@ void stream_peer::channel_started(stream_channel* channel)
     primary_channel_ = channel;
     stall_warnings_ = 0;
 
-    // Re-parent it directly underneath us, so it won't be deleted when its KeyInitiator disappears.
-    // fl->setParent(this);
-
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
-    primary_channel_->on_link_status_changed.connect(
-        boost::bind(&stream_peer::primary_status_changed, this, _1));
+    primary_channel_->on_link_status_changed.connect([this](link::status new_status) {
+        primary_status_changed(new_status);
+    });
 
     // Notify all waiting streams
     on_channel_connected();
