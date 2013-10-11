@@ -136,7 +136,17 @@ bool stream::connect_to(peer_id const& destination,
 }
 
 void stream::connect_link_status_signal()
-{}
+{
+    if (status_signal_connected_ or !stream_)
+        return;
+
+    stream_peer* peer = host_->stream_peer(stream_->peerid_);
+
+    peer->on_link_status_changed.connect([this](link::status new_status) {
+        on_link_status_changed(new_status);
+    });
+    status_signal_connected_ = true;
+}
 
 void stream::connect_at(endpoint const& ep)
 {

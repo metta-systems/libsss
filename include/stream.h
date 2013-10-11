@@ -539,19 +539,19 @@ public:
      */
     ready_signal on_receive_blocked;
 
-    typedef boost::signals2::signal<void (void)> link_status_change_signal;
+    typedef boost::signals2::signal<void (void)> link_status_signal;
     /**
      * Emitted when the stream establishes live connectivity
      * upon first connecting, or after being down or stalled.
      */
-    link_status_change_signal on_link_up;
+    link_status_signal on_link_up;
     /**
      * Emitted when connectivity on the stream has temporarily stalled. SSU emits the
      * on_link_stalled() signal at the first sign of trouble: this provides an early warning
      * that the link may have failed, but it may also just represent an ephemeral network glitch.
      * The application may wish to use this signal to indicate the network status to the user.
      */
-    link_status_change_signal on_link_stalled;
+    link_status_signal on_link_stalled;
     /**
      * Emitted when link connectivity for the stream has been lost. SSU may emit this signal either 
      * due to a timeout or due to detection of a link- or network-level "hard" failure.
@@ -562,7 +562,13 @@ public:
      * stream failure, the application may simply destroy the stream upon receiving the 
      * on_link_down() signal.
      */
-    link_status_change_signal on_link_down;
+    link_status_signal on_link_down;
+
+    typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
+    /**
+     * Emitted when this stream observes a change in link status.
+     */
+    link_status_changed_signal on_link_status_changed;
 
     typedef boost::signals2::signal<void (void)> substream_notify_signal;
     /**
