@@ -14,6 +14,7 @@
 #include "byte_array_wrap.h"
 #include "settings_provider.h"
 #include "host.h"
+#include "platform.h"
 
 using namespace std;
 
@@ -297,7 +298,14 @@ udp_link::prepare_async_receive()
 vector<endpoint>
 udp_link::local_endpoints()
 {
-    return {udp_socket.local_endpoint()};
+    vector<endpoint> result{udp_socket.local_endpoint()};
+    auto addresses = platform::local_endpoints();
+    auto port = local_port();
+    for (auto v : addresses) {
+        v.port(port);
+        result.emplace_back(v);
+    }
+    return result;
 }
 
 uint16_t

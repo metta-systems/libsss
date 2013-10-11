@@ -31,6 +31,16 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
     link->send(local_ep, msg);
 }
 
+BOOST_AUTO_TEST_CASE(local_endpoints)
+{
+    shared_ptr<host> host(make_shared<host>());
+    endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    link->bind(local_ep);
+
+    link->local_endpoints();
+}
+
 BOOST_AUTO_TEST_CASE(bound_link_is_active)
 {
     shared_ptr<host> host(make_shared<host>());
