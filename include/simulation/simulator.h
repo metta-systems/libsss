@@ -25,6 +25,7 @@ class simulator
 
 public:
     simulator();
+    ~simulator();
 
     /**
      * Run simulation to the end.

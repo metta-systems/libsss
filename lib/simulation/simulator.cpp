@@ -19,6 +19,11 @@ simulator::simulator()
 {
 }
 
+simulator::~simulator()
+{
+    timers_.clear(); // @todo Either keep shared pointers in timers_ or call delete on them here.
+}
+
 void simulator::run()
 {
     while (!timers_.empty()) {
