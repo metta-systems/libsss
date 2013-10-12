@@ -153,7 +153,7 @@ constexpr packet_seq_t channel::max_packet_sequence;
 
 channel::channel(shared_ptr<host> host)
     : link_channel()
-    , pimpl_(make_unique<private_data>(host))
+    , pimpl_(stdext::make_unique<private_data>(host))
 {
     pimpl_->retransmit_timer_.on_timeout.connect(boost::bind(&channel::retransmit_timeout, this, _1));
 

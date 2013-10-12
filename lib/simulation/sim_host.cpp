@@ -48,7 +48,7 @@ sim_host::current_time()
 std::unique_ptr<async::timer_engine>
 sim_host::create_timer_engine_for(async::timer* t)
 {
-    return make_unique<sim_timer_engine>(t, simulator_);
+    return stdext::make_unique<sim_timer_engine>(t, simulator_);
 }
 
 std::shared_ptr<link> sim_host::create_link()

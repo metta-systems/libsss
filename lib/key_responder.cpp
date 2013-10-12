@@ -622,7 +622,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     byte_array rx_enc_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, 'E', 128/8);
     byte_array rx_mac_key = calc_key(master_secret, initiator_hashed_nonce, data.responder_nonce, 'A', 256/8);
 
-    chan->set_armor(make_unique<aes_armor>(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key));
+    chan->set_armor(stdext::make_unique<aes_armor>(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key));
 
     // Set up the new channel IDs
     byte_array tx_chan_id = calc_key(master_secret, data.responder_nonce, initiator_hashed_nonce, 'I', 128/8);
@@ -733,7 +733,7 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
                                      initiator->responder_nonce_,
                                      initiator->initiator_hashed_nonce_, 'A', 256/8);
 
-    initiator->channel_->set_armor(make_unique<aes_armor>(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key));
+    initiator->channel_->set_armor(stdext::make_unique<aes_armor>(tx_enc_key, tx_mac_key, rx_enc_key, rx_mac_key));
 
     // Set up the new channel IDs
     byte_array tx_chan_id = calc_key(initiator->shared_master_secret_, initiator->initiator_hashed_nonce_,
