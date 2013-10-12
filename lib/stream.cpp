@@ -81,9 +81,18 @@ void stream::disconnect()
 
 void stream::shutdown(shutdown_mode mode)
 {
-    if (stream_) {
-        stream_->shutdown(mode);
-    }
+    if (!stream_) return;
+
+    stream_->shutdown(mode);
+
+    // @todo Close this stream for reading or writing, or both.
+    // Something like
+    // if (mode & reset)
+    //     setOpenMode(NotOpen);
+    // if (mode & read)
+    //     setOpenMode(isWritable() ? WriteOnly : NotOpen);
+    // if (mode & write)
+    //     setOpenMode(isReadable() ? ReadOnly : NotOpen);
 }
 
 bool stream::is_connected() const
