@@ -246,6 +246,8 @@ dsa160_key::dsa160_key(DSA *dsa)
 
 dsa160_key::dsa160_key(byte_array const& key)
 {
+    assert(type() == invalid);
+
     dsa_ = DSA_new();
     assert(dsa_);
 
@@ -293,7 +295,7 @@ dsa160_key::dsa160_key(int bits)
 dsa160_key::~dsa160_key()
 {
     if (dsa_) {
-        DSA_free(dsa_);
+        DSA_free(dsa_); // @todo Make dsa_ an unique_ptr<>?
         dsa_ = nullptr;
     }
 }
@@ -301,8 +303,7 @@ dsa160_key::~dsa160_key()
 byte_array 
 dsa160_key::id() const
 {
-    if (type() == invalid)
-        return byte_array();
+    assert(type() != invalid);
 
     crypto::hash::value hash = sha256::hash(public_key());
 
@@ -320,6 +321,7 @@ dsa160_key::id() const
 byte_array
 dsa160_key::public_key() const
 {
+    assert(type() != invalid);
     byte_array data;
     {
         byte_array_owrap<flurry::oarchive> write(data);
@@ -332,6 +334,7 @@ dsa160_key::public_key() const
 byte_array
 dsa160_key::private_key() const
 {
+    assert(type() == public_and_private);
     byte_array data;
     {
         byte_array_owrap<flurry::oarchive> write(data);
@@ -344,14 +347,10 @@ dsa160_key::private_key() const
 byte_array
 dsa160_key::sign(byte_array const& digest) const
 {
-    if (type() == invalid)
-        return byte_array();
-
     assert(type() == public_and_private);
     assert(digest.size() == SHA256_DIGEST_LENGTH);
 
-    // The version of DSA currently implemented by OpenSSL
-    // only supports digests up to 160 bits.
+    // The version of DSA currently implemented by OpenSSL only supports digests up to 160 bits.
     int digest_size = 160/8;
 
     DSA_SIG *sig = DSA_do_sign((const unsigned char*)digest.data(), digest_size, dsa_);

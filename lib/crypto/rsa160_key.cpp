@@ -75,8 +75,7 @@ rsa160_key::~rsa160_key()
 byte_array 
 rsa160_key::id() const
 {
-    if (type() == invalid)
-        return byte_array();
+    assert(type() != invalid);
 
     crypto::hash::value hash = sha256::hash(public_key());
 
@@ -92,6 +91,7 @@ rsa160_key::id() const
 byte_array
 rsa160_key::public_key() const
 {
+    assert(type() != invalid);
     byte_array data;
     {
         byte_array_owrap<flurry::oarchive> write(data);
@@ -104,6 +104,7 @@ rsa160_key::public_key() const
 byte_array
 rsa160_key::private_key() const
 {
+    assert(type() == public_and_private);
     byte_array data;
     {
         byte_array_owrap<flurry::oarchive> write(data);
@@ -117,8 +118,7 @@ rsa160_key::private_key() const
 byte_array
 rsa160_key::sign(byte_array const& digest) const
 {
-    if (type() == invalid)
-        return byte_array();
+    assert(type() != invalid);
     assert(digest.size() == SHA256_DIGEST_LENGTH);
 
     byte_array signature;
@@ -141,8 +141,7 @@ rsa160_key::sign(byte_array const& digest) const
 bool
 rsa160_key::verify(byte_array const& digest, byte_array const& signature) const
 {
-    if (type() == invalid)
-        return false;
+    assert(type() != invalid);
     assert(digest.size() == SHA256_DIGEST_LENGTH);
 
     int rc = RSA_verify(NID_sha256,
