@@ -20,6 +20,14 @@ using namespace std;
 namespace ssu {
 namespace simulation {
 
+shared_ptr<sim_host>
+sim_host::create(std::shared_ptr<simulator> sim)
+{
+    auto host = make_shared<sim_host>(sim);
+    // host->init_link(nullptr); This causes errors because of binding, check how it should work.
+    return host;
+}
+
 sim_host::sim_host(std::shared_ptr<simulator> sim)
     : host()
     , simulator_(sim)
@@ -51,13 +59,16 @@ sim_host::create_timer_engine_for(async::timer* t)
     return stdext::make_unique<sim_timer_engine>(t, simulator_);
 }
 
-std::shared_ptr<link> sim_host::create_link()
+std::shared_ptr<link>
+sim_host::create_link()
 {
     return make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this()));
 }
 
-void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
+void
+sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
 {
+    // @todo replace with std::upper_bound()?
     size_t i = 0;
     for (; i < packet_queue_.size(); ++i)
     {
@@ -68,7 +79,8 @@ void sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
     packet_queue_.insert(packet_queue_.begin() + i, packet);
 }
 
-void sim_host::dequeue_packet(shared_ptr<sim_packet> packet)
+void
+sim_host::dequeue_packet(shared_ptr<sim_packet> packet)
 {
     // @todo Replace with .erase(packet)?
     for (auto it = find(packet_queue_.begin(), packet_queue_.end(), packet); it != packet_queue_.end();)
@@ -78,7 +90,8 @@ void sim_host::dequeue_packet(shared_ptr<sim_packet> packet)
     }
 }
 
-bool sim_host::packet_on_queue(shared_ptr<sim_packet> packet) const
+bool
+sim_host::packet_on_queue(shared_ptr<sim_packet> packet) const
 {
     return find(packet_queue_.begin(), packet_queue_.end(), packet) != packet_queue_.end();
 }
@@ -109,7 +122,8 @@ sim_host::neighbor_at(endpoint const& dst, endpoint& src)
 {
     for (auto conn : connections_)
     {
-        std::shared_ptr<sim_host> uplink = conn.second->uplink_for(std::static_pointer_cast<sim_host>(shared_from_this()));
+        std::shared_ptr<sim_host> uplink =
+            conn.second->uplink_for(std::static_pointer_cast<sim_host>(shared_from_this()));
         if (conn.second->address_for(uplink) == dst)
         {
             src = conn.first;

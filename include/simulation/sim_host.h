@@ -46,6 +46,11 @@ class sim_host : public host
 public:
     std::shared_ptr<simulator> get_simulator() const { return simulator_; }
 
+    /**
+     * Use this function to create and initialize new sim_host.
+     */
+    static std::shared_ptr<sim_host> create(std::shared_ptr<simulator> sim);
+
     sim_host(std::shared_ptr<simulator> sim);
     ~sim_host();
 

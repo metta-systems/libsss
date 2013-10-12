@@ -19,5 +19,5 @@ using namespace ssu::simulation;
 BOOST_AUTO_TEST_CASE(created_host)
 {
     shared_ptr<simulator> sim(make_shared<simulator>());
-    shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> my_host(sim_host::create(sim));
 }

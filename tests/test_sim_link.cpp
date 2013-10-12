@@ -21,7 +21,7 @@ using namespace ssu::simulation;
 BOOST_AUTO_TEST_CASE(created_link)
 {
     shared_ptr<simulator> sim(make_shared<simulator>());
-    shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> my_host(sim_host::create(sim));
 
     shared_ptr<ssu::link> link = my_host->create_link();
     BOOST_CHECK(link != nullptr);
@@ -30,8 +30,8 @@ BOOST_AUTO_TEST_CASE(created_link)
 BOOST_AUTO_TEST_CASE(connected_link)
 {
     shared_ptr<simulator> sim(make_shared<simulator>());
-    shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
-    shared_ptr<sim_host> other_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> my_host(sim_host::create(sim));
+    shared_ptr<sim_host> other_host(sim_host::create(sim));
 
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
     conn->connect(other_host, endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),0),

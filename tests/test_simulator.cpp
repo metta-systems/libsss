@@ -34,10 +34,10 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     shared_ptr<simulator> sim(make_shared<simulator>());
     BOOST_CHECK(sim != nullptr);
 
-    shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> my_host(sim_host::create(sim));
     BOOST_CHECK(my_host != nullptr);
     endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
-    shared_ptr<sim_host> other_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> other_host(sim_host::create(sim));
     BOOST_CHECK(other_host != nullptr);
     endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
 
@@ -79,10 +79,10 @@ BOOST_AUTO_TEST_CASE(connect_wrong_service)
     shared_ptr<simulator> sim(make_shared<simulator>());
     BOOST_CHECK(sim != nullptr);
 
-    shared_ptr<sim_host> my_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> my_host(sim_host::create(sim));
     BOOST_CHECK(my_host != nullptr);
     endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
-    shared_ptr<sim_host> other_host(make_shared<sim_host>(sim));
+    shared_ptr<sim_host> other_host(sim_host::create(sim));
     BOOST_CHECK(other_host != nullptr);
     endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
 
