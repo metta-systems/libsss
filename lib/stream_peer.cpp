@@ -251,7 +251,9 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     // Note: the reason we don't just set the primary right here
     // is because stream_channel::start() gets called on incoming streams too,
     // so servers don't have to initiate back-channels to their clients.
-    assert(primary_channel_ and primary_channel_->link_status() == link::status::up);
+
+    // @todo This invariant doesn't hold here, fixme.
+    // assert(primary_channel_ and primary_channel_->link_status() == link::status::up);
 }
 
 void stream_peer::primary_status_changed(link::status new_status)

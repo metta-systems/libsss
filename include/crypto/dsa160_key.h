@@ -8,8 +8,8 @@
 //
 #pragma once
 
-#include "sign_key.h"
 #include <openssl/dsa.h>
+#include "sign_key.h"
 
 namespace ssu {
 namespace crypto {

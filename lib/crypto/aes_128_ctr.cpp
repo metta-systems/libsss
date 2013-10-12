@@ -27,7 +27,7 @@ aes_128_ctr::~aes_128_ctr()
 
 byte_array aes_128_ctr::encrypt(byte_array const& in, boost::array<uint8_t,AES_BLOCK_SIZE> iv)
 {
-    uint8_t ecount[AES_BLOCK_SIZE]{0};
+    uint8_t ecount[AES_BLOCK_SIZE]{0}; // Encryption state
     unsigned int num{0};
 
     byte_array out;
