@@ -24,7 +24,10 @@ shared_ptr<sim_host>
 sim_host::create(std::shared_ptr<simulator> sim)
 {
     auto host = make_shared<sim_host>(sim);
-    // host->init_link(nullptr); This causes errors because of binding, check how it should work.
+    // No need to call init_link here because primary link initialized and bound there
+    // is not used anywhere! Calling init_link here causes errors because of real endpoint
+    // binding attempts; check how it should be set up betterer and reenable here.
+    // host->init_link(nullptr);
     return host;
 }
 
