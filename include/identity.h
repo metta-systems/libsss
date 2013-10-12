@@ -13,7 +13,6 @@
 #include "byte_array.h"
 #include "peer_id.h"
 #include "crypto/sign_key.h"
-#include "crypto/secure_hash.h"
 
 class settings_provider;
 
@@ -219,22 +218,11 @@ public:
     void clear_key();
 
     /**
-     * Create a new secure_hash object suitable for hashing messages
-     * to be signed using this identity's private key.
-     * @return the new secure_hash object.
-     */
-    inline std::unique_ptr<crypto::secure_hash> create_hash() const {
-        assert(key_);
-        return key_->create_hash();
-    }
-
-    /**
      * Hash a block of data using this identity scheme's hash function.
      * This is just a convenience function based on create_hash().
      * @param data a pointer to the data to hash.
      * @param len the number of bytes to hash.
      * @return the resulting hash, in a byte_array.
-     * @see create_hash
      */
     byte_array hash(char const* data, int len) const;
 
@@ -243,7 +231,6 @@ public:
      * This is just a convenience function based on create_hash().
      * @param data the byte_array to hash.
      * @return the resulting hash, in a byte_array.
-     * @see create_hash
      */
     inline byte_array hash(byte_array const& data) const {
         return hash(data.const_data(), data.size());

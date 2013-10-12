@@ -30,8 +30,6 @@ public:
     byte_array public_key() const override;
     byte_array private_key() const override;
 
-    std::unique_ptr<secure_hash> create_hash() const override;
-
     byte_array sign(byte_array const& digest) const override;
     bool verify(byte_array const& digest, byte_array const& signature) const override;
 

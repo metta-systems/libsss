@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "identity.h"
+#include "crypto/sha256_hash.h"
 #include "crypto/dsa160_key.h"
 #include "crypto/rsa160_key.h"
 #include "logging.h"
@@ -233,9 +234,7 @@ byte_array identity::private_key() const
 
 byte_array identity::hash(char const* data, int len) const
 {
-    auto hsh = create_hash();
-    hsh->update(data, len);
-    return hsh->final();
+    return crypto::sha256::hash(data, len);
 }
 
 //=================================================================================================

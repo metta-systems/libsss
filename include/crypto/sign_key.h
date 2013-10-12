@@ -67,12 +67,6 @@ public:
     virtual byte_array private_key() const = 0;
 
     /**
-     * Create a new secure_hash object suitable for hashing messages
-     * to be signed using private key.
-     */
-    virtual std::unique_ptr<secure_hash> create_hash() const = 0;
-
-    /**
      * Generate signature
      * @param  digest Digest of the message to be signed.
      * @return        Message digital signature.

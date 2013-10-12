@@ -341,14 +341,6 @@ dsa160_key::private_key() const
     return data;
 }
 
-class secure_hash {public: secure_hash() = default;}; // @fixme temp
-
-std::unique_ptr<secure_hash>
-dsa160_key::create_hash() const
-{
-    return std::unique_ptr<secure_hash>(nullptr); //new sha256_hash();
-}
-
 byte_array
 dsa160_key::sign(byte_array const& digest) const
 {
