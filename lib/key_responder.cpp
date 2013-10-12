@@ -85,7 +85,7 @@ calc_signature_hash(ssu::negotiation::dh_group_type group,
            << peer_eid;
     }
 
-    return sha256::hash(data);
+    return crypto::sha256::hash(data);
 }
 
 byte_array
@@ -94,7 +94,7 @@ calc_key(byte_array const& master,
     byte_array const& responder_nonce,
     char which, int keylen)
 {
-    byte_array master_hash = sha256::hash(master);
+    byte_array master_hash = crypto::sha256::hash(master);
     assert(master_hash.size() == crypto::HMACKEYLEN);
 
     crypto::hash hmac(master_hash.as_vector()); // Use master_hash as hmac key
@@ -243,7 +243,7 @@ key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey
             << src;
     }
 
-    return sha256::keyed_hash(hostkey->hmac_secret_key_, data);
+    return crypto::sha256::keyed_hash(hostkey->hmac_secret_key_, data);
 }
 
 void key_responder::receive(const byte_array& msg, const link_endpoint& src)
@@ -440,7 +440,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     logger::debug() << "Got dh_init2 from " << src;
 
     // We'll need the originator's hashed nonce as well...
-    byte_array initiator_hashed_nonce = sha256::hash(data.initiator_nonce);
+    byte_array initiator_hashed_nonce = crypto::sha256::hash(data.initiator_nonce);
 
     if (data.key_min_length != 128/8 and data.key_min_length != 192/8 and data.key_min_length != 256/8)
         return warning("Invalid minimum AES key length");
@@ -783,7 +783,7 @@ key_initiator::key_initiator(channel* channel,
 
     // DH/AES key agreement state
     crypto::fill_random(initiator_nonce_.as_vector());
-    initiator_hashed_nonce_ = sha256::hash(initiator_nonce_);
+    initiator_hashed_nonce_ = crypto::sha256::hash(initiator_nonce_);
 }
 
 key_initiator::~key_initiator()

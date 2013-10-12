@@ -12,14 +12,25 @@
 #include "byte_array.h"
 
 namespace ssu {
+namespace crypto {
 
 // A quick simple wrapper for instantly getting a sha-256 of a byte_array.
 class sha256
 {
 public:
+    static crypto::hash::value hash(char const* data, size_t size);
     static crypto::hash::value hash(byte_array const& data);
     static crypto::hash::value keyed_hash(byte_array const& key, byte_array const& data); // HMAC
 };
+
+inline crypto::hash::value sha256::hash(char const* data, size_t size)
+{
+    crypto::hash md;
+    crypto::hash::value sha256hash;
+    md.update(boost::asio::buffer(data, size));
+    md.finalize(sha256hash);
+    return sha256hash;
+}
 
 inline crypto::hash::value sha256::hash(byte_array const& data)
 {
@@ -41,4 +52,5 @@ inline crypto::hash::value sha256::keyed_hash(byte_array const& key, byte_array 
     return mac;
 }
 
+} // crypto namespace
 } // ssu namespace
