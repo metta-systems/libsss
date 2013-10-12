@@ -371,7 +371,23 @@ dsa160_key::sign(byte_array const& digest) const
 bool
 dsa160_key::verify(byte_array const& digest, byte_array const& signature) const
 {
-    return false;
+    assert(type() != invalid);
+    assert(digest.size() == SHA256_DIGEST_LENGTH);
+
+    // The version of DSA currently implemented by OpenSSL only supports digests up to 160 bits.
+    int digest_size = 160/8;
+
+    DSA_SIG *sig = DSA_SIG_new();
+    if (!sig)
+        return false;
+
+    byte_array_iwrap<flurry::iarchive> read(signature);
+    read.archive() >> sig->r >> sig->s; // @todo Check if there's more data in the signature, fail.
+
+    int rc = DSA_do_verify((const unsigned char*)digest.const_data(), digest_size, sig, dsa_);
+
+    DSA_SIG_free(sig);
+    return rc == 1;
 }
 
 void
