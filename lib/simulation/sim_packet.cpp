@@ -90,7 +90,7 @@ void sim_packet::send()
 
     target_host_->enqueue_packet(shared_from_this());
 
-    timer_.on_timeout.connect(boost::bind(&sim_packet::arrive, this));
+    timer_.on_timeout.connect([this](bool){arrive();});
     timer_.start(arrival_time - now);
 }
 
