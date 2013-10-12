@@ -79,7 +79,12 @@ bool sim_link::send(const endpoint& ep, const char *data, size_t size)
 vector<endpoint>
 sim_link::local_endpoints()
 {
-    return host_->local_endpoints();
+    vector<endpoint> result;
+    for (auto ep : host_->local_endpoints())
+    {
+        result.emplace_back(ep.address(), local_port());
+    }
+    return result;
 }
 
 } // simulation namespace
