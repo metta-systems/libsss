@@ -35,17 +35,14 @@ const int dsl_bw[][2] = // specific down/up combinations
 // Typical SDSL/SHDSL bandwidth parameters (Kbps)
 const int sdsl_bw[] = {512,1024,1536,2048,4096};
 
-
 // Typical cable modem uplink/downlink bandwidths (all in Kbps)
 const int cable_down_bw[] = {1500, 3000, 5000, 6000, 8000, 9000};
 const int cable_up_bw[] = {250, 400, 500, 1000, 1500};
-
 
 // Common downlink queue sizes in Kbytes, according to QFind results
 // (Claypool et al, "Inferring Queue Sizes in Access Networks...")
 const int dsl_dn_qsize[] = {10, 15, 25, 40, 55, 60};
 const int cable_dn_qsize[] = {5, 10, 15, 20};
-
 
 // Common measured last-hop link delays from Dischinger study:
 // Note: round-trip, in milliseconds
@@ -54,7 +51,6 @@ const int cable_delay[] = {5, 7, 10, 20};
 
 #define DSL_RTDELAY 13  // approx median, milliseconds
 #define CABLE_RTDELAY   7   // approx median, milliseconds
-
 
 // Common downlink and uplink queue lengths in milliseconds,
 // according to Dischinger et al study

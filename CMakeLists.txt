@@ -20,3 +20,8 @@ endif()
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif (BUILD_TESTING)
+
+# Very simple secure shell terminal
+if (UNIX AND BUILD_TESTING)
+    #add_subdirectory(shell)
+endif (UNIX AND BUILD_TESTING)

@@ -55,7 +55,7 @@ sim_link::unbind()
 }
 
 // Target address must be routable to in order to send.
-// Find the destination host in the "routing table".
+// Find the destination host in the "routing table" (a simple list of neighbors).
 bool sim_link::send(const endpoint& ep, const char *data, size_t size)
 {
     assert(port_ > 0);

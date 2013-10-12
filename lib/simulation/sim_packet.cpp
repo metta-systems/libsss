@@ -115,7 +115,7 @@ void sim_packet::arrive()
     // Get hold of a shared pointer to self, which is needed to keep ourselves alive a little bit more.
     std::shared_ptr<sim_packet> self = shared_from_this();
 
-    target_host_->dequeue_packet(shared_from_this());
+    target_host_->dequeue_packet(self);
 
     link_endpoint src_ep(link.get(), from_);
     link->receive(data_, src_ep);
