@@ -360,7 +360,7 @@ dsa160_key::sign(byte_array const& digest) const
     {
         byte_array_owrap<flurry::oarchive> write(signature);
         // write to signature
-        write.archive() << utils::bn2ba(sig->r) << utils::bn2ba(sig->s);
+        write.archive() << sig->r << sig->s;
     }
 
     DSA_SIG_free(sig);
