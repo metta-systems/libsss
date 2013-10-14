@@ -1,6 +1,6 @@
  ☐ Multithreaded send/receive ruins everything - add locking/asynchronicity
    ☐ Easily reproducible with opus-streaming.
-
+ ☐ Need to bind to both ipv4 and ipv6 sockets.
  ✔ Implement basic settings_provider for storing host key @done (13-10-10 00:12)
    ☐ and friend list.
  ☐ Implement basic DHT in 'routing' to let nodes find each other.
