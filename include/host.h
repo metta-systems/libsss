@@ -14,6 +14,7 @@
 #include "identity.h"
 #include "negotiation/key_responder.h"
 #include "private/stream_host_state.h"
+#include "routing_host_state.h"
 #include "logging.h"
 
 class settings_provider;
@@ -41,7 +42,7 @@ class host
     , public stream_host_state
     , public virtual asio_host_state
     , public timer_host_state
-    //, public routing_host_state
+    , public routing_host_state
 {
 public:
     // @todo Hide the constructor.
