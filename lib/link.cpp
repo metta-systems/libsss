@@ -96,18 +96,18 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
     // @todo Should be able to bind to both at the same time...
 
     do {
-        if (primary_link_->bind(local_ep6)) {
-            break;
-        }
-        logger::warning() << "Can't bind to port " << default_port << " ("
-            << primary_link_->error_string() << ") - trying another";
+        // if (primary_link_->bind(local_ep6)) {
+        //     break;
+        // }
+        // logger::warning() << "Can't bind to port " << default_port << " ("
+        //     << primary_link_->error_string() << ") - trying another";
 
-        local_ep6.port(0);
-        if (primary_link_->bind(local_ep6)) {
-            break;
-        }
-        logger::warning() << "Couldn't bind the link on ipv6 ("
-            << primary_link_->error_string() << "), trying ipv4";
+        // local_ep6.port(0);
+        // if (primary_link_->bind(local_ep6)) {
+        //     break;
+        // }
+        // logger::warning() << "Couldn't bind the link on ipv6 ("
+        //     << primary_link_->error_string() << "), trying ipv4";
 
         if (primary_link_->bind(local_ep)) {
             break;
