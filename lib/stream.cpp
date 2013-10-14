@@ -432,8 +432,17 @@ public:
 };
 
 stream_responder::stream_responder(shared_ptr<host> host)
-    : key_responder(host, magic_id)
-{}
+    : key_responder(host, stream_protocol::magic_id)
+{
+    // // Get us connected to all currently extant RegClients
+    // foreach (RegClient *rc, h->regClients())
+    //     conncli(rc);
+
+    // // Watch for newly created RegClients
+    // RegHostState *rhs = h;
+    // connect(rhs, SIGNAL(regClientCreate(RegClient*)),
+    //     this, SLOT(clientCreate(RegClient*)));
+}
 
 /// @todo Return unique_ptr<channel>?
 channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
@@ -451,6 +460,50 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
 
     return chan;
 }
+
+// void StreamResponder::conncli(RegClient *rc)
+// {
+//     qDebug() << "StreamResponder: RegClient" << rc->serverName();
+//     if (connrcs.contains(rc))
+//         return;
+
+//     connrcs.insert(rc);
+//     connect(rc, SIGNAL(stateChanged(int)), this, SLOT(clientStateChanged(int)));
+//     connect(rc, SIGNAL(lookupNotify(const SST::PeerId&,
+//             const Endpoint &, const RegInfo &)),
+//         this, SLOT(lookupNotify(const SST::PeerId&,
+//             const Endpoint &, const RegInfo &)));
+// }
+
+// void StreamResponder::clientCreate(RegClient *rc)
+// {
+//     qDebug() << "StreamResponder::clientCreate" << rc->serverName();
+//     conncli(rc);
+// }
+
+// void StreamResponder::clientStateChanged(int state)
+// {
+//     qDebug() << "StreamResponder::clientStateChanged" << state << RegClient::stateString(state);
+
+//     // A RegClient changed state, potentially connected.
+//     // Retry all outstanding lookups in case they might succeed now.
+//     if (state == RegClient::Registered)
+//     {
+//         foreach (StreamPeer *peer, host()->peers) {
+//             peer->connectFlow();
+//         }
+//     }
+// }
+
+// void StreamResponder::lookupNotify(const SST::PeerId&, const Endpoint &loc, const RegInfo &)
+// {
+//     qDebug() << "StreamResponder::lookupNotify";
+
+//     // Someone at endpoint 'loc' is apparently trying to reach us -
+//     // send them an R0 hole punching packet to his public endpoint.
+//     // XX perhaps make sure we might want to talk with them first?
+//     sendR0(loc);
+// }
 
 //=================================================================================================
 // Stream host state.

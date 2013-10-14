@@ -37,8 +37,75 @@ struct transmit_event_t
     }
 };
 
+// --CC control------------------------------------------------------
+
 static constexpr unsigned CWND_MIN = 2;     // Min congestion window (packets/RTT)
 static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RTT)
+
+/// Congestion Control modes
+// enum CCMode {
+//     CC_TCP,
+//     CC_AGGRESSIVE,
+//     CC_DELAY,
+//     CC_VEGAS,
+//     CC_CTCP,
+//     CC_FIXED,
+// };
+
+// class Flow : public SocketFlow
+// {
+// private:
+//     //FlowCC *cc;        ///< Congestion control method
+//     CCMode ccmode;       ///< Congestion control method
+
+// public:
+//     // Set the congestion controller for this flow.
+//     // This must be set if the client wishes to call mayTransmit().
+//     //inline void setCongestionController(FlowCC *cc) { this->cc = cc; }
+//     //inline FlowCC *congestionController() { return cc; }
+
+// protected:
+//     // Size of rxmask, rxackmask, and txackmask fields in bits
+//     static const int maskBits = 32;
+
+//     // Transmit state
+
+//     // TCP congestion control
+//     quint32 ssthresh;   ///< Slow start threshold
+//     bool sstoggle;      ///< Slow start toggle flag for CC_VEGAS
+
+//     // Aggressive congestion control
+//     quint32 ssbase;     ///< Slow start baseline
+
+//     // Low-delay congestion control
+//     int cwndinc;
+//     int lastrtt;        ///< Measured RTT of last round-trip
+//     float lastpps;      ///< Measured PPS of last round-trip
+//     quint32 basewnd;
+//     float basertt, basepps, basepwr;
+
+//     // TCP Vegas-like congestion control
+//     float cwndmax;
+
+// public:
+//     void ccReset();
+//     inline CCMode ccMode() const { return ccmode; }
+//     inline void setCCMode(CCMode mode) { ccmode = mode; ccReset(); }
+
+//     /// for CC_FIXED: fixed congestion window for reserved-bandwidth links
+//     inline void setCCWindow(int cwnd) { this->cwnd = cwnd; }
+
+//     /// Congestion information accessors for flow monitoring purposes
+//     inline int txCongestionWindow() { return cwnd; }
+//     inline int txBytesInFlight() { return txfltsize; }
+//     inline int txPacketsInFlight() { return txfltcnt; }
+
+// private:
+//     /// Congestion control
+//     void ccMissed(quint64 pktseq);
+// };
+
+// --end CC control--------------------------------------------------
 
 class channel::private_data
 {
@@ -113,7 +180,15 @@ public:
     // Channel statistics.
     //-------------------------------------------
 
+    /// Cumulative measured RTT in milliseconds.
     async::timer::duration_type cumulative_rtt_;
+    // float cumrttvar;    ///< Cumulative variation in RTT
+    // float cumpps;       ///< Cumulative measured packets per second
+    // float cumppsvar;    ///< Cumulative variation in PPS
+    // float cumpwr;       ///< Cumulative measured network power (pps/rtt)
+    // float cumbps;       ///< Cumulative measured bytes per second
+    // float cumloss;      ///< Cumulative measured packet loss ratio
+    // Timer statstimer;
 
 public:
     private_data(shared_ptr<host> host)
@@ -138,6 +213,15 @@ public:
     inline async::timer::duration_type elapsed_since_mark() {
         return host_->current_time() - mark_time_;
     }
+
+    /// Compute current number of transmitted but un-acknowledged packets.
+    /// This count may include raw ACK packets, for which we expect no acknowledgments
+    /// unless they happen to be piggybacked on data coming back.
+    inline int64_t unacked_packets() { return tx_sequence_ - tx_ack_sequence_; }
+
+    /// Compute the time elapsed since the mark in microseconds.
+    // qint64 markElapsed();
+
 };
 
 // @todo Move this to cc_strategy implementation.
@@ -161,6 +245,22 @@ channel::channel(shared_ptr<host> host)
 
     // Delayed ACK state
     pimpl_->ack_timer_.on_timeout.connect(boost::bind(&channel::ack_timeout, this));
+
+    // --CC control---------------------------------------------------
+    // ccmode = CC_TCP;
+    // delayack = true;
+    // assert(sizeof(txackmask)*8 == maskBits);
+
+    // // Initialize transmit congestion control state
+    // recovseq = 1;
+
+    // // Initialize congestion control state
+    // ccReset(); // @fixme see end of file
+
+    // // Statistics gathering state
+    // connect(&statstimer, SIGNAL(timeout(bool)), this, SLOT(statsTimeout()));
+    //statstimer.start(5*1000);
+    // --end CC control-----------------------------------------------
 }
 
 channel::~channel()
@@ -331,6 +431,21 @@ void channel::retransmit_timeout(bool failed)
     // Restart the retransmission timer
     // with an exponentially increased backoff delay.
     pimpl_->retransmit_timer_.restart();
+
+    //--CC control---------------------------------------------------
+    // if (!nocc) switch (ccmode) {
+    // default:
+    //     // Reset cwnd and go back to slow start
+    //     ssthresh = txfltcnt / 2;
+    //     ssthresh = qMax(ssthresh, CWND_MIN);
+    //     cwnd = CWND_MIN;
+    //     qDebug("rtxTimeout: ssthresh = %d, cwnd = %d",
+    //             ssthresh, cwnd);
+
+    // case CC_FIXED:
+    //     break;  // fixed cwnd, no congestion control
+    // }
+    //--end CC control-----------------------------------------------
 
     // Assume that all in-flight data packets have been dropped,
     // and notify the upper layer as such.
@@ -651,7 +766,9 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                 e.pipe_ = false;
                 pimpl_->tx_inflight_count_--;
                 pimpl_->tx_inflight_size_ -= e.size_;
-                // ccMissed(miss_seq);
+                //--CC control---------------------------------------------------
+                // ccMissed(miss_seq); // @fixme see end of file
+                //--end CC control-----------------------------------------------
                 missed(miss_seq, 1);
                 logger::debug() << this << " infer-missed seq " << miss_seq << " tx inflight " << pimpl_->tx_inflight_count_;
             }
@@ -726,6 +843,49 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     //-------------------------------------------------------------
     // cc code will be here - should be some function in cc_strategy?
     //-------------------------------------------------------------
+    //--CC control---------------------------------------------------
+    // if (!nocc) switch (ccmode) {
+    // case CC_VEGAS:
+    //     sstoggle = !sstoggle;
+    //     if (sstoggle)
+    //         break;  // do slow start only once every two RTTs
+
+    //     // fall through...
+    // case CC_TCP: {
+    //     // During standard TCP slow start procedure,
+    //     // increment cwnd for each newly-ACKed packet.
+    //     // XX TCP spec allows this to be <=,
+    //     // which puts us in slow start briefly after each loss...
+    //     if (newpackets && cwndlim && cwnd < ssthresh) {
+    //         cwnd = qMin(cwnd + newpackets, ssthresh);
+    //         qDebug("Slow start: %d new ACKs; boost cwnd to %d "
+    //             "(ssthresh %d)",
+    //             newpackets, cwnd, ssthresh);
+    //     }
+    //     break; }
+
+    // case CC_DELAY:
+    //     if (cwndinc < 0)    // Only slow start during up-phase
+    //         break;
+
+    //     // fall through...
+    // case CC_AGGRESSIVE: {
+    //     // We're always in slow start, but we only count ACKs received
+    //     // on schedule and after a per-roundtrip baseline.
+    //     if (markacks > ssbase && markElapsed() <= lastrtt) {
+    //         cwnd += qMin(newpackets, markacks - ssbase);
+    //     //  qDebug("Slow start: %d new ACKs; boost cwnd to %d",
+    //     //      newpackets, cwnd);
+    //     }
+    //     break; }
+
+    // case CC_CTCP:
+    //     Q_ASSERT(0);    // XXX
+
+    // case CC_FIXED:
+    //     break;  // fixed cwnd, no congestion control
+    // }
+    //--end CC control-----------------------------------------------
 
     // When ackseq passes mark_sequence_, we've observed a round-trip,
     // so update our round-trip statistics.
@@ -772,6 +932,117 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     //     //------------------------------------------------------------------
     //     //more cc code here - should be some other function in cc_strategy?
     //     //------------------------------------------------------------------
+//         // --CC control---------------------------------------------------
+//         if (!nocc) switch (ccmode) {
+//         case CC_TCP:
+//             // Normal TCP congestion control:
+//             // during congestion avoidance,
+//             // increment cwnd once each RTT,
+//             // but only on round-trips that were cwnd-limited.
+//             if (cwndlim) {
+//                 cwnd++;
+//                 qDebug("cwnd %d ssthresh %d",
+//                     cwnd, ssthresh);
+//             }
+//             cwndlim = false;
+//             break;
+
+//         case CC_AGGRESSIVE:
+//             break;
+
+//         case CC_DELAY:
+//             if (pwr > basepwr) {
+//                 basepwr = pwr;
+//                 basertt = rtt;
+//                 basepps = pps;
+//                 basewnd = markacks;
+//             } else if (markacks <= basewnd && rtt > basertt) {
+//                 basertt = rtt;
+//                 basepwr = basepps / basertt;
+//             } else if (markacks >= basewnd && pps < basepps) {
+//                 basepps = pps;
+//                 basepwr = basepps / basertt;
+//             }
+
+//             if (cwndinc > 0) {
+//                 // Window going up.
+//                 // If RTT makes a significant jump, reverse.
+//                 if (rtt > basertt || cwnd >= CWND_MAX) {
+//                     cwndinc = -1;
+//                 } else {
+//                     // Additively increase the window
+//                     cwnd += cwndinc;
+//                 }
+//             } else {
+//                 // Window going down.
+//                 // If PPS makes a significant dive, reverse.
+//                 if (pps < basepps || cwnd <= CWND_MIN) {
+//                     ssbase = cwnd++;
+//                     cwndinc = +1;
+//                 } else {
+//                     // Additively decrease the window
+//                     cwnd += cwndinc;
+//                 }
+//             }
+//             cwnd = qMax(CWND_MIN, cwnd);
+//             cwnd = qMin(CWND_MAX, cwnd);
+//             qDebug("RT: pwr %.0f[%.0f/%.0f]@%d "
+//                 "base %.0f[%.0f/%.0f]@%d "
+//                 "cwnd %d%+d",
+//                 pwr*1000.0, pps, (float)rtt, markacks,
+//                 basepwr*1000.0, basepps, basertt, basewnd,
+//                 cwnd, cwndinc);
+//             break;
+
+//         case CC_VEGAS: {
+//             // Keep track of the lowest RTT ever seen,
+//             // as per the original Vegas algorithm.
+//             // This has the known problem that it screws up
+//             // if the path's actual base RTT changes.
+//             if (basertt == 0)   // first packet
+//                 basertt = rtt;
+//             else if (rtt < basertt)
+//                 basertt = rtt;
+//             //else
+//             //  basertt = (basertt * 255.0 + rtt) / 256.0;
+
+//             float expect = (float)marksent / basertt;
+//             float actual = (float)marksent / rtt;
+//             float diffpps = expect - actual;
+//             Q_ASSERT(diffpps >= 0.0);
+//             float diffpprt = diffpps * rtt;
+
+//             if (diffpprt < 1.0 && cwnd < CWND_MAX && cwndlim) {
+//                 cwnd++;
+//                 // ssthresh = qMax(ssthresh, cwnd / 2); ??
+//             } else if (diffpprt > 3.0 && cwnd > CWND_MIN) {
+//                 cwnd--;
+//                 ssthresh = qMin(ssthresh, cwnd); // /2??
+//             }
+
+//             qDebug("Round-trip: win %d basertt %.3f rtt %d "
+//                 "exp-pps %f act-pps %f diff-pprt %.3f cwnd %d",
+//                 marksent, basertt, rtt,
+//                 expect*1000000.0, actual*1000000.0,
+//                 diffpprt, cwnd);
+//             break; }
+
+//         case CC_CTCP: {
+// #if 0
+//             k = 0.8; a = 1/8; B = 1/2
+//             if (in-recovery)
+//                 ...
+//             else if (diff < y) {
+//                 dwnd += sqrt(win)/8.0 - 1;
+//             } else
+//                 dwnd -= C * diff;
+// #endif
+//             break; }
+
+//         case CC_FIXED:
+//             break;  // fixed cwnd, no congestion control
+//         }
+//         // --end CC control-----------------------------------------------
 
     //     if (pimpl_->nocc_) {
     //         logger::debug() << "End-to-end rtt " << rtt << " cumulative rtt " << pimpl_->cumulative_rtt_;
@@ -799,5 +1070,98 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     if (new_packets > 0 and may_transmit())
         on_ready_transmit();
 }
+
+// --CC control---------------------------------------------------
+// void channel::ccReset()
+// {
+//     qDebug() << this << "ccReset: mode" << ccmode;
+
+//     cwnd = CWND_MIN;
+//     cwndlim = true;
+//     ssthresh = CWND_MAX;
+//     sstoggle = true;
+//     ssbase = 0;
+//     cwndinc = 1;
+//     cwndmax = CWND_MIN;
+//     lastrtt = 0;
+//     lastpps = 0;
+//     basertt = 0;
+//     basepps = 0;
+//     cumrtt = RTT_INIT;
+//     cumrttvar = 0;
+//     cumpps = 0;
+//     cumppsvar = 0;
+//     cumpwr = 0;
+//     cumbps = 0;
+//     cumloss = 0;
+// }
+
+// void channel::ccMissed(quint64 pktseq)
+// {
+//     qDebug() << "Missed seq" << pktseq;
+
+//     // Notify congestion control
+//     if (!nocc) switch (ccmode) {
+//     case CC_TCP: 
+//     case CC_DELAY:
+//     case CC_VEGAS: {
+//         // Packet loss detected -
+//         // perform standard TCP congestion control
+//         if (pktseq <= recovseq) {
+//             // We're in a fast recovery window:
+//             // this isn't a new loss event.
+//             break;
+//         }
+
+//         // new loss event: cut ssthresh and cwnd
+//         //ssthresh = (txseq - txackseq) / 2;    XXX
+//         ssthresh = cwnd / 2;
+//         ssthresh = qMax(ssthresh, CWND_MIN);
+//         // qDebug("%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
+//         cwnd = ssthresh;
+
+//         // fast recovery for the rest of this window
+//         recovseq = txseq;
+
+//         break; }
+
+//     case CC_AGGRESSIVE: {
+//         // Number of packets we think have been lost
+//         // so far during this round-trip.
+//         int lost = (txackseq - markbase) - markacks;
+//         lost = qMax(0, lost);
+
+//         // Number of packets we expect to receive,
+//         // assuming the lost ones are really lost
+//         // and we don't lose any more this round-trip.
+//         unsigned expected = marksent - lost;
+
+//         // Clamp the congestion window to this value.
+//         if (expected < cwnd) {
+//             qDebug("PACKETS LOST: cwnd %d -> %d", cwnd, expected);
+//             cwnd = ssbase = expected;
+//             cwnd = qMax(CWND_MIN, cwnd);
+//         }
+//         break; }
+
+//     case CC_CTCP:
+//         Q_ASSERT(0);    // XXX
+
+//     case CC_FIXED:
+//         break;  // fixed cwnd, no congestion control
+//     }
+// }
+// --end CC control-----------------------------------------------
+
+// Transmit statistics
+// void channel::statsTimeout()
+// {
+//     qDebug("Stats: txseq %llu txackseq %llu "
+//         "rxseq %llu rxackseq %llu"
+//         "txfltcnt %d cwnd %d ssthresh %d\n\t"
+//         "cumrtt %.3f cumpps %.3f cumloss %.3f",
+//         txseq, txackseq, rxseq, rxackseq, txfltcnt, cwnd, ssthresh,
+//         cumrtt, cumpps, cumloss);
+// }
 
 } // ssu namespace

@@ -91,6 +91,72 @@ void stream_peer::connect_channel()
     reconnect_timer_.start(connect_retry_period);
 }
 
+// --- Some routing stuff still unfinished: ---
+//
+// void StreamPeer::conncli(RegClient *rc)
+// {
+//     if (connrcs.contains(rc))
+//         return;
+//     connrcs.insert(rc);
+
+//     // Listen for the lookup response
+//     connect(rc, SIGNAL(lookupDone(const SST::PeerId&,
+//             const Endpoint &, const RegInfo &)),
+//         this, SLOT(lookupDone(const SST::PeerId&,
+//             const Endpoint &, const RegInfo &)));
+
+//     // Also make sure we hear if this regclient disappears
+//     connect(rc, SIGNAL(destroyed(QObject*)),
+//         this, SLOT(regClientDestroyed(QObject*)));
+// }
+
+// void StreamPeer::lookupDone(const SST::PeerId &id, const Endpoint &loc, const RegInfo &info)
+// {
+//     if (id != this->id) {
+//         qDebug() << this << "got lookupDone for wrong id" << id << "expecting" << this->id << "(harmless, ignored)";
+//         return; // ignore responses for other lookup requests
+//     }
+
+//     // Mark this outstanding lookup as completed.
+//     RegClient *rc = (RegClient*)sender();
+//     if (!lookups.contains(rc)) {
+//         qDebug() << "StreamPeer: unexpected lookupDone signal";
+//         return; // ignore duplicates caused by concurrent requests
+//     }
+//     lookups.remove(rc);
+
+//     // If the lookup failed, notify waiting streams as appropriate.
+//     if (loc.isNull()) {
+//         qDebug() << this << "Lookup on" << id << "failed";
+//         if (!lookups.isEmpty() || !initors.isEmpty())
+//             return;     // There's still hope
+//         return flowFailed();
+//     }
+
+//     qDebug() << "StreamResponder::lookupDone: primary" << loc << "num secondaries" << info.endpoints().size();
+
+//     // Add the endpoint information we've received to our address list,
+//     // and initiate flow setup attempts to those endpoints.
+//     foundEndpoint(loc);
+//     foreach (const Endpoint &ep, info.endpoints())
+//         foundEndpoint(ep);
+// }
+
+// void StreamPeer::regClientDestroyed(QObject *obj)
+// {
+//     qDebug() << "StreamPeer: RegClient destroyed before lookupDone";
+
+//     RegClient *rc = (RegClient*)obj;
+//     lookups.remove(rc);
+//     connrcs.remove(rc);
+
+//     // If there are no more RegClients available at all,
+//     // notify waiting streams of connection failure
+//     // next time we get back to the main loop.
+//     if (lookups.isEmpty() && initors.isEmpty())
+//         recontimer.start(0);
+// }
+
 void stream_peer::retry_timeout()
 {
     // If we actually have an active flow now, do nothing.
