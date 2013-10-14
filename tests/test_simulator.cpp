@@ -117,4 +117,6 @@ BOOST_AUTO_TEST_CASE(connect_wrong_service)
     sim->run();
 
     logger::debug() << "<<< shutdown from this point on";
+
+    logger::debug() << "<<< host use counts " << dec << my_host.use_count() << " and " << other_host.use_count();
 }
