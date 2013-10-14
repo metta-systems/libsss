@@ -30,9 +30,11 @@ typedef uint32_t magic_t;
 typedef uint8_t channel_number;
 
 /**
- * Packet sequence number.
+ * Packet sequence numbers are 64-bit unsigned integers.
  */
 typedef uint64_t packet_seq_t;
+
+static constexpr packet_seq_t max_packet_seq = ~0ULL;
 
 /**
  * @internal

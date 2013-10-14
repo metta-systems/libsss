@@ -24,7 +24,7 @@ namespace ssu {
 
 struct transmit_event_t
 {
-    int32_t size_;   ///< Total size of packet including hdr
+    int32_t size_;   ///< Total size of packet including header
     bool    data_;   ///< Was an upper-layer data packet
     bool    pipe_;   ///< Currently counted toward transmit_data_pipe
 
@@ -64,7 +64,8 @@ public:
     packet_seq_t mark_base_{0};
     /// Time at which marked packet was sent.
     bp::ptime mark_time_;
-    uint32_t tx_ack_mask_{1};  ///< Mask of packets transmitted and ACK'd (fictitious packet 0 already received)
+    /// Mask of packets transmitted and ACK'd (fictitious packet 0 already received)
+    uint32_t tx_ack_mask_{1};
     /// Data packets currently in flight.
     uint32_t tx_inflight_count_{0};
     /// Data bytes currently in flight.
@@ -92,7 +93,8 @@ public:
 
     /// Highest sequence number received so far.
     packet_seq_t rx_sequence_{0};
-    uint32_t rx_mask_{1};     ///< Mask of packets received so far (1 = fictitious packet 0)
+    /// Mask of packets received so far (1 = fictitious packet 0)
+    uint32_t rx_mask_{1};
 
     // Receive-side ACK state
     /// Highest sequence number acknowledged so far.
@@ -320,6 +322,7 @@ void channel::start_retransmit_timer()
     pimpl_->retransmit_timer_.start(timeout); // Wait for full round-trip time.
 }
 
+// channel::retransmit_timer_ invokes this slot when the retransmission timer expires.
 void channel::retransmit_timeout(bool failed)
 {
     logger::debug() << this << " Retransmit timeout" << (failed ? " - FAILED" : "")
@@ -668,7 +671,6 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                 expire(pimpl_->tx_event_sequence_ - 1, 1);
             }
         }
-        //---------------------------------------------------------------------
 
         // Reset the retransmission timer, since we've made progress.
         // Only re-arm it if there's still outstanding unACKed data.

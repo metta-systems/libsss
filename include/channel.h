@@ -18,7 +18,7 @@ namespace ssu {
 class host;
 
 /**
- * Abstract base class representing a channel between a local Socket and a remote endpoint.
+ * Abstract base class representing a channel between a local link and a remote endpoint.
  */
 class channel : public link_channel
 {
@@ -30,6 +30,8 @@ class channel : public link_channel
     std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
 
     std::unique_ptr<channel_armor> armor_;         ///< Armors cannot be shared.
+    /// Per-direction unique channel IDs for this channel.
+    /// Stream layer uses these in assigning USIDs to new streams.
     byte_array   tx_channel_id_;                   ///< Transmit ID of the channel.
     byte_array   rx_channel_id_;                   ///< Receive ID of the channel.
     link::status link_status_{link::status::down}; ///< Link online status.
@@ -65,14 +67,19 @@ public:
 
     virtual std::shared_ptr<host> get_host();
 
+    /// Start the channel.
 	void start(bool initiate) override;
+    /// Stop the channel.
 	void stop() override;
 
+    /// Check congestion control state and return the number of new packets,
+    /// if any, that flow control says we may transmit now.
     virtual int may_transmit();
 
     inline byte_array tx_channel_id() { return tx_channel_id_; }
     inline byte_array rx_channel_id() { return rx_channel_id_; }
 
+    /// Set the channel IDs for this channel.
     inline void set_channel_ids(byte_array const& tx_id, byte_array const& rx_id) {
         tx_channel_id_ = tx_id;
         rx_channel_id_ = rx_id;
@@ -101,8 +108,6 @@ public:
      */
     inline link::status link_status() const { return link_status_; }
 
-    inline void set_link_status(link::status new_status) { link_status_ = new_status; }
-
     typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
 
     /// Indicates when this channel observes a change in link status.
@@ -113,7 +118,7 @@ protected:
      * Transmit a packet across the channel.
      * Caller must leave header_len bytes at the beginning for the header. The packet
      * is armored in-place in the provided byte_array. It is the caller's responsibility
-     * to transmit only when flow control says it's OK (may_transmit() returns true)
+     * to transmit only when flow control says it's OK (may_transmit() returns non-zero)
      * or upon getting on_ready_transmit() signal.
      * Provides in 'packet_seq' the transmit sequence number that was assigned to the packet.
      * Returns true if the transmit was successful, or false if it failed (e.g., due
@@ -122,7 +127,7 @@ protected:
     bool channel_transmit(byte_array& packet, packet_seq_t& packet_seq);
 
     /**
-     * Main method for upper-layer subclass to receive a packet on a flow.
+     * Main method for upper-layer subclass to receive a packet on a channel.
      * Should return true if the packet was processed and should be acked,
      * or false to silently pretend we never received the packet.
      */
@@ -131,7 +136,7 @@ protected:
     /**
      * Create and transmit a packet for acknowledgment purposes only.
      * Upper layer may override this if ack packets should contain
-     * more than an just an empty channel payload.
+     * more than just an empty channel payload.
      */
     virtual bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count);
 
@@ -142,14 +147,8 @@ protected:
 private:
     void start_retransmit_timer();
 
-    /**
-     * Transmit ack packet with no extra payload.
-     * @param  ackseq    Acknowledge sequence number.
-     * @param  ack_count Count of consecutively acknowledged packets.
-     * @return           true if sent successfully.
-     */
-    bool tx_ack(packet_seq_t ackseq, int ack_count);
-    void flush_ack();
+    /** @name Internal transmit methods. */
+    /**@{*/
 
     /**
      * Private low-level transmit routine:
@@ -160,18 +159,40 @@ private:
     bool transmit(byte_array& packet, uint32_t ack_seq, packet_seq_t& packet_seq, bool is_data);
 
     /**
+     * Transmit ack packet with no extra payload.
+     * @param  ackseq    Acknowledge sequence number.
+     * @param  ack_count Count of consecutively acknowledged packets.
+     * @return           true if sent successfully.
+     */
+    bool tx_ack(packet_seq_t ackseq, int ack_count);
+    void flush_ack();
+
+    /**@}*/
+
+    /**
      * Called by link to dispatch a received packet to this channel.
-     * @param msg [description]
-     * @param src [description]
+     * @param msg Incoming encrypted packet.
+     * @param src Origin endpoint.
      */
     void receive(const byte_array& msg, const link_endpoint& src) override;
+
+    /// Repeat stall indications but not other link status changes.
+    /// XXX hack - maybe "stall severity" or "stall time" should be part of status?
+    /// Or perhaps status should be (up, stalltime)?
+    inline void set_link_status(link::status new_status) {
+        if (link_status_ != new_status or new_status == link::status::stalled) {
+            link_status_ = new_status;
+            on_link_status_changed(new_status);
+        }
+    }
 
     //-------------------------------------------
     // Handlers
     //-------------------------------------------
 
-    void ack_timeout();
-    void retransmit_timeout(bool failed);
+    void retransmit_timeout(bool failed); ///< Retransmission timeout
+    void ack_timeout();                   ///< Delayed ACK timeout
+    void stats_timeout();                 ///< Stats gathering
 };
 
 } // namespace ssu
