@@ -498,14 +498,14 @@ constexpr int maskBits = 32;
 
 void channel::receive(byte_array const& pkt, link_endpoint const& src)
 {
-    logger::debug() << this << "channel::receive from " << src;
+    logger::debug() << this << " Channel - receive from " << src;
 
     if (!is_active()) {
-        logger::warning() << this << " receive: inactive channel";
+        logger::warning() << this << " Channel receive - inactive channel";
         return;
     }
     if (pkt.size() < header_len) {
-        logger::warning() << this << " receive: runt packet";
+        logger::warning() << this << " Channel receive - runt packet";
         return;
     }
 
@@ -520,22 +520,22 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                     >> 8;
 
     packet_seq_t pktseq = pimpl_->rx_sequence_ + seqdiff;
-    logger::debug() << "channel: receive - rxseq " << pktseq << ", size " << pkt.size();
+    logger::debug() << "Channel receive - rxseq " << pktseq << ", size " << pkt.size();
 
     // Immediately drop too-old or already-received packets
     static_assert(sizeof(pimpl_->rx_mask_)*8 == maskBits, "Invalid rx_mask size");
 
     if (seqdiff > 0) {
         if (pktseq < pimpl_->rx_sequence_) {
-            logger::warning() << "Channel receive: 64-bit wraparound detected!";
+            logger::warning() << "Channel receive - 64-bit wraparound detected!";
             return;
         }
     } else if (seqdiff <= -maskBits) {
-        logger::debug() << "Channel receive: too-old packet dropped";
+        logger::debug() << "Channel receive - too-old packet dropped";
         return;
     } else if (seqdiff <= 0) {
         if (pimpl_->rx_mask_ & (1 << -seqdiff)) {
-            logger::debug() << "Channel receive: duplicate packet dropped";
+            logger::debug() << "Channel receive - duplicate packet dropped";
             return;
         }
     }
@@ -547,11 +547,9 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         return;
     }
 
-    {
-        // Log decoded packet.
-        logger::file_dump(msg, "received.bin");
-        logger::file_dump(msg, "dump.bin");
-    }
+    // Log decoded packet.
+    logger::file_dump(msg, "received.bin");
+    logger::file_dump(msg, "dump.bin");
 
     // Record this packet as received for replay protection
     if (seqdiff > 0) {
@@ -579,11 +577,11 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                     - ((int32_t)pimpl_->tx_ack_sequence_ << 8))
                     >> 8;
     packet_seq_t ackseq = pimpl_->tx_ack_sequence_ + ack_diff;
-    logger::debug() << "channel: receive - ack seq " << ackseq;
+    logger::debug() << "Channel receive - ack seq " << ackseq;
 
     if (ackseq >= pimpl_->tx_sequence_)
     {
-        logger::warning() << "Channel receive: got ACK for packet seq " << ackseq
+        logger::warning() << "Channel receive - got ACK for packet seq " << ackseq
             << " not transmitted yet";
         return;
     }
@@ -675,7 +673,6 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // Reset the retransmission timer, since we've made progress.
         // Only re-arm it if there's still outstanding unACKed data.
         set_link_status(link::status::up);
-        logger::debug() << "STILL INFLIGHT " << pimpl_->tx_inflight_count_;
         if (pimpl_->tx_inflight_count_ > 0)
         {
             start_retransmit_timer();
