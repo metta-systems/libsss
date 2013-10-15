@@ -94,6 +94,7 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
 
     // Try IPv6 bind first, if that doesn't work bind to IPv4.
     // @todo Should be able to bind to both at the same time...
+    // https://code.google.com/p/openpgm/source/browse/trunk/openpgm/pgm/sockaddr.c
 
     do {
         // if (primary_link_->bind(local_ep6)) {
