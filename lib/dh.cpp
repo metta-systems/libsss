@@ -9,7 +9,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "dh.h"
 #include "host.h"
-#include "crypto/utils.h"
+#include "utils.h"
 
 using namespace std;
 

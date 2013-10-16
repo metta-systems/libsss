@@ -21,13 +21,6 @@ add_library(ssu STATIC
     base_stream.cpp
     datagram_stream.cpp
     channel.cpp
-    crypto/aes_armor.cpp
-    crypto/aes_128_ctr.cpp
-    crypto/aes_256_cbc.cpp
-    crypto/sign_key.cpp
-    crypto/rsa160_key.cpp
-    crypto/dsa160_key.cpp
-    crypto/utils.cpp
     dh.cpp
     host.cpp
     identity.cpp
