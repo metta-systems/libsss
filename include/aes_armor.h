@@ -9,7 +9,7 @@
 #pragma once
 
 #include "channel_armor.h"
-#include "crypto/aes_128_ctr.h"
+#include "aes_128_ctr.h"
 
 namespace ssu {
 
