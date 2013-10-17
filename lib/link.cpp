@@ -92,6 +92,9 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
     // Create and bind the main link.
     primary_link_ = create_link();
 
+// TODO
+// it should have primary_link and primary6_link and bind both on ipv4 and ipv6 addresses...
+
     // Try IPv6 bind first, if that doesn't work bind to IPv4.
     // @todo Should be able to bind to both at the same time...
     // https://code.google.com/p/openpgm/source/browse/trunk/openpgm/pgm/sockaddr.c

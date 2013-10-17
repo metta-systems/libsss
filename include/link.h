@@ -335,7 +335,8 @@ protected:
  */
 class udp_link : public link
 {
-    boost::asio::ip::udp::socket udp_socket;
+    boost::asio::ip::udp::socket udp_socket;  ///< ipv4 socket.
+    // boost::asio::ip::udp::socket udp6_socket; ///< ipv6 socket.
     boost::asio::streambuf received_buffer;
     link_endpoint received_from;
     std::string error_string_;
