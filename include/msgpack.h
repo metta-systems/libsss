@@ -1,3 +1,5 @@
+// @todo Port length-delimited option and remove this file
+//
 // Length-delimited option type.
 //
 // Store an optional chunk into a substream, then feed it and its size into the archive.
