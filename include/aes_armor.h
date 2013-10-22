@@ -11,12 +11,12 @@
 #include "channel_armor.h"
 #include "aes_128_ctr.h"
 
-namespace ssu {
+namespace crypto {
 
 /**
  * AES protection with encryption and authentication.
  */
-class aes_armor : public channel_armor
+class aes_armor : public ssu::channel_armor
 {
     aes_128_ctr tx_aes_;
     aes_128_ctr rx_aes_;
@@ -44,4 +44,4 @@ public:
     bool receive_decode(uint64_t pktseq, byte_array& pkt) override;
 };
 
-} // ssu namespace
+} // crypto namespace
