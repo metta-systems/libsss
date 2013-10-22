@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace ssu;
+using namespace crypto;
 
 //=================================================================================================
 // Supplemental functions.
