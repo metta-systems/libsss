@@ -14,8 +14,6 @@ create_test(sim_link LIBS ssu support plist ${OPENSSL_LIBRARIES})
 create_test(sim_connection LIBS ssu support plist ${OPENSSL_LIBRARIES})
 create_test(simulator LIBS ssu support plist ${OPENSSL_LIBRARIES})
 
-# This needs to be sprinkled with BOOST_CHECK()s.
-create_test(crypto LIBS ssu support ${OPENSSL_LIBRARIES})
 
 # These need a way to limit io_service run time (or a way to cancel async_receive_from).
 create_test(udp_link LIBS ssu support plist ${OPENSSL_LIBRARIES} NO_CTEST)
