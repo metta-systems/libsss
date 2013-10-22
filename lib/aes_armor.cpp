@@ -20,6 +20,10 @@ namespace ssu {
 channel_armor::~channel_armor()
 {}
 
+} // ssu namespace
+
+namespace crypto {
+
 aes_armor::aes_armor(byte_array const& tx_enc_key, byte_array const& tx_mac_key,
                      byte_array const& rx_enc_key, byte_array const& rx_mac_key)
     : tx_aes_(tx_enc_key)
@@ -69,7 +73,7 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
         boost::array<uint8_t, AES_BLOCK_SIZE> bytes;
     } ivec;
 
-    if (pkt.size() - crypto::HMACLEN < channel::header_len) {
+    if (pkt.size() - crypto::HMACLEN < ssu::channel::header_len) {
         logger::warning() << "Received packet too small.";
         return false;
     }
@@ -110,4 +114,4 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     return true;
 }
 
-} // ssu namespace
+} // crypto namespace
