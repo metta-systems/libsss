@@ -74,34 +74,6 @@ public:
     link* link() const { return link_; }
 };
 
-// Flurry specialization for endpoint
-inline flurry::oarchive& operator << (flurry::oarchive& oa, endpoint const& ep)
-{
-    if (ep.address().is_v4())
-        oa << ep.address().to_v4().to_bytes();
-    else
-        oa << ep.address().to_v6().to_bytes();
-    oa << ep.port();
-    return oa;
-}
-
-inline flurry::iarchive& operator >> (flurry::iarchive& ia, endpoint& ep)
-{
-    return ia;
-}
-
-inline flurry::oarchive& operator << (flurry::oarchive& oa, link_endpoint const& ep)
-{
-    oa << (ssu::endpoint const&)ep;
-    return oa;
-}
-
-inline flurry::iarchive& operator >> (flurry::iarchive& ia, link_endpoint& ep)
-{
-    ia >> (ssu::endpoint&)ep;
-    return ia;
-}
-
 /**
  * This mixin class encapsulates link-related part of host state.
  * @see host
@@ -382,6 +354,38 @@ private:
 };
 
 } // ssu namespace
+
+namespace flurry {
+
+// Flurry specialization for endpoint
+inline flurry::oarchive& operator << (flurry::oarchive& oa, ssu::endpoint const& ep)
+{
+    if (ep.address().is_v4())
+        oa << ep.address().to_v4().to_bytes();
+    else
+        oa << ep.address().to_v6().to_bytes();
+    oa << ep.port();
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, ssu::endpoint& ep)
+{
+    return ia;
+}
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, ssu::link_endpoint const& ep)
+{
+    oa << (ssu::endpoint const&)ep;
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, ssu::link_endpoint& ep)
+{
+    ia >> (ssu::endpoint&)ep;
+    return ia;
+}
+
+} // flurry namespace
 
 // Hash specialization for endpoint
 namespace std {
