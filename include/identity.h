@@ -165,6 +165,11 @@ public:
     scheme key_scheme() const;
 
     /**
+     * Return textual description of the identity scheme.
+     */
+    std::string scheme_name() const;
+
+    /**
      * Determine whether this identifier contains an associated key
      * usable for signature verification.
      * @return true if this identity contains a public key.

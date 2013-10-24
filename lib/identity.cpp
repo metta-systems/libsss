@@ -115,6 +115,20 @@ identity::scheme identity::key_scheme() const
     return scheme(id_.id()[0] >> 3);
 }
 
+std::string identity::scheme_name() const
+{
+    switch (key_scheme())
+    {
+        case null: return "null";
+        case mac:  return "mac";
+        case ipv4: return "ipv4";
+        case ipv6: return "ipv6";
+        case dsa160: return "dsa160";
+        case rsa160: return "rsa160";
+        default:     return "unknown";
+    }
+}
+
 identity identity::from_mac_address(byte_array const& mac)
 {
     assert(mac.size() == 6);
