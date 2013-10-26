@@ -439,9 +439,7 @@ stream_responder::stream_responder(shared_ptr<host> host)
     //     conncli(rc);
 
     // // Watch for newly created RegClients
-    // RegHostState *rhs = h;
-    // connect(rhs, SIGNAL(regClientCreate(RegClient*)),
-    //     this, SLOT(clientCreate(RegClient*)));
+    // host_->coordinator->on_routing_client_created.connect(this, SLOT(clientCreate(RegClient*)));
 }
 
 /// @todo Return unique_ptr<channel>?
