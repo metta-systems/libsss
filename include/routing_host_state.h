@@ -8,8 +8,11 @@
 //
 #pragma once
 
+#include <boost/signals2/signal.hpp>
 #include <memory>
 #include "coordinator.h"
+
+namespace ssu {
 
 /**
  * We store a routing::client_coordinator which keeps track of our
@@ -18,6 +21,7 @@
  */
 class routing_host_state
 {
+public:
     /**
      * We can't create coordinator in ctor, because it needs shared_ptr to host,
      * instead, it is intialized upon requesting first connection.
@@ -26,3 +30,5 @@ class routing_host_state
      */
     std::shared_ptr<uia::routing::client_coordinator> coordinator;
 };
+
+} // ssu namespace
