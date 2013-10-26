@@ -430,7 +430,7 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
     initiator->encrypted_identity_info_ = encrypted_initiator_info;
 
     initiator->send_dh_init2();
-    initiator->retransmit_timer_.start(async::timer::retry_min);
+    initiator->retransmit_timer_.start();
 }
 
 /**
@@ -802,7 +802,7 @@ void key_initiator::exchange_keys()
 
     send_dh_init1();
 
-    retransmit_timer_.start(async::timer::retry_min);
+    retransmit_timer_.start();
 }
 
 void key_initiator::retransmit(bool fail)

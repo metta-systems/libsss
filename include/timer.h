@@ -57,7 +57,7 @@ public:
      * @param interval the initial timer interval.
      * @param fail_interval the hard failure interval.
      */
-   void start(duration_type interval, duration_type fail_interval = fail_max);
+   void start(duration_type interval = retry_min, duration_type fail_interval = fail_max);
     /**
      * Stop the timer if it is currently running.
      */
