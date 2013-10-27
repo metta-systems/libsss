@@ -62,6 +62,8 @@ public:
      */
     void instantiate_stream_responder();
 
+    std::vector<std::shared_ptr<stream_peer>> all_peers() const;
+
     /**
      * Create if necessary and return the stream peer's information (from the other side).
      */

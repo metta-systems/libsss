@@ -6,6 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/algorithm/copy.hpp>
 #include "stream.h"
 #include "stream_channel.h"
 #include "private/stream_peer.h"
@@ -506,6 +508,14 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
 //=================================================================================================
 // Stream host state.
 //=================================================================================================
+
+std::vector<std::shared_ptr<stream_peer>>
+stream_host_state::all_peers() const
+{
+    std::vector<std::shared_ptr<ssu::stream_peer>> values;
+    boost::copy(peers_ | boost::adaptors::map_values, std::back_inserter(values));
+    return values;
+}
 
 void stream_host_state::instantiate_stream_responder()
 {
