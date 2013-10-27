@@ -76,13 +76,6 @@ private:
     inline peer_id remote_host_id() const { return remote_id_; }
 
     /**
-     * Initiate a connection attempt to target host by any means possible,
-     * hopefully at some point resulting in an active primary channel.
-     * Eventually emits a on_channel_connected or on_channel_failed signal.
-     */
-    void connect_channel();
-
-    /**
      * Connect to routing change signals to find peer endpoints.
      */
     // void observe_routing(ssu::routing::client* client);
@@ -118,6 +111,13 @@ private:
 public:
     stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id, private_tag);
     ~stream_peer();
+
+    /**
+     * Initiate a connection attempt to target host by any means possible,
+     * hopefully at some point resulting in an active primary channel.
+     * Eventually emits a on_channel_connected or on_channel_failed signal.
+     */
+    void connect_channel();
 
     /**
      * Supply an endpoint hint that may be useful for finding this peer.
