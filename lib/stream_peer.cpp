@@ -9,8 +9,11 @@
 #include "private/stream_peer.h"
 #include "stream_channel.h"
 #include "algorithm.h"
+#include "routing_client.h"
+#include "client_profile.h"
 
 using namespace std;
+namespace ur = uia::routing;
 
 namespace ssu {
 // namespace internal {
@@ -70,20 +73,21 @@ void stream_peer::connect_channel()
 
     // @todo Ask routing to figure out other possible endpoints for this peer.
 
-    // // Send a lookup request to each known registration server.
-    // foreach (RegClient *rc, h->regClients()) {
-    //     if (!rc->registered())
-    //         continue;   // Can't poll an inactive regserver
-    //     if (lookups.contains(rc))
-    //         continue;   // Already polling this regserver
+    // Send a lookup request to each known registration server.
+    for (auto rc : host_->coordinator->routing_clients())
+    {
+        if (!rc->is_ready()) // @todo Register for on_ready() in this case...
+            continue;   // Can't poll an inactive regserver
+        if (contains(lookups_, rc))
+            continue;   // Already polling this regserver
 
-    //     // Make sure we're hooked up to this client's signals
-    //     conncli(rc);
+        // Make sure we're hooked up to this client's signals
+        connect_routing_client(rc);
 
-    //     // Start the lookup, with hole punching
-    //     lookups.insert(rc);
-    //     rc->lookup(remote_id_, true);
-    // }
+        // Start the lookup, with hole punching
+        lookups_.insert(rc);
+        rc->lookup(remote_id_, /*notify:*/true);
+    }
 
     // Initiate key exchange attempts to all already-known endpoints
     // using each of the network links we have available.
@@ -99,60 +103,63 @@ void stream_peer::connect_channel()
     reconnect_timer_.start(connect_retry_period);
 }
 
-// --- Some routing stuff still unfinished: ---
-//
-// void StreamPeer::conncli(RegClient *rc)
-// {
-//     if (connrcs.contains(rc))
-//         return;
-//     connrcs.insert(rc);
+void stream_peer::connect_routing_client(ur::client *rc)
+{
+    if (contains(connected_routing_clients_, rc))
+        return;
+    connected_routing_clients_.insert(rc);
 
-//     // Listen for the lookup response
-//     connect(rc, SIGNAL(lookupDone(const SST::PeerId&,
-//             const Endpoint &, const RegInfo &)),
-//         this, SLOT(lookupDone(const SST::PeerId&,
-//             const Endpoint &, const RegInfo &)));
+    // Listen for the lookup response
+    rc->on_lookup_done.connect([this](ssu::peer_id const& target_peer,
+                                      ssu::endpoint const& peer_endpoint,
+                                      ur::client_profile const& peer_profile) {
+        lookup_done(target_peer, peer_endpoint, peer_profile);
+    });
 
-//     // Also make sure we hear if this regclient disappears
-//     connect(rc, SIGNAL(destroyed(QObject*)),
-//         this, SLOT(regClientDestroyed(QObject*)));
-// }
+    // Also make sure we hear if this regclient disappears
+    // connect(rc, SIGNAL(destroyed(QObject*)),
+        // this, SLOT(regClientDestroyed(QObject*)));
+}
 
-// void StreamPeer::lookupDone(const SST::PeerId &id, const Endpoint &loc, const RegInfo &info)
-// {
-//     if (id != this->id) {
-//         qDebug() << this << "got lookupDone for wrong id" << id << "expecting" << this->id << "(harmless, ignored)";
-//         return; // ignore responses for other lookup requests
-//     }
+void
+stream_peer::lookup_done(ssu::peer_id const& target_peer,
+    ssu::endpoint const& peer_endpoint,
+    ur::client_profile const& peer_profile)
+{
+    if (target_peer != remote_id_) {
+        logger::debug() << "Got lookup_done for wrong id " << target_peer
+            << " expecting " << remote_id_ << " (harmless, ignored)";
+        return; // ignore responses for other lookup requests
+    }
 
-//     // Mark this outstanding lookup as completed.
+    // Mark this outstanding lookup as completed.
 //     RegClient *rc = (RegClient*)sender();
 //     if (!lookups.contains(rc)) {
-//         qDebug() << "StreamPeer: unexpected lookupDone signal";
+//         qDebug() << "stream_peer: unexpected lookupDone signal";
 //         return; // ignore duplicates caused by concurrent requests
 //     }
 //     lookups.remove(rc);
 
 //     // If the lookup failed, notify waiting streams as appropriate.
-//     if (loc.isNull()) {
+//     if (peer_endpoint.isNull()) {
 //         qDebug() << this << "Lookup on" << id << "failed";
 //         if (!lookups.isEmpty() || !initors.isEmpty())
 //             return;     // There's still hope
 //         return flowFailed();
 //     }
 
-//     qDebug() << "StreamResponder::lookupDone: primary" << loc << "num secondaries" << info.endpoints().size();
+    logger::debug() << "stream_peer: lookup found primary " << peer_endpoint << ", num secondaries " << peer_profile.endpoints().size();
 
-//     // Add the endpoint information we've received to our address list,
-//     // and initiate flow setup attempts to those endpoints.
-//     foundEndpoint(loc);
-//     foreach (const Endpoint &ep, info.endpoints())
+    // Add the endpoint information we've received to our address list,
+    // and initiate flow setup attempts to those endpoints.
+    add_location_hint(peer_endpoint);
+//     foreach (const Endpoint &ep, peer_profile.endpoints())
 //         foundEndpoint(ep);
-// }
+}
 
-// void StreamPeer::regClientDestroyed(QObject *obj)
+// void stream_peer::regClientDestroyed(QObject *obj)
 // {
-//     qDebug() << "StreamPeer: RegClient destroyed before lookupDone";
+//     qDebug() << "stream_peer: RegClient destroyed before lookupDone";
 
 //     RegClient *rc = (RegClient*)obj;
 //     lookups.remove(rc);

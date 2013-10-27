@@ -19,6 +19,7 @@
 namespace uia {
 namespace routing {
 class client;
+class client_profile;
 } // routing namespace
 } // uia namespace
 
@@ -60,7 +61,7 @@ class stream_peer : public stream_protocol
     // Routing state:
     std::unordered_set<uia::routing::client*> lookups_; ///< Outstanding lookups in progress
     async::timer reconnect_timer_;                      ///< For persistent lookup requests
-    // std::unordered_set<uia::routing::client*> connected_routing_clients_; // Set of RegClients we've connected to so far
+    std::unordered_set<uia::routing::client*> connected_routing_clients_; // Set of RegClients we've connected to so far
 
     // For channels under construction:
     std::unordered_set<endpoint> locations_; ///< Potential locations known
@@ -78,7 +79,7 @@ private:
     /**
      * Connect to routing change signals to find peer endpoints.
      */
-    // void observe_routing(ssu::routing::client* client);
+    // void observe_routing(uia::routing::client* client);
 
     /**
      * Initiate a key exchange attempt to a given endpoint,
@@ -101,8 +102,12 @@ private:
     void completed(std::shared_ptr<negotiation::key_initiator> ki, bool success);
     void primary_status_changed(link::status new_status);
 
+    void connect_routing_client(uia::routing::client *rc);
+
     // Routing client handlers @todo
-    // void lookupDone(const SST::PeerId &id, const Endpoint &loc, const RegInfo &info);
+    void lookup_done(ssu::peer_id const& target_peer,
+        ssu::endpoint const& peer_endpoint,
+        uia::routing::client_profile const& peer_profile);
     // void regClientDestroyed(QObject *obj);
     void retry_timeout();
 
