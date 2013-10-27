@@ -9,9 +9,9 @@ create_test(server LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
 create_test(optional LIBS ssu support plist)
 create_test(serialization LIBS ssu support plist)
 
-create_test(sim_host LIBS ssu support plist krypto ${OPENSSL_LIBRARIES})
-create_test(sim_link LIBS ssu support plist krypto ${OPENSSL_LIBRARIES})
-create_test(sim_connection LIBS ssu support plist krypto ${OPENSSL_LIBRARIES})
+create_test(sim_host LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
+create_test(sim_link LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
+create_test(sim_connection LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
 create_test(simulator LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
 
 # These need a way to limit io_service run time (or a way to cancel async_receive_from).
