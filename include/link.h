@@ -193,6 +193,8 @@ public:
         up       ///< apparently alive, all's well as far as we know.
     };
 
+    static std::string status_string(status s);
+
     link(std::shared_ptr<host> host) : host_(host) {}
     virtual ~link();
 

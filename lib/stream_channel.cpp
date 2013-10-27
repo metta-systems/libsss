@@ -76,7 +76,7 @@ void stream_channel::got_ready_transmit()
 
 void stream_channel::got_link_status_changed(link::status new_status)
 {
-    logger::debug() << "stream_channel: link status changed, new status " << int(new_status);
+    logger::debug() << "stream_channel: link status changed, new status " << link::status_string(new_status);
 
     if (new_status != link::status::down)
         return;

@@ -167,6 +167,15 @@ link_endpoint::send(const char *data, int size) const
 // link
 //=================================================================================================
 
+std::string link::status_string(link::status s)
+{
+    switch (s) {
+        case status::down: return "down";
+        case status::stalled: return "stalled";
+        case status::up: return "up";
+    }
+}
+
 link::~link()
 {
     // Unbind all channels - @todo this should be automatic, use shared_ptr<link_channel>s?
