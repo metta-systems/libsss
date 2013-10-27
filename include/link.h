@@ -361,15 +361,26 @@ namespace flurry {
 inline flurry::oarchive& operator << (flurry::oarchive& oa, ssu::endpoint const& ep)
 {
     if (ep.address().is_v4())
-        oa << ep.address().to_v4().to_bytes();
+        oa << byte_array(ep.address().to_v4().to_bytes());
     else
-        oa << ep.address().to_v6().to_bytes();
+        oa << byte_array(ep.address().to_v6().to_bytes());
     oa << ep.port();
     return oa;
 }
 
 inline flurry::iarchive& operator >> (flurry::iarchive& ia, ssu::endpoint& ep)
 {
+    byte_array addr;
+    uint16_t port;
+    ia >> addr >> port;
+    if (addr.size() == boost::asio::ip::address_v6::bytes_type::size()) { // v6 address
+        boost::asio::ip::address_v6 v6(addr.as<boost::asio::ip::address_v6::bytes_type>()[0]);
+        ep = ssu::endpoint(v6, port);
+    }
+    else { // v4 address
+        boost::asio::ip::address_v4 v4(addr.as<boost::asio::ip::address_v4::bytes_type>()[0]);
+        ep = ssu::endpoint(v4, port);
+    }
     return ia;
 }
 
