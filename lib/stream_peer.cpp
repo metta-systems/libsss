@@ -76,17 +76,15 @@ void stream_peer::connect_channel()
     // Send a lookup request to each known registration server.
     for (auto rc : host_->coordinator->routing_clients())
     {
-        if (!rc->is_ready()) // @todo Register for on_ready() in this case...
-            continue;   // Can't poll an inactive regserver
-        if (contains(lookups_, rc))
-            continue;   // Already polling this regserver
+        if (!rc->is_ready()) {
+            // Can't poll an inactive regserver
+            rc->on_ready.connect([this, rc] {
+                routing_client_ready(rc);
+            });
+            continue;
+        }
 
-        // Make sure we're hooked up to this client's signals
-        connect_routing_client(rc);
-
-        // Start the lookup, with hole punching
-        lookups_.insert(rc);
-        rc->lookup(remote_id_, /*notify:*/true);
+        routing_client_ready(rc);
     }
 
     // Initiate key exchange attempts to all already-known endpoints
@@ -101,6 +99,19 @@ void stream_peer::connect_channel()
 
     // Keep firing off connection attempts periodically
     reconnect_timer_.start(connect_retry_period);
+}
+
+void stream_peer::routing_client_ready(ur::client *rc)
+{
+    if (contains(lookups_, rc))
+        return;   // Already polling this regserver
+
+    // Make sure we're hooked up to this client's signals
+    connect_routing_client(rc);
+
+    // Start the lookup, with hole punching
+    lookups_.insert(rc);
+    rc->lookup(remote_id_, /*notify:*/true);
 }
 
 void stream_peer::connect_routing_client(ur::client *rc)

@@ -102,6 +102,7 @@ private:
     void completed(std::shared_ptr<negotiation::key_initiator> ki, bool success);
     void primary_status_changed(link::status new_status);
 
+    void routing_client_ready(uia::routing::client *rc);
     void connect_routing_client(uia::routing::client *rc);
 
     // Routing client handlers @todo
