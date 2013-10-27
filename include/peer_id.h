@@ -9,9 +9,10 @@
 #pragma once
 
 #include "byte_array.h"
+#include "flurry.h"
 #include "base32.h"
 
-namespace ssu {
+namespace ssu { // @todo make this uia::peer_id
 
 /**
  * Peer ID - helper for keeping all peer-related ID conversions in one place.
@@ -27,7 +28,7 @@ class peer_id
     byte_array id_;
 
 public:
-    inline peer_id() : id_() {} 
+    inline peer_id() = default;
     inline peer_id(std::string base32) : id_(encode::from_base32(base32)) {}
     inline peer_id(byte_array id) : id_(id) {}
 
@@ -46,6 +47,25 @@ inline std::ostream& operator << (std::ostream& os, peer_id const& id)
 }
 
 } // ssu namespace
+
+namespace flurry {
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, ssu::peer_id const& id)
+{
+    oa << id.id();
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, ssu::peer_id& id)
+{
+    byte_array i;
+    ia >> i;
+    id = i;
+    return ia;
+}
+
+
+} // flurry namespace
 
 // Hash specialization for peer_id
 namespace std {
