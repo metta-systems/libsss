@@ -420,8 +420,8 @@ class stream_responder : public negotiation::key_responder, public stream_protoc
     unordered_set<ur::client*> connected_clients_;
     void connect_routing_client(ur::client* client);
     // Handlers:
-    void connected_client(ur::client *rc);
-    void clientStateChanged(int);
+    void created_client(ur::client *rc);
+    void client_ready();
     // void lookupNotify(peer_id const& id, endpoint const& loc, ur::peer_info const& info);
     /**@}*/
 
@@ -436,12 +436,12 @@ public:
 stream_responder::stream_responder(shared_ptr<host> host)
     : key_responder(host, stream_protocol::magic_id)
 {
-    // // Get us connected to all currently extant RegClients
-    // foreach (RegClient *rc, h->regClients())
-    //     conncli(rc);
+    // Get us connected to all currently extant routing clients
+    for (ur::client *c : host->coordinator->routing_clients())
+        connect_routing_client(c);
 
-    // // Watch for newly created RegClients
-    // host_->coordinator->on_routing_client_created.connect(this, SLOT(clientCreate(RegClient*)));
+    // Watch for newly created routing clients
+    host->coordinator->on_routing_client_created.connect([this](ur::client* c) { created_client(c); });
 }
 
 /// @todo Return unique_ptr<channel>?
@@ -461,44 +461,39 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
     return chan;
 }
 
-// void StreamResponder::conncli(RegClient *rc)
+void stream_responder::connect_routing_client(ur::client *c)
+{
+    logger::debug() << "stream_responder: connect routing client " << c->name();
+    if (contains(connected_clients_, c))
+        return;
+
+    connected_clients_.insert(c);
+    c->on_ready.connect([this]() { client_ready(); });
+    // connect(rc, SIGNAL(lookupNotify(const SST::PeerId&,
+    //         const Endpoint &, const RegInfo &)),
+    //     this, SLOT(lookupNotify(const SST::PeerId&,
+    //         const Endpoint &, const RegInfo &)));
+}
+
+void stream_responder::created_client(ur::client *c)
+{
+    logger::debug() << "stream_responder::created_client " << c->name();
+    connect_routing_client(c);
+}
+
+void stream_responder::client_ready()
+{
+    logger::debug() << "stream_responder: routing client ready";
+
+    // Retry all outstanding lookups in case they might succeed now.
+    for (auto peer : get_host()->all_peers()) {
+        peer->connect_channel();
+    }
+}
+
+// void stream_responder::lookupNotify(const SST::PeerId&, const Endpoint &loc, const RegInfo &)
 // {
-//     qDebug() << "StreamResponder: RegClient" << rc->serverName();
-//     if (connrcs.contains(rc))
-//         return;
-
-//     connrcs.insert(rc);
-//     connect(rc, SIGNAL(stateChanged(int)), this, SLOT(clientStateChanged(int)));
-//     connect(rc, SIGNAL(lookupNotify(const SST::PeerId&,
-//             const Endpoint &, const RegInfo &)),
-//         this, SLOT(lookupNotify(const SST::PeerId&,
-//             const Endpoint &, const RegInfo &)));
-// }
-
-// void StreamResponder::clientCreate(RegClient *rc)
-// {
-//     qDebug() << "StreamResponder::clientCreate" << rc->serverName();
-//     conncli(rc);
-// }
-
-// void StreamResponder::clientStateChanged(int state)
-// {
-//     qDebug() << "StreamResponder::clientStateChanged" << state << RegClient::stateString(state);
-
-//     // A RegClient changed state, potentially connected.
-//     // Retry all outstanding lookups in case they might succeed now.
-//     if (state == RegClient::Registered)
-//     {
-//         foreach (StreamPeer *peer, host()->peers) {
-//             peer->connectFlow();
-//         }
-//     }
-// }
-
-// void StreamResponder::lookupNotify(const SST::PeerId&, const Endpoint &loc, const RegInfo &)
-// {
-//     qDebug() << "StreamResponder::lookupNotify";
-
+//     logger::debug() << "stream_responder::lookupNotify";
 //     // Someone at endpoint 'loc' is apparently trying to reach us -
 //     // send them an R0 hole punching packet to his public endpoint.
 //     // XX perhaps make sure we might want to talk with them first?
