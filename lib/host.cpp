@@ -16,6 +16,7 @@ shared_ptr<host>
 host::create()
 {
     shared_ptr<host> host(make_shared<host>());
+    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
     return host;
 }
 
@@ -23,6 +24,7 @@ shared_ptr<host>
 host::create(settings_provider* settings, uint16_t default_port)
 {
     shared_ptr<host> host(make_shared<host>());
+    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
     host->init_link(settings, default_port);
     host->init_identity(settings);
     return host;

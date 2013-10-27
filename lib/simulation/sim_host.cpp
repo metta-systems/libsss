@@ -24,6 +24,7 @@ shared_ptr<sim_host>
 sim_host::create(std::shared_ptr<simulator> sim)
 {
     auto host = make_shared<sim_host>(sim);
+    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
     // No need to call init_link here because primary link initialized and bound there
     // is not used anywhere! Calling init_link here causes errors because of real endpoint
     // binding attempts; check how it should be set up betterer and reenable here.
