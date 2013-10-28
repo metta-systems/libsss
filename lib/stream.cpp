@@ -44,9 +44,10 @@ stream::stream(shared_ptr<abstract_stream> other_stream, stream* parent)
     // @todo set stream i/o mode to read-writable and no buffering
 }
 
-shared_ptr<stream> stream::create(shared_ptr<abstract_stream> other_stream)
+shared_ptr<stream>
+stream::create(shared_ptr<abstract_stream> other_stream)
 {
-    auto st = make_shared<stream>(other_stream);
+    shared_ptr<stream> st = make_shared<stream>(other_stream);
     other_stream->owner_ = st;
     return st;
 }
