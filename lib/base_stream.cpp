@@ -651,6 +651,8 @@ byte_array base_stream::read_datagram(ssize_t max_size)
 
 ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
 {
+    logger::debug() << "Sending datagram, size " << total_size << ", "
+                    << (is_reliable == stream::datagram_type::reliable ? "reliable" : "unreliable");
     if (is_reliable == stream::datagram_type::reliable
         or total_size > (ssize_t)max_stateless_datagram_size)
     {
