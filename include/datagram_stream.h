@@ -35,6 +35,7 @@ public:
         , payload_(data)
         , pos_(pos)
     {}
+    virtual ~datagram_stream() {}
 
     bool is_link_up() const override {
         return false; // Already closed.
