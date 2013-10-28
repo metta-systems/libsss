@@ -22,11 +22,7 @@ void datagram_stream::shutdown(stream::shutdown_mode mode)
     if (mode != stream::shutdown_mode::write)
         pos_ = size();
 
-    if (owner_.expired())
-    {
-        logger::fatal() << this << " datagram_stream self-destructing";
-        // delete this; // @fixme properly delete the object
-    }
+    // We hold a shared_ptr<> to datagram_stream, so it will get deleted once client let it go.
 }
 
 ssize_t datagram_stream::read_record(char* data, ssize_t max_size)
