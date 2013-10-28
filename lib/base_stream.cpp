@@ -96,7 +96,7 @@ void base_stream::clear()
     for (auto sub : received_substreams_)
     {
         sub->shutdown(stream::shutdown_mode::reset);
-        // should self-destruct automatically when done
+        // should self-destruct automatically when done - clear() call below does it
     }
     received_substreams_.clear();
 }
