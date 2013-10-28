@@ -309,10 +309,23 @@ protected:
  */
 class udp_link : public link
 {
-    boost::asio::ip::udp::socket udp_socket;  ///< ipv4 socket.
-    // boost::asio::ip::udp::socket udp6_socket; ///< ipv6 socket.
+    /**
+     * Underlying socket.
+     */
+    boost::asio::ip::udp::socket udp_socket;
+    // boost::asio::ip::udp::socket udp6_socket; ///< ipv6 socket - host manages two udp_links instead
     boost::asio::streambuf received_buffer;
+    /**
+     * Endpoint we've received the packet from.
+     */
     link_endpoint received_from;
+    /**
+     * Network activity execution queue.
+     */
+    boost::asio::strand strand_;
+    /**
+     * Socket error status.
+     */
     std::string error_string_;
 
 public:

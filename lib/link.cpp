@@ -299,8 +299,13 @@ udp_link::udp_link(shared_ptr<host> host)
     : link(host)
     , udp_socket(host->get_io_service())
     , received_from(this, endpoint()) // @fixme Dummy endpoint initializer here... init in bind()?
+    , strand_(host->get_io_service())
 {}
 
+/**
+ * See http://stackoverflow.com/questions/12794107/why-do-i-need-strand-per-connection
+ * Run prepare_async_receive() through a strand always to make this operation thread safe.
+ */
 void
 udp_link::prepare_async_receive()
 {
@@ -386,7 +391,7 @@ udp_link::udp_ready_read(const boost::system::error_code& error, size_t bytes_tr
         byte_array b(boost::asio::buffer_cast<const char*>(received_buffer.data()), bytes_transferred);
         receive(b, received_from);
         received_buffer.consume(bytes_transferred);
-        prepare_async_receive();
+        strand_.dispatch([this]{ prepare_async_receive(); });
     }
     else
     {
