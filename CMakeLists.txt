@@ -3,18 +3,16 @@ project(libssu)
 
 if (NOT BUILD_IN_METTANODE)
     include(cmake/setup.cmake)
+    include_directories(3rdparty/endian 3rdparty/support/include)
 endif()
 
-# Additional unofficial boost libraries
-include_directories(../../mettanode/3rdparty/endian)
-
-include_directories(include ../support/include 3rdparty/msgpack/src)
+include_directories(include)
 add_subdirectory(doc)
 add_subdirectory(lib)
 
 # Build libsupport in standalone version.
 if (NOT BUILD_IN_METTANODE)
-    add_subdirectory(../support/lib ${CMAKE_CURRENT_BINARY_DIR}/support)
+    add_subdirectory(3rdparty/support/lib)
 endif()
 
 if (BUILD_TESTING)
