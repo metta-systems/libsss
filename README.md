@@ -27,6 +27,7 @@ Features of SSU:
  * **End-to-end cryptographic security** comparable to SSL
  * **Peer-to-peer communication across NATs** via hole punching
  * Implemented as a library that can be linked directly into applications like SSL for easy deployment
+ * Written in standard c++14 with boost.
 
 ![streams](https://raw.github.com/berkus/libssu/develop/doc/streams.png "Streams Structure")
 
