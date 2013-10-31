@@ -1062,6 +1062,7 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
     // abort the stream
     // send RESET packet to the peer
+    // emit on_reset_notify()
 
 // as per the PDF:
 // As in TCP, either host may unilaterally terminate an SST stream in both directions and discard 
