@@ -580,6 +580,7 @@ public:
     substream_notify_signal on_new_substream;
 
     typedef boost::signals2::signal<void (const std::string&)> error_signal;
+    typedef boost::signals2::signal<void (void)> reset_signal;
     /**
      * Emitted when an error condition is detected on the stream.
      * Link stalls or failures are not considered error conditions.
@@ -588,7 +589,7 @@ public:
     /**
      * Emitted when the stream is reset by either endpoint.
      */
-    error_signal on_reset_notify;
+    reset_signal on_reset_notify;
 
     /**@}*/
 };
