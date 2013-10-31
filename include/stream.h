@@ -575,7 +575,7 @@ public:
      * Emitted when we receive an incoming substream while listening.
      * In response the client should call accept_substream() in a loop
      * to accept all queued incoming substreams,
-     * until accept_substream() returns NULL.
+     * until accept_substream() returns nullptr.
      */
     substream_notify_signal on_new_substream;
 
