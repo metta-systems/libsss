@@ -522,6 +522,7 @@ ssize_t base_stream::read_record(char* data, ssize_t max_size)
     {
         ssize_t skip_size = base_stream::read_data(nullptr, 1 << 30);
         assert(skip_size > 0);
+        (void)skip_size;
     }
     assert(rx_record_sizes_.size() == rx_message_count_before - 1);
 
@@ -542,6 +543,7 @@ byte_array base_stream::read_record(ssize_t max_size)
 
     ssize_t actual_size = read_record(buf.data(), buf_size);
     assert(actual_size == buf_size);
+    (void)actual_size;
 
     return buf;
 }

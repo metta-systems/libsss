@@ -632,6 +632,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
 
     channel_number pktchan = tx_seq >> 24;
     assert(pktchan == local_channel());    // Enforced by link
+    (void)pktchan;
 
     int32_t seqdiff = ((int32_t)(tx_seq << 8)
                     - ((int32_t)pimpl_->rx_sequence_ << 8))
