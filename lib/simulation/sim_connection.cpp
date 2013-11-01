@@ -232,7 +232,7 @@ sim_connection::params_for(std::shared_ptr<sim_host> host) const
 {
     if (host == downlink_) return downlink_params_;
     if (host == uplink_) return uplink_params_;
-    assert(0 and "Target host not on this connection!");
+    throw std::runtime_error("Target host not on this connection!");
 }
 
 boost::posix_time::ptime&
@@ -240,7 +240,7 @@ sim_connection::arrival_time_for(std::shared_ptr<sim_host> host)
 {
     if (host == downlink_) return downlink_arrival_time_;
     if (host == uplink_) return uplink_arrival_time_;
-    assert(0 and "Target host not on this connection!");
+    throw std::runtime_error("Target host not on this connection!");
 }
 
 } // simulation namespace
