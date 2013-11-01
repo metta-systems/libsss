@@ -8,7 +8,6 @@
 //
 #include "negotiation/key_responder.h"
 #include "negotiation/key_message.h"
-#include "crypto.h"
 #include "sha256_hash.h"
 #include "aes_256_cbc.h"
 #include "aes_armor.h"

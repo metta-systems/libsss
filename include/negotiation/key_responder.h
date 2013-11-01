@@ -12,7 +12,7 @@
 #include <boost/signals2/signal.hpp>
 #include "link.h"
 #include "timer.h"
-#include "crypto.h"
+#include "krypto.h"
 #include "peer_id.h"
 #include "negotiation/key_message.h"
 
