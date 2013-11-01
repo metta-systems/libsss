@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "aes_armor.h"
-#include "crypto.h"
+#include "krypto.h"
 #include "opaque_endian.h"
 #include "logging.h"
 #include "channel.h"
