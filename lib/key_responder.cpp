@@ -92,7 +92,7 @@ byte_array
 calc_key(byte_array const& master,
     byte_array const& initiator_hashed_nonce,
     byte_array const& responder_nonce,
-    char which, int keylen)
+    unsigned char which, int keylen)
 {
     byte_array master_hash = crypto::sha256::hash(master);
     assert(master_hash.size() == crypto::HMACKEYLEN);
