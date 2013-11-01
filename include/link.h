@@ -388,7 +388,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, ssu::endpoint& ep)
     byte_array addr;
     uint16_t port;
     ia >> addr >> port;
-    if (addr.size() == boost::asio::ip::address_v6::bytes_type::size()) { // v6 address
+    if (addr.size() == std::tuple_size<boost::asio::ip::address_v6::bytes_type>::value) { // v6 address
         boost::asio::ip::address_v6 v6(addr.as<boost::asio::ip::address_v6::bytes_type>()[0]);
         ep = ssu::endpoint(v6, port);
     }
