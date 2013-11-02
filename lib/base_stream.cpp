@@ -1938,7 +1938,7 @@ void base_stream::got_service_reply()
     assert(state_ == state::wait_service);
     assert(tx_current_attachment_);
 
-    byte_array rec = read_record(max_service_record_size);
+    byte_array rec(read_record(max_service_record_size));
     logger::debug() << "Received record " << rec;
 
     byte_array_iwrap<flurry::iarchive> read(rec);
