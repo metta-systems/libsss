@@ -18,6 +18,7 @@ namespace simulation {
 // This set of connection data comes straight from SST.
 //=================================================================================================
 
+#if 0
 // Typical ADSL uplink/downlink bandwidths and combinations (all in Kbps)
 // (e.g., see Dischinger et al, "Characterizing Residental Broadband Networks")
 const int dsl_dn_bw[] = {128,256,384,512,768,1024,1536,2048,3072,4096,6144};
@@ -25,12 +26,6 @@ const int dsl_up_bw[] = {128,384,512,768};
 const int dsl_bw[][2] = // specific down/up combinations
     {{128,128},{384,128},{768,384},{1024,384},{1536,384},{2048,384},
      {3072,512},{4096,512},{6144,768}};
-
-#define DSL_DN_BW   1536    // Most common ADSL link speed in 2007
-#define DSL_UP_BW   384
-
-#define CABLE_DN_BW 5000    // Most common cable link speed
-#define CABLE_UP_BW 384
 
 // Typical SDSL/SHDSL bandwidth parameters (Kbps)
 const int sdsl_bw[] = {512,1024,1536,2048,4096};
@@ -49,15 +44,23 @@ const int cable_dn_qsize[] = {5, 10, 15, 20};
 const int dsl_delay[] = {7, 10, 13, 15, 20};
 const int cable_delay[] = {5, 7, 10, 20};
 
-#define DSL_RTDELAY 13  // approx median, milliseconds
-#define CABLE_RTDELAY   7   // approx median, milliseconds
-
 // Common downlink and uplink queue lengths in milliseconds,
 // according to Dischinger et al study
 const int dsl_dn_qlen[] = {30,90,130,200,250,300,350,400};
 const int dsl_up_qlen[] = {50,250,750,1200,1700,2500};
 const int cable_dn_qlen[] = {30,75,130,200,250};
 const int cable_up_qlen[] = {100,800,1800,2200,2500,3000,4000};
+
+#endif
+
+#define DSL_DN_BW   1536    // Most common ADSL link speed in 2007
+#define DSL_UP_BW   384
+
+#define CABLE_DN_BW 5000    // Most common cable link speed
+#define CABLE_UP_BW 384
+
+#define DSL_RTDELAY 13  // approx median, milliseconds
+#define CABLE_RTDELAY   7   // approx median, milliseconds
 
 #define DSL_DN_QLEN 300
 #define DSL_UP_QLEN 750 // Very common among many ISPs
