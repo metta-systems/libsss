@@ -1880,7 +1880,7 @@ void base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size
 
     if ((seg.flags() & (flags::data_record | flags::data_close)) and (rx_record_available_ > 0))
     {
-        logger::debug() << "Received record";
+        logger::debug() << "Received complete record";
         rx_record_sizes_.push_back(rx_record_available_);
         rx_record_available_ = 0;
     }
@@ -1902,7 +1902,9 @@ void base_stream::got_service_request()
 {
     assert(state_ == state::accepting);
 
-    byte_array_iwrap<flurry::iarchive> read(read_record(max_service_record_size));
+    byte_array rec = read_record(max_service_record_size);
+    logger::debug() << "Received record " << rec;
+    byte_array_iwrap<flurry::iarchive> read(rec);
     uint32_t code;
     string service, protocol;
     read.archive() >> code >> service >> protocol; // @fixme may throw..
