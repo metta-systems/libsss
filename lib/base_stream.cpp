@@ -1938,9 +1938,10 @@ void base_stream::got_service_reply()
     assert(state_ == state::wait_service);
     assert(tx_current_attachment_);
 
-    logger::debug() << "got_service_reply";
+    byte_array rec = read_record(max_service_record_size);
+    logger::debug() << "Received record " << rec;
 
-    byte_array_iwrap<flurry::iarchive> read(read_record(max_service_record_size));
+    byte_array_iwrap<flurry::iarchive> read(rec);
     uint32_t code, status;
     string message;
     read.archive() >> code >> status >> message;
@@ -1951,6 +1952,9 @@ void base_stream::got_service_reply()
             << " message " << message;
         return fail(oss.str());
     }
+
+    logger::debug() << "got_service_reply code '" << code << "' status '" << status << "' message '" 
+        << message << "'";
 
     state_ = state::connected;
     if (auto stream = owner_.lock())
