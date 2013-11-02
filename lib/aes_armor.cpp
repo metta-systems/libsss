@@ -20,10 +20,6 @@ namespace ssu {
 channel_armor::~channel_armor()
 {}
 
-} // ssu namespace
-
-namespace crypto {
-
 aes_armor::aes_armor(byte_array const& tx_enc_key, byte_array const& tx_mac_key,
                      byte_array const& rx_enc_key, byte_array const& rx_mac_key)
     : tx_aes_(tx_enc_key)
@@ -114,4 +110,4 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     return true;
 }
 
-} // crypto namespace
+} // ssu namespace

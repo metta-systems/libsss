@@ -21,6 +21,7 @@ add_library(ssu STATIC
     base_stream.cpp
     datagram_stream.cpp
     channel.cpp
+    aes_armor.cpp
     dh.cpp
     host.cpp
     identity.cpp
