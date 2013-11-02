@@ -1,18 +1,23 @@
+# Linux is notorious for it's awkward library handling.
+# There should be some more work on separating the librouting and libssu so that
+# there are no cross-references and libraries could be linked completely independently.
+set(SSULIBS routing ssu routing ssu)
+
 create_test(identity LIBS ssu support plist ${OPENSSL_LIBRARIES})
 
 create_test(host LIBS ssu support plist krypto ${OPENSSL_LIBRARIES})
 create_test(channel LIBS ssu support plist)
-create_test(stream_user LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
+create_test(stream_user LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
 create_test(stream_internal LIBS ssu support plist)
-create_test(server LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
+create_test(server LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
 
 create_test(optional LIBS ssu support plist)
 create_test(serialization LIBS ssu support plist)
 
-create_test(sim_host LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
-create_test(sim_link LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
-create_test(sim_connection LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
-create_test(simulator LIBS ssu support plist routing krypto ${OPENSSL_LIBRARIES})
+create_test(sim_host LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
+create_test(sim_link LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
+create_test(sim_connection LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
+create_test(simulator LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
 
 # These need a way to limit io_service run time (or a way to cancel async_receive_from).
 create_test(udp_link LIBS ssu support plist krypto ${OPENSSL_LIBRARIES} NO_CTEST)
