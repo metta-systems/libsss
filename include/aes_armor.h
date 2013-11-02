@@ -33,7 +33,7 @@ public:
      * @param  pkt    Packet to send.
      * @return        Encoded and authenticated packet.
      */
-    byte_array transmit_encode(uint64_t pktseq, const byte_array& pkt) override;
+    byte_array transmit_encode(uint64_t pktseq, byte_array const& pkt) override;
 
     /**
      * Decode packet in place.
