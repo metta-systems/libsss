@@ -28,7 +28,7 @@ aes_armor::aes_armor(byte_array const& tx_enc_key, byte_array const& tx_mac_key,
     , rx_mac_key_(rx_mac_key)
 {}
 
-byte_array aes_armor::transmit_encode(uint64_t pktseq, const byte_array& pkt)
+byte_array aes_armor::transmit_encode(uint64_t pktseq, byte_array const& pkt)
 {
     union {
         big_uint32_t words[4];
