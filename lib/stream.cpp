@@ -423,7 +423,9 @@ class stream_responder : public negotiation::key_responder, public stream_protoc
     // Handlers:
     void created_client(ur::client *rc);
     void client_ready();
-    // void lookupNotify(peer_id const& id, endpoint const& loc, ur::peer_info const& info);
+    void lookup_notify(ssu::peer_id const& target_peer,
+        ssu::endpoint const& peer_ep,
+        uia::routing::client_profile const& peer_profile);
     /**@}*/
 
     channel* create_channel(link_endpoint const& initiator_ep,
@@ -469,11 +471,12 @@ void stream_responder::connect_routing_client(ur::client *c)
         return;
 
     connected_clients_.insert(c);
-    c->on_ready.connect([this]() { client_ready(); });
-    // connect(rc, SIGNAL(lookupNotify(const SST::PeerId&,
-    //         const Endpoint &, const RegInfo &)),
-    //     this, SLOT(lookupNotify(const SST::PeerId&,
-    //         const Endpoint &, const RegInfo &)));
+    c->on_ready.connect([this] { client_ready(); });
+    c->on_lookup_notify.connect([this](ssu::peer_id const& target_peer, ssu::endpoint const& peer_ep,
+        uia::routing::client_profile const& peer_profile)
+    {
+        lookup_notify(target_peer, peer_ep, peer_profile);
+    });
 }
 
 void stream_responder::created_client(ur::client *c)
@@ -492,14 +495,15 @@ void stream_responder::client_ready()
     }
 }
 
-// void stream_responder::lookupNotify(const SST::PeerId&, const Endpoint &loc, const RegInfo &)
-// {
-//     logger::debug() << "stream_responder::lookupNotify";
-//     // Someone at endpoint 'loc' is apparently trying to reach us -
-//     // send them an R0 hole punching packet to his public endpoint.
-//     // XX perhaps make sure we might want to talk with them first?
-//     sendR0(loc);
-// }
+void stream_responder::lookup_notify(ssu::peer_id const& target_peer, ssu::endpoint const& peer_ep,
+    uia::routing::client_profile const& peer_profile)
+{
+    logger::debug() << "stream_responder: lookup_notify - send r0 punch packet";
+    // Someone at endpoint 'peer_ep' is apparently trying to reach us -
+    // send them an R0 hole punching packet to their public endpoint.
+    // @fixme perhaps make sure we might want to talk with them first?
+    send_probe0(peer_ep);
+}
 
 //=================================================================================================
 // Stream host state.
