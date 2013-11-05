@@ -113,7 +113,8 @@ protected:
      * @param default_port Default port number to bind to if 'port' key not found in @a settings.
      * @return the created link (during this or a previous call).
      */
-    void init_link(settings_provider* settings, uint16_t default_port = 9660);
+    void init_link(settings_provider* settings,
+        uint16_t default_port = stream_protocol::default_port);
 
 public:
     /**

@@ -21,8 +21,6 @@ using namespace std;
 using namespace ssu;
 using namespace ssu::simulation;
 
-#define DEFAULT_PORT 9669
-
 BOOST_AUTO_TEST_CASE(created_simulator)
 {
     shared_ptr<simulator> sim(make_shared<simulator>());
@@ -36,10 +34,10 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
 
     shared_ptr<sim_host> my_host(sim_host::create(sim));
     BOOST_CHECK(my_host != nullptr);
-    endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
+    endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"), stream_protocol::default_port);
     shared_ptr<sim_host> other_host(sim_host::create(sim));
     BOOST_CHECK(other_host != nullptr);
-    endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
+    endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"), stream_protocol::default_port);
 
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
     BOOST_CHECK(conn != nullptr);
@@ -81,10 +79,10 @@ BOOST_AUTO_TEST_CASE(connect_wrong_service)
 
     shared_ptr<sim_host> my_host(sim_host::create(sim));
     BOOST_CHECK(my_host != nullptr);
-    endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"),DEFAULT_PORT);
+    endpoint my_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"), stream_protocol::default_port);
     shared_ptr<sim_host> other_host(sim_host::create(sim));
     BOOST_CHECK(other_host != nullptr);
-    endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"),DEFAULT_PORT);
+    endpoint other_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"), stream_protocol::default_port);
 
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
     BOOST_CHECK(conn != nullptr);

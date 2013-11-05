@@ -45,6 +45,8 @@ static constexpr packet_seq_t max_packet_seq = ~0ULL;
 class stream_protocol
 {
 public:
+    static constexpr uint16_t default_port = 9660;
+
     static constexpr size_t mtu = 1200; // @fixme This needs to be a per-link variable.
     static constexpr size_t min_receive_buffer_size = mtu * 2; // @fixme Should be dynamic based on mtu.
 

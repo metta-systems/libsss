@@ -17,7 +17,7 @@ int main()
 	try
 	{
 		shared_ptr<host> host(make_shared<host>());
-		endpoint local_ep(boost::asio::ip::udp::v4(), 9660);
+		endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
 		udp_link l(host);
 		l.bind(local_ep);
 		l.send(local_ep, "\0SSUohai!", 10);
