@@ -1,7 +1,11 @@
 # Linux is notorious for it's awkward library handling.
 # There should be some more work on separating the librouting and libssu so that
 # there are no cross-references and libraries could be linked completely independently.
-set(SSULIBS routing ssu routing ssu)
+if (UNIX AND NOT APPLE)
+    set(SSULIBS routing ssu routing ssu)
+else()
+    set(SSULIBS routing ssu)
+endif()
 
 create_test(identity LIBS ssu support plist ${OPENSSL_LIBRARIES})
 
