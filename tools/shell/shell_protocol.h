@@ -1,16 +1,15 @@
 #pragma once
 
 #include <termios.h>
-#include <QObject>
-#include <QFlags>
-#include <QQueue>
+#include <string>
+#include "flurry.h"
 
 class shell_protocol
 {
 public:
     // Standard service and protocol names for this protocol.
-    static const QString serviceName;
-    static const QString protocolName;
+    static const std::string service_name;
+    static const std::string protocol_name;
 
     enum Command {
         Invalid = 0,
@@ -40,7 +39,6 @@ public:
         tPARMRK     = 0x0800,
         tIUCLC      = 0x1000,
     };
-    Q_DECLARE_FLAGS(InputFlags, InputFlag)
 
     // Terminal output flags
     enum OutputFlag {
@@ -51,7 +49,6 @@ public:
         tONOCR      = 0x0010,
         tONLRET     = 0x0020,
     };
-    Q_DECLARE_FLAGS(OutputFlags, OutputFlag)
 
     // Terminal control flags
     enum ControlFlag {
@@ -62,7 +59,6 @@ public:
         tHUPCL      = 0x0010,
         tCLOCAL     = 0x0020,
     };
-    Q_DECLARE_FLAGS(ControlFlags, ControlFlag)
 
     // Terminal local flags
     enum LocalFlag {
@@ -76,7 +72,6 @@ public:
         tNOFLSH     = 0x0080,
         tTOSTOP     = 0x0100,
     };
-    Q_DECLARE_FLAGS(LocalFlags, LocalFlag)
 
     // Special character indexes
     static const int tVEOF      = 0;
@@ -93,17 +88,11 @@ public:
     // Size of input/output buffers for shell I/O forwarding
     static const int shellBufferSize = 16384;
 
-
-    static void termpack(SST::XdrStream &xs, const struct termios &tios);
-    static void termunpack(SST::XdrStream &xs, struct termios &tios);
-
+    static void termpack(flurry::oarchive& xs, struct termios const& tios);
+    static void termunpack(flurry::iarchive& xs, struct termios& tios);
 
 private:
     static int termpackspeed(speed_t speed);
-    static speed_t termunpackspeed(quint32 speed);
+    static speed_t termunpackspeed(uint32_t speed);
 };
-Q_DECLARE_OPERATORS_FOR_FLAGS(ShellProtocol::InputFlags);
-Q_DECLARE_OPERATORS_FOR_FLAGS(ShellProtocol::OutputFlags);
-Q_DECLARE_OPERATORS_FOR_FLAGS(ShellProtocol::ControlFlags);
-Q_DECLARE_OPERATORS_FOR_FLAGS(ShellProtocol::LocalFlags);
 

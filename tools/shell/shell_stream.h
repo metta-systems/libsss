@@ -1,6 +1,8 @@
 #pragma once
 
+#include <boost/signals2/signal.hpp>
 #include "shell_protocol.h"
+#include "stream.h"
 
 // Common base class for managing both client- and server-side shell streams.
 // Handles encoding and decoding control messages embedded within the stream.
@@ -21,7 +23,7 @@ public:
 private:
     static constexpr int maxControlMessage = 1<<24;
 
-    ssu::stream *strm; // Handle onto a control stream (we do not own it)
+    ssu::stream *stream_{nullptr}; // Handle onto a control stream (we do not own it)
 
     // Receive state:
     //  0: normal character transmission
@@ -34,19 +36,17 @@ private:
     } rstate;
 
     byte_array rx_buffer_;    // Raw stream data receive buffer, rbuf
-    char *rdat;
-    int rx_amount_;//ramt
+    char *rx_data_;
+    int rx_amount_{0};//ramt
 
     byte_array ctl_buffer_;    // Control message buffer
     int ctl_len_, ctl_got_;
 
-    std::deque<packet> rx_queue_;  // packet receive queue
-
 public:
     shell_stream(ssu::stream *strm = nullptr);
 
-    inline ssu::stream *stream() { return strm; }
-    void set_stream(ssu::stream *strm);
+    inline ssu::stream *stream() { return stream_; }
+    void set_stream(ssu::stream *stream);
 
     packet receive();
     bool at_end() const;
@@ -60,9 +60,15 @@ public:
     void send_eof();
 
     // signals:
-    void on_ready_read();
-    void on_bytes_written(int64_t bytes);
+    typedef boost::signals2::signal<void (void)> ready_signal;
+    ready_signal on_ready_read;
 
-    // Emitted when a protocol error is detected.
-    void on_error(std::string const& msg);
+    typedef boost::signals2::signal<void (ssize_t)> bytes_written_signal;
+    bytes_written_signal on_bytes_written;
+
+    typedef boost::signals2::signal<void (std::string const&)> error_signal;
+    /**
+     * Emitted when a protocol error is detected.
+     */
+    error_signal on_error;
 };
