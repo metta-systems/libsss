@@ -2,11 +2,6 @@
 
 #include <QThread>
 
-#include "stream.h"
-#include "proto.h"
-#include "asyncfile.h"
-
-
 class pid_watcher : public QThread
 {
 private:

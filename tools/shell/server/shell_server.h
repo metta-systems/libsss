@@ -11,5 +11,5 @@ private:
     void got_connection();
 
 public:
-    shell_server(ssu::host *host);
+    shell_server(std::shared_ptr<ssu::host> host);
 };
