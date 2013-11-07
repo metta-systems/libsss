@@ -502,7 +502,7 @@ public:
     bytes_written_signal on_bytes_written;
 
     typedef boost::signals2::signal<void (void)> ready_signal;
-    ready_signal on_ready_read; // QIODevice
+    ready_signal on_ready_read;
 
     /**
      * Emitted when a record marker arrives in the incoming byte stream ready to be read. This
