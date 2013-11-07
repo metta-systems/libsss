@@ -69,7 +69,8 @@ public:
      * in the settings_provider, or defaulting to @a default_port if none.
      * If the desired UDP port cannot be bound, just picks an arbitrary UDP port instead.
      */
-    static std::shared_ptr<host> create(settings_provider* settings, uint16_t default_port);
+    static std::shared_ptr<host> create(settings_provider* settings,
+        uint16_t default_port = stream_protocol::default_port);
     /**@{*/
 };
 
