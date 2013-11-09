@@ -345,13 +345,13 @@ udp_link::bind(endpoint const& ep)
     udp_socket.open(ep.protocol(), ec);
     if (ec) {
         error_string_ = ec.message();
-        logger::warning() << ec;
+        logger::warning() << "udp_link open error - " << ec.message();
         return false;
     }
     udp_socket.bind(ep, ec);
     if (ec) {
         error_string_ = ec.message();
-        logger::warning() << ec;
+        logger::warning() << "udp_link bind error - " << ec.message();
         return false;
     }
     // once bound, can start receiving datagrams.
