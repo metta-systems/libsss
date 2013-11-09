@@ -107,8 +107,7 @@ protected:
     virtual std::shared_ptr<link> create_link();
 
     /**
-     * Initialize and return the link this host instance uses to communicate.
-     * Repeated calls will return already initialized link instance.
+     * Initialize the link this host instance uses to communicate.
      * It exits the application via abort() if socket creation fails.
      * @param settings     Settings provider for port number. If not null, init_link() looks
      *                     for a 'port' key and uses it in place of the specified default
