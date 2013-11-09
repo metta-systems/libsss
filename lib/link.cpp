@@ -75,6 +75,9 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
     if (primary_link_ and primary_link_->is_active())
         return;
 
+    if (primary_link6_ and primary_link6_->is_active())
+        return;
+
     // See if a port number is recorded in our settings;
     // if so, use that instead of the specified default port.
     if (settings) {
@@ -90,44 +93,43 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
     ip::udp::endpoint local_ep6(ip::address_v6::any(), default_port);
     ip::udp::endpoint local_ep(ip::address_v4::any(), default_port);
 
-    // Create and bind the main link.
+    // Create and bind the main links.
     primary_link_ = create_link();
+    primary_link6_ = create_link();
 
-// TODO
-// it should have primary_link and primary6_link and bind both on ipv4 and ipv6 addresses...
+    // See https://raw.github.com/boostcon/2011_presentations/master/wed/IPv6.pdf
+    // do {
+    //     if (primary_link_->bind(local_ep)) {
+    //         break;
+    //     }
+    //     logger::warning() << "Can't bind to port " << dec << default_port << " ("
+    //         << primary_link_->error_string() << ") - trying another";
 
-    // Try IPv6 bind first, if that doesn't work bind to IPv4.
-    // @todo Should be able to bind to both at the same time...
-    // https://code.google.com/p/openpgm/source/browse/trunk/openpgm/pgm/sockaddr.c
+    //     local_ep.port(0);
+    //     if (primary_link_->bind(local_ep)) {
+    //         break;
+    //     }
+    //     logger::fatal() << "Couldn't bind the link on ipv4 - " << primary_link_->error_string();
+    // } while(0);
 
     do {
-        // if (primary_link_->bind(local_ep6)) {
-        //     break;
-        // }
-        // logger::warning() << "Can't bind to port " << default_port << " ("
-        //     << primary_link_->error_string() << ") - trying another";
-
-        // local_ep6.port(0);
-        // if (primary_link_->bind(local_ep6)) {
-        //     break;
-        // }
-        // logger::warning() << "Couldn't bind the link on ipv6 ("
-        //     << primary_link_->error_string() << "), trying ipv4";
-
-        if (primary_link_->bind(local_ep)) {
+        if (primary_link6_->bind(local_ep6)) {
             break;
         }
-        logger::warning() << "Can't bind to port " << default_port << " ("
-            << primary_link_->error_string() << ") - trying another";
+        logger::warning() << "Can't bind to port " << dec << default_port << " ("
+            << primary_link6_->error_string() << ") - trying another";
 
-        local_ep.port(0);
-        if (primary_link_->bind(local_ep)) {
+        local_ep6.port(0);
+        if (primary_link6_->bind(local_ep6)) {
             break;
         }
-        logger::fatal() << "Couldn't bind the link on ipv4 - " << primary_link_->error_string();
+        logger::warning() << "Couldn't bind the link on ipv6 ("
+            << primary_link6_->error_string() << "), trying ipv4";
     } while(0);
 
-    default_port = primary_link_->local_port();
+    default_port = primary_link6_->local_port();
+    //ipv6 may have a different port here...
+    // @todo Fix port to whatever worked for the first bind and fail if second bind fails?
 
     // Remember the port number we ended up using.
     if (settings) {
@@ -341,6 +343,9 @@ udp_link::local_port()
 bool
 udp_link::bind(endpoint const& ep)
 {
+    // if (ep.address().is_v6()) {
+        // udp_socket.set_option(ip::v6_only(true));
+    // }
     logger::debug() << "udp_link bind on endpoint " << ep;
     boost::system::error_code ec;
     udp_socket.open(ep.protocol(), ec);

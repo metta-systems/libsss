@@ -90,9 +90,13 @@ class link_host_state : virtual public asio_host_state /* jeez, damn asio! */
      */
     std::unordered_set<link*> active_links_;
     /**
-     * Link created by init_link(), if any.
+     * ipv4 link created by init_link(), if any.
      */
     std::shared_ptr<link> primary_link_;
+    /**
+     * ipv6 link created by init_link(), if any.
+     */
+    std::shared_ptr<link> primary_link6_;
 
 protected:
     /**
