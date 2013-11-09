@@ -1,14 +1,14 @@
 #include "shell_stream.h"
 #include "logging.h"
 
-shell_stream::shell_stream(ssu::stream *stream)
+shell_stream::shell_stream(std::shared_ptr<ssu::stream> stream)
     : rstate(RecvNormal)
 {
     if (stream)
         set_stream(stream);
 }
 
-void shell_stream::set_stream(ssu::stream *stream)
+void shell_stream::set_stream(std::shared_ptr<ssu::stream> stream)
 {
     assert(stream_ == nullptr);
     stream_ = stream;

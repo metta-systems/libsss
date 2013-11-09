@@ -23,7 +23,7 @@ public:
 private:
     static constexpr int maxControlMessage = 1<<24;
 
-    ssu::stream *stream_{nullptr}; // Handle onto a control stream (we do not own it)
+    std::shared_ptr<ssu::stream> stream_{nullptr};
 
     // Receive state:
     //  0: normal character transmission
@@ -43,10 +43,10 @@ private:
     int ctl_len_, ctl_got_;
 
 public:
-    shell_stream(ssu::stream *strm = nullptr);
+    shell_stream(std::shared_ptr<ssu::stream> strm);
 
-    inline ssu::stream *stream() { return stream_; }
-    void set_stream(ssu::stream *stream);
+    inline ssu::stream *stream() { return stream_.get(); }
+    void set_stream(std::shared_ptr<ssu::stream> stream);
 
     packet receive();
     bool at_end() const;
