@@ -17,6 +17,7 @@
 #include "platform.h"
 
 using namespace std;
+using namespace boost::asio;
 
 namespace ssu {
 
@@ -86,8 +87,8 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
         }
     }
 
-    boost::asio::ip::udp::endpoint local_ep6(boost::asio::ip::address_v6::any(), default_port);
-    boost::asio::ip::udp::endpoint local_ep(boost::asio::ip::address_v4::any(), default_port);
+    ip::udp::endpoint local_ep6(ip::address_v6::any(), default_port);
+    ip::udp::endpoint local_ep(ip::address_v4::any(), default_port);
 
     // Create and bind the main link.
     primary_link_ = create_link();
@@ -366,7 +367,7 @@ void
 udp_link::unbind()
 {
     logger::debug() << "udp_link unbind";
-    udp_socket.shutdown(boost::asio::ip::udp::socket::shutdown_both);
+    udp_socket.shutdown(ip::udp::socket::shutdown_both);
     udp_socket.close();
     set_active(false);
 }
@@ -375,7 +376,7 @@ bool
 udp_link::send(const endpoint& ep, const char *data, size_t size)
 {
     boost::system::error_code ec;
-    size_t sent = udp_socket.send_to(boost::asio::buffer(data, size), ep, 0, ec);
+    size_t sent = udp_socket.send_to(buffer(data, size), ep, 0, ec);
     if (ec or sent < size) {
         error_string_ = ec.message();
     }
@@ -388,7 +389,7 @@ udp_link::udp_ready_read(const boost::system::error_code& error, size_t bytes_tr
     if (!error)
     {
         logger::debug() << "Received " << bytes_transferred << " bytes via UDP link";
-        byte_array b(boost::asio::buffer_cast<const char*>(received_buffer.data()), bytes_transferred);
+        byte_array b(buffer_cast<const char*>(received_buffer.data()), bytes_transferred);
         receive(b, received_from);
         received_buffer.consume(bytes_transferred);
         strand_.dispatch([this]{ prepare_async_receive(); });
