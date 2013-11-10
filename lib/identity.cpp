@@ -299,8 +299,8 @@ void identity_host_state::init_identity(settings_provider* settings)
     host_identity_ = identity::generate();
 
     // Save it in our host settings
-    settings->set("id", host_identity_.id().id());
-    settings->set("key", host_identity_.private_key());
+    settings->set("id", host_identity_.id().id().as_vector());
+    settings->set("key", host_identity_.private_key().as_vector());
     settings->sync();
 }
 
