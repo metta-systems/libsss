@@ -372,6 +372,16 @@ private:
     void udp_ready_read(const boost::system::error_code& error, std::size_t bytes_transferred);
 };
 
+/**
+ * Helper function to bind a passed in socket to a given ep and set the error string to
+ * occured error if any.
+ * @param  sock         UDP socket to open and bind.
+ * @param  ep           Endpoint to bind to. Can be ipv4 or ipv6.
+ * @param  error_string Output string to set if error occured.
+ * @return              true if successful, false if any error occured. Error string is set then.
+ */
+bool bind_socket(boost::asio::ip::udp::socket& sock, ssu::endpoint const& ep, std::string& error_string);
+
 } // ssu namespace
 
 namespace flurry {

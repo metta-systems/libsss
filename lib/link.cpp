@@ -22,6 +22,29 @@ using namespace boost::asio;
 namespace ssu {
 
 //=================================================================================================
+// helper function
+//=================================================================================================
+
+bool bind_socket(boost::asio::ip::udp::socket& sock, ssu::endpoint const& ep, std::string& error_string)
+{
+    boost::system::error_code ec;
+    sock.open(ep.protocol(), ec);
+    if (ec) {
+        error_string = ec.message();
+        logger::warning() << "udp socket open error - " << ec.message();
+        return false;
+    }
+    sock.bind(ep, ec);
+    if (ec) {
+        error_string = ec.message();
+        logger::warning() << "udp socket bind error - " << ec.message();
+        return false;
+    }
+    error_string = "";
+    return true;
+}
+
+//=================================================================================================
 // link_receiver
 //=================================================================================================
 
@@ -347,21 +370,9 @@ udp_link::bind(endpoint const& ep)
         // udp_socket.set_option(ip::v6_only(true));
     // }
     logger::debug() << "udp_link bind on endpoint " << ep;
-    boost::system::error_code ec;
-    udp_socket.open(ep.protocol(), ec);
-    if (ec) {
-        error_string_ = ec.message();
-        logger::warning() << "udp_link open error - " << ec.message();
+    if (!bind_socket(udp_socket, ep, error_string_))
         return false;
-    }
-    udp_socket.bind(ep, ec);
-    if (ec) {
-        error_string_ = ec.message();
-        logger::warning() << "udp_link bind error - " << ec.message();
-        return false;
-    }
     // once bound, can start receiving datagrams.
-    error_string_ = "";
     prepare_async_receive();
     logger::debug() << "Bound udp_link on " << ep;
     set_active(true);
