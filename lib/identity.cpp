@@ -276,6 +276,7 @@ void identity_host_state::init_identity(settings_provider* settings)
 {
     if (host_identity_.has_private_key())
         return; // Already initialized.
+
     if (!settings)
     {
         host_identity(); // No persistence available.
