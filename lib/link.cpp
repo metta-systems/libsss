@@ -404,7 +404,8 @@ udp_link::udp_ready_read(const boost::system::error_code& error, size_t bytes_tr
 {
     if (!error)
     {
-        logger::debug() << "Received " << bytes_transferred << " bytes via UDP link";
+        logger::debug() << "Received "
+            << bytes_transferred << " bytes via UDP link from " << received_from;
         byte_array b(buffer_cast<const char*>(received_buffer.data()), bytes_transferred);
         receive(b, received_from);
         received_buffer.consume(bytes_transferred);
