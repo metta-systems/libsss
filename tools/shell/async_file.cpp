@@ -30,8 +30,6 @@ bool async_file::open(OpenMode)
 
 bool async_file::open(int fd, OpenMode mode)
 {
-    sd.assign(::dup(fd));
-
     logger::debug() << "Open fd " << fd << " mode " << mode;
     assert(mode & ReadWrite);
 
@@ -40,6 +38,8 @@ bool async_file::open(int fd, OpenMode mode)
         logger::debug() << error_string();
         return false;
     }
+
+    sd.assign(::dup(fd));
 
     // Place the file descriptor in nonblocking mode
     sd.non_blocking(true);
