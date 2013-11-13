@@ -1,20 +1,17 @@
-PidWatcher::PidWatcher(QObject *parent)
-:   QThread(parent),
-    pid(-1)
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#include "pid_watcher.h"
+
+void pid_watcher::watch_pid(int pid)
 {
+    thread_ = std::thread([this, pid]{
+        waitpid(pid, &stat_, 0);
+        on_finished();
+    });
 }
-
-void PidWatcher::watchPid(int pid)
-{
-    Q_ASSERT(!isRunning() && !isFinished());
-
-    this->pid = pid;
-    start();
-}
-
-void PidWatcher::run()
-{
-    Q_ASSERT(pid > 0);
-    waitpid(pid, &stat, 0);
-}
-
