@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "shell_stream.h"
 #include "logging.h"
 
@@ -89,9 +97,10 @@ shell_stream::packet shell_stream::receive()
             byte_array ret = (act == rx_buffer_.size())
                         ? rx_buffer_
                         : byte_array(rx_data_, act);
-            rx_data_ += act, rx_amount_ -= act;
-            return packet(packet_type::Data, ret); }
-
+            rx_data_ += act;
+            rx_amount_ -= act;
+            return packet(packet_type::Data, ret);
+        }
         case RecvLength: {
             if (ctl_len_ >= maxControlMessage) {
                 on_error("Control message too large");
@@ -99,7 +108,8 @@ shell_stream::packet shell_stream::receive()
                 return packet();
             }
             char ch = rx_data_[0];
-            rx_data_++, rx_amount_--;
+            rx_data_++;
+            rx_amount_--;
             ctl_len_ = (ctl_len_ << 7) | (ch & 0x7f);
             if (ch & 0x80) {
                 if (ctl_len_ == 0) {
@@ -117,7 +127,8 @@ shell_stream::packet shell_stream::receive()
             // Receive control message data.
             int act = std::min(rx_amount_, ctl_len_-ctl_got_);
             memcpy(ctl_buffer_.data()+ctl_got_, rx_data_, act);
-            rx_data_ += act, rx_amount_ -= act;
+            rx_data_ += act;
+            rx_amount_ -= act;
             ctl_got_ += act;
             if (ctl_got_ == ctl_len_) {
                 // Got a complete control message.
