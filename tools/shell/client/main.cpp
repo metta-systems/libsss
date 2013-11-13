@@ -35,29 +35,29 @@ int main(int argc, char **argv)
     po::options_description desc("msh mettashell client");
     desc.add_options()
         ("nickname,n", po::value<std::string>(&nickname),
-            "Custom name for the remote host")
+            "Custom shorthand name for the remote host")
+        ("eid,e", po::value<std::string>(&peer),
+            "EID of the remote host")
         ("host,h", po::value<std::vector<std::string>>(&location_hints),
             "Endpoint location (ipv4 or ipv6 address), can be specified multiple times")
         ("port,p", po::value<int>(&port)->default_value(stream_protocol::default_port),
             "Connect to service on this port")
-        ("eid,e", po::value<std::string>(&peer),
-            "EID of the remote host")
         ("verbose,v", po::bool_switch(&verbose_debug),
             "Print verbose output for debug")
         ("help",
             "Print this help message");
     po::positional_options_description p;
     p.add("nickname", 1);
-    p.add("host", 2);
-    p.add("port", 3);
-    p.add("eid", 4);
+    p.add("eid", 1);
+    p.add("host", 1);
+    p.add("port", 1);
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).
           options(desc).positional(p).run(), vm);
     po::notify(vm);
 
     if (vm.count("help")) {
-        std::cout << "Usage: msh <nickname> [<hostname> [<port>]]\n\n";
+        std::cout << "Usage: msh <nickname> [<eid> [<hostname> [<port>]]]\n\n";
         std::cout << desc << std::endl;
         return 1;
     }
