@@ -381,6 +381,8 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     pkt_header[0] = tx_seq;
     pkt_header[1] = ack_seq;
 
+    logger::file_dump dump(packet, "sending channel packet before encrypt");
+
     // Encrypt and compute the MAC for the packet
     byte_array epkt = armor_->transmit_encode(pimpl_->tx_sequence_, packet);
 
