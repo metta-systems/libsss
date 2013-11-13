@@ -1,20 +1,16 @@
-/*
-Wrap this into async_file:
-
-posix::stream_descriptor in(my_io_service, ::dup(STDIN_FILENO));
-posix::stream_descriptor out(my_io_service, ::dup(STDOUT_FILENO));
-
-These are then used as synchronous or asynchronous read and write streams.
-This means the objects can be used with any of the read(), async_read(), write(),
-async_write(), read_until() or async_read_until() free functions.
-
-See http://boost.cowic.de/rc/pdf/asio_doc.pdf
-*/
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include <deque>
 #include <boost/asio.hpp> // @todo More precise include, please
-#include <boost/signals2/signal.hpp> // @todo More precise include, please
+#include <boost/signals2/signal.hpp>
 #include "byte_array.h"
 
 /**
@@ -22,7 +18,7 @@ See http://boost.cowic.de/rc/pdf/asio_doc.pdf
  * in nonblocking mode on both reads and writes.
  * Provides internal write buffering so that writes always succeed
  * even if the underlying file descriptor isn't ready to accept data.
- * (The caller can use bytesToWrite() to see if output is blocked.)
+ * (The caller can use bytes_to_write() to see if output is blocked.)
  */
 class async_file
 {
@@ -31,14 +27,18 @@ public:
     enum OpenMode {Read=1, Write=2, ReadWrite=3};
 
 private:
+    /**
+     * See http://boost.cowic.de/rc/pdf/asio_doc.pdf
+     */
     boost::asio::posix::stream_descriptor sd;
 
     std::deque<byte_array> inq;
     std::deque<byte_array> outq;
     ssize_t outqd;
-    OpenMode mode_;
+    int mode_;
     Status st;
     bool endread;
+    std::string error_string_;
 
 public:
     async_file(boost::asio::io_service& service);
@@ -47,11 +47,12 @@ public:
     bool open(int fd, OpenMode mode);
     void close();
     void close_read();
+    void close_write();
 
     /// Returns true if we have reached end-of-file in the input direction.
     bool at_end() const;
 
-    inline Status status() { return st; }
+    // inline Status status() { return st; }
 
     //========================================
 
@@ -73,15 +74,14 @@ public:
 
     //========================================
 
+    void set_error(std::string const& msg);
+    std::string error_string() const { return error_string_; }
+
 protected:
     bool open(OpenMode mode);
     void read_some(boost::system::error_code const& error, std::size_t bytes_transferred);
-    ssize_t write_data(const char *data, ssize_t maxSize);
-
-private:
-    void set_error(std::string const& msg);
-    std::string error_string() const;
+    void write_some(boost::system::error_code const& error, std::size_t bytes_transferred);
 
 private: //slots
-    void ready_write();
+    // void ready_write();
 };
