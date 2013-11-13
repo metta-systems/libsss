@@ -667,8 +667,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     }
 
     // Log decoded packet.
-    logger::file_dump(msg, "received.bin");
-    logger::file_dump(msg, "dump.bin");
+    logger::file_dump(msg, "decoded channel packet");
 
     // Record this packet as received for replay protection
     if (seqdiff > 0) {

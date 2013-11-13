@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(serialize_msgpack_types)
         byte_array_owrap<flurry::oarchive> write(data);
         write.archive() << true << false << 42 << 0xdeadbeefabba << byte_array({'a','b','c','d','e'});
     }
-    logger::file_dump out(data);
+    logger::file_dump out(data, "serialization test");
 }
 
 BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
     byte_array data = generate_dh1_chunk();
 
     {
-        logger::file_dump out(data);
+        logger::file_dump out(data, "deserialization test");
     }
 
     {

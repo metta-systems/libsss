@@ -255,8 +255,7 @@ link::receive(const byte_array& msg, const link_endpoint& src)
         return;
     }
 
-    logger::file_dump(msg, "received_raw.bin");
-    logger::file_dump(msg, "dump.bin");
+    logger::file_dump(msg, "received raw link packet");
 
     // First byte should be a channel number.
     // Try to find an endpoint-specific channel.

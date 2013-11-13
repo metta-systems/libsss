@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         write.archive() << maybe_value;
     }
     {
-        logger::file_dump out(data);
+        logger::file_dump out(data, "optional test");
     }
     {
         boost::optional<uint32_t> maybe_value;
