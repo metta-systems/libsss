@@ -26,5 +26,5 @@ endif (BUILD_TESTING)
 
 # Very simple secure shell terminal
 if (UNIX AND BUILD_TESTING)
-    #add_subdirectory(shell)
+    add_subdirectory(tools/shell)
 endif (UNIX AND BUILD_TESTING)

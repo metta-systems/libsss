@@ -1,25 +1,35 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "shell_protocol.h"
 #include "shell_stream.h"
+#include "async_file.h"
+#include "host.h"
 
 class shell_client : public shell_protocol
 {
 private:
-    ssu::stream stream_;
+    std::shared_ptr<ssu::stream> stream_;
     shell_stream shs;
     async_file afin, afout;
 
 public:
-    shell_client(SST::Host *host, QObject *parent = NULL);
+    shell_client(std::shared_ptr<ssu::host> host);
 
-    inline void connect_to(const SST::PeerId &dsteid, const SST::Endpoint &locationHint)
+    inline void connect_to(const ssu::peer_id& dst_eid, const ssu::endpoint& location_hint)
     {
-        Q_ASSERT(!strm.isConnected());
-        stream_.connect_to(dsteid, serviceName, protocolName, locationHint);
+        assert(!stream_->is_connected());
+        stream_->connect_to(dst_eid, service_name, protocol_name, location_hint);
     }
 
     inline void connect_at(ssu::endpoint const& ep)
     {
-        stream_.connect_at(ep);
+        stream_->connect_at(ep);
     }
 
     void setup_terminal(int fd);

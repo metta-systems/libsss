@@ -1,18 +1,26 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include <string.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <QSocketNotifier>
-#include <QCoreApplication>
-#include "xdr.h"
-#include "cli.h"
+#include "shell_client.h"
+#include "logging.h"
+#include "byte_array_wrap.h"
 
-using namespace SST;
+using namespace ssu;
+using namespace std;
 
 #define STDIN_FILENO 0
 
-static bool termiosChanged;
+static bool termiosChanged{false};
 static struct termios termiosSave;
 
 static void termiosRestore()
@@ -21,36 +29,38 @@ static void termiosRestore()
         return;
 
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &termiosSave) < 0)
-        qDebug("Can't restore terminal settings: %s", strerror(errno));
+        logger::debug() << "Can't restore terminal settings: " << strerror(errno);
+
     termiosChanged = false;
 }
 
-ShellClient::ShellClient(Host *host, QObject *parent)
-:   QObject(parent),
-    strm(host),
-    shs(&strm)
+shell_client::shell_client(std::shared_ptr<ssu::host> host)
+    : stream_(make_shared<ssu::stream>(host))
+    , shs(stream_)
+    , afin(host->get_io_service())
+    , afout(host->get_io_service())
 {
-    connect(&afin, SIGNAL(readyRead()), this, SLOT(inReady()));
-    connect(&strm, SIGNAL(bytesWritten(qint64)), this, SLOT(inReady()));
+    afin.on_ready_read.connect([this] { in_ready(); });
+    stream_->on_bytes_written.connect([this](ssize_t) { in_ready(); });
 
-    connect(&strm, SIGNAL(readyRead()), this, SLOT(outReady()));
-    connect(&afout, SIGNAL(bytesWritten(qint64)), this, SLOT(outReady()));
+    stream_->on_ready_read.connect([this] { out_ready(); });
+    afout.on_bytes_written.connect([this](ssize_t) { out_ready(); });
 }
 
-void ShellClient::setupTerminal(int fd)
+void shell_client::setup_terminal(int fd)
 {
     // Get current terminal name
-    QString termname(getenv("TERM"));
+    std::string termname(getenv("TERM"));
 
     // Get current terminal settings
     struct termios tios;
     if (tcgetattr(fd, &tios) < 0)
-        qFatal("Can't get terminal settings: %s", strerror(errno));
+        logger::fatal() << "Can't get terminal settings: " << strerror(errno);
 
     // Save the original terminal settings,
     // and install an atexit handler to restore them on exit.
     if (!termiosChanged) {
-        Q_ASSERT(fd == STDIN_FILENO);   // XX
+        assert(fd == STDIN_FILENO);   // XX
         termiosSave = tios;
         termiosChanged = true;
         atexit(termiosRestore);
@@ -60,132 +70,138 @@ void ShellClient::setupTerminal(int fd)
     struct winsize ws;
     memset(&ws, 0, sizeof(ws));
     if (ioctl(fd, TIOCGWINSZ, &ws) < 0)
-        qWarning("Can't get terminal window size: %s",
-            strerror(errno));
+        logger::warning() << "Can't get terminal window size: " << strerror(errno);
 
     // Build the pseudo-tty parameter control message
-    QByteArray msg;
-    XdrStream wxs(&msg, QIODevice::WriteOnly);
-    wxs << (quint32)Terminal
-        << termname
-        << (quint32)ws.ws_col << (quint32)ws.ws_row
-        << (quint32)ws.ws_xpixel << (quint32)ws.ws_ypixel;
-    termpack(wxs, tios);
+    byte_array msg;
+    {
+        byte_array_owrap<flurry::oarchive> write(msg);
+        write.archive() << Terminal << termname
+            << ws.ws_col << ws.ws_row
+            << ws.ws_xpixel << ws.ws_ypixel;
+        termpack(write.archive(), tios);
+    }
 
     // Send it
-    shs.sendControl(msg);
+    shs.send_control(msg);
 
     // Turn off terminal input processing
     tios.c_lflag &= ~(ICANON | ISIG | ECHO);
-    if (tcsetattr(fd, TCSAFLUSH, &tios) < 0)
-        qFatal("Can't set terminal settings: %s", strerror(errno));
+    if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
+        logger::fatal() << "Can't set terminal settings: " << strerror(errno);
+    }
 }
 
-void ShellClient::runShell(const QString &cmd, int infd, int outfd)
+void shell_client::run_shell(std::string const& cmd, int infd, int outfd)
 {
-    if (!afin.open(infd, afin.ReadOnly))
-        qFatal("Error setting up input forwarding: %s", afin.errorString().toLocal8Bit().data());
+    if (!afin.open(infd, afin.Read)) {
+        logger::fatal() << "Error setting up input forwarding: " << afin.error_string();
+    }
 
-    if (!afout.open(outfd, afout.WriteOnly))
-        qFatal("Error setting up output forwarding: %s", afout.errorString().toLocal8Bit().data());
+    if (!afout.open(outfd, afout.Write)) {
+        logger::fatal() << "Error setting up output forwarding: " << afout.error_string();
+    }
 
     // Build the message to start the shell or command
-    QByteArray msg;
-    XdrStream wxs(&msg, QIODevice::WriteOnly);
-    if (cmd.isEmpty())
-        wxs << (quint32)Shell;
-    else
-        wxs << (quint32)Exec << cmd;
-
-    // Send it
-    shs.sendControl(msg);
+    byte_array msg;
+    {
+        byte_array_owrap<flurry::oarchive> write(msg);
+        if (cmd.empty())
+            write.archive() << Shell;
+        else
+            write.archive() << Exec << cmd;
+    }
+    shs.send_control(msg);
 }
 
-void ShellClient::inReady()
+void shell_client::in_ready()
 {
-    //qDebug() << this << "inReady";
+    //logger::debug() << this << "inReady";
     while (true) {
         // XX if (shs.bytesToWrite() >= shellBufferSize) return;
 
         char buf[4096];
         int act = afin.read(buf, sizeof(buf));
-        //qDebug() << this << "got:" << QByteArray(buf, act);
-        if (act < 0)
-            qFatal("Error reading input for remote shell: %s", afin.errorString().toLocal8Bit().data());
+        //logger::debug() << this << "got:" << byte_array(buf, act);
+        if (act < 0) {
+            logger::fatal() << "Error reading input for remote shell: " << afin.error_string();
+        }
 
         if (act == 0) {
-            if (afin.atEnd()) {
-                qDebug() << "End of local input";
-                afin.closeRead();
-                shs.stream()->shutdown(Stream::Write);
+            if (afin.at_end()) {
+                logger::debug() << "End of local input";
+                afin.close_read();
+                shs.stream()->shutdown(stream::shutdown_mode::write);
             }
             return;
         }
-        shs.sendData(buf, act);
+        shs.send_data(buf, act);
     }
 }
 
-void ShellClient::outReady()
+void shell_client::out_ready()
 {
-    //qDebug() << this << "outReady";
+    //logger::debug() << this << "outReady";
     while (true) {
-        if (afout.bytesToWrite() >= shellBufferSize)
+        if (afout.bytes_to_write() >= shellBufferSize)
             return; // Wait until the write buffer empties a bit
 
-        ShellStream::Packet pkt = shs.receive();
+        shell_stream::packet pkt = shs.receive();
         switch (pkt.type) {
-        case ShellStream::Null:
-            if (shs.atEnd()) {
-                qDebug() << "End of remote shell stream";
-                QCoreApplication::exit(0);
+        case shell_stream::packet_type::Null:
+            if (shs.at_end()) {
+                logger::debug() << "End of remote shell stream";
+                exit(0);
             }
             return; // Nothing more to receive for now
-        case ShellStream::Data:
-            if (afout.write(pkt.data) < 0)
-                qFatal("Error writing remote shell output: %s", afout.errorString() .toLocal8Bit().data());
+        case shell_stream::packet_type::Data:
+            if (afout.write(pkt.data) < 0) {
+                logger::fatal() << "Error writing remote shell output: " << afout.error_string();
+            }
             break;
-        case ShellStream::Control:
-            gotControl(pkt.data);
+        case shell_stream::packet_type::Control:
+            got_control_packet(pkt.data);
             break;
         }
     }
 }
 
-void ShellClient::gotControl(const QByteArray &msg)
+void shell_client::got_control_packet(byte_array const& msg)
 {
-    //qDebug() << "got control message size" << msg.size();
+    //logger::debug() << "got control message size" << msg.size();
 
-    XdrStream rxs(msg);
-    qint32 cmd;
-    rxs >> cmd;
+    byte_array_iwrap<flurry::iarchive> read(msg);
+    int32_t cmd;
+    read.archive() >> cmd;
     switch (cmd) {
     case ExitStatus:
     {
-        qint32 code;
-        rxs >> code;
-        if (rxs.status() != rxs.Ok)
-            qDebug() << "invalid ExitStatus control message";
-        qDebug() << "remote process exited with code" << code;
-        QCoreApplication::exit(code);
+        int32_t code;
+        read.archive() >> code;
+        // if (rxs.status() != rxs.Ok)
+            // logger::debug() << "invalid ExitStatus control message";
+        logger::debug() << "remote process exited with code " << code;
+        exit(code);
         break;
     }
 
     case ExitSignal:
     {
-        qint32 flags;
-        QString signame, errmsg, langtag;
-        rxs >> flags >> signame >> errmsg >> langtag;
-        if (rxs.status() != rxs.Ok)
-            qDebug() << "invalid ExitSignal control message";
+        int32_t flags;
+        std::string signame, errmsg, langtag;
+        read.archive() >> flags >> signame >> errmsg >> langtag;
+        // if (rxs.status() != rxs.Ok)
+            // logger::debug() << "invalid ExitSignal control message";
 
-        fprintf(stderr, "Remote process terminated by signal %s%s\n", signame.toLocal8Bit().data(),
-                (flags & 1) ? " (core dumped)" : "");
-        QCoreApplication::exit(1);
+        logger::info() << "Remote process terminated by signal " << signame
+            << ((flags & 1) ? " (core dumped)" : "");
+
+        exit(1);
         break;
     }
 
     default:
-        qDebug() << "unknown control message type" << cmd;
+        logger::debug() << "unknown control message type " << cmd;
         break;      // just ignore the control message
     }
 }
