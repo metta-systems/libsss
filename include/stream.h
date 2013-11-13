@@ -111,6 +111,7 @@ public:
      * Use this factory function to create new streams.
      */
     static std::shared_ptr<stream> create(std::shared_ptr<abstract_stream> other_stream);
+    std::shared_ptr<host> get_host() const { return host_; }
 
     /**
      * Create a new stream instance.
