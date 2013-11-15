@@ -71,6 +71,12 @@ public:
      */
     static std::shared_ptr<host> create(settings_provider* settings,
         uint16_t default_port = stream_protocol::default_port);
+    // Overload to make calls simpler.
+    static inline std::shared_ptr<host> create(std::shared_ptr<settings_provider> settings,
+        uint16_t default_port = stream_protocol::default_port)
+    {
+        return create(settings.get(), default_port);
+    }
     /**@{*/
 };
 
