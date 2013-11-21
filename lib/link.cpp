@@ -106,7 +106,7 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
     if (settings) {
         auto s_port = settings->get("port");
         if (!s_port.empty()) {
-            int port = boost::any_cast<long long>(s_port);
+            int port = boost::any_cast<int64_t>(s_port);
             if (port > 0 && port <= 65535) {
                 default_port = port;
             }
@@ -156,7 +156,7 @@ link_host_state::init_link(settings_provider* settings, uint16_t default_port)
 
     // Remember the port number we ended up using.
     if (settings) {
-        settings->set("port", (long long)default_port);
+        settings->set("port", static_cast<int64_t>(default_port));
     }
 }
 
