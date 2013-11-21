@@ -132,7 +132,7 @@ shell_stream::packet shell_stream::receive()
             ctl_got_ += act;
             if (ctl_got_ == ctl_len_) {
                 // Got a complete control message.
-                assert(ctl_buffer_.size() == ctl_len_);
+                assert(ctl_buffer_.size() == size_t(ctl_len_));
                 rstate = RecvNormal;
                 packet p(packet_type::Control, ctl_buffer_);
                 ctl_buffer_.clear();
