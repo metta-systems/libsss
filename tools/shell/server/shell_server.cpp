@@ -21,6 +21,7 @@ shell_server::shell_server(std::shared_ptr<ssu::host> host)
 
 void shell_server::got_connection()
 {
+    logger::debug() << "Incoming shell server connection";
     while (auto stream = srv.accept())
     {
         new shell_session(stream);
