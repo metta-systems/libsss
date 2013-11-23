@@ -26,19 +26,19 @@ namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
-    std::string nickname;
-    std::vector<std::string> location_hints;
+    string nickname;
+    vector<string> location_hints;
     int port{stream_protocol::default_port};
     bool verbose_debug{false};
-    std::string peer;
+    string peer;
 
     po::options_description desc("msh mettashell client");
     desc.add_options()
-        ("nickname,n", po::value<std::string>(&nickname),
+        ("nickname,n", po::value<string>(&nickname),
             "Custom shorthand name for the remote host")
-        ("eid,e", po::value<std::string>(&peer),
+        ("eid,e", po::value<string>(&peer),
             "EID of the remote host")
-        ("host,h", po::value<std::vector<std::string>>(&location_hints),
+        ("host,h", po::value<vector<string>>(&location_hints),
             "Endpoint location (ipv4 or ipv6 address), can be specified multiple times")
         ("port,p", po::value<int>(&port)->default_value(stream_protocol::default_port),
             "Connect to service on this port")
@@ -57,8 +57,8 @@ int main(int argc, char **argv)
     po::notify(vm);
 
     if (vm.count("help")) {
-        std::cout << "Usage: msh <nickname> [<eid> [<hostname> [<port>]]]\n\n";
-        std::cout << desc << std::endl;
+        cout << "Usage: msh <nickname> [<eid> [<hostname> [<port>]]]\n\n";
+        cout << desc << endl;
         return 1;
     }
 
