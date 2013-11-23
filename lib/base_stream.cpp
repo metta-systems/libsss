@@ -148,7 +148,7 @@ void base_stream::transmit_on(stream_channel* channel)
         // Throttle data transmission if channel window is full
         if (tx_inflight_ + seg_size > tx_window_)
         {
-            logger::debug() << this << " Transmit window full - need " << (tx_inflight_ + seg_size)
+            logger::debug() << "Transmit window full - need " << (tx_inflight_ + seg_size)
                 << " have " << tx_window_;
             // XXX query status if latest update is out-of-date!
             //XXXreturn;
@@ -161,7 +161,7 @@ void base_stream::transmit_on(stream_channel* channel)
         // Register the segment as being in-flight.
         tx_inflight_ += seg_size;
 
-        logger::debug() << this << " inflight data " << head_packet->tx_byte_seq
+        logger::debug() << "inflight data " << head_packet->tx_byte_seq
             << ", bytes in flight " << tx_inflight_;
 
         // Transmit the next segment in a regular Data packet.
@@ -214,7 +214,7 @@ void base_stream::transmit_on(stream_channel* channel)
             // Adjust the in-flight byte count for channel control.
             // Init packets get "charged" to the parent stream.
             parent->tx_inflight_ += seg_size;
-            logger::debug() << this << " inflight init " << head_packet->tx_byte_seq
+            logger::debug() << "inflight init " << head_packet->tx_byte_seq
                 << ", bytes in flight on parent " << parent->tx_inflight_;
 
             return tx_attach_data(packet_type::init, parent->tx_current_attachment_->stream_id_);
@@ -232,7 +232,7 @@ void base_stream::transmit_on(stream_channel* channel)
 
                     // Adjust the in-flight byte count.
                     tx_inflight_ += seg_size;
-                    logger::debug() << this << " inflight reply " << head_packet->tx_byte_seq
+                    logger::debug() << "inflight reply " << head_packet->tx_byte_seq
                         << ", bytes in flight " << tx_inflight_;
 
                     return tx_attach_data(packet_type::reply, rx_attachments_[i].stream_id_);
@@ -272,7 +272,7 @@ void base_stream::recalculate_receive_window()
         i++;
     receive_window_byte_ = i;
 
-    logger::debug() << this << " buffered "
+    logger::debug() << "buffered "
         << rx_available_ << "+" << (rx_buffer_used_ - rx_available_) 
         << ", new receive window " << rwin << ", exp " << i;
 }
@@ -285,7 +285,7 @@ void base_stream::recalculate_transmit_window(uint8_t window_byte)
     int i = window_byte & 0x1f;
     tx_window_ = (1 << i) - 1;
 
-    logger::debug() << this << " Transmit window change " << old_window << "->" << tx_window_
+    logger::debug() << "Transmit window change " << old_window << "->" << tx_window_
         << ", in use " << tx_inflight_;
 
     if (tx_window_ > old_window)
@@ -403,7 +403,7 @@ void base_stream::attach_for_transmit()
     if (usid_.is_empty())
     {
         set_usid(unique_stream_id_t(sid, channel->tx_channel_id()));
-        logger::debug() << this << " Creating stream " << usid_;
+        logger::debug() << "Creating stream " << usid_;
     }
 
     // Get us in line to transmit on the channel.
@@ -999,7 +999,7 @@ void base_stream::tx_data(packet& p)
 
 void base_stream::tx_datagram()
 {
-    logger::debug() << this << " base_stream::tx_datagram";
+    logger::debug() << "base_stream::tx_datagram";
 
     // Transmit the whole datagram immediately,
     // so that all fragments get consecutive packet sequence numbers.
@@ -1083,7 +1083,7 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
 void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq)
 {
-    logger::debug() << this << " ACKed packet of size " << pkt.buf.size();
+    logger::debug() << "ACKed packet of size " << pkt.buf.size();
 
     switch (pkt.type)
     {
@@ -1117,7 +1117,7 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
             {
                 // We've gotten our first ack for a new attachment.
                 // Save the rxseq the ack came in on as the attachment's reference pktseq.
-                logger::debug() << this << " Got attach ack " << rx_seq;
+                logger::debug() << "Got attach ack " << rx_seq;
                 tx_current_attachment_->set_active(rx_seq);
                 init_ = false;
 
@@ -1154,12 +1154,12 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
 {
     assert(pkt.late);
 
-    logger::debug() << this << " Missed seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
+    logger::debug() << "Missed seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
 
     switch (pkt.type)
     {
         case packet_type::data: {
-            logger::debug() << this << " Retransmit seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
+            logger::debug() << "Retransmit seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
             // Mark the segment no longer "in flight".
             end_flight(pkt);
             // Retransmit reliable segments...
@@ -1169,12 +1169,12 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
         }
 
         case packet_type::attach:
-            logger::debug() << this << " Attach packet lost: trying again to attach";
+            logger::debug() << "Attach packet lost: trying again to attach";
             tx_enqueue_channel();
             return true;
 
         case packet_type::datagram:
-            logger::debug() << this << "Datagram packet lost: oops, gone for good";
+            logger::debug() << "Datagram packet lost: oops, gone for good";
 
             // Mark the segment no longer "in flight".
             // We know we'll only do this once per DatagramPacket
@@ -1211,13 +1211,13 @@ void base_stream::end_flight(packet const& pkt)
         if (auto parent = parent_.lock())
         {
             parent->tx_inflight_ -= pkt.payload_size();
-            logger::debug() << this << " Endflight " << pkt.tx_byte_seq
+            logger::debug() << "Endflight " << pkt.tx_byte_seq
                 << ", bytes in flight on parent " << parent->tx_inflight_;
             assert(parent->tx_inflight_ >= 0);
         }
     } else {    // Reply or Data packet
         tx_inflight_ -= pkt.payload_size();
-        logger::debug() << this << " Endflight " << pkt.tx_byte_seq
+        logger::debug() << "Endflight " << pkt.tx_byte_seq
             << ", bytes in flight " << tx_inflight_;
         assert(tx_inflight_ >= 0);
     }
@@ -1666,7 +1666,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     if (end_read_) {
         // Ignore anything we receive past end of stream
         // (which we may have forced from our end via close()).
-        logger::warning() << this << " Ignoring segment received after end-of-stream";
+        logger::warning() << "Ignoring segment received after end-of-stream";
         assert(readahead_.empty());
         assert(rx_segments_.empty());
         return;
@@ -1691,12 +1691,12 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
         {
             // The packet is way out of date -
             // its end doesn't even come up to our current RSN.
-            logger::debug() << this << " Duplicate segment at rx_seq " << rseg.rx_byte_seq
+            logger::debug() << "Duplicate segment at rx_seq " << rseg.rx_byte_seq
                 << " size " << seg_size;
             return recalculate_receive_window();
         }
         rseg.header_len -= rx_seq_diff; // Merge useless data into "headers"
-        logger::debug() << this << " actual_size " << act_size << " flags " << int(rseg.flags());
+        logger::debug() << "actual_size " << act_size << " flags " << int(rseg.flags());
 
         // It gives us exactly the data we want next - very good!
         bool was_empty = !has_bytes_available();
@@ -1720,7 +1720,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
             // below we'll re-add whatever part of it we use.
             rx_buffer_used_ -= seg_size;
 
-            logger::debug() << this << " Pull readahead segment at " << read_seg.rx_byte_seq
+            logger::debug() << "Pull readahead segment at " << read_seg.rx_byte_seq
                 << " of size " << seg_size << " from reorder buffer";
 
             int act_size = seg_size + rx_seq_diff;
@@ -1784,7 +1784,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
         // It's out of order beyond our current receive sequence -
         // stash it in a re-order buffer, sorted by rx_seq.
 
-        logger::debug() << this << " Received out-of-order segment at " << rseg.rx_byte_seq
+        logger::debug() << "Received out-of-order segment at " << rseg.rx_byte_seq
             << " size " << seg_size;
 
         // Binary search for the correct position.
