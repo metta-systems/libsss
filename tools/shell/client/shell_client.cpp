@@ -49,6 +49,8 @@ shell_client::shell_client(std::shared_ptr<ssu::host> host)
 
 void shell_client::setup_terminal(int fd)
 {
+    logger::debug() << "Shell client setup terminal on fd " << fd;
+
     // Get current terminal name
     std::string termname(getenv("TERM"));
 
@@ -116,7 +118,7 @@ void shell_client::run_shell(std::string const& cmd, int infd, int outfd)
 
 void shell_client::in_ready()
 {
-    //logger::debug() << this << "inReady";
+    logger::debug() << "Shell client in ready";
     while (true) {
         // XX if (shs.bytesToWrite() >= shellBufferSize) return;
 
@@ -141,7 +143,7 @@ void shell_client::in_ready()
 
 void shell_client::out_ready()
 {
-    //logger::debug() << this << "outReady";
+    logger::debug() << "Shell client out ready";
     while (true) {
         if (afout.bytes_to_write() >= shellBufferSize)
             return; // Wait until the write buffer empties a bit
@@ -168,7 +170,7 @@ void shell_client::out_ready()
 
 void shell_client::got_control_packet(byte_array const& msg)
 {
-    //logger::debug() << "got control message size" << msg.size();
+    logger::debug() << "Shell client got control message, size " << dec << msg.size();
 
     byte_array_iwrap<flurry::iarchive> read(msg);
     int32_t cmd;
