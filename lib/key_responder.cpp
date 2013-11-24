@@ -752,7 +752,7 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
 
 void key_responder::send_probe0(endpoint const& dest)
 {
-    logger::debug() << this << " Send probe0 to " << dest;
+    logger::debug() << "Send probe0 to " << dest;
     for (link *l : get_host()->active_links())
     {
         link_endpoint ep(l, dest);
@@ -828,7 +828,7 @@ void key_initiator::retransmit(bool fail)
 void key_initiator::done()
 {
     bool send_signal = (state_ != state::done);
-    logger::debug() << this << " Key exchange completed with " << target_ << (send_signal ? " (signaling upper layer)" : "");
+    logger::debug() << "Key exchange completed with " << target_ << (send_signal ? " (signaling upper layer)" : "");
     state_ = state::done;
     cancel();
     if (send_signal) {
@@ -838,7 +838,7 @@ void key_initiator::done()
 
 void key_initiator::cancel()
 {
-    logger::debug() << this << " Stop initiating to " << target_;
+    logger::debug() << "Stop initiating to " << target_;
     retransmit_timer_.stop();
     host_->unregister_dh_initiator(initiator_hashed_nonce_, target_);
 }
