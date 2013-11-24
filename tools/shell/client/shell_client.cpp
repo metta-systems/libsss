@@ -34,7 +34,7 @@ static void termiosRestore()
     termiosChanged = false;
 }
 
-shell_client::shell_client(std::shared_ptr<ssu::host> host)
+shell_client::shell_client(shared_ptr<ssu::host> host)
     : stream_(make_shared<ssu::stream>(host))
     , shs(stream_)
     , afin(host->get_io_service())
@@ -52,7 +52,7 @@ void shell_client::setup_terminal(int fd)
     logger::debug() << "Shell client setup terminal on fd " << fd;
 
     // Get current terminal name
-    std::string termname(getenv("TERM"));
+    string termname(getenv("TERM"));
 
     // Get current terminal settings
     struct termios tios;
@@ -94,7 +94,7 @@ void shell_client::setup_terminal(int fd)
     }
 }
 
-void shell_client::run_shell(std::string const& cmd, int infd, int outfd)
+void shell_client::run_shell(string const& cmd, int infd, int outfd)
 {
     if (!afin.open(infd, afin.Read)) {
         logger::fatal() << "Error setting up input forwarding: " << afin.error_string();
@@ -190,7 +190,7 @@ void shell_client::got_control_packet(byte_array const& msg)
     case ExitSignal:
     {
         int32_t flags;
-        std::string signame, errmsg, langtag;
+        string signame, errmsg, langtag;
         read.archive() >> flags >> signame >> errmsg >> langtag;
         // if (rxs.status() != rxs.Ok)
             // logger::debug() << "invalid ExitSignal control message";
