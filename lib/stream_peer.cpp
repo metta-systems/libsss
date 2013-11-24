@@ -163,6 +163,7 @@ stream_peer::lookup_done(ssu::peer_id const& target_peer,
     // and initiate flow setup attempts to those endpoints.
     add_location_hint(peer_endpoint);
     for (auto& ep : peer_profile.endpoints()) {
+        logger::debug() << "stream_peer: secondary " << ep;
         // Ignore ep if it's a loopback.
         if (ep.address().is_loopback() or ep.address().is_unspecified()) {
             continue;
