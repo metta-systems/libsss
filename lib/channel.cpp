@@ -241,26 +241,14 @@ channel::channel(shared_ptr<host> host)
     : link_channel()
     , pimpl_(stdext::make_unique<private_data>(host))
 {
-    pimpl_->retransmit_timer_.on_timeout.connect(boost::bind(&channel::retransmit_timeout, this, _1));
+    pimpl_->retransmit_timer_.on_timeout.connect([this](bool fail) {
+        retransmit_timeout(fail);
+    });
 
     // Delayed ACK state
-    pimpl_->ack_timer_.on_timeout.connect(boost::bind(&channel::ack_timeout, this));
-
-    // --CC control---------------------------------------------------
-    // ccmode = CC_TCP;
-    // delayack = true;
-    // assert(sizeof(txackmask)*8 == maskBits);
-
-    // // Initialize transmit congestion control state
-    // recovseq = 1;
-
-    // // Initialize congestion control state
-    // ccReset(); // @fixme see end of file
-
-    // // Statistics gathering state
-    // connect(&statstimer, SIGNAL(timeout(bool)), this, SLOT(statsTimeout()));
-    //statstimer.start(5*1000);
-    // --end CC control-----------------------------------------------
+    pimpl_->ack_timer_.on_timeout.connect([this](bool) {
+        ack_timeout();
+    });
 }
 
 channel::~channel()
