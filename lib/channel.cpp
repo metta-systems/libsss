@@ -22,6 +22,19 @@ namespace ssu {
 // channel private_data implementation
 //=================================================================================================
 
+/// Size of rxmask, rxackmask, and txackmask fields in bits
+static constexpr int maskBits = 32;
+
+static constexpr int max_ack_count = 0xf;
+
+static constexpr unsigned CWND_MIN = 2;     // Min congestion window (packets/RTT)
+static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RTT)
+
+static const async::timer::duration_type RTT_INIT = bp::milliseconds(500);
+
+constexpr int channel::header_len;
+constexpr packet_seq_t channel::max_packet_sequence;
+
 struct transmit_event_t
 {
     int32_t size_;   ///< Total size of packet including header
@@ -39,8 +52,6 @@ struct transmit_event_t
 
 // --CC control------------------------------------------------------
 
-static constexpr unsigned CWND_MIN = 2;     // Min congestion window (packets/RTT)
-static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RTT)
 
 /// Congestion Control modes
 // enum CCMode {
@@ -64,9 +75,6 @@ static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RT
 //     //inline void setCongestionController(FlowCC *cc) { this->cc = cc; }
 //     //inline FlowCC *congestionController() { return cc; }
 
-// protected:
-//     // Size of rxmask, rxackmask, and txackmask fields in bits
-//     static const int maskBits = 32;
 
 //     // Transmit state
 
@@ -233,9 +241,6 @@ void channel::private_data::reset_congestion_control()
 //=================================================================================================
 // channel
 //=================================================================================================
-
-constexpr int channel::header_len;
-constexpr packet_seq_t channel::max_packet_sequence;
 
 channel::channel(shared_ptr<host> host)
     : link_channel()
@@ -473,9 +478,6 @@ void channel::retransmit_timeout(bool failed)
     set_link_status(failed ? link::status::down : link::status::stalled);
 }
 
-
-constexpr int max_ack_count = 0xf;
-
 void channel::acknowledge(uint16_t pktseq, bool send_ack)
 {
     constexpr int min_ack_packets = 2;
@@ -601,8 +603,6 @@ void channel::expire(uint64_t txseq, int npackets)
 {
     logger::debug() << this << "channel: tx seq " << txseq << " expired";
 }
-
-constexpr int maskBits = 32;
 
 void channel::receive(byte_array const& pkt, link_endpoint const& src)
 {
