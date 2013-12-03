@@ -275,10 +275,9 @@ void channel::start(bool initiate)
     pimpl_->nocc_ = is_link_congestion_controlled();
 
     // We're ready to go!
-    start_retransmit_timer();
-    on_ready_transmit();
-
     set_link_status(link::status::up);
+    on_ready_transmit();
+    start_retransmit_timer();
 }
 
 void channel::stop()
