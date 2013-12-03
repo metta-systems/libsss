@@ -46,7 +46,8 @@ struct transmit_event_t
         , data_(is_data)
         , pipe_(is_data)
     {
-        logger::debug() << "New transmission event for " << size_ << (data_ ? " data bytes" : " control bytes");
+        logger::debug() << "New transmission event for " << size_
+            << (data_ ? " data bytes" : " control bytes");
     }
 };
 
@@ -295,8 +296,9 @@ void channel::stop()
 int channel::may_transmit()
 {
     logger::debug() << "channel: may_transmit";
-    if (pimpl_->nocc_)
+    if (pimpl_->nocc_) {
         return super::may_transmit();
+    }
 
     if (pimpl_->cwnd > pimpl_->tx_inflight_count_) {
         int allowance = pimpl_->cwnd - pimpl_->tx_inflight_count_;
@@ -482,7 +484,8 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
     constexpr int min_ack_packets = 2;
     constexpr int max_ack_packets = 4;
 
-    logger::debug() << "channel: acknowledge " << pktseq << (send_ack ? " (sending)" : " (not sending)");
+    logger::debug() << "channel: acknowledge " << pktseq
+        << (send_ack ? " (sending)" : " (not sending)");
 
     // Update our receive state to account for this packet
     int32_t seq_diff = pktseq - pimpl_->rx_ack_sequence_;
@@ -740,18 +743,20 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // have been dropped, and notify the upper layer as such.
         // XX we could avoid some of this arithmetic if we just
         // made sequence numbers start a bit higher.
-        packet_seq_t miss_lim = pimpl_->tx_ack_sequence_ - min(pimpl_->tx_ack_sequence_, (packet_seq_t)
-                    max(pimpl_->miss_threshold_, new_packets));
+        packet_seq_t miss_lim = pimpl_->tx_ack_sequence_ -
+            min(pimpl_->tx_ack_sequence_, (packet_seq_t) max(pimpl_->miss_threshold_, new_packets));
 
-        for (packet_seq_t miss_seq = pimpl_->tx_ack_sequence_ - min(pimpl_->tx_ack_sequence_, (packet_seq_t)
-                    (pimpl_->miss_threshold_ + ack_diff - 1));
-                miss_seq <= miss_lim;
-                ++miss_seq)
+        for (packet_seq_t miss_seq = pimpl_->tx_ack_sequence_ -
+            min(pimpl_->tx_ack_sequence_, packet_seq_t(pimpl_->miss_threshold_ + ack_diff - 1));
+            miss_seq <= miss_lim;
+            ++miss_seq)
         {
             transmit_event_t& e = pimpl_->tx_events_[miss_seq - pimpl_->tx_event_sequence_];
             if (e.pipe_)
             {
-                logger::debug() << this << " seq " << pimpl_->tx_event_sequence_ << " inferred dropped";
+                logger::debug() << this << " seq " << pimpl_->tx_event_sequence_
+                    << " inferred dropped";
+
                 e.pipe_ = false;
                 pimpl_->tx_inflight_count_--;
                 pimpl_->tx_inflight_size_ -= e.size_;
@@ -759,7 +764,8 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                 // ccMissed(miss_seq); // @fixme see end of file
                 //--end CC control-----------------------------------------------
                 missed(miss_seq, 1);
-                logger::debug() << this << " infer-missed seq " << miss_seq << " tx inflight " << pimpl_->tx_inflight_count_;
+                logger::debug() << this << " infer-missed seq " << miss_seq
+                    << " tx inflight " << pimpl_->tx_inflight_count_;
             }
         }
 
@@ -812,7 +818,9 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                 continue;   // already ACKed
             pimpl_->tx_ack_mask_ |= (1 << bit);
 
-            transmit_event_t &e = pimpl_->tx_events_[pimpl_->tx_ack_sequence_ - bit - pimpl_->tx_event_sequence_];
+            transmit_event_t& e
+                = pimpl_->tx_events_[pimpl_->tx_ack_sequence_ - bit - pimpl_->tx_event_sequence_];
+
             if (e.pipe_)
             {
                 e.pipe_ = false;
@@ -1051,13 +1059,15 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
 
     // Pass the received packet to the upper layer for processing.
     // It'll return true if it wants us to ack the packet, false otherwise.
-    if (channel_receive(pktseq, msg))
+    if (channel_receive(pktseq, msg)) {
         acknowledge(pktseq, true);
-        // XX should still replay-protect even if no ack!
+    }
+    // XX should still replay-protect even if no ack!
 
     // Signal upper layer that we can transmit more, if appropriate
-    if (new_packets > 0 and may_transmit())
+    if (new_packets > 0 and may_transmit()) {
         on_ready_transmit();
+    }
 }
 
 // --CC control---------------------------------------------------
