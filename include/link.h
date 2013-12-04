@@ -36,7 +36,7 @@ class link_channel;
  * IP or even Ethernet endpoints - this will require
  * architectural change.
  */
-typedef boost::asio::ip::udp::endpoint endpoint;
+using endpoint = boost::asio::ip::udp::endpoint;
 // See below for the implementation of hash function for endpoint.
 
 /**
