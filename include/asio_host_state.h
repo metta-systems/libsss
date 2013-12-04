@@ -15,7 +15,7 @@ namespace ssu {
 class host;
 
 /**
- * Host state incapsulating asio run loop and possibly other related variables.
+ * Host state incapsulating asio run loop and possibly other related state.
  */
 class asio_host_state
 {

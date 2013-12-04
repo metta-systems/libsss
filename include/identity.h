@@ -37,6 +37,9 @@ class identity
     peer_id                           id_;
 
 public:
+    /**
+     * Exception thrown when invalid identity key is encountered.
+     */
     class bad_key final : public std::runtime_error {
     public:
         explicit inline bad_key() : std::runtime_error("bad identity key") {}
@@ -265,6 +268,9 @@ public:
     }
 };
 
+/**
+ * Host state mixin relevant to identity management.
+ */
 class identity_host_state
 {
     identity host_identity_;

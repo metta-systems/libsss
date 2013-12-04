@@ -14,7 +14,6 @@
 namespace ssu {
 
 /**
- * @internal
  * Internal pseudo-stream object representing a received datagram.
  * This class makes ephemeral substreams received via SSU's optimized datagram-oriented
  * delivery mechanism appear to work like a normal stream that was written and closed immediately.

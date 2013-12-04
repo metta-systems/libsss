@@ -37,7 +37,6 @@ typedef uint64_t packet_seq_t;
 static constexpr packet_seq_t max_packet_seq = ~0ULL;
 
 /**
- * @internal
  * SSU stream protocol definitions.
  * This class simply provides SSU protcol definition constants
  * for use in the other stream classes.

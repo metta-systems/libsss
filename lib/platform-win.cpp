@@ -15,11 +15,6 @@
 
 using namespace std;
 
-/**
- * ACHTUNG: Here be dragons. This code is abandoned, untested and unmaintained.
- * Use at your own risk. Provide patches if you can. Thank you for your attention.
- */
-
 namespace ssu {
 namespace platform {
 

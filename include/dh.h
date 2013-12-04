@@ -24,6 +24,9 @@ namespace negotiation {
 class key_responder;
 class key_initiator;
 
+/**
+ * Diffie-Hellman host key for key exchange.
+ */
 class dh_hostkey_t
 {
     friend class ssu::negotiation::key_responder; // @fixme remove
@@ -60,6 +63,9 @@ public:
 
 } // namespace negotiation
 
+/**
+ * Host state mixin related to DH key exchange.
+ */
 class dh_host_state
 {
     std::array<std::shared_ptr<negotiation::dh_hostkey_t>, /*dh_group_max*/3> dh_keys_;
