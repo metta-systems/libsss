@@ -1034,10 +1034,9 @@ void base_stream::tx_datagram()
     return tx_enqueue_channel();
 }
 
-// @todo Complete the code.
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
 {
-    logger::warning() << "base_stream::tx_reset UNIMPLEMENTED";
+    logger::warning() << "base_stream::tx_reset";
 
     // Build the Reset packet header
     packet p(nullptr, packet_type::reset);
@@ -1053,18 +1052,20 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
     // Save the attach packet in the channel's waiting_ack_ hash,
     // so that we'll be notified when the attach packet gets acked.
-    // XXX for the packets with O flag set, we don't need to ack??
+    // XXX for the packets with O flag set, we don't need to ack
     if (!(flags & flags::reset_remote_sid))
     {
         p.late = false;
         channel->waiting_ack_.insert(make_pair(pktseq, p));
     }
 
-    logger::debug() << channel << " Reset packet sent, XXX garbage collect the stream!";
+    logger::debug() << "Reset packet sent, garbage collecting the stream!";
 
-    // abort the stream
-    // send RESET packet to the peer
-    // emit on_reset_notify()
+    // shutdown(stream::shutdown_mode::reset);
+    // if (auto stream = owner_.lock()) {
+        // stream->on_reset_notify();
+    // }
+    // self_.reset();
 
 // as per the PDF:
 // As in TCP, either host may unilaterally terminate an SST stream in both directions and discard 
