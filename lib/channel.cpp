@@ -937,8 +937,9 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
             // and have a chance to combine multiple acks into one.
             if (pimpl_->state_->rx_unacked_ < min_ack_packets) {
                 // Data packet - start delayed ack timer.
-                if (!pimpl_->ack_timer_.is_active())
+                if (!pimpl_->ack_timer_.is_active()) {
                     pimpl_->ack_timer_.start(bp::milliseconds(10));
+                }
             } else {
                 // Start with zero timeout - immediate callback from event loop.
                 pimpl_->ack_timer_.start(bp::milliseconds(0));
@@ -963,8 +964,9 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
 
         // ACK this discontiguous packet immediately
         // so that the sender is informed of lost packets ASAP.
-        if (send_ack)
-            tx_ack(pimpl_->rx_ack_sequence_, 0);
+        if (send_ack) {
+            tx_ack(pimpl_->state_->rx_ack_sequence_, 0);
+        }
     }
     else if (seq_diff < 0)
     {
@@ -973,8 +975,9 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
         flush_ack();
 
         // ACK this out-of-order packet immediately.
-        if (send_ack)
+        if (send_ack) {
             tx_ack(pktseq, 0);
+        }
     }
 }
 
