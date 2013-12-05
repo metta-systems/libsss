@@ -301,7 +301,7 @@ void congestion_control_strategy::timeout()
         ssthresh = state_->tx_inflight_count_ / 2;
         ssthresh = max(ssthresh, CWND_MIN);
         cwnd = CWND_MIN;
-        logger::debug() << "rtxTimeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd;
+        logger::debug() << "CC Retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd;
     }
 }
 
