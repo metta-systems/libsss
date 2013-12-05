@@ -326,7 +326,8 @@ void congestion_control_strategy::update(unsigned new_packets)
                 logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
                     << cwnd << " (ssthresh " << ssthresh << ")";
             }
-            break; }
+            break;
+        }
 
         case CC_DELAY:
             if (cwndinc < 0)    // Only slow start during up-phase
