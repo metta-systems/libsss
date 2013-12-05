@@ -842,7 +842,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
         == pimpl_->state_->tx_sequence_);
     assert(pimpl_->state_->tx_inflight_count_ <= (unsigned)pimpl_->state_->tx_events_.size());
 
-    logger::debug() << this << " channel.transmit tx seq " << pimpl_->state_->tx_sequence_
+    logger::debug() << "Channel transmit tx seq " << pimpl_->state_->tx_sequence_
         << " size " << epkt.size();
 
     // Ship it out
@@ -859,7 +859,7 @@ void channel::start_retransmit_timer()
 // channel::retransmit_timer_ invokes this slot when the retransmission timer expires.
 void channel::retransmit_timeout(bool failed)
 {
-    logger::debug() << this << " Retransmit timeout" << (failed ? " - FAILED" : "")
+    logger::debug() << "Retransmit timeout" << (failed ? " - TX FAILED" : "")
         << ", interval " << pimpl_->retransmit_timer_.interval();
 
     // Restart the retransmission timer
@@ -884,7 +884,7 @@ void channel::retransmit_timeout(bool failed)
             pimpl_->state_->tx_inflight_count_--;
             pimpl_->state_->tx_inflight_size_ -= e.size_;
             missed(seq, 1);
-            logger::debug() << this << "rtx timeout missed seq " << seq
+            logger::debug() << "Retransmit timeout missed seq " << seq
                 << ", in flight " << pimpl_->state_->tx_inflight_count_;
         }
     }
@@ -1022,30 +1022,30 @@ bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_coun
 
 void channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
 {
-    logger::debug() << this << " channel: tx seq "
-        << txseq << "-" << txseq+npackets-1 << " acknowledged";
+    logger::debug() << "Channel " << this << " - tx seqs "
+        << dec << txseq << "-" << txseq+npackets-1 << " acknowledged";
 }
 
 void channel::missed(uint64_t txseq, int npackets)
 {
-    logger::debug() << this << "channel: tx seq " << txseq << " missed";
+    logger::debug() << "Channel " << this << " - tx seq " << txseq << " missed";
 }
 
 void channel::expire(uint64_t txseq, int npackets)
 {
-    logger::debug() << this << "channel: tx seq " << txseq << " expired";
+    logger::debug() << "Channel " << this << " - tx seq " << txseq << " expired";
 }
 
 void channel::receive(byte_array const& pkt, link_endpoint const& src)
 {
-    logger::debug() << this << " Channel - receive from " << src;
+    logger::debug() << "Channel " << this << " - receive from " << src;
 
     if (!is_active()) {
-        logger::warning() << this << " Channel receive - inactive channel";
+        logger::warning() << "Channel receive - inactive channel";
         return;
     }
     if (pkt.size() < header_len) {
-        logger::warning() << this << " Channel receive - runt packet";
+        logger::warning() << "Channel receive - runt packet";
         return;
     }
 
@@ -1144,7 +1144,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // (Out-of-order ACKs are handled separately below.)
         new_packets = min(unsigned(ack_diff), ackct+1);
 
-        logger::debug() << this << " Advanced by " << ack_diff
+        logger::debug() << "Advanced by " << ack_diff
             << ", ack count " << ackct
             << ", new packets " << new_packets
             << ", tx ack seq " << pimpl_->state_->tx_ack_sequence_;
@@ -1186,7 +1186,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
             transmit_event_t& e = pimpl_->state_->tx_events_[miss_seq - pimpl_->state_->tx_event_sequence_];
             if (e.pipe_)
             {
-                logger::debug() << this << " seq " << pimpl_->state_->tx_event_sequence_
+                logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_
                     << " inferred dropped";
 
                 e.pipe_ = false;
@@ -1198,7 +1198,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                 }
 
                 missed(miss_seq, 1);
-                logger::debug() << this << " infer-missed seq " << miss_seq
+                logger::debug() << "Infer-missed seq " << miss_seq
                     << " tx inflight " << pimpl_->state_->tx_inflight_count_;
             }
         }
@@ -1210,7 +1210,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         {
             while (pimpl_->state_->tx_event_sequence_ <= pimpl_->state_->tx_ack_sequence_ - maskBits)
             {
-                logger::debug() << this << " seq " << pimpl_->state_->tx_event_sequence_ << " expired";
+                logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_ << " expired";
                 assert(!pimpl_->state_->tx_events_.front().pipe_);
                 pimpl_->state_->tx_events_.pop_front();
                 pimpl_->state_->tx_event_sequence_++;
