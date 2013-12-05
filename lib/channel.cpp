@@ -147,7 +147,7 @@ class congestion_control_strategy
 {
 public:
     CCMode mode; ///< Congestion control method
-    shared_ptr<shared_state> state_;
+    shared_ptr<shared_state> const& state_;
 
     uint32_t cwnd{CWND_MIN};       ///< Current congestion window
     bool cwnd_limited_{true};      ///< We were cwnd-limited this round-trip
@@ -193,6 +193,10 @@ public:
     float cumloss;      ///< Cumulative measured packet loss ratio
 
     /**@}*/
+
+    congestion_control_strategy(shared_ptr<shared_state> const& state)
+        : state_(state)
+    {}
 
     /// Reset congestion control.
     void reset();
@@ -596,8 +600,7 @@ public:
 void channel::private_data::reset_congestion_control()
 {
     congestion_control.reset();
-    congestion_control = stdext::make_unique<congestion_control_strategy>();
-    congestion_control->state_ = state_; // @todo Move to ctor
+    congestion_control = stdext::make_unique<congestion_control_strategy>(state_);
 
     // --CC control---------------------------------------------------
     congestion_control->mode = CC_TCP;
