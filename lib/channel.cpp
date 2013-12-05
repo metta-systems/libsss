@@ -568,7 +568,7 @@ public:
 public:
     private_data(shared_ptr<host> host)
         : host_(host)
-        , state_(make_shared<shared_state>(host))
+        , state_(make_shared<shared_state>(host_))
         , ack_timer_(host.get())
         , retransmit_timer_(host.get())
         , stats_timer_(host.get())
