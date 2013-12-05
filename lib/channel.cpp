@@ -623,9 +623,9 @@ void channel::private_data::reset_congestion_control()
 // Transmit statistics
 void channel::private_data::stats_timeout()
 {
-    logger::info() << boost::format("STATS: txseq %llu txackseq %llu rxseq %llu rxackseq %llu "
-        "txfltcnt %d cwnd %d ssthresh %d "
-        "cumrtt %.3f cumpps %.3f cumloss %.3f")
+    logger::info() << boost::format("STATS: txseq %llu, txackseq %llu, rxseq %llu, rxackseq %llu, "
+        "txfltcnt %d, cwnd %d, ssthresh %d, "
+        "cumrtt %.3f, cumpps %.3f, cumloss %.3f")
         % state_->tx_sequence_
         % state_->tx_ack_sequence_
         % state_->rx_sequence_
