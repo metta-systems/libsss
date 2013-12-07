@@ -42,12 +42,13 @@ bool link_channel::bind(link* link, const endpoint& remote_ep, channel_number ch
         return false;
     }
 
-    logger::debug() << "Bind local channel " << int(chan) << " for " << remote_ep << " to " << link;
     remote_ep_ = remote_ep;
     local_channel_number_ = chan;
     if (!link->bind_channel(remote_ep_, local_channel_number_, this)) {
         return false;
     }
+
+    logger::debug() << "Bound local channel " << int(chan) << " for " << remote_ep << " to " << link;
 
     link_ = link;
     return true;

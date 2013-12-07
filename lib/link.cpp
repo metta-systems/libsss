@@ -371,9 +371,9 @@ udp_link::bind(endpoint const& ep)
     logger::debug() << "udp_link bind on endpoint " << ep;
     if (!bind_socket(udp_socket, ep, error_string_))
         return false;
+    logger::debug() << "Bound udp_link on " << ep;
     // once bound, can start receiving datagrams.
     prepare_async_receive();
-    logger::debug() << "Bound udp_link on " << ep;
     set_active(true);
     return true;
 }

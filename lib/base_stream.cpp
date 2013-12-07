@@ -390,7 +390,7 @@ void base_stream::attach_for_transmit()
     while (tx_attachments_[slot].is_in_use())
     {
         if (++slot == max_attachments) {
-            logger::fatal() << "attach_for_transmit: all slots are in use.";
+            logger::fatal() << "Internal stream attach_for_transmit - all slots are in use.";
             // @fixme: Free up some slot.
         }
     }
@@ -885,7 +885,7 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
     if (!is_attached())
         return attach_for_transmit();
 
-    logger::debug() << "Internal stream enqueue on channel";
+    logger::debug(200) << "Internal stream enqueue on channel";
 
     stream_channel* channel = tx_current_attachment_->channel_;
     assert(channel and channel->is_active());
@@ -2017,6 +2017,7 @@ void stream_tx_attachment::set_attaching(stream_channel* channel, stream_id_t si
 
     assert(!contains(channel_->transmit_sids_, stream_id_));
     channel_->transmit_sids_.insert(make_pair(stream_id_, this));
+    logger::debug() << "Stream transmit attachment sid " << stream_id_ << " activated";
 }
 
 void stream_tx_attachment::clear()
@@ -2031,6 +2032,7 @@ void stream_tx_attachment::clear()
     assert(contains(channel->transmit_sids_, stream_id_));
     assert(channel->transmit_sids_[stream_id_] == this);
 
+    logger::debug() << "Clearing tx attachment for sid " << stream_id_;
     channel->transmit_sids_.erase(stream_id_);
     channel_ = nullptr;
     active_ = false;

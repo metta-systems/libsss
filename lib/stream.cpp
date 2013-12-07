@@ -456,7 +456,7 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
     stream_channel* chan = new stream_channel(get_host(), peer, initiator_eid);
     if (!chan->bind(initiator_ep))
     {
-        logger::warning() << "stream_responder - could not bind new channel";
+        logger::warning() << "Stream responder - could not bind new channel";
         delete chan;
         return nullptr;
     }
@@ -466,7 +466,7 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
 
 void stream_responder::connect_routing_client(ur::client *c)
 {
-    logger::debug() << "stream_responder: connect routing client " << c->name();
+    logger::debug() << "Stream responder - connect routing client " << c->name();
     if (contains(connected_clients_, c))
         return;
 
@@ -481,13 +481,13 @@ void stream_responder::connect_routing_client(ur::client *c)
 
 void stream_responder::created_client(ur::client *c)
 {
-    logger::debug() << "stream_responder::created_client " << c->name();
+    logger::debug() << "Stream responder - created client " << c->name();
     connect_routing_client(c);
 }
 
 void stream_responder::client_ready()
 {
-    logger::debug() << "stream_responder: routing client ready";
+    logger::debug() << "Stream responder - routing client ready";
 
     // Retry all outstanding lookups in case they might succeed now.
     for (auto peer : get_host()->all_peers()) {
@@ -498,10 +498,11 @@ void stream_responder::client_ready()
 void stream_responder::lookup_notify(ssu::peer_id const& target_peer, ssu::endpoint const& peer_ep,
     uia::routing::client_profile const& peer_profile)
 {
-    logger::debug() << "stream_responder: lookup_notify - send r0 punch packet";
+    logger::debug() << "Stream responder - send r0 punch packet in response to lookup notify";
     // Someone at endpoint 'peer_ep' is apparently trying to reach us -
     // send them an R0 hole punching packet to their public endpoint.
     // @fixme perhaps make sure we might want to talk with them first?
+    // e.g. check it's not in the blacklist.
     send_probe0(peer_ep);
 }
 

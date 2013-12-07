@@ -157,13 +157,13 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
         return on_channel_failed();
     }
 
-    logger::debug() << "stream_peer: lookup found primary " << peer_endpoint << ", num secondaries " << peer_profile.endpoints().size();
+    logger::debug() << "Stream peer - lookup found primary " << peer_endpoint << ", num secondaries " << peer_profile.endpoints().size();
 
     // Add the endpoint information we've received to our address list,
     // and initiate flow setup attempts to those endpoints.
     add_location_hint(peer_endpoint);
     for (auto& ep : peer_profile.endpoints()) {
-        logger::debug() << "stream_peer: secondary " << ep;
+        logger::debug() << "Stream peer - secondary " << ep;
         // Ignore ep if it's a loopback.
         if (ep.address().is_loopback() or ep.address().is_unspecified()) {
             continue;

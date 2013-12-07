@@ -704,7 +704,7 @@ shared_ptr<host> channel::get_host()
 
 void channel::start(bool initiate)
 {
-    logger::debug() << "channel: start " << (initiate ? "(initiator)" : "(responder)");
+    logger::debug() << "Channel - start as " << (initiate ? "initiator" : "responder");
 
     assert(armor_);
 
@@ -720,7 +720,7 @@ void channel::start(bool initiate)
 
 void channel::stop()
 {
-    logger::debug() << "channel: stop";
+    logger::debug() << "Channel - stop";
     pimpl_->retransmit_timer_.stop();
     pimpl_->ack_timer_.stop();
     pimpl_->stats_timer_.stop();
@@ -732,18 +732,18 @@ void channel::stop()
 
 int channel::may_transmit()
 {
-    logger::debug() << "channel: may_transmit";
+    logger::debug(200) << "Channel - may_transmit";
     if (pimpl_->nocc_) {
         return super::may_transmit();
     }
 
     if (pimpl_->congestion_control->cwnd > pimpl_->state_->tx_inflight_count_) {
         int allowance = pimpl_->congestion_control->cwnd - pimpl_->state_->tx_inflight_count_;
-        logger::debug() << "channel: congestion window limits may_transmit to " << allowance;
+        logger::debug(200) << "Channel - congestion window limits may_transmit to " << allowance;
         return allowance;
     }
 
-    logger::debug() << "channel: congestion window limits may_transmit to 0";
+    logger::debug(200) << "Channel - congestion window limits may_transmit to 0";
     pimpl_->congestion_control->cwnd_limited_ = true;
     return 0;
 }
@@ -912,7 +912,7 @@ void channel::acknowledge(uint16_t pktseq, bool send_ack)
     constexpr int min_ack_packets = 2;
     constexpr int max_ack_packets = 4;
 
-    logger::debug() << "channel: acknowledge " << pktseq
+    logger::debug() << "Channel - acknowledge " << pktseq
         << (send_ack ? " (sending)" : " (not sending)");
 
     // Update our receive state to account for this packet
@@ -1008,7 +1008,7 @@ inline void channel::ack_timeout()
 
 bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 {
-    logger::debug() << "channel: transmit_ack seq " << ackseq << ", count " << ack_count+1;
+    logger::debug() << "Channel - transmit_ack seq " << ackseq << ", count " << ack_count+1;
 
     assert(ack_count <= max_ack_count);
 

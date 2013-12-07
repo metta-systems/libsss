@@ -50,6 +50,7 @@ stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const p
 stream_channel::~stream_channel()
 {
     on_link_status_changed.disconnect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
+    logger::debug() << "Stream channel - destructing";
     stop();
     root_->state_ = base_stream::state::disconnected;
 }
@@ -59,7 +60,7 @@ void stream_channel::got_ready_transmit()
     if (sending_streams_.empty())
         return;
 
-    logger::debug() << "stream_channel: ready to transmit";
+    logger::debug() << "Stream channel - ready to transmit";
 
     // Round-robin between our streams for now.
     do {
@@ -76,7 +77,7 @@ void stream_channel::got_ready_transmit()
 
 void stream_channel::got_link_status_changed(link::status new_status)
 {
-    logger::debug() << "stream_channel: link status changed, new status " << link::status_string(new_status);
+    logger::debug() << "Stream channel - link status changed, new status " << link::status_string(new_status);
 
     if (new_status != link::status::down)
         return;
@@ -123,7 +124,7 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
 
 void stream_channel::start(bool initiate)
 {
-    logger::debug() << "stream_channel: start " << (initiate ? "(initiator)" : "(responder)");
+    logger::debug() << "Stream channel - start as " << (initiate ? "initiator" : "responder");
     super::start(initiate);
     assert(is_active());
  
@@ -139,7 +140,7 @@ void stream_channel::start(bool initiate)
 
 void stream_channel::stop()
 {
-    logger::debug() << "stream_channel: stop";
+    logger::debug() << "Stream channel - stop";
     super::stop();
 
     // XXX clean up sending_streams_, waiting_ack_ -- detach_all() cleans up waiting_ack_
@@ -161,7 +162,7 @@ void stream_channel::stop()
 
 void stream_channel::enqueue_stream(base_stream* stream)
 {
-    logger::debug() << "enqueue_stream " << stream;
+    logger::debug() << "Stream channel - enqueue stream " << stream;
 
     // Find the correct position at which to enqueue this stream,
     // based on priority.
@@ -175,7 +176,7 @@ void stream_channel::enqueue_stream(base_stream* stream)
 
 void stream_channel::dequeue_stream(base_stream* stream)
 {
-    logger::debug() << "dequeue_stream " << stream;
+    logger::debug() << "Stream channel - dequeue stream " << stream;
     sending_streams_.erase(
         remove(sending_streams_.begin(), sending_streams_.end(), stream), sending_streams_.end());
 }
@@ -214,7 +215,7 @@ void stream_channel::detach_all()
 
 bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count)
 {
-    logger::debug() << "stream_channel: transmit_ack " << ackseq;
+    logger::debug() << "Stream channel - transmit ACK " << ackseq;
 
     // Pick a stream on which to send a window update -
     // for now, just the most recent stream on which we received a segment.
@@ -238,6 +239,7 @@ bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_
 
 void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
 {
+    logger::debug() << "Stream channel - ACKed seq " << txseq;
     for (; npackets > 0; txseq++, npackets--)
     {
         // find and remove the packet
@@ -247,14 +249,15 @@ void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t
         base_stream::packet p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
 
-        logger::debug() << "stream_channel: acknowledged packet " << txseq << " of size " << p.buf.size();
+        logger::debug() << "Stream channel - acknowledged packet " << txseq
+            << " of size " << p.buf.size();
         p.owner->acknowledged(this, p, rxackseq);
     }
 }
 
 void stream_channel::missed(packet_seq_t txseq, int npackets)
 {
-    logger::debug() << "stream_channel: missed " << txseq;
+    logger::debug() << "Stream channel - missed seq " << txseq;
     for (; npackets > 0; txseq++, npackets--)
     {
         // find but don't remove (common case for missed packets)
@@ -266,7 +269,9 @@ void stream_channel::missed(packet_seq_t txseq, int npackets)
 
         base_stream::packet p = waiting_ack_[txseq];
 
-        logger::debug() << "stream_channel: missed packet " << txseq << " of size " << p.buf.size();
+        logger::debug() << "Stream channel - missed packet " << txseq
+            << " of size " << p.buf.size();
+
         if (!p.late)
         {
             p.late = true;
@@ -279,7 +284,7 @@ void stream_channel::missed(packet_seq_t txseq, int npackets)
 
 void stream_channel::expire(packet_seq_t txseq, int npackets)
 {
-    logger::debug() << "stream_channel: expire " << txseq;
+    logger::debug() << "Stream channel - expire seq " << txseq;
     for (; npackets > 0; txseq++, npackets--)
     {
         // find and unconditionally remove packet when it expires
@@ -287,18 +292,20 @@ void stream_channel::expire(packet_seq_t txseq, int npackets)
         waiting_ack_.erase(txseq);
 
         if (p.is_null()) {
-            logger::debug() << "Missed packet " << txseq << " but can't find it!";
+            logger::debug() << "Expired packet " << txseq << " but can't find it!";
             continue;
         }
 
-        logger::debug() << "Missed packet " << txseq << " of size " << p.payload_size();
+        logger::debug() << "Stream channel - expired packet " << txseq
+            << " of size " << p.payload_size();
+
         p.owner->expire(this, p);
     }
 }
 
 bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
 {
-    logger::debug() << "stream_channel: channel_receive " << pktseq;
+    logger::debug() << "Stream channel - receive seq " << pktseq;
     return base_stream::receive(pktseq, pkt, this);
 }
 
