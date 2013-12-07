@@ -1618,7 +1618,8 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
         return true;
     }
 
-    for (auto x : channel->peer_->usid_streams_) {
+    for (auto x : channel->peer_->usid_streams_)
+    {
         logger::debug() << "known usid " << x.first;
     }
 
@@ -1995,8 +1996,9 @@ void base_stream::substream_read_record()
     // When one of our queued subs emits an on_ready_read_record() signal,
     // we have to forward that via our on_ready_read_datagram() signal.
     // @fixme WHY?
-    if (auto stream = owner_.lock())
+    if (auto stream = owner_.lock()) {
         stream->on_ready_read_datagram();
+    }
 }
 
 //=================================================================================================
