@@ -105,10 +105,11 @@ private:
     void routing_client_ready(uia::routing::client *rc);
     void connect_routing_client(uia::routing::client *rc);
 
-    // Routing client handlers @todo
-    void lookup_done(ssu::peer_id const& target_peer,
+    // Routing client handlers
+    void lookup_done(uia::routing::client *rc, ssu::peer_id const& target_peer,
         ssu::endpoint const& peer_endpoint,
         uia::routing::client_profile const& peer_profile);
+    // @todo
     // void regClientDestroyed(QObject *obj);
     void retry_timeout();
 

@@ -119,10 +119,10 @@ void stream_peer::connect_routing_client(ur::client *rc)
     connected_routing_clients_.insert(rc);
 
     // Listen for the lookup response
-    rc->on_lookup_done.connect([this](ssu::peer_id const& target_peer,
+    rc->on_lookup_done.connect([this, rc](ssu::peer_id const& target_peer,
                                       ssu::endpoint const& peer_endpoint,
                                       ur::client_profile const& peer_profile) {
-        lookup_done(target_peer, peer_endpoint, peer_profile);
+        lookup_done(rc, target_peer, peer_endpoint, peer_profile);
     });
 
     // Also make sure we hear if this regclient disappears
@@ -131,7 +131,7 @@ void stream_peer::connect_routing_client(ur::client *rc)
 }
 
 void
-stream_peer::lookup_done(ssu::peer_id const& target_peer,
+stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
     ssu::endpoint const& peer_endpoint,
     ur::client_profile const& peer_profile)
 {
@@ -142,20 +142,20 @@ stream_peer::lookup_done(ssu::peer_id const& target_peer,
     }
 
     // Mark this outstanding lookup as completed.
-//     RegClient *rc = (RegClient*)sender();
-//     if (!lookups.contains(rc)) {
-//         qDebug() << "stream_peer: unexpected lookupDone signal";
-//         return; // ignore duplicates caused by concurrent requests
-//     }
-//     lookups.remove(rc);
+    if (!contains(lookups_, rc)) {
+        logger::debug() << "Stream peer - unexpected lookup_done signal";
+        return; // ignore duplicates caused by concurrent requests
+    }
+    lookups_.erase(rc);
 
-//     // If the lookup failed, notify waiting streams as appropriate.
-//     if (peer_endpoint.isNull()) {
-//         qDebug() << this << "Lookup on" << id << "failed";
-//         if (!lookups.isEmpty() || !initors.isEmpty())
-//             return;     // There's still hope
-//         return flowFailed();
-//     }
+    // If the lookup failed, notify waiting streams as appropriate.
+    if (peer_endpoint.address().is_unspecified())
+    {
+        logger::debug() << "Lookup on " << target_peer << " failed";
+        if (!lookups_.empty() or !key_exchanges_initiated_.empty())
+            return;     // There's still hope
+        return on_channel_failed();
+    }
 
     logger::debug() << "stream_peer: lookup found primary " << peer_endpoint << ", num secondaries " << peer_profile.endpoints().size();
 
