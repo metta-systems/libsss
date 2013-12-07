@@ -1,0 +1,25 @@
+Forming service/protocol pairs in uniform way is a key to good scalability.
+
+MIME types mechanism seems to be good for this, as service is a more generic name, further
+refined by protocol, similar to what image/jpeg pair in MIME serves, for example.
+
+A mime-like way of specifying service/protocol is adopted, like "web/http 1.1" where slash
+separates service from protocol in writing, but not on the wire level.
+
+Vendor-specific types can have vendor name as a prefix separated by a '-'. For example
+'adobe-shockwave/flash'.
+
+A non-standard service or protocol can be prefixed with 'x-', for example 'x-porn/video'
+
+Theoretically, protocols are defined only within a namespace of the umbrella service,
+but in practice it also makes sense to reuse the names if the protocol is the same.
+For example, 'web/http 1.1' and 'dav/http 1.1' are entirely possible.
+
+Examples of some service/protocol pairs in use:
+
+stream-voice/opus
+www/http 1.1
+www/spdy
+stream-video/vp8
+stream-mux/webm          # A multiplexed streaming of audio and video
+mettanode/routing
