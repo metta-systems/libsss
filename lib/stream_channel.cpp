@@ -49,8 +49,8 @@ stream_channel::stream_channel(shared_ptr<host> host, stream_peer* peer, const p
 
 stream_channel::~stream_channel()
 {
-    on_link_status_changed.disconnect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
     logger::debug() << "Stream channel - destructing";
+    // on_link_status_changed.disconnect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
     stop();
     root_->state_ = base_stream::state::disconnected;
 }
@@ -96,9 +96,7 @@ void stream_channel::got_link_status_changed(link::status new_status)
     }
 
     // Stop and destroy this flow.
-    stop();
-    // deleteLater();
-    logger::debug() << "stream_channel: @todo MUST DELETE HERE";
+    delete this;
 }
 
 stream_protocol::counter_t stream_channel::allocate_transmit_sid()
