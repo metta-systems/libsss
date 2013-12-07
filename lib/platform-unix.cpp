@@ -34,6 +34,8 @@ std::string user_name()
     return std::string(username);
 }
 
+#define NO_PORT 0
+
 // http://vrjuggler.org/docs/vapor/2.2/programmer.reference/namespacevpr.html#aadd07b8751f2d2ba6b757e9c11fd7eab
 std::vector<ssu::endpoint> local_endpoints()
 {
@@ -48,7 +50,6 @@ std::vector<ssu::endpoint> local_endpoints()
     for (ifaddrs *a = ifa; a; a = a->ifa_next) {
         sockaddr* sa = a->ifa_addr;
         sockaddr_in* addr_in = (sockaddr_in*) a->ifa_addr;
-        boost::asio::ip::address address;
 
         if (sa
             and ((sa->sa_family == AF_INET) or (sa->sa_family == AF_INET6)) 
@@ -58,24 +59,23 @@ std::vector<ssu::endpoint> local_endpoints()
             {
                 boost::asio::ip::address_v4::bytes_type bytes;
                 copy((uint8_t*)&addr_in->sin_addr, (uint8_t*)(&addr_in->sin_addr) + bytes.size(), bytes.begin());
-                boost::asio::ip::address_v4 addr(bytes);
-                if (addr.is_loopback())
+                boost::asio::ip::address_v4 address(bytes);
+                if (address.is_loopback() or address.is_unspecified())
                     continue;
-                address = addr;
+                result.emplace_back(address, NO_PORT);
+                logger::debug() << "Local IP address: " << address;
             }
             else if (sa->sa_family == AF_INET6)
             {
                 boost::asio::ip::address_v6::bytes_type bytes;
                 copy((uint8_t*)&addr_in->sin_addr, (uint8_t*)(&addr_in->sin_addr) + bytes.size(), bytes.begin());
-                boost::asio::ip::address_v6 addr(bytes);
-                if (addr.is_loopback() || addr.is_link_local())
+                boost::asio::ip::address_v6 address(bytes);
+                if (address.is_loopback() or address.is_link_local() or address.is_unspecified())
                     continue;
-                address = addr;
+                result.emplace_back(address, NO_PORT);
+                logger::debug() << "Local IP address: " << address;
             }
         }
-
-        // result.push_back(address);
-        logger::debug() << "Local IP address: " << address;
     }
 
     freeifaddrs(ifa);
