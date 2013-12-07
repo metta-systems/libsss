@@ -2042,11 +2042,8 @@ void stream_tx_attachment::clear()
     // Clear out packets for this stream from channel's ackwait table
     logger::debug() << "waiting ack size " << channel->waiting_ack_.size();
 
-    // Since erasing invalidates iterators, we cannot use range-based-for easily,
-    // instead use two step algorithm and erase packets afterwards.
-    vector<packet_seq_t> remove_acks;
-
-    for (auto ackw : channel->waiting_ack_)
+    auto ack_copy = channel->waiting_ack_;
+    for (auto ackw : ack_copy)
     {
         base_stream::packet& p = ackw.second;
         assert(!p.is_null());
@@ -2062,12 +2059,7 @@ void stream_tx_attachment::clear()
             stream_->expire(channel, p);
         }
 
-        remove_acks.emplace_back(ackw.first);
-    }
-
-    for (auto id : remove_acks)
-    {
-        channel->waiting_ack_.erase(id);
+        channel->waiting_ack_.erase(ackw.first);
         logger::debug() << "Cleared packet";
     }
 }

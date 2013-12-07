@@ -145,12 +145,14 @@ void stream_channel::stop()
     // XXX clean up sending_streams_, waiting_ack_ -- detach_all() cleans up waiting_ack_
 
     // Detach and notify all affected streams.
-    for (auto it : transmit_sids_)
+    auto tsids_copy = transmit_sids_;
+    for (auto it : tsids_copy)
     {
         assert(it.second->channel_ == this);
         it.second->clear();
     }
-    for (auto it : receive_sids_)
+    auto rsids_copy = receive_sids_;
+    for (auto it : rsids_copy)
     {
         assert(it.second->channel_ == this);
         it.second->clear();
@@ -184,19 +186,20 @@ void stream_channel::detach_all()
     // it'll be more efficient to go through it once
     // and send all the waiting packets back to their streams,
     // than for each stream to pull out its packets individually.
-    auto ack_backup = waiting_ack_;
+    auto ack_copy = waiting_ack_;
     waiting_ack_.clear();
 
     // Detach all the streams with transmit-attachments to this flow.
-    for (auto v : transmit_sids_)
+    auto tsids_copy = transmit_sids_;
+    for (auto v : tsids_copy)
     {
         v.second->clear();
     }
     assert(transmit_sids_.empty());
 
     // Finally, send back all the waiting packets to their streams.
-    logger::debug() << this << " Returning " << ack_backup.size() << " packets for retransmission";
-    for (auto v : ack_backup)
+    logger::debug() << "Returning " << ack_copy.size() << " channel packets for retransmission";
+    for (auto v : ack_copy)
     {
         base_stream::packet& p = v.second;
         assert(!p.is_null());
