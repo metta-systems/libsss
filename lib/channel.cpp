@@ -1047,6 +1047,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     }
     if (pkt.size() < header_len) {
         logger::warning() << "Channel receive - runt packet";
+        //src.link()->runt_packet_received(src); // @todo Gather failure statistics
         return;
     }
 
@@ -1086,6 +1087,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     // Authenticate and decrypt the packet
     if (!armor_->receive_decode(pktseq, msg)) {
         logger::warning() << "Received packet auth failed on rx " << pktseq;
+        //src.link()->bad_auth_received(src); // Gather failure statistics
         return;
     }
 
