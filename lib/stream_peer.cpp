@@ -47,7 +47,8 @@ stream_peer::~stream_peer()
 {
     logger::debug() << this << " ~stream_peer";
     // Clear the state of all streams associated with this peer.
-    for (auto v : all_streams_)
+    auto streams_copy = all_streams_;
+    for (auto v : streams_copy)
     {
         v->clear();
     }
