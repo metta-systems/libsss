@@ -122,7 +122,8 @@ void stream_peer::connect_routing_client(ur::client *rc)
     // Listen for the lookup response
     rc->on_lookup_done.connect([this, rc](ssu::peer_id const& target_peer,
                                       ssu::endpoint const& peer_endpoint,
-                                      ur::client_profile const& peer_profile) {
+                                      ur::client_profile const& peer_profile)
+    {
         lookup_done(rc, target_peer, peer_endpoint, peer_profile);
     });
 
