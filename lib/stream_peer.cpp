@@ -196,8 +196,9 @@ void stream_peer::retry_timeout()
         return;
 
     // Notify any waiting streams of failure
-    if (lookups_.empty() and key_exchanges_initiated_.empty())
+    if (no_lookups_possible()) {
         on_channel_failed();
+    }
 
     // If there are (still) any waiting streams, fire off a new batch of connection attempts.
     connect_channel();
@@ -339,8 +340,9 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     // If unsuccessful, notify waiting streams.
     if (!success)
     {
-        if (lookups_.empty() and key_exchanges_initiated_.empty())
+        if (no_lookups_possible()) {
             return on_channel_failed();
+        }
         return; // There's still hope
     }
 

@@ -76,6 +76,10 @@ class stream_peer : public stream_protocol
 private:
     inline peer_id remote_host_id() const { return remote_id_; }
 
+    inline bool no_lookups_possible() {
+        return lookups_.empty() and key_exchanges_initiated_.empty();
+    }
+
     /**
      * Connect to routing change signals to find peer endpoints.
      */
