@@ -304,8 +304,9 @@ void stream_peer::add_location_hint(endpoint const& hint)
     assert(!remote_id_.is_empty());
     // assert(!hint.empty());
 
-    if (contains(locations_, hint))
+    if (contains(locations_, hint)) {
         return; // We already know; sit down...
+    }
 
     logger::debug() << "Found endpoint " << hint << " for target " << remote_id_;
 
@@ -395,8 +396,9 @@ void stream_peer::primary_status_changed(link::status new_status)
 
     if (new_status == link::status::stalled)
     {
-        if (++stall_warnings_ < stall_warnings_max) {
-            logger::warning() << this << " Primary channel stall "
+        if (++stall_warnings_ < stall_warnings_max)
+        {
+            logger::warning() << "Primary channel stall "
                 << stall_warnings_ << " of " << stall_warnings_max;
             return on_link_status_changed(new_status);
         }
