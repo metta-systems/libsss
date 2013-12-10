@@ -128,8 +128,7 @@ void stream_peer::connect_routing_client(ur::client *rc)
     });
 
     // Also make sure we hear if this regclient disappears
-    // connect(rc, SIGNAL(destroyed(QObject*)),
-        // this, SLOT(regClientDestroyed(QObject*)));
+    rc->on_destroyed.connect([this](ur::client* rc) { regclient_destroyed(rc); });
 }
 
 void
@@ -174,20 +173,20 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
     }
 }
 
-// void stream_peer::regClientDestroyed(QObject *obj)
-// {
-//     qDebug() << "stream_peer: RegClient destroyed before lookupDone";
+void stream_peer::regclient_destroyed(ur::client *rc)
+{
+    logger::debug() << "Stream peer - regclient destroyed before lookup done";
 
-//     RegClient *rc = (RegClient*)obj;
-//     lookups.remove(rc);
-//     connrcs.remove(rc);
+    lookups_.erase(rc);
+    connected_routing_clients_.erase(rc);
 
-//     // If there are no more RegClients available at all,
-//     // notify waiting streams of connection failure
-//     // next time we get back to the main loop.
-//     if (lookups.isEmpty() && initors.isEmpty())
-//         recontimer.start(0);
-// }
+    // If there are no more RegClients available at all,
+    // notify waiting streams of connection failure
+    // next time we get back to the main loop.
+    if (no_lookups_possible()) {
+        reconnect_timer_.start(boost::posix_time::milliseconds(0));
+    }
+}
 
 void stream_peer::retry_timeout()
 {

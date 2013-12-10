@@ -113,8 +113,7 @@ private:
     void lookup_done(uia::routing::client *rc, ssu::peer_id const& target_peer,
         ssu::endpoint const& peer_endpoint,
         uia::routing::client_profile const& peer_profile);
-    // @todo
-    // void regClientDestroyed(QObject *obj);
+    void regclient_destroyed(uia::routing::client *rc);
     void retry_timeout();
 
     struct private_tag {};
