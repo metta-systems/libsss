@@ -272,9 +272,11 @@ void stream_peer::channel_started(stream_channel* channel)
     stall_warnings_ = 0;
 
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
-    primary_channel_->on_link_status_changed.connect([this](link::status new_status) {
-        primary_status_changed(new_status);
-    });
+    primary_channel_link_status_connection_ =
+        primary_channel_->on_link_status_changed.connect([this](link::status new_status)
+        {
+            primary_status_changed(new_status);
+        });
 
     // Notify all waiting streams
     on_channel_connected();
@@ -290,8 +292,7 @@ void stream_peer::clear_primary_channel()
     primary_channel_ = nullptr;
 
     // Avoid getting further primary link status notifications from it
-    old_primary->on_link_status_changed.disconnect(
-        boost::bind(&stream_peer::primary_status_changed, this, _1));
+    primary_channel_link_status_connection_.disconnect();
 
     // Clear all transmit-attachments
     // and return outstanding packets to the streams they came from.

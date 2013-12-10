@@ -11,6 +11,7 @@
 #include <map>
 #include <unordered_set>
 #include <boost/signals2/signal.hpp>
+#include <boost/signals2/connection.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "protocol.h"
 #include "host.h"
@@ -57,6 +58,8 @@ class stream_peer : public stream_protocol
     const peer_id         remote_id_;          ///< Host ID of target.
     stream_channel*       primary_channel_{0}; ///< Current primary channel.
     int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
+    /// @internal
+    boost::signals2::connection primary_channel_link_status_connection_;
 
     // Routing state:
     std::unordered_set<uia::routing::client*> lookups_; ///< Outstanding lookups in progress
