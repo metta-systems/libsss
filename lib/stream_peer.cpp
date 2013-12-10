@@ -160,6 +160,10 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
 
     logger::debug() << "Stream peer - lookup found primary " << peer_endpoint << ", num secondaries " << peer_profile.endpoints().size();
 
+    // @todo
+    // Find intersection between our and targets' IP addresses.
+    // Prefer local network addresses first, initiate there in case the peer is in our network.
+
     // Add the endpoint information we've received to our address list,
     // and initiate flow setup attempts to those endpoints.
     add_location_hint(peer_endpoint);
