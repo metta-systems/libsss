@@ -22,7 +22,9 @@ constexpr int stream_peer::stall_warnings_max;
 
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
-stream_peer::stream_peer(shared_ptr<host> const& host, peer_id const& remote_id, stream_peer::private_tag)
+stream_peer::stream_peer(shared_ptr<host> const& host,
+                         peer_id const& remote_id,
+                         stream_peer::private_tag)
     : host_(host)
     , remote_id_(remote_id)
     , reconnect_timer_(host.get())
@@ -158,7 +160,8 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
         return on_channel_failed();
     }
 
-    logger::debug() << "Stream peer - lookup found primary " << peer_endpoint << ", num secondaries " << peer_profile.endpoints().size();
+    logger::debug() << "Stream peer - lookup found primary " << peer_endpoint
+        << ", num secondaries " << peer_profile.endpoints().size();
 
     // @todo
     // Find intersection between our and targets' IP addresses.
