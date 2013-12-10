@@ -340,7 +340,7 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     key_exchanges_initiated_.erase(lep);
 
     ki->cancel();
-    ki.reset();
+    ki = nullptr;
 
     // If unsuccessful, notify waiting streams.
     if (!success)
@@ -375,24 +375,20 @@ void stream_peer::primary_status_changed(link::status new_status)
         // of those streams as _its_ primary and be left with a dangling channel!)
         // For Multipath-SSU to work we rather should not destroy them here and set up
         // multiple channels at once.
-        std::vector<link_endpoint> delete_later;
-
-        for (auto ki : key_exchanges_initiated_)
+        auto ki_copy = key_exchanges_initiated_;
+        for (auto ki : ki_copy)
         {
             auto initiator = ki.second;
-            if (!initiator->is_early())
+            if (!initiator->is_early()) {
                 continue;   // too late - let it finish
+            }
             logger::debug() << "Deleting " << initiator << " for " << remote_id_
                 << " to " << initiator->remote_endpoint();
 
             assert(ki.first == initiator->remote_endpoint());
-            delete_later.push_back(ki.first);
+            key_exchanges_initiated_.erase(ki.first);
             initiator->cancel();
-            initiator.reset();//->deleteLater();
-        }
-
-        for (auto k : delete_later) {
-            key_exchanges_initiated_.erase(k);
+            initiator = nullptr;
         }
 
         return on_link_status_changed(new_status);
