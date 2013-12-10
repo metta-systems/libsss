@@ -16,7 +16,7 @@ using namespace std;
 namespace ur = uia::routing;
 
 namespace ssu {
-// namespace internal {
+namespace internal {
 
 constexpr int stream_peer::stall_warnings_max;
 
@@ -408,5 +408,5 @@ void stream_peer::primary_status_changed(link::status new_status)
     on_link_status_changed(new_status);
 }
 
-// } // internal namespace
+} // internal namespace
 } // ssu namespace

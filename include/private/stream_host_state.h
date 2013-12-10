@@ -36,8 +36,10 @@ struct hash<std::pair<std::string, std::string>> : public std::unary_function<st
 namespace ssu {
 
 class stream_responder;
-class stream_peer;
 class server;
+namespace internal {
+    class stream_peer;
+}
 
 /**
  * Host state related to stream management.
@@ -46,7 +48,7 @@ class server;
 class stream_host_state
 {
     std::shared_ptr<stream_responder> responder_{nullptr};
-    std::unordered_map<peer_id, std::shared_ptr<stream_peer>> peers_;
+    std::unordered_map<peer_id, std::shared_ptr<internal::stream_peer>> peers_;
     std::unordered_map<std::pair<std::string, std::string>, server*> listeners_;
 
 public:
@@ -62,16 +64,16 @@ public:
      */
     void instantiate_stream_responder();
 
-    std::vector<std::shared_ptr<stream_peer>> all_peers() const;
+    std::vector<std::shared_ptr<internal::stream_peer>> all_peers() const;
 
     /**
      * Create if necessary and return the stream peer's information (from the other side).
      */
-    class stream_peer* stream_peer(peer_id const& id);
+    internal::stream_peer* stream_peer(peer_id const& id);
     /**
      * Return the stream peer's information (from the other side) or nullptr.
      */
-    class stream_peer* stream_peer_if_exists(peer_id const& id);
+    internal::stream_peer* stream_peer_if_exists(peer_id const& id);
 
     inline bool is_listening(std::pair<std::string, std::string> svc_pair) const {
         return contains(listeners_, svc_pair);

@@ -18,7 +18,9 @@ namespace ssu {
 
 class host;
 class stream;
-class stream_peer;
+namespace internal {
+    class stream_peer;
+}
 
 /** 
  * @internal

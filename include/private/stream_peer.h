@@ -28,7 +28,7 @@ namespace ssu {
 class base_stream;
 class stream_channel;
 
-// namespace internal {
+namespace internal {
 
 /**
  * Private helper class to keep information about a peer we are trying to establish connection with.
@@ -38,9 +38,9 @@ class stream_channel;
  */
 class stream_peer : public stream_protocol
 {
-    friend class base_stream; // @fixme Use accessors n stuff.
-    friend class stream_host_state; // @fixme used only to construct.
-    friend class stream_channel; // @fixme Used to call channel_started() only.
+    friend class ssu::base_stream; // @fixme Use accessors n stuff.
+    friend class ssu::stream_host_state; // @fixme used only to construct.
+    friend class ssu::stream_channel; // @fixme Used to call channel_started() only.
 
     /**
      * Retry connection attempts for persistent streams once every minute.
@@ -148,5 +148,5 @@ public:
     link_status_changed_signal on_link_status_changed;
 };
 
-// } // internal namespace
+} // internal namespace
 } // ssu namespace

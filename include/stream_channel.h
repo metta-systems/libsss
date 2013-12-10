@@ -15,9 +15,9 @@
 
 namespace ssu {
 
-// namespace private_ {
-class stream_peer;
-// } // private_ namespace
+namespace internal {
+    class stream_peer;
+}
 
 /**
  * Channel implementation for SSU streams.
@@ -37,7 +37,7 @@ class stream_channel : public channel, public stream_protocol
      * so there should be no chance of this pointer ever dangling.
      * @fixme In SSU the relationships are simpler, but peer_ pointer is still never dangling.
      */
-    stream_peer* peer_{nullptr};
+    internal::stream_peer* peer_{nullptr};
 
     /**
      * Top-level stream used for connecting to services.
@@ -90,13 +90,13 @@ class stream_channel : public channel, public stream_protocol
     void got_ready_transmit();
 
 public:
-    stream_channel(std::shared_ptr<host> host, stream_peer* peer, const peer_id& id);
+    stream_channel(std::shared_ptr<host> host, internal::stream_peer* peer, const peer_id& id);
     ~stream_channel();
 
     void start(bool initiate) override;
     void stop() override;
 
-    inline stream_peer* target_peer() { return peer_; }
+    inline internal::stream_peer* target_peer() { return peer_; }
     inline std::shared_ptr<base_stream> root_stream() { return root_; }
 
     counter_t allocate_transmit_sid();

@@ -18,9 +18,11 @@ namespace ssu {
 class identity;
 class host;
 class abstract_stream;
-class stream_peer;
 class channel;
 class server;
+namespace internal {
+    class stream_peer;
+}
 
 /**
  * @nosubgrouping

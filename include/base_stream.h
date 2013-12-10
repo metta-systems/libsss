@@ -211,7 +211,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
     unique_stream_id_t usid_,        ///< Unique stream ID.
                        parent_usid_; ///< Unique ID of parent stream.
-    stream_peer* peer_;              ///< Information about the other side of this connection.
+    internal::stream_peer* peer_;    ///< Information about the other side of this connection.
 
     /**@}*/
     //-------------------------------------------

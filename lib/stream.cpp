@@ -154,7 +154,7 @@ void stream::connect_link_status_signal()
     if (status_signal_connected_ or !stream_)
         return;
 
-    stream_peer* peer = host_->stream_peer(stream_->peerid_);
+    internal::stream_peer* peer = host_->stream_peer(stream_->peerid_);
 
     peer->on_link_status_changed.connect([this](link::status new_status) {
         on_link_status_changed(new_status);
@@ -451,7 +451,7 @@ stream_responder::stream_responder(shared_ptr<host> host)
 channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
             byte_array const& initiator_eid, byte_array const&, byte_array&)
 {
-    stream_peer* peer = get_host()->stream_peer(initiator_eid);
+    internal::stream_peer* peer = get_host()->stream_peer(initiator_eid);
 
     stream_channel* chan = new stream_channel(get_host(), peer, initiator_eid);
     if (!chan->bind(initiator_ep))
@@ -510,10 +510,10 @@ void stream_responder::lookup_notify(ssu::peer_id const& target_peer, ssu::endpo
 // Stream host state.
 //=================================================================================================
 
-std::vector<std::shared_ptr<stream_peer>>
+std::vector<std::shared_ptr<internal::stream_peer>>
 stream_host_state::all_peers() const
 {
-    std::vector<std::shared_ptr<ssu::stream_peer>> values;
+    std::vector<std::shared_ptr<ssu::internal::stream_peer>> values;
     boost::copy(peers_ | boost::adaptors::map_values, std::back_inserter(values));
     return values;
 }
@@ -525,17 +525,20 @@ void stream_host_state::instantiate_stream_responder()
     assert(responder_);
 }
 
-stream_peer* stream_host_state::stream_peer(peer_id const& id)
+internal::stream_peer* stream_host_state::stream_peer(peer_id const& id)
 {
-    if (!contains(peers_, id))
-        peers_[id] = make_shared<class stream_peer>(get_host(), id, stream_peer::private_tag{});
+    if (!contains(peers_, id)) {
+        peers_[id] = make_shared<internal::stream_peer>(get_host(), id,
+            internal::stream_peer::private_tag{});
+    }
     return peers_[id].get();
 }
 
-class stream_peer* stream_host_state::stream_peer_if_exists(peer_id const& id)
+internal::stream_peer* stream_host_state::stream_peer_if_exists(peer_id const& id)
 {
-    if (!contains(peers_, id))
+    if (!contains(peers_, id)) {
         return nullptr;
+    }
     return peers_[id].get();
 }
 
