@@ -380,6 +380,13 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_chunk& kc)
 struct key_message
 {
     uint32_t magic;
+    /**
+     * Negotiate encryption, authentication and compression features for this session using
+     * a list of strings in 'features' vector.
+     * Features are listed in order of decreasing priority. First feature to match
+     * on receiver side is one to use and is sent back in the response.
+     */
+    std::vector<std::string> features;
     std::vector<key_chunk> chunks;
 };
 
@@ -389,7 +396,7 @@ inline flurry::oarchive& operator << (flurry::oarchive& oa, key_message const& k
 {
     big_uint32_t magic_out(km.magic);
     oa.pack_raw_data(reinterpret_cast<const char*>(&magic_out), 4);
-    oa << km.chunks;
+    oa << km.features << km.chunks;
     return oa;
 }
 
@@ -399,7 +406,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_message& km)
     ub.resize(4);
     ia.unpack_raw_data(ub);
     km.magic = ub.as<big_uint32_t>()[0];
-    ia >> km.chunks;
+    ia >> km.features >> km.chunks;
     return ia;
 }
 
