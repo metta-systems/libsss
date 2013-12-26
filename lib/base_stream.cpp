@@ -563,7 +563,7 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
             size = total_size;
         }
 
-        logger::debug() << "Transmit segment at " << tx_byte_seq_ << " size " << size << " bytes";
+        logger::debug() << "Transmit segment at [byteseq " << tx_byte_seq_ << "], size " << size << " bytes";
 
         // Build the appropriate packet header.
         packet p(this, packet_type::data);
@@ -590,8 +590,9 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
         tx_waiting_ack_.insert(p.tx_byte_seq);
         tx_waiting_size_ += size;
 
-        logger::debug() << "write_data inserted " << p.tx_byte_seq << " into waiting ack, size "
-            << size << ", new count " << tx_waiting_ack_.size() << ", twaitsize " << tx_waiting_size_;
+        logger::debug() << "write_data inserted [byteseq " << p.tx_byte_seq
+            << "] into waiting ack, size " << size << ", new count " << tx_waiting_ack_.size()
+            << ", twaitsize " << tx_waiting_size_;
 
         // Queue up the segment for transmission ASAP
         tx_enqueue_packet(p);
