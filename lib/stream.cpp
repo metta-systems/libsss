@@ -440,11 +440,14 @@ stream_responder::stream_responder(shared_ptr<host> host)
     : key_responder(host, stream_protocol::magic_id)
 {
     // Get us connected to all currently extant routing clients
-    for (ur::client *c : host->coordinator->routing_clients())
+    for (ur::client *c : host->coordinator->routing_clients()) {
         connect_routing_client(c);
+    }
 
     // Watch for newly created routing clients
-    host->coordinator->on_routing_client_created.connect([this](ur::client* c) { created_client(c); });
+    host->coordinator->on_routing_client_created.connect([this](ur::client* c) {
+        created_client(c);
+    });
 }
 
 /// @todo Return unique_ptr<channel>?
@@ -467,13 +470,15 @@ channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
 void stream_responder::connect_routing_client(ur::client *c)
 {
     logger::debug() << "Stream responder - connect routing client " << c->name();
-    if (contains(connected_clients_, c))
+    if (contains(connected_clients_, c)) {
         return;
+    }
 
     connected_clients_.insert(c);
     c->on_ready.connect([this] { client_ready(); });
-    c->on_lookup_notify.connect([this](ssu::peer_id const& target_peer, ssu::endpoint const& peer_ep,
-        uia::routing::client_profile const& peer_profile)
+    c->on_lookup_notify.connect([this](ssu::peer_id const& target_peer,
+                                       ssu::endpoint const& peer_ep,
+                                       uia::routing::client_profile const& peer_profile)
     {
         lookup_notify(target_peer, peer_ep, peer_profile);
     });

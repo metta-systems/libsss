@@ -519,7 +519,8 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     initiator_identity_chunk iic;
     read.archive() >> iic;
 
-    if (iic.initiator_channel_number == 0) {
+    if (iic.initiator_channel_number == 0)
+    {
         logger::debug() << "Received dh_init2 with bad identity info.";
         return; // XXX generate cached error response instead
     }
@@ -534,8 +535,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     // Check that the initiator actually wants to talk with us
     byte_array host_id = get_host()->host_identity().id().id();
     byte_array responder_eid = iic.responder_eid;
-    if (responder_eid.is_empty())
-    {
+    if (responder_eid.is_empty()) {
         responder_eid = host_id;
     }
     else if (responder_eid != host_id)
