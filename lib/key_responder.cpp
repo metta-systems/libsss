@@ -528,7 +528,7 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     // Check that the initiator is someone we want to talk with!
     if (!is_initiator_acceptable(src, iic.initiator_eid, iic.user_data_in))
     {
-        logger::warning() << "Rejecting dh_init2 due to is_initiator_acceptable()";
+        logger::warning() << "Rejecting dh_init2 due to not acceptable initiator";
         return; // XXX generate cached error response instead
     }
 
