@@ -797,7 +797,9 @@ void key_initiator::exchange_keys()
 
     host_->register_dh_initiator(initiator_hashed_nonce_, target_, shared_from_this());
 
-    retransmit_timer_.on_timeout.connect(boost::bind(&key_initiator::retransmit, this, _1));
+    retransmit_timer_.on_timeout.connect([this](bool fail) {
+        retransmit(fail);
+    });
 
     send_dh_init1();
 
