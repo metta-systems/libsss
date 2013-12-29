@@ -591,6 +591,8 @@ public:
 
     void reset_congestion_control();
 
+    void bump_tx_sequence();
+
     /// Compute current number of transmitted but un-acknowledged packets.
     /// This count may include raw ACK packets, for which we expect no acknowledgments
     /// unless they happen to be piggybacked on data coming back.
@@ -674,6 +676,18 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
 
     // Always clamp cwnd against CWND_MAX.
     congestion_control->cwnd = min(congestion_control->cwnd, CWND_MAX);
+}
+
+void channel::private_data::bump_tx_sequence()
+{
+    if (state_->tx_sequence_ == state_->mark_sequence_)
+    {
+        state_->mark_time_ = host_->current_time();
+        state_->mark_acks_ = 0;
+        state_->mark_base_ = state_->tx_ack_sequence_;
+        state_->mark_sent_ = state_->tx_sequence_ - state_->tx_ack_sequence_;
+    }
+    state_->tx_sequence_ += 1;
 }
 
 //=================================================================================================
@@ -822,14 +836,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     // and timestamp if this packet is marked for RTT measurement
     // This is the "Point of no return" -
     // a failure after this still consumes sequence number space.
-    if (pimpl_->state_->tx_sequence_ == pimpl_->state_->mark_sequence_)
-    {
-        pimpl_->state_->mark_time_ = pimpl_->host_->current_time();
-        pimpl_->state_->mark_acks_ = 0;
-        pimpl_->state_->mark_base_ = pimpl_->state_->tx_ack_sequence_;
-        pimpl_->state_->mark_sent_ = pimpl_->state_->tx_sequence_ - pimpl_->state_->tx_ack_sequence_;
-    }
-    pimpl_->state_->tx_sequence_ += 1;
+    pimpl_->bump_tx_sequence();
 
     // Record the transmission event
     transmit_event_t evt(packet.size(), is_data);
