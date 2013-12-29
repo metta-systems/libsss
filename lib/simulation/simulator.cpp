@@ -21,6 +21,7 @@ simulator::simulator()
 
 simulator::~simulator()
 {
+    posted_actions_.clear();
     timers_.clear(); // @todo Either keep shared pointers in timers_ or call delete on them here.
 }
 
@@ -30,6 +31,15 @@ void simulator::run()
         run_step();
     }
     logger::info() << "Simulation completed. #####";
+}
+
+void simulator::run_actions()
+{
+    while (posted_actions_.size() > 0)
+    {
+        posted_actions_.front()();
+        posted_actions_.pop_front();
+    }
 }
 
 void simulator::run_step()
@@ -44,6 +54,9 @@ void simulator::run_step()
     next->clear_wake_time();
 
     logger::info() << "Simulation step: time now " << current_clock_ << " #####";
+
+    // Run posted mainloop actions
+    run_actions();
 
     // Dispatch the event
     next->timeout();
