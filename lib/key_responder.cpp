@@ -818,6 +818,10 @@ void key_initiator::retransmit(bool fail)
 
     logger::debug() << "Time to retransmit the key exchange packet.";
 
+    // If we're gonna resend the init packet, make sure we are registered as a receiver for
+    // response packets.
+    host_->register_dh_initiator(initiator_hashed_nonce_, target_, shared_from_this());
+
     if (state_ == state::init1) {
         send_dh_init1();
     }
