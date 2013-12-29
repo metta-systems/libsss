@@ -823,7 +823,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
 
     // Fill in the transmit and ACK sequence number fields.
     assert(packet.size() >= header_len);
-    big_uint32_t* pkt_header = reinterpret_cast<big_uint32_t*>(packet.data());
+    big_uint32_t* pkt_header = packet.as<big_uint32_t>(2);
     pkt_header[0] = tx_seq;
     pkt_header[1] = ack_seq;
 
