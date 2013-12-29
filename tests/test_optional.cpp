@@ -30,9 +30,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         BOOST_CHECK(*maybe_value == 0xabbadead);
         write.archive() << maybe_value;
     }
-    {
-        logger::file_dump out(data, "optional test");
-    }
+    logger::file_dump(data, "optional test");
     {
         boost::optional<uint32_t> maybe_value;
         byte_array_iwrap<flurry::iarchive> read(data);
