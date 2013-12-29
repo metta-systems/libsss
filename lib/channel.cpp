@@ -850,7 +850,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
         == pimpl_->state_->tx_sequence_);
     assert(pimpl_->state_->tx_inflight_count_ <= (unsigned)pimpl_->state_->tx_events_.size());
 
-    logger::debug() << "Channel transmit tx seq " << pimpl_->state_->tx_sequence_
+    logger::debug() << "Channel transmit tx seq " << dec << pimpl_->state_->tx_sequence_
         << " size " << epkt.size();
 
     // Ship it out
