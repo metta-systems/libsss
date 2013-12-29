@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
         ssu::negotiation::key_message m;
         byte_array_iwrap<flurry::iarchive> read(data);
 
-        BOOST_CHECK(data.size() == 0xbb);
+        BOOST_CHECK(data.size() == 0xbc);
 
         read.archive() >> m;
 
