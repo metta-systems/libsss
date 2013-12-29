@@ -832,6 +832,8 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     // Encrypt and compute the MAC for the packet
     byte_array epkt = armor_->transmit_encode(pimpl_->state_->tx_sequence_, packet);
 
+    logger::file_dump(epkt, "sending channel packet after encrypt");
+
     // Bump transmit sequence number,
     // and timestamp if this packet is marked for RTT measurement
     // This is the "Point of no return" -
