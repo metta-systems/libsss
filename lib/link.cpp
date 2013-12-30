@@ -409,7 +409,7 @@ udp_link::udp_ready_read(const boost::system::error_code& error, size_t bytes_tr
         byte_array b(buffer_cast<const char*>(received_buffer.data()), bytes_transferred);
         receive(b, received_from);
         received_buffer.consume(bytes_transferred);
-        strand_.dispatch([this]{ prepare_async_receive(); });
+        strand_.dispatch([this] { prepare_async_receive(); });
     }
     else
     {
