@@ -785,6 +785,8 @@ key_initiator::key_initiator(channel* channel,
     , retransmit_timer_(channel->get_host().get())
     , key_min_length_(128/8)
 {
+    logger::debug() << "Creating key_initiator " << this;
+
     assert(target_ != endpoint());
     assert(channel->is_bound());
     assert(!channel->is_active());
@@ -798,6 +800,7 @@ key_initiator::key_initiator(channel* channel,
 
 key_initiator::~key_initiator()
 {
+    logger::debug() << "Destroying key_initiator " << this;
     cancel();
 }
 
