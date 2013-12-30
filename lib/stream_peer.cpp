@@ -167,6 +167,14 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
     // Find intersection between our and targets' IP addresses.
     // Prefer local network addresses first, initiate there in case the peer is in our network.
 
+    // Sort hints by longest-common-IP-prefix.
+    // This way the closest IP addresses would be at the top of the list.
+    // Prefer local network addresses to external ones,
+    // for the moment prefer ipv4 addresses over ipv6.
+
+    // PROBLEM: A common shared external IP address will have ALL bits matching and therefore
+    // longest-common prefix.
+
     // Add the endpoint information we've received to our address list,
     // and initiate flow setup attempts to those endpoints.
     add_location_hint(peer_endpoint);
