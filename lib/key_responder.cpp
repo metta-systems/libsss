@@ -285,16 +285,26 @@ void key_responder::got_probe0(link_endpoint const& src)
 {
     // Trigger a retransmission of the dh_init1 packet
     // for each outstanding initiation attempt to the given target.
-    auto pairs = get_host()->get_initiators(src);
-    while (pairs.first != pairs.second)
-    {
-        auto initiator = (*pairs.first).second;
-        ++pairs.first;
-        if (!initiator or initiator->state_ != key_initiator::state::init1)
-            continue;
+    logger::debug() << "Got probe0 from " << src;
 
-        initiator->send_dh_init1();
-    }
+// @todo This ruins the init/response chain for the DH exchange
+// Peers are left in a perpetual loop of reinstating almost always broken peer channel.
+// To fix this, we might not send R0 packets from the peer being contacted if it detects that
+// the same address is already attempting to establish a session.
+// This is not entirely robust though.
+// The other thing might be replay protection, refuse continuing the contact after dh_init1 if 
+// there's a duplicate request coming in (that's how it should work I believe).
+
+    // auto pairs = get_host()->get_initiators(src);
+    // while (pairs.first != pairs.second)
+    // {
+    //     auto initiator = (*pairs.first).second;
+    //     ++pairs.first;
+    //     if (!initiator or initiator->state_ != key_initiator::state::init1)
+    //         continue;
+
+    //     initiator->send_dh_init1();
+    // }
 }
 
 void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src)
