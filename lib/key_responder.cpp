@@ -294,6 +294,7 @@ void key_responder::got_probe0(link_endpoint const& src)
 // This is not entirely robust though.
 // The other thing might be replay protection, refuse continuing the contact after dh_init1 if 
 // there's a duplicate request coming in (that's how it should work I believe).
+// dh.cpp has r2_cache_ of r2 replay protection data.
 
     // auto pairs = get_host()->get_initiators(src);
     // while (pairs.first != pairs.second)
