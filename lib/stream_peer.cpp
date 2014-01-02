@@ -133,6 +133,34 @@ void stream_peer::connect_routing_client(ur::client *rc)
     rc->on_destroyed.connect([this](ur::client* rc) { regclient_destroyed(rc); });
 }
 
+#if 0
+// Calculate affinity in bits of two IP addresses.
+int
+affinity(address const& a, address const& b)
+{
+    if (a.size() != b.size()) {
+        return 0; // ipv4 and ipv6 do not match at all
+    }
+    for (int i = 0; i < a.size(); ++i)
+    {
+        int x = a.bytes()[i] ^ b.bytes()[i];
+        if (x == 0) {
+            continue;
+        }
+        // Byte difference detected - find first bit difference
+        for (int j = 0; j < 8; ++j)
+        {
+            if (x & (0x80 >> j)) {
+                return i*8 + j;
+            }
+        }
+        // Should never be reached
+        assert(0);
+    }
+    return a.size() * 8;  // addresses are identical
+}
+#endif
+
 void
 stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
     ssu::endpoint const& peer_endpoint,
@@ -173,19 +201,58 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
     // for the moment prefer ipv4 addresses over ipv6.
 
     // PROBLEM: A common shared external IP address will have ALL bits matching and therefore
-    // longest-common prefix.
+    // longest-common prefix. Therefore match only internal endpoints.
 
+#if 0
+    // Need to distinguish internal and external endpoints in the endpoint list.
+    for (ep : internal_endpoints)
+    {
+        int max_affinity = 0;
+        for (peer_ep : peer_endpoints)
+        {
+            if (affinity(peer_ep, ep) > max_affinity)
+            {
+                // This peer_ep is better candidate for connection through ep.
+                max_affinity = affinity(peer_ep, ep);
+            }
+        }
+    }
+#endif
+
+    add_location_hint(peer_endpoint);//temp
+#if 0
     // Add the endpoint information we've received to our address list,
     // and initiate flow setup attempts to those endpoints.
-    add_location_hint(peer_endpoint);
-    for (auto& ep : peer_profile.endpoints()) {
+    auto peer_endpoints = peer_profile.endpoints();
+    peer_endpoints.push_back(peer_endpoint);
+
+    // Final sorted list of endpoints to connect to.
+    std::vector<ssu::endpoint> output_endpoints;
+
+    // Filter and sort endpoints array.
+    for (auto& ep : peer_endpoints)
+    {
         logger::debug() << "Stream peer - secondary " << ep;
         // Ignore ep if it's a loopback.
         if (ep.address().is_loopback() or ep.address().is_unspecified()) {
             continue;
         }
-        add_location_hint(ep);
+        // Calculate common prefix length between ep and our local endpoints addresses.
+        output_endpoints.push_back(ep);
     }
+
+    for (auto& ep : output_endpoints
+    {
+        logger::debug() << "Stream peer - secondary " << ep;
+        // Ignore ep if it's a loopback.
+        if (ep.address().is_loopback() or ep.address().is_unspecified()) {
+            continue;
+        }
+        
+        // @todo Multiple key exchanges seem to cause some protocol confusion... fix it
+        // add_location_hint(ep);
+    }
+#endif
 }
 
 void stream_peer::regclient_destroyed(ur::client *rc)
