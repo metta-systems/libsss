@@ -23,6 +23,9 @@ create_test(sim_link LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
 create_test(sim_connection LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
 create_test(simulator LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES})
 
+# Regression tests are fairly long
+create_test(datagrams LIBS ${SSULIBS} support plist krypto ${OPENSSL_LIBRARIES} NO_CTEST)
+
 # These need a way to limit io_service run time (or a way to cancel async_receive_from).
 create_test(udp_link LIBS ssu support plist krypto ${OPENSSL_LIBRARIES} NO_CTEST)
 create_test(run_udp_receiver LIBS ssu support plist krypto ${OPENSSL_LIBRARIES} NO_CTEST)
