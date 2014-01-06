@@ -13,9 +13,6 @@
 [submodule "3rdparty/krypto"]
 	path = 3rdparty/krypto
 	url = https://berkus@github.com/berkus/libkrypto.git
-[submodule "3rdparty/plist"]
-	path = 3rdparty/plist
-	url = https://berkus@github.com/berkus/PlistCpp.git
 [submodule "3rdparty/routing"]
 	path = 3rdparty/routing
 	url = https://berkus@github.com/berkus/librouting.git
