@@ -9,8 +9,8 @@
 #define BOOST_TEST_MODULE Test_sim_host
 #include <boost/test/unit_test.hpp>
 
-#include "simulation/simulator.h"
-#include "simulation/sim_host.h"
+#include "ssu/simulation/simulator.h"
+#include "ssu/simulation/sim_host.h"
 
 using namespace std;
 using namespace ssu;

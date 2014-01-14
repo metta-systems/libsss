@@ -9,9 +9,9 @@
 #pragma once
 
 #include "byte_array.h"
-#include "protocol.h"
-#include "peer_id.h"
-#include "stream.h"
+#include "ssu/protocol.h"
+#include "ssu/peer_id.h"
+#include "ssu/stream.h"
 #include "underlying.h"
 
 namespace ssu {
@@ -22,10 +22,10 @@ namespace internal {
     class stream_peer;
 }
 
-/** 
+/**
  * @internal
  * Abstract base class for internal stream control objects.
- * 
+ *
  * The separation between the internal stream control object and the
  * application-visible stream object is primarily needed so that ssu can
  * hold onto a stream's state and gracefully shut it down after the
@@ -43,7 +43,7 @@ class abstract_stream : public stream_protocol
 
 protected:
     std::shared_ptr<host> host_;    ///< Per-host state.
-    std::weak_ptr<stream> owner_;   ///< Back-pointer to stream object, 
+    std::weak_ptr<stream> owner_;   ///< Back-pointer to stream object,
                                     ///< or nullptr if stream has been deleted.
     peer_id peerid_;                ///< EID of peer we're connected to.
 
@@ -76,7 +76,7 @@ public:
      */
     virtual bool is_link_up() const = 0;
 
-    /** 
+    /**
      * Set the stream's transmit priority level.
      * When the application has multiple streams
      * with data ready to transmit to the same remote host,

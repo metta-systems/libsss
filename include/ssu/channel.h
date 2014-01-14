@@ -9,9 +9,9 @@
 #pragma once
 
 #include "byte_array.h"
-#include "link.h"
-#include "link_channel.h"
-#include "channel_armor.h"
+#include "ssu/link.h"
+#include "ssu/link_channel.h"
+#include "ssu/channel_armor.h"
 
 namespace ssu {
 
@@ -44,7 +44,7 @@ public:
      * to be transmitted with channel_transmit() or received via channel_receive().
      * @fixme won't always be static const.
      *
-     * Channel header consists of 
+     * Channel header consists of
      * +--------------------------------+-------------------------+
      * | 24-31: Channel number          | 0-23: Transmit sequence | 4 bytes first header word
      * +-------------+------------------+-------------------------+

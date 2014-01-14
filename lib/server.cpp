@@ -7,10 +7,10 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/format.hpp>
-#include "server.h"
-#include "stream.h"
+#include "ssu/server.h"
+#include "ssu/stream.h"
 #include "logging.h"
-#include "base_stream.h"
+#include "ssu/base_stream.h"
 
 using namespace std;
 

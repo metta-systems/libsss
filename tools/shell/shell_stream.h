@@ -10,7 +10,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include "shell_protocol.h"
-#include "stream.h"
+#include "ssu/stream.h"
 
 // Common base class for managing both client- and server-side shell streams.
 // Handles encoding and decoding control messages embedded within the stream.

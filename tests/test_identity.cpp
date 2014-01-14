@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Test_identity
 #include <boost/test/unit_test.hpp>
 
-#include "identity.h"
+#include "ssu/identity.h"
 
 using namespace std;
 using namespace ssu;

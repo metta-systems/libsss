@@ -8,10 +8,10 @@
 //
 #include <deque>
 #include <boost/format.hpp>
-#include "channel.h"
+#include "ssu/channel.h"
 #include "logging.h"
-#include "host.h"
-#include "timer.h"
+#include "ssu/host.h"
+#include "ssu/timer.h"
 #include "make_unique.h"
 
 using namespace std;
@@ -241,7 +241,7 @@ void congestion_control_strategy::missed(uint64_t pktseq)
 
     switch (mode)
     {
-        case CC_TCP: 
+        case CC_TCP:
         case CC_DELAY:
         case CC_VEGAS:
             // Packet loss detected -
@@ -294,7 +294,7 @@ void congestion_control_strategy::missed(uint64_t pktseq)
 
 void congestion_control_strategy::timeout()
 {
-    // If fixed cwnd, no congestion control, otherwise 
+    // If fixed cwnd, no congestion control, otherwise
     // Reset cwnd and go back to slow start
     if (mode != CC_FIXED)
     {
@@ -764,7 +764,7 @@ int channel::may_transmit()
 
 uint32_t channel::make_first_header_word(channel_number channel, uint32_t tx_sequence)
 {
-    constexpr uint32_t seq_bits = 24;  
+    constexpr uint32_t seq_bits = 24;
     constexpr uint32_t seq_mask = (1 << seq_bits) - 1;
 
     // 31-24: channel number
@@ -774,9 +774,9 @@ uint32_t channel::make_first_header_word(channel_number channel, uint32_t tx_seq
 
 uint32_t channel::make_second_header_word(uint8_t ack_count, uint32_t ack_sequence)
 {
-    constexpr uint32_t ack_cnt_bits = 4; 
+    constexpr uint32_t ack_cnt_bits = 4;
     constexpr uint32_t ack_cnt_mask = (1 << ack_cnt_bits) - 1;
-    constexpr uint32_t ack_seq_bits = 24;   
+    constexpr uint32_t ack_seq_bits = 24;
     constexpr uint32_t ack_seq_mask = (1 << ack_seq_bits) - 1;
 
     // 31-28: reserved field
@@ -790,7 +790,7 @@ bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
     assert(packet.size() > header_len); // Must be non-empty data packet.
 
     // Include implicit acknowledgment of the latest packet(s) we've acked
-    uint32_t ack_seq = 
+    uint32_t ack_seq =
         make_second_header_word(pimpl_->state_->rx_ack_count_, pimpl_->state_->rx_ack_sequence_);
     if (pimpl_->state_->rx_unacked_)
     {
@@ -1190,7 +1190,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
                 packet_seq_t(max(pimpl_->state_->miss_threshold_, new_packets)));
 
         for (packet_seq_t miss_seq = pimpl_->state_->tx_ack_sequence_ -
-            min(pimpl_->state_->tx_ack_sequence_, 
+            min(pimpl_->state_->tx_ack_sequence_,
                 packet_seq_t(pimpl_->state_->miss_threshold_ + ack_diff - 1));
             miss_seq <= miss_lim;
             ++miss_seq)

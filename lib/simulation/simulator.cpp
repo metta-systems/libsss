@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "simulation/simulator.h"
-#include "simulation/sim_timer_engine.h"
+#include "ssu/simulation/simulator.h"
+#include "ssu/simulation/sim_timer_engine.h"
 #include "logging.h"
 
 namespace ssu {

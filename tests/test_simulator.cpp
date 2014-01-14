@@ -10,12 +10,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include "test_data_helper.h"
-#include "stream.h"
-#include "server.h"
-#include "simulation/simulator.h"
-#include "simulation/sim_host.h"
-#include "simulation/sim_link.h"
-#include "simulation/sim_connection.h"
+#include "ssu/stream.h"
+#include "ssu/server.h"
+#include "ssu/simulation/simulator.h"
+#include "ssu/simulation/sim_host.h"
+#include "ssu/simulation/sim_link.h"
+#include "ssu/simulation/sim_connection.h"
 
 using namespace std;
 using namespace ssu;

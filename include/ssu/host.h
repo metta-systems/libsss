@@ -8,12 +8,12 @@
 //
 #pragma once
 
-#include "dh.h"
-#include "link.h"
-#include "timer.h"
-#include "identity.h"
-#include "negotiation/key_responder.h"
-#include "private/stream_host_state.h"
+#include "ssu/dh.h"
+#include "ssu/link.h"
+#include "ssu/timer.h"
+#include "ssu/identity.h"
+#include "ssu/negotiation/key_responder.h"
+#include "ssu/private/stream_host_state.h"
 #include "routing_host_state.h"
 #include "logging.h"
 
@@ -26,7 +26,7 @@ namespace ssu {
  * By centralizing this state here instead of using global/static variables,
  * the host environment can be virtualized for simulation purposes
  * and multiple ssu instances can be run in one process.
- * 
+ *
  * It is the client's responsibility to ensure that a host object
  * is not destroyed while any ssu objects still refer to it.
  *

@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "algorithm.h"
-#include "stream_channel.h"
-#include "private/stream_peer.h"
+#include "ssu/stream_channel.h"
+#include "ssu/private/stream_peer.h"
 #include "logging.h"
 
 using namespace std;
@@ -127,7 +127,7 @@ void stream_channel::start(bool initiate)
     logger::debug() << "Stream channel - start as " << (initiate ? "initiator" : "responder");
     super::start(initiate);
     assert(is_active());
- 
+
     // Set the root stream's USID based on our channel ID
     root_->usid_.half_channel_id_ = initiate ? tx_channel_id() : rx_channel_id();
     root_->usid_.counter_ = 0;

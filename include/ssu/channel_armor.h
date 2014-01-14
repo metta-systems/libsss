@@ -9,7 +9,7 @@
 #pragma once
 
 #include "byte_array.h"
-#include "link.h"
+#include "ssu/link.h"
 
 namespace ssu {
 

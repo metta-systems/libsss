@@ -6,12 +6,12 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "simulation/sim_host.h"
-#include "simulation/sim_timer_engine.h"
-#include "simulation/simulator.h"
-#include "simulation/sim_link.h"
-#include "simulation/sim_packet.h"
-#include "simulation/sim_connection.h"
+#include "ssu/simulation/sim_host.h"
+#include "ssu/simulation/sim_timer_engine.h"
+#include "ssu/simulation/simulator.h"
+#include "ssu/simulation/sim_link.h"
+#include "ssu/simulation/sim_packet.h"
+#include "ssu/simulation/sim_connection.h"
 #include "make_unique.h"
 #include "algorithm.h"
 

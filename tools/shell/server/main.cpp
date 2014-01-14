@@ -8,7 +8,7 @@
 //
 #include "settings_provider.h"
 #include "shell_server.h"
-#include "host.h"
+#include "ssu/host.h"
 
 int main(int argc, char **argv)
 {

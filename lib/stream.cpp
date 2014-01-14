@@ -8,15 +8,15 @@
 //
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/copy.hpp>
-#include "stream.h"
-#include "stream_channel.h"
-#include "private/stream_peer.h"
-#include "base_stream.h"
-#include "identity.h"
+#include "ssu/stream.h"
+#include "ssu/stream_channel.h"
+#include "ssu/private/stream_peer.h"
+#include "ssu/base_stream.h"
+#include "ssu/identity.h"
 #include "logging.h"
-#include "host.h"
+#include "ssu/host.h"
 #include "algorithm.h"
-#include "negotiation/key_responder.h"
+#include "ssu/negotiation/key_responder.h"
 #include "routing_client.h"
 
 using namespace std;
@@ -109,7 +109,7 @@ bool stream::is_link_up() const
     return stream_->is_link_up();
 }
 
-bool stream::connect_to(peer_id const& destination, 
+bool stream::connect_to(peer_id const& destination,
     string service, string protocol,
     endpoint const& destination_endpoint_hint)
 {
@@ -368,7 +368,7 @@ shared_ptr<stream> stream::accept_substream()
         set_error("No waiting substreams");
         return nullptr;
     }
- 
+
     return make_shared<stream>(new_stream, this);
 }
 

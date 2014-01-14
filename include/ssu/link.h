@@ -17,8 +17,8 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include "byte_array.h"
-#include "asio_host_state.h"
-#include "link_receiver.h"
+#include "ssu/asio_host_state.h"
+#include "ssu/link_receiver.h"
 #include "flurry.h"
 #include "algorithm.h"
 
@@ -430,7 +430,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, ssu::link_endpoint& 
 // Hash specialization for endpoint
 namespace std {
 
-template<> 
+template<>
 struct hash<ssu::endpoint> : public std::unary_function<ssu::endpoint, size_t>
 {
     inline size_t operator()(ssu::endpoint const& a) const noexcept

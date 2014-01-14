@@ -11,8 +11,8 @@
 #include "byte_array.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
-#include "protocol.h"
-#include "negotiation/key_message.h"
+#include "ssu/protocol.h"
+#include "ssu/negotiation/key_message.h"
 
 /**
  * Generate a binary blob for testing key_message.h I/O functions.

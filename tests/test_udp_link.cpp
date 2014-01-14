@@ -9,10 +9,10 @@
 #define BOOST_TEST_MODULE Test_ssu_link
 #include <boost/test/unit_test.hpp>
 
-#include "link.h"
-#include "host.h"
-#include "negotiation/key_message.h"
-#include "negotiation/key_responder.h"
+#include "ssu/link.h"
+#include "ssu/host.h"
+#include "ssu/negotiation/key_message.h"
+#include "ssu/negotiation/key_responder.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
 

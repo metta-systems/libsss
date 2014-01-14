@@ -9,8 +9,8 @@
 #define BOOST_TEST_MODULE Test_ssu_stream_user
 #include <boost/test/unit_test.hpp>
 
-#include "host.h"
-#include "stream.h"
+#include "ssu/host.h"
+#include "ssu/stream.h"
 
 using namespace std;
 using namespace ssu;

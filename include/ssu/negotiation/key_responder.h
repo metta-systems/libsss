@@ -10,11 +10,11 @@
 
 #include <memory>
 #include <boost/signals2/signal.hpp>
-#include "link.h"
-#include "timer.h"
+#include "ssu/link.h"
+#include "ssu/timer.h"
 #include "krypto.h"
-#include "peer_id.h"
-#include "negotiation/key_message.h"
+#include "ssu/peer_id.h"
+#include "ssu/negotiation/key_message.h"
 
 namespace ssu {
 
@@ -100,7 +100,7 @@ private:
  * Key initiator maintains host state with respect to initiated key exchanges.
  * One initiator keeps state about key exchange with one peer.
  *
- * XXX we should really have a separate Idle state, 
+ * XXX we should really have a separate Idle state,
  * so that clients can hookup signals before starting key exchange.
  * XXX make key_initiator an abstract base class like key_responder,
  * calling a create_channel() method when it needs to set up a channel
@@ -153,7 +153,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
      * Encrypted and authenticated identity information.
      */
     byte_array                                 encrypted_identity_info_;
-    
+
     /**
      * Opaque user info block transmitted in init2 phase.
      */

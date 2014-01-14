@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Test_ssu_server
 #include <boost/test/unit_test.hpp>
 
-#include "server.h"
+#include "ssu/server.h"
 
 using namespace std;
 using namespace ssu;

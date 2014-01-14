@@ -9,12 +9,12 @@
 #define BOOST_TEST_MODULE Test_key_message_serialization
 #include <boost/test/unit_test.hpp>
 #include <fstream>
-#include "protocol.h"
+#include "ssu/protocol.h"
 #include "byte_array.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
-#include "negotiation/key_message.h"
-#include "link.h"
+#include "ssu/negotiation/key_message.h"
+#include "ssu/link.h"
 #include "test_data_helper.h"
 #include "logging.h"
 

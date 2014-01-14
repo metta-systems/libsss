@@ -8,11 +8,11 @@
 //
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real.hpp>
-#include "simulation/simulator.h"
-#include "simulation/sim_packet.h"
-#include "simulation/sim_host.h"
-#include "simulation/sim_link.h"
-#include "simulation/sim_connection.h"
+#include "ssu/simulation/simulator.h"
+#include "ssu/simulation/sim_packet.h"
+#include "ssu/simulation/sim_host.h"
+#include "ssu/simulation/sim_link.h"
+#include "ssu/simulation/sim_connection.h"
 #include "logging.h"
 
 namespace ssu {

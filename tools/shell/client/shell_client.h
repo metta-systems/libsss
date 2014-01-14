@@ -9,7 +9,7 @@
 #include "shell_protocol.h"
 #include "shell_stream.h"
 #include "async_file.h"
-#include "host.h"
+#include "ssu/host.h"
 
 class shell_client : public shell_protocol
 {

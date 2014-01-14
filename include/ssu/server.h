@@ -11,9 +11,9 @@
 #include <queue>
 #include <boost/signals2/signal.hpp>
 #include "byte_array.h"
-#include "host.h"
-#include "peer_id.h"
-#include "stream.h"
+#include "ssu/host.h"
+#include "ssu/peer_id.h"
+#include "ssu/stream.h"
 
 namespace ssu {
 
@@ -21,7 +21,7 @@ class base_stream;
 
 /**
  * This class represents a server that can accept incoming SSU connections.
- * 
+ *
  * To use this class, the application creates a server instance, calls listen() to begin
  * listening for connections, and upon arrival of a on_new_connection() signal uses accept()
  * to accept any queued incoming connections.
@@ -46,7 +46,7 @@ public:
      */
     server(std::shared_ptr<host> host);
 
-    /** 
+    /**
      * Listen for incoming connections to a particular service using a particular
      * application protocol. This method may only be called once on a server instance.
      * An error occurs if another server object is already listening on the specified

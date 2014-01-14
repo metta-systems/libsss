@@ -11,8 +11,8 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/signals2/signal.hpp>
-#include "asio_host_state.h"
-#include "timer_engine.h"
+#include "ssu/asio_host_state.h"
+#include "ssu/timer_engine.h"
 
 namespace ssu {
 
@@ -101,7 +101,7 @@ public:
      *
      * timeout signal handler signature is
      * void timeout(bool failed)
-     * 
+     *
      * Argument 'failed' is true if the hard failure deadline has been reached.
      */
     timeout_signal on_timeout;

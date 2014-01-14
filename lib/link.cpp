@@ -6,15 +6,15 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "link.h"
-#include "link_channel.h"
-#include "link_receiver.h"
+#include "ssu/link.h"
+#include "ssu/link_channel.h"
+#include "ssu/link_receiver.h"
 #include "logging.h"
 #include "flurry.h"
 #include "byte_array_wrap.h"
 #include "settings_provider.h"
-#include "host.h"
-#include "platform.h"
+#include "ssu/host.h"
+#include "ssu/platform.h"
 #include "any_int_cast.h"
 
 using namespace std;

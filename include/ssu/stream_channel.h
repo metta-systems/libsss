@@ -10,8 +10,8 @@
 
 #include <queue>
 #include <unordered_map>
-#include "channel.h"
-#include "base_stream.h"
+#include "ssu/channel.h"
+#include "ssu/base_stream.h"
 
 namespace ssu {
 

@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Test_ssu_host
 #include <boost/test/unit_test.hpp>
 
-#include "host.h"
+#include "ssu/host.h"
 
 using namespace ssu;
 

@@ -6,16 +6,16 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "negotiation/key_responder.h"
-#include "negotiation/key_message.h"
+#include "ssu/negotiation/key_responder.h"
+#include "ssu/negotiation/key_message.h"
 #include "sha256_hash.h"
 #include "aes_256_cbc.h"
-#include "aes_armor.h"
-#include "host.h"
+#include "ssu/aes_armor.h"
+#include "ssu/host.h"
 #include "byte_array_wrap.h"
 #include "flurry.h"
-#include "channel.h"
-#include "link.h"
+#include "ssu/channel.h"
+#include "ssu/link.h"
 #include "make_unique.h"
 #include "algorithm.h"
 
@@ -292,7 +292,7 @@ void key_responder::got_probe0(link_endpoint const& src)
 // To fix this, we might not send R0 packets from the peer being contacted if it detects that
 // the same address is already attempting to establish a session.
 // This is not entirely robust though.
-// The other thing might be replay protection, refuse continuing the contact after dh_init1 if 
+// The other thing might be replay protection, refuse continuing the contact after dh_init1 if
 // there's a duplicate request coming in (that's how it should work I believe).
 // dh.cpp has r2_cache_ of r2 replay protection data.
 

@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include "shell_session.h"
 #include "logging.h"
-#include "host.h"
+#include "ssu/host.h"
 
 using namespace std;
 
@@ -358,7 +358,7 @@ void shell_session::child_done()
             flags |= 1;
         string errmsg;
         string langtag;        // XXX RFC3066 lang tag?
-        
+
         byte_array_owrap<flurry::oarchive> write(cmsg);
         write.archive() << ExitSignal << flags << signame << errmsg << langtag;
     }

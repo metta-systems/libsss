@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include "host.h"
+#include "ssu/host.h"
 #include "shell_client.h"
 #include "settings_provider.h"
 

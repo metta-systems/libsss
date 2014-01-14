@@ -6,11 +6,11 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "aes_armor.h"
+#include "ssu/aes_armor.h"
 #include "krypto.h"
 #include "opaque_endian.h"
 #include "logging.h"
-#include "channel.h"
+#include "ssu/channel.h"
 
 // Info http://stackoverflow.com/questions/3141860/aes-ctr-256-encryption-mode-of-operation
 // @todo use EVP_aes_128_ctr instead of manual

@@ -10,7 +10,7 @@
 #include <boost/asio.hpp>
 #include <algorithm>
 #include "logging.h"
-#include "platform.h"
+#include "ssu/platform.h"
 #include "byte_array.h"
 
 using namespace std;

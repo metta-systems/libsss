@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "simulation/sim_timer_engine.h"
-#include "simulation/simulator.h"
+#include "ssu/simulation/sim_timer_engine.h"
+#include "ssu/simulation/simulator.h"
 
 namespace ssu {
 namespace simulation {

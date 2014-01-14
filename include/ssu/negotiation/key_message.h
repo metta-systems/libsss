@@ -13,7 +13,7 @@
 #include "flurry.h"
 #include "underlying.h"
 #include "opaque_endian.h"
-#include "protocol.h"
+#include "ssu/protocol.h"
 
 namespace ssu {
 namespace negotiation {

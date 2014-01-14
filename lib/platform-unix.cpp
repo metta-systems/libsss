@@ -15,7 +15,7 @@
 #include <boost/asio.hpp>
 #include <algorithm>
 #include "logging.h"
-#include "platform.h"
+#include "ssu/platform.h"
 
 using namespace std;
 
@@ -52,7 +52,7 @@ std::vector<ssu::endpoint> local_endpoints()
         sockaddr_in* addr_in = (sockaddr_in*) a->ifa_addr;
 
         if (sa
-            and ((sa->sa_family == AF_INET) or (sa->sa_family == AF_INET6)) 
+            and ((sa->sa_family == AF_INET) or (sa->sa_family == AF_INET6))
             and (a->ifa_flags & IFF_UP))
         {
             if (sa->sa_family == AF_INET)

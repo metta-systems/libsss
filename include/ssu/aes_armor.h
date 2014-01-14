@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "channel_armor.h"
+#include "ssu/channel_armor.h"
 #include "aes_128_ctr.h"
 
 namespace ssu {

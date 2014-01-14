@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/format.hpp>
-#include "simulation/sim_connection.h"
-#include "simulation/sim_host.h"
+#include "ssu/simulation/sim_connection.h"
+#include "ssu/simulation/sim_host.h"
 #include "logging.h"
 
 namespace ssu {

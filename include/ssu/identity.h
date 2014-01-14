@@ -9,16 +9,16 @@
 #pragma once
 
 #include <stdexcept>
-#include "link.h"
+#include "ssu/link.h"
 #include "byte_array.h"
-#include "peer_id.h"
+#include "ssu/peer_id.h"
 #include "sign_key.h"
 
 class settings_provider;
 
 namespace ssu {
 
-/** 
+/**
  * Represents an endpoint identifier and optionally an associated cryptographic signing key.
  *
  * SSU uses EIDs in place of IP addresses to identify hosts or virtual endpoint identities

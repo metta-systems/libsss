@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "server.h"
+#include "ssu/server.h"
 #include "shell_protocol.h"
 
 class shell_server : public shell_protocol

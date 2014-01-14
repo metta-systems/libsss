@@ -1,3 +1,5 @@
+#pragma once
+
 // @todo Port length-delimited option and remove this file
 //
 // Length-delimited option type.

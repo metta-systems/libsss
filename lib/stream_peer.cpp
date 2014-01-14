@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "private/stream_peer.h"
-#include "stream_channel.h"
+#include "ssu/private/stream_peer.h"
+#include "ssu/stream_channel.h"
 #include "algorithm.h"
 #include "routing_client.h"
 #include "client_profile.h"
@@ -248,7 +248,7 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
         if (ep.address().is_loopback() or ep.address().is_unspecified()) {
             continue;
         }
-        
+
         // @todo Multiple key exchanges seem to cause some protocol confusion... fix it
         // add_location_hint(ep);
     }
@@ -341,7 +341,7 @@ void stream_peer::channel_started(stream_channel* channel)
     {
         // If we already have a working primary channel, we don't need a new one.
         if (primary_channel_->link_status() == link::status::up)
-            return; 
+            return;
 
         // But if the current primary is on the blink, replace it.
         clear_primary_channel();
@@ -407,7 +407,7 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
 
     // Remove and schedule the key initiator for deletion, in case it wasn't removed already
     // (e.g., if key agreement failed).
-    // 
+    //
     // @todo Delete channel automatically if key_initiator failed...
     link_endpoint lep = ki->remote_endpoint();
 

@@ -8,8 +8,8 @@
 //
 #pragma once
 
-#include "link.h"
-#include "timer.h"
+#include "ssu/link.h"
+#include "ssu/timer.h"
 
 namespace ssu {
 namespace simulation {

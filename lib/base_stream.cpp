@@ -6,16 +6,16 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "base_stream.h"
-#include "datagram_stream.h"
+#include "ssu/base_stream.h"
+#include "ssu/datagram_stream.h"
 #include "logging.h"
-#include "host.h"
-#include "private/stream_peer.h"
-#include "stream_channel.h"
+#include "ssu/host.h"
+#include "ssu/private/stream_peer.h"
+#include "ssu/stream_channel.h"
 #include "flurry.h"
 #include "byte_array_wrap.h"
 #include "algorithm.h"
-#include "server.h"
+#include "ssu/server.h"
 
 using namespace std;
 
@@ -27,7 +27,7 @@ namespace ssu {
 
 constexpr int base_stream::max_attachments;
 
-base_stream::base_stream(shared_ptr<host> host, 
+base_stream::base_stream(shared_ptr<host> host,
                          const peer_id& peer_id,
                          shared_ptr<base_stream> parent)
     : abstract_stream(host)
@@ -273,7 +273,7 @@ void base_stream::recalculate_receive_window()
     receive_window_byte_ = i;
 
     logger::debug() << "buffered "
-        << rx_available_ << "+" << (rx_buffer_used_ - rx_available_) 
+        << rx_available_ << "+" << (rx_buffer_used_ - rx_available_)
         << ", new receive window " << rwin << ", exp " << i;
 }
 
@@ -1069,17 +1069,17 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
     // self_.reset();
 
 // as per the PDF:
-// As in TCP, either host may unilaterally terminate an SST stream in both directions and discard 
-// any buffered data. A host resets a stream by sending a Reset packet (Figure 6) containing 
+// As in TCP, either host may unilaterally terminate an SST stream in both directions and discard
+// any buffered data. A host resets a stream by sending a Reset packet (Figure 6) containing
 // an LSID in either the sender’s or receiver’s LSID space, and an O (Orientation) flag indicating
-// in which space the LSID is to be interpreted. When a host uses a Reset packet to terminate 
+// in which space the LSID is to be interpreted. When a host uses a Reset packet to terminate
 // a stream it believes to be active, it uses its own LSID referring to the stream, and resends
 // the Reset packet as necessary until it obtains an acknowledgment. A host also sends a Reset
-// in response to a packet it receives referring to an unknown LSID or USID. This situation 
+// in response to a packet it receives referring to an unknown LSID or USID. This situation
 // may occur if the host has closed and garbage collected its state for a stream but one of its
 // acknowledgments to its peer’s data segments is lost in transit, causing its peer to retransmit
-// those segments. The stateless Reset response indicates to the peer that it can garbage collect 
-// its stream state as well. Stateless Reset responses always refer to the peer’s LSID space, 
+// those segments. The stateless Reset response indicates to the peer that it can garbage collect
+// its stream state as well. Stateless Reset responses always refer to the peer’s LSID space,
 // since by definition the host itself does not have an LSID assigned to the unknown stream.
 }
 
@@ -1113,7 +1113,7 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
             // fall through...
 
         case packet_type::attach:
-            if (tx_current_attachment_ 
+            if (tx_current_attachment_
                 and tx_current_attachment_->channel_ == channel
                 and !tx_current_attachment_->is_acknowledged())
             {
@@ -1166,7 +1166,7 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
             end_flight(pkt);
             // Retransmit reliable segments...
             packet p = pkt;
-            tx_enqueue_packet(p); 
+            tx_enqueue_packet(p);
             return true; // ...but keep the tx record until expiry in case it gets acked late!
         }
 
@@ -1956,7 +1956,7 @@ void base_stream::got_service_reply()
         return fail(oss.str());
     }
 
-    logger::debug() << "got_service_reply code '" << code << "' status '" << status << "' message '" 
+    logger::debug() << "got_service_reply code '" << code << "' status '" << status << "' message '"
         << message << "'";
 
     state_ = state::connected;

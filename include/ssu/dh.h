@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <openssl/dh.h>
 #include "byte_array.h"
-#include "timer.h"
-#include "negotiation/key_message.h"
+#include "ssu/timer.h"
+#include "ssu/negotiation/key_message.h"
 
 namespace ssu {
 

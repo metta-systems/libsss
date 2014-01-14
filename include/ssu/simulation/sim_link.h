@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "link.h"
+#include "ssu/link.h"
 
 namespace ssu {
 

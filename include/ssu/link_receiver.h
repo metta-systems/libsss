@@ -9,7 +9,7 @@
 #pragma once
 
 #include <memory>
-#include "protocol.h"
+#include "ssu/protocol.h"
 
 class byte_array;
 

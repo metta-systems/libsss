@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "dh.h"
-#include "host.h"
+#include "ssu/dh.h"
+#include "ssu/host.h"
 #include "utils.h"
 
 using namespace std;

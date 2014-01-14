@@ -10,8 +10,8 @@
 
 #include <map>
 #include <vector>
-#include "host.h"
-#include "link.h"
+#include "ssu/host.h"
+#include "ssu/link.h"
 
 namespace ssu {
 namespace simulation {
