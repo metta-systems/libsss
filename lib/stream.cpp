@@ -17,7 +17,7 @@
 #include "ssu/host.h"
 #include "algorithm.h"
 #include "ssu/negotiation/key_responder.h"
-#include "routing_client.h"
+#include "routing/routing_client.h"
 
 using namespace std;
 namespace ur = uia::routing;

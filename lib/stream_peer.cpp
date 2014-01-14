@@ -9,8 +9,8 @@
 #include "ssu/private/stream_peer.h"
 #include "ssu/stream_channel.h"
 #include "algorithm.h"
-#include "routing_client.h"
-#include "client_profile.h"
+#include "routing/routing_client.h"
+#include "routing/client_profile.h"
 
 using namespace std;
 namespace ur = uia::routing;

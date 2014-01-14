@@ -10,7 +10,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include <memory>
-#include "coordinator.h"
+#include "routing/coordinator.h"
 
 namespace ssu {
 
