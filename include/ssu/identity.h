@@ -12,7 +12,7 @@
 #include "ssu/link.h"
 #include "byte_array.h"
 #include "ssu/peer_id.h"
-#include "sign_key.h"
+#include "krypto/sign_key.h"
 
 class settings_provider;
 

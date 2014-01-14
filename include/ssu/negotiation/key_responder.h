@@ -12,7 +12,7 @@
 #include <boost/signals2/signal.hpp>
 #include "ssu/link.h"
 #include "ssu/timer.h"
-#include "krypto.h"
+#include "krypto/krypto.h"
 #include "ssu/peer_id.h"
 #include "ssu/negotiation/key_message.h"
 

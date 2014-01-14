@@ -8,8 +8,8 @@
 //
 #include "ssu/negotiation/key_responder.h"
 #include "ssu/negotiation/key_message.h"
-#include "sha256_hash.h"
-#include "aes_256_cbc.h"
+#include "krypto/sha256_hash.h"
+#include "krypto/aes_256_cbc.h"
 #include "ssu/aes_armor.h"
 #include "ssu/host.h"
 #include "byte_array_wrap.h"

@@ -7,9 +7,9 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "ssu/identity.h"
-#include "sha256_hash.h"
-#include "dsa160_key.h"
-#include "rsa160_key.h"
+#include "krypto/sha256_hash.h"
+#include "krypto/dsa160_key.h"
+#include "krypto/rsa160_key.h"
 #include "logging.h"
 #include "settings_provider.h"
 
