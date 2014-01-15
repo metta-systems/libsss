@@ -4,9 +4,6 @@
 [submodule "travis-ci"]
 	path = travis-ci
 	url = https://berkus@github.com/berkus/travis-scripts.git
-[submodule "3rdparty/support"]
-	path = 3rdparty/support
-	url = https://berkus@github.com/berkus/libsupport.git
 [submodule "3rdparty/endian"]
 	path = 3rdparty/endian
 	url = https://berkus@github.com/berkus/endian.git
@@ -16,3 +13,6 @@
 [submodule "3rdparty/routing"]
 	path = 3rdparty/routing
 	url = https://berkus@github.com/berkus/librouting.git
+[submodule "3rdparty/arsenal"]
+	path = 3rdparty/arsenal
+	url = https://berkus@github.com/berkus/libarsenal.git
