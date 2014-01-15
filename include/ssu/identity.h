@@ -10,7 +10,7 @@
 
 #include <stdexcept>
 #include "ssu/link.h"
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/peer_id.h"
 #include "krypto/sign_key.h"
 

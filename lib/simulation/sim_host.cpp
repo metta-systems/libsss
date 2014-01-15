@@ -12,8 +12,8 @@
 #include "ssu/simulation/sim_link.h"
 #include "ssu/simulation/sim_packet.h"
 #include "ssu/simulation/sim_connection.h"
-#include "make_unique.h"
-#include "algorithm.h"
+#include "arsenal/make_unique.h"
+#include "arsenal/algorithm.h"
 
 using namespace std;
 

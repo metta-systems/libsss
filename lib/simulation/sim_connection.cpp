@@ -9,7 +9,7 @@
 #include <boost/format.hpp>
 #include "ssu/simulation/sim_connection.h"
 #include "ssu/simulation/sim_host.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 namespace ssu {
 namespace simulation {

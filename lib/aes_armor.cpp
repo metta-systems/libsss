@@ -8,8 +8,8 @@
 //
 #include "ssu/aes_armor.h"
 #include "krypto/krypto.h"
-#include "opaque_endian.h"
-#include "logging.h"
+#include "arsenal/opaque_endian.h"
+#include "arsenal/logging.h"
 #include "ssu/channel.h"
 
 // Info http://stackoverflow.com/questions/3141860/aes-ctr-256-encryption-mode-of-operation

@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <utility>
 #include <string>
-#include "hash_combine.h"
-#include "algorithm.h"
+#include "arsenal/hash_combine.h"
+#include "arsenal/algorithm.h"
 
 // Hash specialization for pair<string,string>
 // Need to have it before declaration of listeners_ below.

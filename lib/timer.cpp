@@ -9,7 +9,7 @@
 #include <boost/asio.hpp>
 #include "ssu/timer.h"
 #include "ssu/timer_engine.h"
-#include "make_unique.h"
+#include "arsenal/make_unique.h"
 
 namespace bp = boost::posix_time;
 

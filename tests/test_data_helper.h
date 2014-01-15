@@ -8,9 +8,9 @@
 //
 #pragma once
 
-#include "byte_array.h"
-#include "byte_array_wrap.h"
-#include "flurry.h"
+#include "arsenal/byte_array.h"
+#include "arsenal/byte_array_wrap.h"
+#include "arsenal/flurry.h"
 #include "ssu/protocol.h"
 #include "ssu/negotiation/key_message.h"
 

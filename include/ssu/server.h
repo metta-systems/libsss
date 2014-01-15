@@ -10,7 +10,7 @@
 
 #include <queue>
 #include <boost/signals2/signal.hpp>
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/host.h"
 #include "ssu/peer_id.h"
 #include "ssu/stream.h"

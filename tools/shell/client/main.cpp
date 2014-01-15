@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #include "ssu/host.h"
 #include "shell_client.h"
-#include "settings_provider.h"
+#include "arsenal/settings_provider.h"
 
 using namespace ssu;
 using namespace std;

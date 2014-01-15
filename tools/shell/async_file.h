@@ -11,7 +11,7 @@
 #include <deque>
 #include <boost/asio.hpp> // @todo More precise include, please
 #include <boost/signals2/signal.hpp>
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 
 /**
  * Generic asynchronous I/O wrapper for using native file descriptors

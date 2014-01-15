@@ -16,11 +16,11 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/asio_host_state.h"
 #include "ssu/link_receiver.h"
-#include "flurry.h"
-#include "algorithm.h"
+#include "arsenal/flurry.h"
+#include "arsenal/algorithm.h"
 
 class settings_provider;
 

@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/link.h"
 
 namespace ssu {

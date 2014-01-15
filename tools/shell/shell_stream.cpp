@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "shell_stream.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 shell_stream::shell_stream(std::shared_ptr<ssu::stream> stream)
     : rstate(RecvNormal)

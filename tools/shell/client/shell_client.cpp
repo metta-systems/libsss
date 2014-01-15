@@ -12,8 +12,8 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include "shell_client.h"
-#include "logging.h"
-#include "byte_array_wrap.h"
+#include "arsenal/logging.h"
+#include "arsenal/byte_array_wrap.h"
 
 using namespace ssu;
 using namespace std;

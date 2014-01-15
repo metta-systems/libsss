@@ -8,11 +8,11 @@
 //
 #pragma once
 
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/protocol.h"
 #include "ssu/peer_id.h"
 #include "ssu/stream.h"
-#include "underlying.h"
+#include "arsenal/underlying.h"
 
 namespace ssu {
 

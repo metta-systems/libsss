@@ -9,13 +9,13 @@
 #include "ssu/link.h"
 #include "ssu/link_channel.h"
 #include "ssu/link_receiver.h"
-#include "logging.h"
-#include "flurry.h"
-#include "byte_array_wrap.h"
-#include "settings_provider.h"
+#include "arsenal/logging.h"
+#include "arsenal/flurry.h"
+#include "arsenal/byte_array_wrap.h"
+#include "arsenal/settings_provider.h"
 #include "ssu/host.h"
 #include "ssu/platform.h"
-#include "any_int_cast.h"
+#include "arsenal/any_int_cast.h"
 
 using namespace std;
 using namespace boost::asio;

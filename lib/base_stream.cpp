@@ -8,13 +8,13 @@
 //
 #include "ssu/base_stream.h"
 #include "ssu/datagram_stream.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/host.h"
 #include "ssu/private/stream_peer.h"
 #include "ssu/stream_channel.h"
-#include "flurry.h"
-#include "byte_array_wrap.h"
-#include "algorithm.h"
+#include "arsenal/flurry.h"
+#include "arsenal/byte_array_wrap.h"
+#include "arsenal/algorithm.h"
 #include "ssu/server.h"
 
 using namespace std;

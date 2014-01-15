@@ -9,10 +9,10 @@
 #include <deque>
 #include <boost/format.hpp>
 #include "ssu/channel.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/host.h"
 #include "ssu/timer.h"
-#include "make_unique.h"
+#include "arsenal/make_unique.h"
 
 using namespace std;
 namespace bp = boost::posix_time;

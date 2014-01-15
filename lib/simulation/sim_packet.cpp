@@ -13,7 +13,7 @@
 #include "ssu/simulation/sim_host.h"
 #include "ssu/simulation/sim_link.h"
 #include "ssu/simulation/sim_connection.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 namespace ssu {
 namespace simulation {

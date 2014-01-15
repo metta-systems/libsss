@@ -12,7 +12,7 @@
 #include "shell_stream.h"
 #include "pid_watcher.h"
 #include "async_file.h"
-#include "byte_array_wrap.h"
+#include "arsenal/byte_array_wrap.h"
 
 class shell_session : private shell_protocol
 {

@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "settings_provider.h"
+#include "arsenal/settings_provider.h"
 #include "shell_server.h"
 #include "ssu/host.h"
 

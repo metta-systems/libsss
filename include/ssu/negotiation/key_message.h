@@ -9,10 +9,10 @@
 #pragma once
 
 #include <boost/optional/optional.hpp>
-#include "logging.h"
-#include "flurry.h"
-#include "underlying.h"
-#include "opaque_endian.h"
+#include "arsenal/logging.h"
+#include "arsenal/flurry.h"
+#include "arsenal/underlying.h"
+#include "arsenal/opaque_endian.h"
 #include "ssu/protocol.h"
 
 namespace ssu {

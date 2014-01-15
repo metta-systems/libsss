@@ -9,7 +9,7 @@
 #include <boost/format.hpp>
 #include "ssu/server.h"
 #include "ssu/stream.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/base_stream.h"
 
 using namespace std;

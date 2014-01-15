@@ -2,7 +2,7 @@
 
 #include <termios.h>
 #include <string>
-#include "flurry.h"
+#include "arsenal/flurry.h"
 
 class shell_protocol
 {

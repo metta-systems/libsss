@@ -8,9 +8,9 @@
 //
 #pragma once
 
-#include "byte_array.h"
-#include "flurry.h"
-#include "base32.h"
+#include "arsenal/byte_array.h"
+#include "arsenal/flurry.h"
+#include "arsenal/base32.h"
 
 namespace ssu { // @todo make this uia::peer_id
 

@@ -14,8 +14,8 @@
 #include "ssu/identity.h"
 #include "ssu/negotiation/key_responder.h"
 #include "ssu/private/stream_host_state.h"
-#include "routing_host_state.h"
-#include "logging.h"
+#include "ssu/routing_host_state.h"
+#include "arsenal/logging.h"
 
 class settings_provider;
 

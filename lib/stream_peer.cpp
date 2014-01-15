@@ -8,7 +8,7 @@
 //
 #include "ssu/private/stream_peer.h"
 #include "ssu/stream_channel.h"
-#include "algorithm.h"
+#include "arsenal/algorithm.h"
 #include "routing/routing_client.h"
 #include "routing/client_profile.h"
 

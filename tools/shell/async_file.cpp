@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "async_file.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 async_file::async_file(boost::asio::io_service& service)
     : sd(service)
@@ -79,7 +79,7 @@ void async_file::read_some(
 
     inq.emplace_back(256);
     sd.async_read_some(
-        boost::asio::buffer(inq.back().as_vector()), 
+        boost::asio::buffer(inq.back().as_vector()),
         [this](boost::system::error_code const& error, std::size_t bytes_transferred) {
             read_some(error, bytes_transferred);
         });
@@ -94,7 +94,7 @@ void async_file::write_some(
 
     inq.emplace_back(256);
     sd.async_write_some(
-        boost::asio::buffer(inq.back().as_vector()), 
+        boost::asio::buffer(inq.back().as_vector()),
         [this](boost::system::error_code const& error, std::size_t bytes_transferred) {
             read_some(error, bytes_transferred);
         });

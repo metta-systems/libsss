@@ -1,5 +1,5 @@
 #include "shell_protocol.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 const std::string shell_protocol::service_name = "Shell";
 const std::string shell_protocol::protocol_name = "MettaShell";

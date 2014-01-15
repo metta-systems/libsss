@@ -18,7 +18,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "shell_session.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/host.h"
 
 using namespace std;

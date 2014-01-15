@@ -6,10 +6,10 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "algorithm.h"
+#include "arsenal/algorithm.h"
 #include "ssu/stream_channel.h"
 #include "ssu/private/stream_peer.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 using namespace std;
 

@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/link.h"
 #include "ssu/link_channel.h"
 #include "ssu/channel_armor.h"

@@ -10,10 +10,10 @@
 
 #include <cstdint>
 #include <type_traits>
-#include "byte_array.h"
-#include "opaque_endian.h"
-#include "flurry.h"
-#include "hash_combine.h"
+#include "arsenal/byte_array.h"
+#include "arsenal/opaque_endian.h"
+#include "arsenal/flurry.h"
+#include "arsenal/hash_combine.h"
 
 namespace ssu {
 

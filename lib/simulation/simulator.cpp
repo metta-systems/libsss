@@ -9,7 +9,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ssu/simulation/simulator.h"
 #include "ssu/simulation/sim_timer_engine.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 namespace ssu {
 namespace simulation {

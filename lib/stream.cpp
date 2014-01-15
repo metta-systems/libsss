@@ -13,9 +13,9 @@
 #include "ssu/private/stream_peer.h"
 #include "ssu/base_stream.h"
 #include "ssu/identity.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/host.h"
-#include "algorithm.h"
+#include "arsenal/algorithm.h"
 #include "ssu/negotiation/key_responder.h"
 #include "routing/routing_client.h"
 

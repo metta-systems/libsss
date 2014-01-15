@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "ssu/link_channel.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 namespace ssu {
 

@@ -10,8 +10,8 @@
 #include "krypto/sha256_hash.h"
 #include "krypto/dsa160_key.h"
 #include "krypto/rsa160_key.h"
-#include "logging.h"
-#include "settings_provider.h"
+#include "arsenal/logging.h"
+#include "arsenal/settings_provider.h"
 
 using namespace std;
 

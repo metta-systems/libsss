@@ -13,8 +13,8 @@
 #include "ssu/host.h"
 #include "ssu/negotiation/key_message.h"
 #include "ssu/negotiation/key_responder.h"
-#include "byte_array_wrap.h"
-#include "flurry.h"
+#include "arsenal/byte_array_wrap.h"
+#include "arsenal/flurry.h"
 
 using namespace std;
 using namespace ssu;

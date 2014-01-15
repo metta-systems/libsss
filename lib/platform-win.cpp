@@ -9,9 +9,9 @@
 #include <lmcons.h>
 #include <boost/asio.hpp>
 #include <algorithm>
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/platform.h"
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 
 using namespace std;
 

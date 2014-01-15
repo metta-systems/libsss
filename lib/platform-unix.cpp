@@ -14,7 +14,7 @@
 #include <arpa/inet.h>
 #include <boost/asio.hpp>
 #include <algorithm>
-#include "logging.h"
+#include "arsenal/logging.h"
 #include "ssu/platform.h"
 
 using namespace std;

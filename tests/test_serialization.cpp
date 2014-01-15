@@ -10,13 +10,13 @@
 #include <boost/test/unit_test.hpp>
 #include <fstream>
 #include "ssu/protocol.h"
-#include "byte_array.h"
-#include "byte_array_wrap.h"
-#include "flurry.h"
+#include "arsenal/byte_array.h"
+#include "arsenal/byte_array_wrap.h"
+#include "arsenal/flurry.h"
 #include "ssu/negotiation/key_message.h"
 #include "ssu/link.h"
 #include "test_data_helper.h"
-#include "logging.h"
+#include "arsenal/logging.h"
 
 using namespace std;
 

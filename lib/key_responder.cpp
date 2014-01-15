@@ -12,12 +12,12 @@
 #include "krypto/aes_256_cbc.h"
 #include "ssu/aes_armor.h"
 #include "ssu/host.h"
-#include "byte_array_wrap.h"
-#include "flurry.h"
+#include "arsenal/byte_array_wrap.h"
+#include "arsenal/flurry.h"
 #include "ssu/channel.h"
 #include "ssu/link.h"
-#include "make_unique.h"
-#include "algorithm.h"
+#include "arsenal/make_unique.h"
+#include "arsenal/algorithm.h"
 
 using namespace std;
 using namespace ssu;

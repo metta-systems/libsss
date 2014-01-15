@@ -9,7 +9,7 @@
 #pragma once
 
 #include <boost/signals2/signal.hpp>
-#include "byte_array.h"
+#include "arsenal/byte_array.h"
 #include "ssu/peer_id.h"
 #include "ssu/link.h"
 
