@@ -488,6 +488,8 @@ public:
      */
     void set_error(std::string const& error);
 
+    std::string error() const { return error_string_; }
+
     /**
      * Dump the state of this stream, for debugging purposes.
      */
