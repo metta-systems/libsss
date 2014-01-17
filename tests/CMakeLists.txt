@@ -13,6 +13,7 @@ create_test(host LIBS ssu arsenal krypto ${OPENSSL_LIBRARIES})
 create_test(channel LIBS ssu arsenal)
 create_test(stream_user LIBS ${SSULIBS} arsenal krypto ${OPENSSL_LIBRARIES})
 create_test(stream_internal LIBS ssu arsenal)
+create_test(substreams LIBS ${SSULIBS} arsenal krypto ${OPENSSL_LIBRARIES})
 create_test(server LIBS ${SSULIBS} arsenal krypto ${OPENSSL_LIBRARIES})
 
 create_test(optional LIBS ssu arsenal)
