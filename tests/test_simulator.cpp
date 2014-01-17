@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
 
     // client->write_data("test1", 6);
 
-    the_simulator->run();
+    simulator->run();
 
     logger::debug() << "<<< shutdown from this point on";
 }
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(connect_wrong_service)
     // Connect to wrong service and protocol here.
     client->connect_to(server_host_eid, "test", "simulator", server_host_address);
 
-    the_simulator->run();
+    simulator->run();
 
     logger::debug() << "<<< shutdown from this point on";
 

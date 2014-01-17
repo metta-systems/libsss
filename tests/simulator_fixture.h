@@ -19,7 +19,7 @@
 
 struct simulator_fixture
 {
-    std::shared_ptr<ssu::simulation::simulator> the_simulator;
+    std::shared_ptr<ssu::simulation::simulator> simulator;
     std::shared_ptr<ssu::simulation::sim_connection> server_client_connection;
 
     std::shared_ptr<ssu::simulation::sim_host> server_host;
@@ -35,8 +35,8 @@ struct simulator_fixture
     std::shared_ptr<ssu::stream> client;
 
     simulator_fixture() {
-        the_simulator = std::make_shared<ssu::simulation::simulator>();
-        BOOST_CHECK(the_simulator != nullptr);
+        simulator = std::make_shared<ssu::simulation::simulator>();
+        BOOST_CHECK(simulator != nullptr);
 
         setup_test_server();
         setup_test_client();
@@ -51,14 +51,14 @@ struct simulator_fixture
         server.reset();
         server_link.reset();
         server_host.reset();
-        the_simulator.reset();
+        simulator.reset();
         logger::debug() << "<<< host use counts after reset " << std::dec << client_host.use_count()
             << " and " << server_host.use_count();
     }
 
     void setup_test_server()
     {
-        server_host = ssu::simulation::sim_host::create(the_simulator);
+        server_host = ssu::simulation::sim_host::create(simulator);
         BOOST_CHECK(server_host != nullptr);
         server_host_eid = server_host->host_identity().id();
         server_host_address = ssu::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),
@@ -77,7 +77,7 @@ struct simulator_fixture
 
     void setup_test_client()
     {
-        client_host = ssu::simulation::sim_host::create(the_simulator);
+        client_host = ssu::simulation::sim_host::create(simulator);
         BOOST_CHECK(client_host != nullptr);
         client_host_eid = client_host->host_identity().id();
         client_host_address = ssu::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),
