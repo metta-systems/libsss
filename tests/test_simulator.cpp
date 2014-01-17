@@ -21,9 +21,7 @@ BOOST_AUTO_TEST_CASE(created_simulator)
     BOOST_CHECK(sim != nullptr);
 }
 
-BOOST_FIXTURE_TEST_SUITE(simulator, simulator_fixture)
-
-BOOST_AUTO_TEST_CASE(simple_sim_step)
+BOOST_FIXTURE_TEST_CASE(simple_sim_step, simulator_fixture)
 {
     // no routing in simulator yet
     bool hinted = client->add_location_hint(server_host_eid, server_host_address);
@@ -37,7 +35,7 @@ BOOST_AUTO_TEST_CASE(simple_sim_step)
     logger::debug() << "<<< shutdown from this point on";
 }
 
-BOOST_AUTO_TEST_CASE(connect_wrong_service)
+BOOST_FIXTURE_TEST_CASE(connect_wrong_service, simulator_fixture)
 {
     // Connect to wrong service and protocol here.
     client->connect_to(server_host_eid, "test", "simulator", server_host_address);
@@ -49,5 +47,3 @@ BOOST_AUTO_TEST_CASE(connect_wrong_service)
     logger::debug() << "<<< host use counts " << dec << client_host.use_count()
         << " and " << server_host.use_count();
 }
-
-BOOST_AUTO_TEST_SUITE_END()
