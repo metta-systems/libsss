@@ -273,7 +273,7 @@ void base_stream::recalculate_receive_window()
     receive_window_byte_ = i;
 
     logger::debug() << "buffered "
-        << rx_available_ << "+" << (rx_buffer_used_ - rx_available_)
+        << dec << rx_available_ << "+" << (rx_buffer_used_ - rx_available_)
         << ", new receive window " << rwin << ", exp " << i;
 }
 
@@ -781,20 +781,20 @@ shared_ptr<abstract_stream> base_stream::accept_substream()
 void base_stream::set_receive_buffer_size(size_t size)
 {
     if (size < min_receive_buffer_size) {
-        logger::warning() << "Child receive buffer size " << size << " too small";
+        logger::warning() << "Child receive buffer size " << dec << size << " too small";
         size = min_receive_buffer_size;
     }
-    logger::debug() << "Setting internal stream receive buffer size " << size << " bytes";
+    logger::debug() << "Setting base stream receive buffer size " << dec << size << " bytes";
     receive_buf_size_ = size;
 }
 
 void base_stream::set_child_receive_buffer_size(size_t size)
 {
     if (size < min_receive_buffer_size) {
-        logger::warning() << "Child receive buffer size " << size << " too small";
+        logger::warning() << "Child receive buffer size " << dec << size << " too small";
         size = min_receive_buffer_size;
     }
-    logger::debug() << "Setting internal stream child receive buffer size " << size << " bytes";
+    logger::debug() << "Setting base stream child receive buffer size " << dec << size << " bytes";
     child_receive_buf_size_ = size;
 }
 
@@ -1087,7 +1087,7 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
 void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq)
 {
-    logger::debug() << "ACKed packet of size " << pkt.buf.size();
+    logger::debug() << "Base stream ACKed packet of size " << dec << pkt.buf.size();
 
     switch (pkt.type)
     {
