@@ -1838,7 +1838,7 @@ base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
     if (!is_listening()) {
         // The parent SID is not in error, so just reset the new child.
         // Ack the pktseq first so peer won't ignore the reset!
-        logger::debug() << "Other side trying to create substream, but we're not listening.";
+        logger::warning() << "Other side trying to create substream, but we're not listening.";
         channel->acknowledge(pktseq, false);
         tx_reset(channel, sid, flags::reset_remote_sid);
         return nullptr;
