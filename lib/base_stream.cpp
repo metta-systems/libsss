@@ -175,7 +175,7 @@ void base_stream::transmit_on(stream_channel* channel)
         auto header = p.header<data_header>();
         header->stream_id = tx_current_attachment_->stream_id_;
         // Preserve flags already set.
-        header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype); //@fixme & dataAllFlags);
+        header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype);
         header->window = receive_window_byte();
         header->tx_seq_no = p.tx_byte_seq; // Note: 32-bit TSN
 
@@ -563,7 +563,8 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
             size = total_size;
         }
 
-        logger::debug() << "Transmit segment at [byteseq " << tx_byte_seq_ << "], size " << size << " bytes";
+        logger::debug() << "Transmit segment at [byteseq " << tx_byte_seq_
+            << "], size " << size << " bytes";
 
         // Build the appropriate packet header.
         packet p(this, packet_type::data);
@@ -652,7 +653,8 @@ byte_array base_stream::read_datagram(ssize_t max_size)
     return data;
 }
 
-ssize_t base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
+ssize_t base_stream::write_datagram(const char* data,
+    ssize_t total_size, stream::datagram_type is_reliable)
 {
     logger::debug() << "Sending datagram, size " << total_size << ", "
                     << (is_reliable == stream::datagram_type::reliable ? "reliable" : "unreliable");
@@ -1101,8 +1103,10 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
                 tx_waiting_ack_.erase(pkt.tx_byte_seq);
                 tx_waiting_size_ -= pkt.payload_size();
 
-                logger::debug() << "tx_waiting_ack remove " << pkt.tx_byte_seq << " size " << pkt.payload_size()
-                         << " new wait count " << tx_waiting_ack_.size() << " waiting to ack " << tx_waiting_size_
+                logger::debug() << "tx_waiting_ack remove " << pkt.tx_byte_seq
+                         << ", size " << pkt.payload_size()
+                         << ", new wait count " << tx_waiting_ack_.size()
+                         << ", waiting to ack " << tx_waiting_size_
                          << " bytes";
             }
             assert(tx_waiting_size_ >= 0);
@@ -1156,12 +1160,14 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
 {
     assert(pkt.late);
 
-    logger::debug() << "Missed seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
+    logger::debug() << "Base stream missed seq " << pkt.tx_byte_seq
+        << " of size " << pkt.payload_size();
 
     switch (pkt.type)
     {
         case packet_type::data: {
-            logger::debug() << "Retransmit seq " << pkt.tx_byte_seq << " of size " << pkt.payload_size();
+            logger::debug() << "Retransmit seq " << pkt.tx_byte_seq
+                << " of size " << pkt.payload_size();
             // Mark the segment no longer "in flight".
             end_flight(pkt);
             // Retransmit reliable segments...
@@ -1273,7 +1279,8 @@ bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_cha
     }
 }
 
-bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_init_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < init_header_len_min) {
         logger::warning() << "Received runt init packet";
@@ -1326,7 +1333,9 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     logger::debug() << "rx_init_packet: parent attach stream " << parent_attach->stream_;
 
     // Create the new substream.
-    auto new_stream = parent_attach->stream_->rx_substream(pktseq, channel, header->stream_id, 0, usid);
+    auto new_stream = parent_attach->stream_->rx_substream(pktseq,
+        channel, header->stream_id, 0, usid);
+
     if (!new_stream)
         return false;
 
@@ -1338,7 +1347,8 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, str
     return false; // Already acknowledged in rx_substream().
 }
 
-bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_reply_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < reply_header_len_min) {
         logger::warning() << "Received runt reply packet";
@@ -1399,7 +1409,8 @@ bool base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, st
     return true;    // Acknowledge the packet
 }
 
-bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_data_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < data_header_len_min) {
         logger::warning() << "Received runt data packet";
@@ -1434,7 +1445,8 @@ bool base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, str
     return true; // ACK the packet
 }
 
-bool base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_datagram_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < datagram_header_len_min) {
         logger::warning() << "Received runt datagram packet";
@@ -1550,7 +1562,8 @@ bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stre
  * @param  channel Associated channel.
  * @return         true if reset is successful.
  */
-bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_reset_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < reset_header_len_min) {
         logger::warning() << "Received runt reset packet";
@@ -1563,7 +1576,8 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, st
     return false;
 }
 
-bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_attach_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < attach_header_len_min) {
         logger::warning() << "Received runt attach packet";
@@ -1574,11 +1588,13 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
     bool init = (header->type_subtype & flags::attach_init) != 0;
     int slot = header->type_subtype & flags::attach_slot_mask;
 
-    static_assert(flags::attach_slot_mask == max_attachments - 1, "max_attachments value changed, need to fix some other code too.");
+    static_assert(flags::attach_slot_mask == max_attachments - 1,
+        "max_attachments value changed, need to fix some other code too.");
 
     unique_stream_id_t usid, parent_usid;
 
-    logger::debug() << "Received attach packet, " << (init ? "init" : "non-init") << " attach on slot " << slot;
+    logger::debug() << "Base stream received attach packet, "
+        << (init ? "init" : "non-init") << " attach on slot " << slot;
 
     byte_array_iwrap<flurry::iarchive> read(pkt);
     read.archive().skip_raw_data(sizeof(attach_header) + channel::header_len);
@@ -1651,7 +1667,8 @@ bool base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, s
 /**
  * @todo Received a detach packet, disconnect stream from the channel.
  */
-bool base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
+bool base_stream::rx_detach_packet(packet_seq_t pktseq,
+    byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < detach_header_len_min) {
         logger::warning() << "Received runt detach packet";
@@ -1914,7 +1931,8 @@ void base_stream::got_service_request()
     if (code != service_code::connect_request)
         return fail("Bad service request");
 
-    logger::debug() << "got_service_request service '" << service << "' protocol '" << protocol << "'";
+    logger::debug() << "got_service_request service '" << service
+        << "' protocol '" << protocol << "'";
 
     // Lookup the requested service
     server* srv = host_->listener_for(service, protocol);
