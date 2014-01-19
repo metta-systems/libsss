@@ -8,14 +8,14 @@
 //
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/copy.hpp>
+#include "arsenal/logging.h"
+#include "arsenal/algorithm.h"
 #include "ssu/stream.h"
 #include "ssu/stream_channel.h"
 #include "ssu/private/stream_peer.h"
 #include "ssu/base_stream.h"
 #include "ssu/identity.h"
-#include "arsenal/logging.h"
 #include "ssu/host.h"
-#include "arsenal/algorithm.h"
 #include "ssu/negotiation/key_responder.h"
 #include "routing/routing_client.h"
 

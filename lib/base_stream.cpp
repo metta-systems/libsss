@@ -6,15 +6,15 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "arsenal/logging.h"
+#include "arsenal/flurry.h"
+#include "arsenal/algorithm.h"
+#include "arsenal/byte_array_wrap.h"
 #include "ssu/base_stream.h"
 #include "ssu/datagram_stream.h"
-#include "arsenal/logging.h"
 #include "ssu/host.h"
 #include "ssu/private/stream_peer.h"
 #include "ssu/stream_channel.h"
-#include "arsenal/flurry.h"
-#include "arsenal/byte_array_wrap.h"
-#include "arsenal/algorithm.h"
 #include "ssu/server.h"
 
 using namespace std;
