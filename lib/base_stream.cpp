@@ -746,7 +746,7 @@ void base_stream::set_priority(int priority)
 
 shared_ptr<abstract_stream> base_stream::open_substream()
 {
-    logger::debug() << "Internal stream open substream";
+    logger::debug() << "Base stream open substream";
 
     // Create a new sub-stream.
     // Note that the parent doesn't have to be attached yet:
@@ -763,7 +763,7 @@ shared_ptr<abstract_stream> base_stream::open_substream()
 
 shared_ptr<abstract_stream> base_stream::accept_substream()
 {
-    logger::debug() << "Internal stream accept substream";
+    logger::debug() << "Base stream accept substream";
 
     if (received_substreams_.empty())
         return nullptr;
@@ -800,7 +800,7 @@ void base_stream::set_child_receive_buffer_size(size_t size)
 
 void base_stream::shutdown(stream::shutdown_mode mode)
 {
-    logger::debug() << "Shutting down internal stream " << this;
+    logger::debug() << "Shutting down base stream " << this;
 
     // @todo self-destruct when done, if appropriate
 
@@ -831,7 +831,7 @@ void base_stream::shutdown(stream::shutdown_mode mode)
 
 void base_stream::disconnect()
 {
-    logger::debug() << "Disconnecting internal stream";
+    logger::debug() << "Disconnecting base stream";
     state_ = state::disconnected;
     // @todo bring down the connection - clear()
 
@@ -851,7 +851,7 @@ void base_stream::fail(string const& error)
 
 void base_stream::dump()
 {
-    logger::debug() << "Internal stream " << this
+    logger::debug() << "Base stream " << this
                     << " state " << int(state_)
                     << " TSN " << tx_byte_seq_
                     << " RSN " << rx_byte_seq_
@@ -888,7 +888,7 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
     if (!is_attached())
         return attach_for_transmit();
 
-    logger::debug(200) << "Internal stream enqueue on channel";
+    logger::debug(200) << "Base stream enqueue on channel";
 
     stream_channel* channel = tx_current_attachment_->channel_;
     assert(channel and channel->is_active());
@@ -914,7 +914,7 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
 
 void base_stream::tx_attach()
 {
-    logger::debug() << "Internal stream tx_attach";
+    logger::debug() << "Base stream tx_attach";
 
     stream_channel* chan = tx_current_attachment_->channel_;
     unsigned slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
@@ -1002,7 +1002,7 @@ void base_stream::tx_data(packet& p)
 
 void base_stream::tx_datagram()
 {
-    logger::debug() << "base_stream::tx_datagram";
+    logger::debug() << "Base stream tx_datagram";
 
     // Transmit the whole datagram immediately,
     // so that all fragments get consecutive packet sequence numbers.
@@ -1039,7 +1039,7 @@ void base_stream::tx_datagram()
 
 void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags)
 {
-    logger::warning() << "base_stream::tx_reset";
+    logger::warning() << "Base stream tx_reset";
 
     // Build the Reset packet header
     packet p(nullptr, packet_type::reset);
@@ -1249,7 +1249,7 @@ constexpr size_t detach_header_len_min   = channel::header_len + 4;
 bool base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     if (pkt.size() < header_len_min) {
-        logger::warning() << "Received runt packet";
+        logger::warning() << "Base stream - received runt packet";
         return false; // @fixme Protocol error, close channel?
     }
 
@@ -1287,7 +1287,7 @@ bool base_stream::rx_init_packet(packet_seq_t pktseq,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::debug() << "rx_init_packet ...";
+    logger::debug() << "Base stream rx_init_packet";
     auto header = as_header<init_header>(pkt);
 
     // Look up the stream - if it already exists,
@@ -1355,7 +1355,7 @@ bool base_stream::rx_reply_packet(packet_seq_t pktseq,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::debug() << "rx_reply_packet ...";
+    logger::debug() << "Base stream rx_reply_packet";
     auto header = as_header<reply_header>(pkt);
 
     // Look up the stream - if it already exists,
@@ -1417,7 +1417,7 @@ bool base_stream::rx_data_packet(packet_seq_t pktseq,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::debug() << "rx_data_packet ...";
+    logger::debug() << "Base stream rx_data_packet";
     auto header = as_header<data_header>(pkt);
 
     if (!contains(channel->receive_sids_, header->stream_id))
@@ -1453,7 +1453,7 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::debug() << "rx_datagram_packet ...";
+    logger::debug() << "Base stream rx_datagram_packet";
     auto header = as_header<datagram_header>(pkt);
 
     // Look up the stream for which the datagram is a substream.
@@ -1523,7 +1523,7 @@ bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stre
     // but do NOT send another ack just to ack this ack!
     channel->acknowledge(pktseq, false);
 
-    logger::debug() << "rx_ack_packet ...";
+    logger::debug() << "Base stream rx_ack_packet";
     auto header = as_header<ack_header>(pkt);
 
     // Look up the stream the data packet belongs to.
@@ -1570,7 +1570,7 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq,
         return false; // @fixme Protocol error, close channel?
     }
 
-    logger::warning() << "rx_reset_packet UNIMPLEMENTED.";
+    logger::warning() << "Base stream rx_reset_packet UNIMPLEMENTED.";
     // auto header = as_header<reset_header>(pkt);
     // bool local_sid = hdr->type & flags::reset_remote_sid;
     return false;
@@ -1677,7 +1677,7 @@ bool base_stream::rx_detach_packet(packet_seq_t pktseq,
 
     // auto header = as_header<detach_header>(pkt);
     // @todo
-    logger::fatal() << "rx_detach_packet UNIMPLEMENTED.";
+    logger::fatal() << "Base stream rx_detach_packet UNIMPLEMENTED.";
     return false;
 }
 
