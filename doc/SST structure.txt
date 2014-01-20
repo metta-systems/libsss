@@ -1,3 +1,4 @@
+```
          +-------------------------------------------------------------+
          |  Link                                                       |
          | +---------------------------------------------------------+ |
@@ -25,5 +26,26 @@ Endpoint | ||    |     +-------------------------------------------+ | | Endpoin
          | |Channel N (2-255)                                        | | | +-----------------------+
          | +---------------------------------------------------------+ | |   Sequencing (TSNs)     |
          +-------------------------------------------------------------+ +-------------------------+
+```
+[source diagram](http://www.asciidraw.com/#6509827088975172190/1377497774)
 
-http://www.asciidraw.com/#6509827088975172190/1377497774
+Setting up a channel.
+=====================
+
+#### Key exchange
+
+Key exchange initiation is sent on channel 0, control messages.
+
+Key exchange is presently a two-step operation consisting of two pairs of material exchanges,
+setting up a DH key and sharing session symmetric encryption key.
+
+Once the key exchange is completed, sides set up an encrypted communication channel.
+
+#### Channel acceptance
+#### Attach stream for transmission.
+
+Starting new stream.
+====================
+#### Initiating root stream (LSID 0)
+#### Initiating sub-streams
+
