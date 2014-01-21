@@ -285,7 +285,7 @@ void base_stream::recalculate_transmit_window(uint8_t window_byte)
     int i = window_byte & 0x1f;
     tx_window_ = (1 << i) - 1;
 
-    logger::debug() << "Transmit window change " << old_window << "->" << tx_window_
+    logger::debug() << "Transmit window change " << dec << old_window << "->" << tx_window_
         << ", in use " << tx_inflight_;
 
     if (tx_window_ > old_window)
