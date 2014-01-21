@@ -42,7 +42,17 @@ setting up a DH key and sharing session symmetric encryption key.
 Once the key exchange is completed, sides set up an encrypted communication channel.
 
 #### Channel acceptance
+
+Channel will be spawned once both steps of key exchange are completed successfully. The key
+exchange initiator acts as initiating channel side, the other side is the responder.
+
 #### Attach stream for transmission.
+
+Streams that need to send data attach onto a channel based on their integer priority. Stream with
+absolute largest priority on the channel wins and will always send first as long
+as it has data to send.
+
+
 
 Starting new stream.
 ====================
