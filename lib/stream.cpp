@@ -369,7 +369,7 @@ shared_ptr<stream> stream::accept_substream()
         return nullptr;
     }
 
-    return make_shared<stream>(new_stream, this);
+    return stream::create(new_stream);
 }
 
 shared_ptr<stream> stream::open_substream()
@@ -385,7 +385,7 @@ shared_ptr<stream> stream::open_substream()
         return nullptr;
     }
 
-    return make_shared<stream>(new_stream, this);
+    return stream::create(new_stream);
 }
 
 void stream::listen(listen_mode mode)
