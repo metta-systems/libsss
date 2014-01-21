@@ -1756,7 +1756,7 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 
         // If we're at the end of stream with no data to read,
         // go into the end-of-stream state immediately.
-        // We must do this because readData() may never
+        // We must do this because read_data() may never
         // see our queued zero-length segment if rx_available_ == 0.
         if (closed and rx_available_ == 0)
         {
@@ -1772,14 +1772,16 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
         }
 
         // Notify the client if appropriate
-        if (was_empty) {
+        if (was_empty)
+        {
             auto stream = owner_.lock();
             if (state_ == state::connected and stream) {
                 stream->on_ready_read();
             }
         }
 
-        if (was_no_recs and has_pending_records()) {
+        if (was_no_recs and has_pending_records())
+        {
             if (state_ == state::connected)
             {
                 on_ready_read_record();
@@ -1787,12 +1789,10 @@ void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
                     stream->on_ready_read_record();
                 }
             }
-            else if (state_ == state::wait_service)
-            {
+            else if (state_ == state::wait_service) {
                 got_service_reply();
             }
-            else if (state_ == state::accepting)
-            {
+            else if (state_ == state::accepting) {
                 got_service_request();
             }
         }
