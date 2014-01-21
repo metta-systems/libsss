@@ -171,6 +171,9 @@ void stream_channel::enqueue_stream(base_stream* stream)
             return str->current_priority() >= prio;
         });
 
+    logger::debug() << "Stream channel - enqueue stream at pos " << (it - sending_streams_.begin())
+        << " of total " << sending_streams_.size() << " streams";
+
     sending_streams_.insert(it, stream);
 }
 
