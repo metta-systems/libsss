@@ -52,7 +52,8 @@ stream_channel::stream_channel(shared_ptr<host> host,
 stream_channel::~stream_channel()
 {
     logger::debug() << "Stream channel - destructing";
-    // on_link_status_changed.disconnect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
+    // on_link_status_changed
+    // .disconnect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
     stop();
     root_->state_ = base_stream::state::disconnected;
 }
@@ -79,7 +80,8 @@ void stream_channel::got_ready_transmit()
 
 void stream_channel::got_link_status_changed(link::status new_status)
 {
-    logger::debug() << "Stream channel - link status changed, new status " << link::status_string(new_status);
+    logger::debug() << "Stream channel - link status changed, new status "
+        << link::status_string(new_status);
 
     if (new_status != link::status::down)
         return;
@@ -166,7 +168,8 @@ void stream_channel::enqueue_stream(base_stream* stream)
 
     // Find the correct position at which to enqueue this stream,
     // based on priority.
-    auto it = upper_bound(sending_streams_.begin(), sending_streams_.end(), stream->current_priority(),
+    auto it = upper_bound(sending_streams_.begin(), sending_streams_.end(),
+        stream->current_priority(),
         [this](int prio, base_stream* str) {
             return str->current_priority() >= prio;
         });
