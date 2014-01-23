@@ -42,7 +42,20 @@ struct substreams_fixture : public simulator_fixture
 
 BOOST_FIXTURE_TEST_CASE(one_substream, substreams_fixture)
 {
+    server->on_new_connection.connect([&] {
+        auto new_stream = server->accept(); // First incoming stream from client
+        stream_setup_listening(new_stream);
+    });
+
+    client->connect_to(server_host_eid, "simulator", "test", server_host_address);
+
+    auto substream1 = client->open_substream();
+    substream1->write_record("ONE!"); // Should arrive last!
+
     simulator->run();
+
+    BOOST_CHECK(received.size() == 1);
+    BOOST_CHECK(received[0].as_string() == "ONE!");
 }
 
 // Test stream with one, two and three levels on substreams.
