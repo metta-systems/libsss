@@ -208,6 +208,8 @@ public:
     void update(unsigned new_packets);
     /// Update rtt information.
     void rtt_update(float pps, float rtt);
+    /// Print cumulative rtt statistics to the log
+    void log_rtt_stats();
     /// Update rtt cumulative statistics.
     void stats_update(float& pps_out, float& rtt_out);
 };
@@ -477,6 +479,18 @@ void congestion_control_strategy::rtt_update(float pps, float rtt)
     }
 }
 
+void congestion_control_strategy::log_rtt_stats()
+{
+    logger::debug() << boost::format(
+        "Cumulative: rtt %.3f[±%.3f] pps %.3f[±%.3f] pwr %.3f loss %.3f")
+        % cumulative_rtt_
+        % cumulative_rtt_variance_
+        % cumulative_pps_
+        % cumulative_pps_var
+        % cumpwr
+        % cumloss;
+}
+
 void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
 {
     // 'rtt' is the total round-trip delay in microseconds before
@@ -657,15 +671,7 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
         if (!nocc_)
         {
             congestion_control->rtt_update(pps, rtt);
-
-            logger::debug() << boost::format(
-                "Cumulative: rtt %.3f[±%.3f] pps %.3f[±%.3f] pwr %.3f loss %.3f")
-                % congestion_control->cumulative_rtt_
-                % congestion_control->cumulative_rtt_variance_
-                % congestion_control->cumulative_pps_
-                % congestion_control->cumulative_pps_var
-                % congestion_control->cumpwr
-                % congestion_control->cumloss;
+            congestion_control->log_rtt_stats();
         }
         else
         {
