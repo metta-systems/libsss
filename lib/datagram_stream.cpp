@@ -19,8 +19,9 @@ namespace ssu {
 
 void datagram_stream::shutdown(stream::shutdown_mode mode)
 {
-    if (mode != stream::shutdown_mode::write)
+    if (mode != stream::shutdown_mode::write) {
         pos_ = size();
+    }
 
     // We hold a shared_ptr<> to datagram_stream, so it will get deleted once client let it go.
 }
