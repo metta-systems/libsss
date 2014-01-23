@@ -738,7 +738,7 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
     // so update our round-trip statistics.
     if (ackseq >= state_->mark_sequence_)
     {
-        float rtt, pps;
+        float pps, rtt;
         congestion_control->stats_update(pps, rtt);
 
         if (!nocc_)
