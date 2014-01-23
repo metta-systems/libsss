@@ -204,6 +204,14 @@ public:
     void log_rtt_stats();
     /// Update rtt cumulative statistics.
     void stats_update(float& pps_out, float& rtt_out);
+
+    /// for cc_fixed: fixed congestion window for reserved-bandwidth links
+    inline void set_cc_window(uint32_t wnd) { cwnd = wnd; }
+
+    /// Congestion information accessors for flow monitoring purposes
+    inline uint32_t tx_congestion_window() const { return cwnd; }
+    inline uint32_t tx_bytes_in_flight() const { return state_->tx_inflight_size_; }
+    inline uint32_t tx_packets_in_flight() const { return state_->tx_inflight_count_; }
 };
 
 void congestion_control_strategy::reset()
