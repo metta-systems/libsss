@@ -110,6 +110,7 @@ BOOST_FIXTURE_TEST_CASE(multiple_substreams, substreams_fixture)
         logger::debug() << b.as_string();
     }
 
+    BOOST_CHECK(received.size() == 6);
     BOOST_CHECK(received[0].as_string() == "THREE.ONE.TWO!");
     BOOST_CHECK(received[1].as_string() == "THREE.ONE!");
     BOOST_CHECK(received[2].as_string() == "THREE!");
