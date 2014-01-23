@@ -128,17 +128,6 @@ public:
     }
 };
 
-/**
- * Congestion Control modes
- */
-enum CCMode {
-    CC_TCP,
-    CC_AGGRESSIVE,
-    CC_DELAY,
-    CC_VEGAS,
-    CC_CTCP,
-    CC_FIXED,
-};
 
 /**
  * Channel's congestion control strategy.
@@ -146,7 +135,6 @@ enum CCMode {
 class congestion_control_strategy
 {
 public:
-    CCMode mode; ///< Congestion control method
     shared_ptr<shared_state> const& state_;
 
     uint32_t cwnd{CWND_MIN};       ///< Current congestion window
@@ -164,22 +152,19 @@ public:
     uint32_t ssthresh;   ///< Slow start threshold
     bool sstoggle;      ///< Slow start toggle flag for CC_VEGAS
 
-    // Aggressive congestion control
+    // Aggressive/Low-delay congestion control
     uint32_t ssbase;     ///< Slow start baseline
 
     // Low-delay congestion control
-    int cwndinc;
-    async::timer::duration_type lastrtt;        ///< Measured RTT of last round-trip
-    float lastpps;      ///< Measured PPS of last round-trip
+    int cwndinc;//cc_delay only
+    async::timer::duration_type lastrtt; ///< Measured RTT of last round-trip (cc_delay/cc_aggro)
+    float lastpps; ///< Measured PPS of last round-trip
     uint32_t basewnd;
     float basertt, basepps, basepwr;
 
-    // TCP Vegas-like congestion control
-    float cwndmax;
-
     /**@}*/
     //-------------------------------------------
-    /** @name Channel statistics */
+    /** @name Channel CC statistics */
     //-------------------------------------------
     /**@{*/
 
@@ -196,18 +181,22 @@ public:
 
     congestion_control_strategy(shared_ptr<shared_state> const& state)
         : state_(state)
-    {}
+    {
+        reset();
+        // Initialize transmit congestion control state
+        recovseq = 1;
+    }
 
     /// Reset congestion control.
     void reset();
     /// Update congestion control on missed packet ack.
-    void missed(uint64_t pktseq);
+    virtual void missed(uint64_t pktseq);
     /// Update on expired packet.
-    void timeout();
+    virtual void timeout();
     /// Update on newly received acks.
-    void update(unsigned new_packets);
+    virtual void update(unsigned new_packets) = 0;
     /// Update rtt information.
-    void rtt_update(float pps, float rtt);
+    virtual void rtt_update(float pps, float rtt) = 0;
     /// Print cumulative rtt statistics to the log
     void log_rtt_stats();
     /// Update rtt cumulative statistics.
@@ -216,14 +205,13 @@ public:
 
 void congestion_control_strategy::reset()
 {
-    logger::debug() << "cc reset: mode " << mode;
+    logger::debug() << "CC reset";
     cwnd = CWND_MIN;
     cwnd_limited_ = true;
     ssthresh = CWND_MAX;
     sstoggle = true;
     ssbase = 0;
     cwndinc = 1;
-    cwndmax = CWND_MIN;
     lastrtt = bp::milliseconds(0);
     lastpps = 0;
     basertt = 0;
@@ -241,242 +229,35 @@ void congestion_control_strategy::missed(uint64_t pktseq)
 {
     logger::debug() << "Missed seq " << pktseq;
 
-    switch (mode)
-    {
-        case CC_TCP:
-        case CC_DELAY:
-        case CC_VEGAS:
-            // Packet loss detected -
-            // perform standard TCP congestion control
-            if (pktseq <= recovseq) {
-                // We're in a fast recovery window:
-                // this isn't a new loss event.
-                break;
-            }
+    // This basic missed packet calculation is shared by cc_tcp, cc_delay and cc_vegas:
 
-            // new loss event: cut ssthresh and cwnd
-            //ssthresh = (tx_sequence_ - tx_ack_sequence_) / 2;    XXX
-            ssthresh = cwnd / 2;
-            ssthresh = max(ssthresh, CWND_MIN);
-            // logger::debug() << "%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
-            cwnd = ssthresh;
-
-            // fast recovery for the rest of this window
-            recovseq = state_->tx_sequence_;
-
-            break;
-
-        case CC_AGGRESSIVE: {
-            // Number of packets we think have been lost
-            // so far during this round-trip.
-            int lost = (state_->tx_ack_sequence_ - state_->mark_base_) - state_->mark_acks_;
-            lost = max(0, lost);
-
-            // Number of packets we expect to receive,
-            // assuming the lost ones are really lost
-            // and we don't lose any more this round-trip.
-            unsigned expected = state_->mark_sent_ - lost;
-
-            // Clamp the congestion window to this value.
-            if (expected < cwnd) {
-                logger::debug() << "PACKETS LOST: cwnd " << cwnd << "->" << expected;
-                cwnd = ssbase = expected;
-                cwnd = max(CWND_MIN, cwnd);
-            }
-            break;
-        }
-
-        case CC_CTCP:
-            assert(0);    // XXX
-
-        case CC_FIXED:
-            break;  // fixed cwnd, no congestion control
+    // Packet loss detected -
+    // perform standard TCP congestion control
+    if (pktseq <= recovseq) {
+        // We're in a fast recovery window:
+        // this isn't a new loss event.
+        return;
     }
+
+    // new loss event: cut ssthresh and cwnd
+    //ssthresh = (tx_sequence_ - tx_ack_sequence_) / 2;    XXX
+    ssthresh = cwnd / 2;
+    ssthresh = max(ssthresh, CWND_MIN);
+    // logger::debug() << "%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
+    cwnd = ssthresh;
+
+    // fast recovery for the rest of this window
+    recovseq = state_->tx_sequence_;
 }
 
 void congestion_control_strategy::timeout()
 {
     // If fixed cwnd, no congestion control, otherwise
     // Reset cwnd and go back to slow start
-    if (mode != CC_FIXED)
-    {
-        ssthresh = state_->tx_inflight_count_ / 2;
-        ssthresh = max(ssthresh, CWND_MIN);
-        cwnd = CWND_MIN;
-        logger::debug() << "CC Retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd;
-    }
-}
-
-void congestion_control_strategy::update(unsigned new_packets)
-{
-    switch (mode)
-    {
-        case CC_VEGAS:
-            sstoggle = !sstoggle;
-            if (sstoggle)
-                break;  // do slow start only once every two RTTs
-
-            // fall through...
-        case CC_TCP: {
-            // During standard TCP slow start procedure,
-            // increment cwnd for each newly-ACKed packet.
-            // XX TCP spec allows this to be <=,
-            // which puts us in slow start briefly after each loss...
-            if (new_packets and cwnd_limited_ and cwnd < ssthresh)
-            {
-                cwnd = min(cwnd + new_packets, ssthresh);
-                logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
-                    << cwnd << " (ssthresh " << ssthresh << ")";
-            }
-            break;
-        }
-
-        case CC_DELAY:
-            if (cwndinc < 0)    // Only slow start during up-phase
-                break;
-
-            // fall through...
-        case CC_AGGRESSIVE: {
-            // We're always in slow start, but we only count ACKs received
-            // on schedule and after a per-roundtrip baseline.
-            if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
-                cwnd += min(new_packets, state_->mark_acks_ - ssbase);
-                logger::debug() << "Slow start: " << new_packets
-                    << " new ACKs; boost cwnd to " << cwnd;
-            }
-            break; }
-
-        case CC_CTCP:
-            assert(0);    // XXX
-
-        case CC_FIXED:
-            break;  // fixed cwnd, no congestion control
-    }
-}
-
-void congestion_control_strategy::rtt_update(float pps, float rtt)
-{
-    switch (mode)
-    {
-        case CC_TCP:
-            // Normal TCP congestion control: during congestion avoidance,
-            // increment cwnd once each RTT, but only on round-trips that were cwnd-limited.
-            if (cwnd_limited_) {
-                cwnd++;
-                logger::debug() << "cwnd " << cwnd << " ssthresh " << ssthresh;
-            }
-            cwnd_limited_ = false;
-            break;
-
-        case CC_AGGRESSIVE:
-            break;
-
-        case CC_DELAY: {
-            float pwr = pps / rtt;
-            if (pwr > basepwr) {
-                basepwr = pwr;
-                basertt = rtt;
-                basepps = pps;
-                basewnd = state_->mark_acks_;
-            } else if (state_->mark_acks_ <= basewnd && rtt > basertt) {
-                basertt = rtt;
-                basepwr = basepps / basertt;
-            } else if (state_->mark_acks_ >= basewnd && pps < basepps) {
-                basepps = pps;
-                basepwr = basepps / basertt;
-            }
-
-            if (cwndinc > 0) {
-                // Window going up.
-                // If RTT makes a significant jump, reverse.
-                if (rtt > basertt || cwnd >= CWND_MAX) {
-                    cwndinc = -1;
-                } else {
-                    // Additively increase the window
-                    cwnd += cwndinc;
-                }
-            } else {
-                // Window going down.
-                // If PPS makes a significant dive, reverse.
-                if (pps < basepps || cwnd <= CWND_MIN) {
-                    ssbase = cwnd++;
-                    cwndinc = +1;
-                } else {
-                    // Additively decrease the window
-                    cwnd += cwndinc;
-                }
-            }
-            cwnd = max(CWND_MIN, cwnd);
-            cwnd = min(CWND_MAX, cwnd);
-
-            logger::debug() << boost::format(
-                "RT: pwr %.0f[%.0f/%.0f]@%d base %.0f[%.0f/%.0f]@%d cwnd %d%+d")
-                % (pwr*1000.0)
-                % pps
-                % rtt
-                % state_->mark_acks_
-                % (basepwr*1000.0)
-                % basepps
-                % basertt
-                % basewnd
-                % cwnd
-                % cwndinc;
-            break;
-        }
-
-        case CC_VEGAS: {
-            // Keep track of the lowest RTT ever seen,
-            // as per the original Vegas algorithm.
-            // This has the known problem that it screws up
-            // if the path's actual base RTT changes.
-            if (basertt == 0)   // first packet
-                basertt = rtt;
-            else if (rtt < basertt)
-                basertt = rtt;
-            //else
-            //  basertt = (basertt * 255.0 + rtt) / 256.0;
-
-            float expect = (float)state_->mark_sent_ / basertt;
-            float actual = (float)state_->mark_sent_ / rtt;
-            float diffpps = expect - actual;
-            assert(diffpps >= 0.0);
-            float diffpprt = diffpps * rtt;
-
-            if (diffpprt < 1.0 && cwnd < CWND_MAX && cwnd_limited_) {
-                cwnd++;
-                // ssthresh = max(ssthresh, cwnd / 2); ??
-            } else if (diffpprt > 3.0 && cwnd > CWND_MIN) {
-                cwnd--;
-                ssthresh = min(ssthresh, cwnd); // /2??
-            }
-
-            logger::debug() << boost::format("Round-trip: win %d basertt %.3f rtt %d "
-                "exp-pps %f act-pps %f diff-pprt %.3f cwnd %d")
-                % state_->mark_sent_
-                % basertt
-                % rtt
-                % (expect*1000000.0)
-                % (actual*1000000.0)
-                % diffpprt
-                % cwnd;
-            break;
-        }
-
-        case CC_CTCP: {
-#if 0
-            k = 0.8; a = 1/8; B = 1/2
-            if (in-recovery)
-                ...
-            else if (diff < y) {
-                dwnd += sqrt(win)/8.0 - 1;
-            } else
-                dwnd -= C * diff;
-#endif
-            break; }
-
-        case CC_FIXED:
-            break;  // fixed cwnd, no congestion control
-    }
+    ssthresh = state_->tx_inflight_count_ / 2;
+    ssthresh = max(ssthresh, CWND_MIN);
+    cwnd = CWND_MIN;
+    logger::debug() << "CC retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd;
 }
 
 void congestion_control_strategy::log_rtt_stats()
@@ -540,23 +321,307 @@ void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
     lastpps = pps;
 }
 
-// public:
-//     // Set the congestion controller for this channel.
-//     // This must be set if the client wishes to call mayTransmit().
-//     //inline void setCongestionController(FlowCC *cc) { this->cc = cc; }
-//     //inline FlowCC *congestionController() { return cc; }
+//=================================================================================================
+// Congestion Control strategies.
+//=================================================================================================
 
-// public:
-//     inline CCMode ccMode() const { return ccmode; }
-//     inline void setCCMode(CCMode mode) { ccmode = mode; ccReset(); }
+/**
+ * TCP-like congestion control.
+ */
+class cc_tcp : public congestion_control_strategy
+{
+public:
+    cc_tcp(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    void rtt_update(float pps, float rtt) override;
+    void update(unsigned new_packets) override;
+};
 
-//     /// for CC_FIXED: fixed congestion window for reserved-bandwidth links
-//     inline void setCCWindow(int cwnd) { this->cwnd = cwnd; }
+void cc_tcp::rtt_update(float pps, float rtt)
+{
+    // Normal TCP congestion control: during congestion avoidance,
+    // increment cwnd once each RTT, but only on round-trips that were cwnd-limited.
+    if (cwnd_limited_) {
+        cwnd++;
+        logger::debug() << "cwnd increased to " << cwnd << ", ssthresh " << ssthresh;
+    }
+    cwnd_limited_ = false;
+}
 
-//     /// Congestion information accessors for flow monitoring purposes
-//     inline int txCongestionWindow() { return cwnd; }
-//     inline int txBytesInFlight() { return txfltsize; }
-//     inline int txPacketsInFlight() { return txfltcnt; }
+void cc_tcp::update(unsigned new_packets)
+{
+    // During standard TCP slow start procedure,
+    // increment cwnd for each newly-ACKed packet.
+    // XX TCP spec allows this to be <=,
+    // which puts us in slow start briefly after each loss...
+    if (new_packets and cwnd_limited_ and cwnd < ssthresh)
+    {
+        cwnd = min(cwnd + new_packets, ssthresh);
+        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
+            << cwnd << " (ssthresh " << ssthresh << ")";
+    }
+}
+
+/**
+ * Aggressive congestion control.
+ */
+class cc_aggressive : public congestion_control_strategy
+{
+public:
+    cc_aggressive(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    void missed(uint64_t pktseq) override;
+    void rtt_update(float pps, float rtt) override;
+    void update(unsigned new_packets) override;
+};
+
+void cc_aggressive::missed(uint64_t pktseq)
+{
+    // Number of packets we think have been lost
+    // so far during this round-trip.
+    int lost = (state_->tx_ack_sequence_ - state_->mark_base_) - state_->mark_acks_;
+    lost = max(0, lost);
+
+    // Number of packets we expect to receive,
+    // assuming the lost ones are really lost
+    // and we don't lose any more this round-trip.
+    unsigned expected = state_->mark_sent_ - lost;
+
+    // Clamp the congestion window to this value.
+    if (expected < cwnd) {
+        logger::debug() << "PACKETS LOST: cwnd " << cwnd << "->" << expected;
+        cwnd = ssbase = expected;
+        cwnd = max(CWND_MIN, cwnd);
+    }
+}
+
+void cc_aggressive::rtt_update(float pps, float rtt)
+{
+    // aggressive doesn't track RTT
+}
+
+void cc_aggressive::update(unsigned new_packets)
+{
+    // We're always in slow start, but we only count ACKs received
+    // on schedule and after a per-roundtrip baseline.
+    if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
+        cwnd += min(new_packets, state_->mark_acks_ - ssbase);
+        logger::debug() << "Slow start: " << new_packets
+            << " new ACKs; boost cwnd to " << cwnd;
+    }
+}
+
+/**
+ * Low-delay congestion control.
+ */
+class cc_delay : public congestion_control_strategy
+{
+public:
+    cc_delay(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    void rtt_update(float pps, float rtt) override;
+    void update(unsigned new_packets) override;
+};
+
+void cc_delay::rtt_update(float pps, float rtt)
+{
+    float pwr = pps / rtt;
+    if (pwr > basepwr) {
+        basepwr = pwr;
+        basertt = rtt;
+        basepps = pps;
+        basewnd = state_->mark_acks_;
+    } else if (state_->mark_acks_ <= basewnd && rtt > basertt) {
+        basertt = rtt;
+        basepwr = basepps / basertt;
+    } else if (state_->mark_acks_ >= basewnd && pps < basepps) {
+        basepps = pps;
+        basepwr = basepps / basertt;
+    }
+
+    if (cwndinc > 0) {
+        // Window going up.
+        // If RTT makes a significant jump, reverse.
+        if (rtt > basertt || cwnd >= CWND_MAX) {
+            cwndinc = -1;
+        } else {
+            // Additively increase the window
+            cwnd += cwndinc;
+        }
+    } else {
+        // Window going down.
+        // If PPS makes a significant dive, reverse.
+        if (pps < basepps || cwnd <= CWND_MIN) {
+            ssbase = cwnd++;
+            cwndinc = +1;
+        } else {
+            // Additively decrease the window
+            cwnd += cwndinc;
+        }
+    }
+    cwnd = max(CWND_MIN, cwnd);
+    cwnd = min(CWND_MAX, cwnd);
+
+    logger::debug() << boost::format(
+        "RT: pwr %.0f[%.0f/%.0f]@%d base %.0f[%.0f/%.0f]@%d cwnd %d%+d")
+        % (pwr*1000.0)
+        % pps
+        % rtt
+        % state_->mark_acks_
+        % (basepwr*1000.0)
+        % basepps
+        % basertt
+        % basewnd
+        % cwnd
+        % cwndinc;
+}
+
+void cc_delay::update(unsigned new_packets)
+{
+    if (cwndinc < 0)    // Only slow start during up-phase
+        return;
+
+    // call into cc_aggressive::update() here?
+    // hrm, what about non-overridden methods? well, missed() is different, might need override too
+    // for now just copypasted the duplicated code...
+
+    // We're always in slow start, but we only count ACKs received
+    // on schedule and after a per-roundtrip baseline.
+    if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
+        cwnd += min(new_packets, state_->mark_acks_ - ssbase);
+        logger::debug() << "Slow start: " << new_packets
+            << " new ACKs; boost cwnd to " << cwnd;
+    }
+}
+
+/**
+ * TCP/Vegas congestion control.
+ */
+class cc_vegas : public congestion_control_strategy
+{
+public:
+    cc_vegas(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    void rtt_update(float pps, float rtt) override;
+    void update(unsigned new_packets) override;
+};
+
+void cc_vegas::rtt_update(float pps, float rtt)
+{
+    // Keep track of the lowest RTT ever seen,
+    // as per the original Vegas algorithm.
+    // This has the known problem that it screws up
+    // if the path's actual base RTT changes.
+    if (basertt == 0)   // first packet
+        basertt = rtt;
+    else if (rtt < basertt)
+        basertt = rtt;
+    //else
+    //  basertt = (basertt * 255.0 + rtt) / 256.0;
+
+    float expect = (float)state_->mark_sent_ / basertt;
+    float actual = (float)state_->mark_sent_ / rtt;
+    float diffpps = expect - actual;
+    assert(diffpps >= 0.0);
+    float diffpprt = diffpps * rtt;
+
+    if (diffpprt < 1.0 && cwnd < CWND_MAX && cwnd_limited_) {
+        cwnd++;
+        // ssthresh = max(ssthresh, cwnd / 2); ??
+    } else if (diffpprt > 3.0 && cwnd > CWND_MIN) {
+        cwnd--;
+        ssthresh = min(ssthresh, cwnd); // /2??
+    }
+
+    logger::debug() << boost::format("Round-trip: win %d basertt %.3f rtt %d "
+        "exp-pps %f act-pps %f diff-pprt %.3f cwnd %d")
+        % state_->mark_sent_
+        % basertt
+        % rtt
+        % (expect*1000000.0)
+        % (actual*1000000.0)
+        % diffpprt
+        % cwnd;
+}
+
+void cc_vegas::update(unsigned new_packets)
+{
+    sstoggle = !sstoggle;
+    if (sstoggle)
+        return;  // do slow start only once every two RTTs
+
+    // call into cc_tcp::update()
+    // for now copypasted
+
+    // During standard TCP slow start procedure,
+    // increment cwnd for each newly-ACKed packet.
+    // XX TCP spec allows this to be <=,
+    // which puts us in slow start briefly after each loss...
+    if (new_packets and cwnd_limited_ and cwnd < ssthresh)
+    {
+        cwnd = min(cwnd + new_packets, ssthresh);
+        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
+            << cwnd << " (ssthresh " << ssthresh << ")";
+    }
+}
+
+/**
+ * CTCP-like congestion control.
+ */
+class cc_ctcp : public congestion_control_strategy
+{
+public:
+    cc_ctcp(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    void missed(uint64_t pktseq) override;
+    void rtt_update(float pps, float rtt) override;
+    void update(unsigned new_packets) override;
+};
+
+void cc_ctcp::missed(uint64_t pktseq)
+{
+    assert(0); // XXX
+}
+
+void cc_ctcp::rtt_update(float pps, float rtt)
+{
+#if 0
+    k = 0.8; a = 1/8; B = 1/2
+    if (in-recovery)
+        ...
+    else if (diff < y) {
+        dwnd += sqrt(win)/8.0 - 1;
+    } else
+        dwnd -= C * diff;
+#endif
+}
+
+void cc_ctcp::update(unsigned new_packets)
+{
+    assert(0); // XXX
+}
+
+/**
+ * No congestion control, fixed window.
+ */
+class cc_fixed : public congestion_control_strategy
+{
+public:
+    cc_fixed(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    void missed(uint64_t pktseq) override;
+    void timeout() override;
+    void update(unsigned new_packets) override;
+};
+
+void cc_fixed::missed(uint64_t pktseq)
+{
+    // fixed cwnd, no congestion control
+}
+
+void cc_fixed::timeout()
+{
+    // fixed cwnd, no congestion control
+}
+
+void cc_fixed::update(unsigned new_packets)
+{
+    // fixed cwnd, no congestion control
+}
 
 // --end CC control--------------------------------------------------
 
@@ -613,22 +678,17 @@ public:
     inline int64_t unacked_packets() { return state_->tx_sequence_ - state_->tx_ack_sequence_; }
 };
 
-// @todo Move this to cc_strategy implementation.
 void channel::private_data::reset_congestion_control()
 {
-    congestion_control.reset();
-    congestion_control = stdext::make_unique<congestion_control_strategy>(state_);
+    // Initialize congestion control state
+    congestion_control.reset(new cc_tcp(state_));
 
     // --CC control---------------------------------------------------
-    congestion_control->mode = CC_TCP;
+    // @todo Move this to cc_strategy implementation.
     // delayack = true;
+    // --end CC control-----------------------------------------------
+
     // static_assert(sizeof(txackmask)*8 == maskBits);
-
-    // // Initialize transmit congestion control state
-    // recovseq = 1;
-
-    // Initialize congestion control state
-    congestion_control->reset();
 
     // Statistics gathering state
     stats_timer_.on_timeout.connect([this](bool) {
