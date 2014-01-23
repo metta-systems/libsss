@@ -30,7 +30,7 @@ void simulator::run()
     while (!timers_.empty()) {
         run_step();
     }
-    logger::info() << "Simulation completed. #####";
+    logger::info() << "##### Simulation completed.";
 }
 
 void simulator::run_actions()
@@ -53,7 +53,7 @@ void simulator::run_step()
     current_clock_ = next->wake_time();
     next->clear_wake_time();
 
-    logger::info() << "Simulation step: time now " << current_clock_ << " #####";
+    logger::info() << "##### Simulation step: time now " << current_clock_;
 
     // Run posted mainloop actions
     run_actions();
