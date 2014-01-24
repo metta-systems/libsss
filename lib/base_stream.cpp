@@ -35,7 +35,7 @@ base_stream::base_stream(shared_ptr<host> host,
 {
     assert(!peer_id.is_empty());
 
-    logger::debug() << "Constructing internal stream " << this << " for peer " << peer_id;
+    logger::debug() << "Constructing base stream " << this << " for peer " << peer_id;
 
     // Initialize inherited parameters
     if (parent)
@@ -64,7 +64,7 @@ base_stream::base_stream(shared_ptr<host> host,
 
 base_stream::~base_stream()
 {
-    logger::debug() << "Destructing internal stream";
+    logger::debug() << "Destructing base stream";
     clear();
 }
 
@@ -113,7 +113,7 @@ void base_stream::transmit_on(stream_channel* channel)
     assert(channel == tx_current_attachment_->channel_);
     assert(!tx_queue_.empty());
 
-    logger::debug() << "Internal stream transmit_on " << channel;
+    logger::debug() << "Base stream transmit_on channel " << channel;
 
     tx_enqueued_channel_ = false; // Channel has just dequeued us.
 
@@ -161,7 +161,7 @@ void base_stream::transmit_on(stream_channel* channel)
         // Register the segment as being in-flight.
         tx_inflight_ += seg_size;
 
-        logger::debug() << "inflight data " << head_packet->tx_byte_seq
+        logger::debug() << "Inflight data " << head_packet->tx_byte_seq
             << ", bytes in flight " << tx_inflight_;
 
         // Transmit the next segment in a regular Data packet.
@@ -214,7 +214,7 @@ void base_stream::transmit_on(stream_channel* channel)
             // Adjust the in-flight byte count for channel control.
             // Init packets get "charged" to the parent stream.
             parent->tx_inflight_ += seg_size;
-            logger::debug() << "inflight init " << head_packet->tx_byte_seq
+            logger::debug() << "Inflight init " << head_packet->tx_byte_seq
                 << ", bytes in flight on parent " << parent->tx_inflight_;
 
             return tx_attach_data(packet_type::init, parent->tx_current_attachment_->stream_id_);
@@ -232,7 +232,7 @@ void base_stream::transmit_on(stream_channel* channel)
 
                     // Adjust the in-flight byte count.
                     tx_inflight_ += seg_size;
-                    logger::debug() << "inflight reply " << head_packet->tx_byte_seq
+                    logger::debug() << "Inflight reply " << head_packet->tx_byte_seq
                         << ", bytes in flight " << tx_inflight_;
 
                     return tx_attach_data(packet_type::reply, rx_attachments_[i].stream_id_);
@@ -251,7 +251,7 @@ void base_stream::transmit_on(stream_channel* channel)
 
 void base_stream::recalculate_receive_window()
 {
-    logger::debug() << "Internal stream recalculate receive window";
+    logger::debug() << "Base stream recalculate receive window";
 
     assert(receive_buf_size_ > 0);
 
@@ -272,7 +272,7 @@ void base_stream::recalculate_receive_window()
         i++;
     receive_window_byte_ = i;
 
-    logger::debug() << "buffered "
+    logger::debug() << "Buffered "
         << dec << rx_available_ << "+" << (rx_buffer_used_ - rx_available_)
         << ", new receive window " << rwin << ", exp " << i;
 }
@@ -294,7 +294,7 @@ void base_stream::recalculate_transmit_window(uint8_t window_byte)
 
 void base_stream::connect_to(string const& service, string const& protocol)
 {
-    logger::debug() << "Connecting internal stream to " << service << ":" << protocol;
+    logger::debug() << "Connecting base stream to " << service << ":" << protocol;
 
     assert(!service.empty());
     assert(state_ == state::created);
@@ -327,7 +327,7 @@ void base_stream::attach_for_transmit()
     // If we already have a transmit-attachment, nothing to do.
     if (tx_current_attachment_ != nullptr) {
         assert(tx_current_attachment_->is_in_use());
-        logger::debug() << "Internal stream already has attached, doing nothing";
+        logger::debug() << "Base stream already has attached, doing nothing";
         return;
     }
 
@@ -336,7 +336,7 @@ void base_stream::attach_for_transmit()
         return;
     }
 
-    logger::debug() << "Internal stream attaching for transmission";
+    logger::debug() << "Base stream attaching for transmission";
 
     // See if there's already an active channel for this peer.
     // If so, use it - otherwise, create new one.
@@ -390,7 +390,7 @@ void base_stream::attach_for_transmit()
     while (tx_attachments_[slot].is_in_use())
     {
         if (++slot == max_attachments) {
-            logger::fatal() << "Internal stream attach_for_transmit - all slots are in use.";
+            logger::fatal() << "Base stream attach_for_transmit - all slots are in use.";
             // @fixme: Free up some slot.
         }
     }
@@ -423,7 +423,7 @@ void base_stream::set_usid(unique_stream_id_t new_usid)
     assert(!new_usid.is_empty());
 
     if (contains(peer_->usid_streams_, new_usid)) {
-        logger::warning() << "Internal stream set_usid passed a duplicate stream USID " << new_usid;
+        logger::warning() << "Base stream set_usid passed a duplicate stream USID " << new_usid;
     }
 
     usid_ = new_usid;
@@ -1461,7 +1461,7 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq,
     {
         // Respond with a reset for the unknown stream ID.
         // Ack the pktseq first so peer won't ignore the reset!
-        logger::debug() << "rx_datagram_packet: unknown stream ID " << header->stream_id;
+        logger::warning() << "rx_datagram_packet: unknown stream ID " << header->stream_id;
         channel->acknowledge(pktseq, false);
         tx_reset(channel, header->stream_id, flags::reset_remote_sid);
         return false;
@@ -1988,9 +1988,9 @@ void base_stream::got_service_reply()
 
 void base_stream::channel_connected()
 {
-    logger::debug() << "Internal stream - channel has connected.";
     if (peer_)
     {
+    logger::debug() << "Base stream - channel has connected.";
         peer_->on_channel_connected.disconnect(boost::bind(&base_stream::channel_connected, this));
     }
 
@@ -2000,9 +2000,9 @@ void base_stream::channel_connected()
 
 void base_stream::parent_attached()
 {
-    logger::debug() << "Internal stream - parent stream has attached, we can now attach.";
     if (auto parent = parent_.lock())
     {
+    logger::debug() << "Base stream - parent stream has attached, we can now attach.";
         parent->on_attached.disconnect(boost::bind(&base_stream::parent_attached, this));
     }
 
