@@ -19,6 +19,7 @@ namespace ssu {
 
 void datagram_stream::shutdown(stream::shutdown_mode mode)
 {
+    logger::debug() << "Shutting down datagram stream " << this;
     if (mode != stream::shutdown_mode::write) {
         pos_ = size();
     }
