@@ -1503,9 +1503,8 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq,
 
     // Don't need to connect to the sub's on_ready_read_record() signal
     // because we already know the sub is completely received...
-    if (auto stream = base->owner_.lock())
-    {
         stream->on_new_substream();
+    if (auto stream = base->owner_.lock()) {
         stream->on_ready_read_datagram();
     }
 
@@ -1683,7 +1682,8 @@ bool base_stream::rx_detach_packet(packet_seq_t pktseq,
 
 void base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 {
-    if (end_read_) {
+    if (end_read_)
+    {
         // Ignore anything we receive past end of stream
         // (which we may have forced from our end via close()).
         logger::warning() << "Ignoring segment received after end-of-stream";
@@ -1835,7 +1835,8 @@ base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
     stream_id_t sid, unsigned slot, unique_stream_id_t const& usid)
 {
     // Make sure we're allowed to create a child stream.
-    if (!is_listening()) {
+    if (!is_listening())
+    {
         // The parent SID is not in error, so just reset the new child.
         // Ack the pktseq first so peer won't ignore the reset!
         logger::warning() << "Other side trying to create substream, but we're not listening.";
@@ -1988,9 +1989,8 @@ void base_stream::got_service_reply()
 
 void base_stream::channel_connected()
 {
-    if (peer_)
-    {
     logger::debug() << "Base stream - channel has connected.";
+    if (peer_) {
         peer_->on_channel_connected.disconnect(boost::bind(&base_stream::channel_connected, this));
     }
 
@@ -2000,9 +2000,8 @@ void base_stream::channel_connected()
 
 void base_stream::parent_attached()
 {
-    if (auto parent = parent_.lock())
-    {
     logger::debug() << "Base stream - parent stream has attached, we can now attach.";
+    if (auto parent = parent_.lock()) {
         parent->on_attached.disconnect(boost::bind(&base_stream::parent_attached, this));
     }
 
