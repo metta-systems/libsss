@@ -99,6 +99,7 @@ void base_stream::clear()
         // should self-destruct automatically when done - clear() call below does it
     }
     received_substreams_.clear();
+    received_datagrams_.clear();
 }
 
 bool base_stream::is_attached()
@@ -616,14 +617,14 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
 
 shared_ptr<abstract_stream> base_stream::get_datagram()
 {
-    // Scan through the list of queued substreams
+    // Scan through the list of queued datagrams
     // for one with a complete record waiting to be read.
-    for (size_t i = 0; i < received_substreams_.size(); i++)
+    for (size_t i = 0; i < received_datagrams_.size(); i++)
     {
-        auto sub = received_substreams_[i];
+        auto sub = received_datagrams_[i];
         if (!sub->has_pending_records())
             continue;
-        received_substreams_.erase(received_substreams_.begin() + i);
+        received_datagrams_.erase(received_datagrams_.begin() + i);
         return sub;
     }
 
@@ -771,7 +772,7 @@ shared_ptr<abstract_stream> base_stream::accept_substream()
     auto sub = received_substreams_.front();
     received_substreams_.pop_front();
 
-    sub->on_ready_read_record.disconnect(boost::bind(&base_stream::substream_read_record, this));
+    // sub->on_ready_read_record.disconnect(boost::bind(&base_stream::substream_read_record, this));
 
     return sub;
 }
@@ -1499,16 +1500,15 @@ bool base_stream::rx_datagram_packet(packet_seq_t pktseq,
 
     // Build a pseudo-Stream object encapsulating the datagram.
     auto dgram = make_shared<datagram_stream>(base->host_, pkt, datagram_header_len_min);
-    base->received_substreams_.push_back(dgram);
+    base->received_datagrams_.push_back(dgram);
 
     // Don't need to connect to the sub's on_ready_read_record() signal
     // because we already know the sub is completely received...
-        stream->on_new_substream();
     if (auto stream = base->owner_.lock()) {
         stream->on_ready_read_datagram();
     }
 
-    return true;    // Acknowledge the packet
+    return true; // Acknowledge the packet
 }
 
 bool base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
@@ -1874,14 +1874,14 @@ base_stream::rx_substream(packet_seq_t pktseq, stream_channel* channel,
     // we expect a service request before application data.
     if (shared_from_this() == channel->root_)
     {
-        new_stream->state_ = state::accepting; // Service request expected
+        new_stream->state_ = state::accepting; // Service request expected on root stream
     }
     else
     {
         new_stream->state_ = state::connected;
         received_substreams_.push_back(new_stream);
-        new_stream->on_ready_read_record.connect(
-            boost::bind(&base_stream::substream_read_record, this));
+        // new_stream->on_ready_read_record.connect(
+            // boost::bind(&base_stream::substream_read_record, this));
         if (auto stream = owner_.lock()) {
             stream->on_new_substream();
         }
@@ -2009,15 +2009,21 @@ void base_stream::parent_attached()
     attach_for_transmit();
 }
 
-void base_stream::substream_read_record()
-{
+// void base_stream::substream_read_record()
+// {
     // When one of our queued subs emits an on_ready_read_record() signal,
     // we have to forward that via our on_ready_read_datagram() signal.
     // @fixme WHY?
-    if (auto stream = owner_.lock()) {
-        stream->on_ready_read_datagram();
-    }
-}
+    // Not sure this is a good idea.
+    // Basically it boils down to when substream has received a record we consider it to be
+    // a datagram substream and fire off datagram reading in client, with the new
+    // received_datagrams_ list it won't work.
+    // See comment in base_stream.h
+
+    // if (auto stream = owner_.lock()) {
+        // stream->on_ready_read_datagram();
+    // }
+// }
 
 //=================================================================================================
 // stream_tx_attachment

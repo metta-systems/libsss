@@ -283,6 +283,8 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
     /// Received, waiting substreams.
     std::deque<std::shared_ptr<abstract_stream>> received_substreams_;
+    /// Received, waiting datagram streams.
+    std::deque<std::shared_ptr<abstract_stream>> received_datagrams_;
 
     /**@}*/
 private:
@@ -379,8 +381,12 @@ private:
      * of any substreams queued in our received_substreams_ list waiting to be accepted,
      * in order to forward the indication to the client
      * via the parent stream's on_ready_read_datagram() signal.
+     *
+     * Originally in SST this was used to indicate reliable or too large datagrams sent as
+     * substreams to be completed and ready to receive.
+     * Now we need to find a better way to indicate that. Ephemeral stream kind of flag.
      */
-    void substream_read_record();
+    // void substream_read_record();
 
 public:
     /**
