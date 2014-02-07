@@ -140,7 +140,7 @@ class congestion_control_strategy
 public:
     shared_ptr<shared_state> const& state_;
 
-    uint32_t cwnd{CWND_MIN};       ///< Current congestion window
+    uint32_t cwnd_{CWND_MIN};       ///< Current congestion window
     bool cwnd_limited_{true};      ///< We were cwnd-limited this round-trip
 
     //-------------------------------------------
@@ -206,10 +206,10 @@ public:
     void stats_update(float& pps_out, float& rtt_out);
 
     /// for cc_fixed: fixed congestion window for reserved-bandwidth links
-    inline void set_cc_window(uint32_t wnd) { cwnd = wnd; }
+    inline void set_cc_window(uint32_t wnd) { cwnd_ = wnd; }
 
     /// Congestion information accessors for flow monitoring purposes
-    inline uint32_t tx_congestion_window() const { return cwnd; }
+    inline uint32_t tx_congestion_window() const { return cwnd_; }
     inline uint32_t tx_bytes_in_flight() const { return state_->tx_inflight_size_; }
     inline uint32_t tx_packets_in_flight() const { return state_->tx_inflight_count_; }
 };
@@ -217,7 +217,7 @@ public:
 void congestion_control_strategy::reset()
 {
     logger::debug() << "CC reset";
-    cwnd = CWND_MIN;
+    cwnd_ = CWND_MIN;
     cwnd_limited_ = true;
     ssthresh = CWND_MAX;
     sstoggle = true;
@@ -252,10 +252,10 @@ void congestion_control_strategy::missed(uint64_t pktseq)
 
     // new loss event: cut ssthresh and cwnd
     //ssthresh = (tx_sequence_ - tx_ack_sequence_) / 2;    XXX
-    ssthresh = cwnd / 2;
+    ssthresh = cwnd_ / 2;
     ssthresh = max(ssthresh, CWND_MIN);
     // logger::debug() << "%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
-    cwnd = ssthresh;
+    cwnd_ = ssthresh;
 
     // fast recovery for the rest of this window
     recovseq = state_->tx_sequence_;
@@ -267,8 +267,8 @@ void congestion_control_strategy::timeout()
     // Reset cwnd and go back to slow start
     ssthresh = state_->tx_inflight_count_ / 2;
     ssthresh = max(ssthresh, CWND_MIN);
-    cwnd = CWND_MIN;
-    logger::debug() << "CC retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd;
+    cwnd_ = CWND_MIN;
+    logger::debug() << "CC retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd_;
 }
 
 void congestion_control_strategy::log_rtt_stats()
@@ -352,8 +352,8 @@ void cc_tcp::rtt_update(float pps, float rtt)
     // Normal TCP congestion control: during congestion avoidance,
     // increment cwnd once each RTT, but only on round-trips that were cwnd-limited.
     if (cwnd_limited_) {
-        cwnd++;
-        logger::debug() << "cwnd increased to " << cwnd << ", ssthresh " << ssthresh;
+        cwnd_++;
+        logger::debug() << "cwnd increased to " << cwnd_ << ", ssthresh " << ssthresh;
     }
     cwnd_limited_ = false;
 }
@@ -364,11 +364,11 @@ void cc_tcp::update(unsigned new_packets)
     // increment cwnd for each newly-ACKed packet.
     // XX TCP spec allows this to be <=,
     // which puts us in slow start briefly after each loss...
-    if (new_packets and cwnd_limited_ and cwnd < ssthresh)
+    if (new_packets and cwnd_limited_ and cwnd_ < ssthresh)
     {
-        cwnd = min(cwnd + new_packets, ssthresh);
+        cwnd_ = min(cwnd_ + new_packets, ssthresh);
         logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
-            << cwnd << " (ssthresh " << ssthresh << ")";
+            << cwnd_ << " (ssthresh " << ssthresh << ")";
     }
 }
 
@@ -397,10 +397,10 @@ void cc_aggressive::missed(uint64_t pktseq)
     unsigned expected = state_->mark_sent_ - lost;
 
     // Clamp the congestion window to this value.
-    if (expected < cwnd) {
-        logger::debug() << "PACKETS LOST: cwnd " << cwnd << "->" << expected;
-        cwnd = ssbase = expected;
-        cwnd = max(CWND_MIN, cwnd);
+    if (expected < cwnd_) {
+        logger::debug() << "PACKETS LOST: cwnd " << cwnd_ << "->" << expected;
+        cwnd_ = ssbase = expected;
+        cwnd_ = max(CWND_MIN, cwnd_);
     }
 }
 
@@ -414,9 +414,9 @@ void cc_aggressive::update(unsigned new_packets)
     // We're always in slow start, but we only count ACKs received
     // on schedule and after a per-roundtrip baseline.
     if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
-        cwnd += min(new_packets, state_->mark_acks_ - ssbase);
+        cwnd_ += min(new_packets, state_->mark_acks_ - ssbase);
         logger::debug() << "Slow start: " << new_packets
-            << " new ACKs; boost cwnd to " << cwnd;
+            << " new ACKs; boost cwnd to " << cwnd_;
     }
 }
 
@@ -439,10 +439,10 @@ void cc_delay::rtt_update(float pps, float rtt)
         basertt = rtt;
         basepps = pps;
         basewnd = state_->mark_acks_;
-    } else if (state_->mark_acks_ <= basewnd && rtt > basertt) {
+    } else if (state_->mark_acks_ <= basewnd and rtt > basertt) {
         basertt = rtt;
         basepwr = basepps / basertt;
-    } else if (state_->mark_acks_ >= basewnd && pps < basepps) {
+    } else if (state_->mark_acks_ >= basewnd and pps < basepps) {
         basepps = pps;
         basepwr = basepps / basertt;
     }
@@ -450,25 +450,25 @@ void cc_delay::rtt_update(float pps, float rtt)
     if (cwndinc > 0) {
         // Window going up.
         // If RTT makes a significant jump, reverse.
-        if (rtt > basertt || cwnd >= CWND_MAX) {
+        if (rtt > basertt or cwnd_ >= CWND_MAX) {
             cwndinc = -1;
         } else {
             // Additively increase the window
-            cwnd += cwndinc;
+            cwnd_ += cwndinc;
         }
     } else {
         // Window going down.
         // If PPS makes a significant dive, reverse.
-        if (pps < basepps || cwnd <= CWND_MIN) {
-            ssbase = cwnd++;
+        if (pps < basepps or cwnd_ <= CWND_MIN) {
+            ssbase = cwnd_++;
             cwndinc = +1;
         } else {
             // Additively decrease the window
-            cwnd += cwndinc;
+            cwnd_ += cwndinc;
         }
     }
-    cwnd = max(CWND_MIN, cwnd);
-    cwnd = min(CWND_MAX, cwnd);
+    cwnd_ = max(CWND_MIN, cwnd_);
+    cwnd_ = min(CWND_MAX, cwnd_);
 
     logger::debug() << boost::format(
         "RT: pwr %.0f[%.0f/%.0f]@%d base %.0f[%.0f/%.0f]@%d cwnd %d%+d")
@@ -480,7 +480,7 @@ void cc_delay::rtt_update(float pps, float rtt)
         % basepps
         % basertt
         % basewnd
-        % cwnd
+        % cwnd_
         % cwndinc;
 }
 
@@ -496,9 +496,9 @@ void cc_delay::update(unsigned new_packets)
     // We're always in slow start, but we only count ACKs received
     // on schedule and after a per-roundtrip baseline.
     if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
-        cwnd += min(new_packets, state_->mark_acks_ - ssbase);
+        cwnd_ += min(new_packets, state_->mark_acks_ - ssbase);
         logger::debug() << "Slow start: " << new_packets
-            << " new ACKs; boost cwnd to " << cwnd;
+            << " new ACKs; boost cwnd to " << cwnd_;
     }
 }
 
@@ -532,12 +532,12 @@ void cc_vegas::rtt_update(float pps, float rtt)
     assert(diffpps >= 0.0);
     float diffpprt = diffpps * rtt;
 
-    if (diffpprt < 1.0 && cwnd < CWND_MAX && cwnd_limited_) {
-        cwnd++;
+    if (diffpprt < 1.0 and cwnd_ < CWND_MAX and cwnd_limited_) {
+        cwnd_++;
         // ssthresh = max(ssthresh, cwnd / 2); ??
-    } else if (diffpprt > 3.0 && cwnd > CWND_MIN) {
-        cwnd--;
-        ssthresh = min(ssthresh, cwnd); // /2??
+    } else if (diffpprt > 3.0 and cwnd_ > CWND_MIN) {
+        cwnd_--;
+        ssthresh = min(ssthresh, cwnd_); // /2??
     }
 
     logger::debug() << boost::format("Round-trip: win %d basertt %.3f rtt %d "
@@ -548,7 +548,7 @@ void cc_vegas::rtt_update(float pps, float rtt)
         % (expect*1000000.0)
         % (actual*1000000.0)
         % diffpprt
-        % cwnd;
+        % cwnd_;
 }
 
 void cc_vegas::update(unsigned new_packets)
@@ -564,11 +564,11 @@ void cc_vegas::update(unsigned new_packets)
     // increment cwnd for each newly-ACKed packet.
     // XX TCP spec allows this to be <=,
     // which puts us in slow start briefly after each loss...
-    if (new_packets and cwnd_limited_ and cwnd < ssthresh)
+    if (new_packets and cwnd_limited_ and cwnd_ < ssthresh)
     {
-        cwnd = min(cwnd + new_packets, ssthresh);
+        cwnd_ = min(cwnd_ + new_packets, ssthresh);
         logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
-            << cwnd << " (ssthresh " << ssthresh << ")";
+            << cwnd_ << " (ssthresh " << ssthresh << ")";
     }
 }
 
@@ -721,7 +721,7 @@ void channel::private_data::stats_timeout()
         % state_->rx_sequence_
         % state_->rx_ack_sequence_
         % state_->tx_inflight_count_
-        % congestion_control->cwnd
+        % congestion_control->cwnd_
         % congestion_control->ssthresh
         % congestion_control->cumulative_rtt_
         % congestion_control->cumulative_pps_
@@ -754,7 +754,7 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
     }
 
     // Always clamp cwnd against CWND_MAX.
-    congestion_control->cwnd = min(congestion_control->cwnd, CWND_MAX);
+    congestion_control->cwnd_ = min(congestion_control->cwnd_, CWND_MAX);
 }
 
 void channel::private_data::bump_tx_sequence()
@@ -830,8 +830,9 @@ int channel::may_transmit()
         return super::may_transmit();
     }
 
-    if (pimpl_->congestion_control->cwnd > pimpl_->state_->tx_inflight_count_) {
-        int allowance = pimpl_->congestion_control->cwnd - pimpl_->state_->tx_inflight_count_;
+    if (pimpl_->congestion_control->cwnd_ > pimpl_->state_->tx_inflight_count_)
+    {
+        int allowance = pimpl_->congestion_control->cwnd_ - pimpl_->state_->tx_inflight_count_;
         logger::debug(200) << "Channel - congestion window limits may_transmit to " << allowance;
         return allowance;
     }
