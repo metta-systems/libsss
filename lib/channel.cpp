@@ -120,7 +120,9 @@ public:
     shared_state(shared_ptr<host> const& host)
         : host_(host)
         , mark_time_(host->current_time())
-    {}
+    {
+        static_assert(sizeof(tx_ack_mask_)*8 == maskBits);
+    }
 
     /// Compute the time elapsed since the mark.
     inline async::timer::duration_type
@@ -708,8 +710,6 @@ void channel::private_data::reset_congestion_control()
     // @todo Move this to cc_strategy implementation.
     // delayack = true;
     // --end CC control-----------------------------------------------
-
-    // static_assert(sizeof(txackmask)*8 == maskBits);
 
     // Statistics gathering state
     stats_timer_.on_timeout.connect([this](bool) {
