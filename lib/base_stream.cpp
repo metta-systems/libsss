@@ -330,6 +330,22 @@ void base_stream::connect_to(string const& service, string const& protocol)
     attach_for_transmit();
 }
 
+/// Get list of services on the peer host.
+// future<vector<pair<string,string>>>
+// base_stream::get_service_list()
+// {
+// fixme: stream may be in created or wait_service or connected state, because we might
+// want to inspect available services before connecting.
+// need to extend state space to include wait_service_list, wait_protocol_list but only
+// if it's not waiting service or ready yet?? gets complicated
+// can be at once in all three states: waiting service, waiting service list and waiting protocol list
+// }
+
+/// Get list of protocols for given service on the peer host.
+// future<vector<pair<string,string>>>
+// base_stream::get_protocol_list(string service)
+// {}
+
 void base_stream::attach_for_transmit()
 {
     assert(!peerid_.is_empty());

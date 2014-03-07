@@ -137,8 +137,17 @@ public:
 
     /// Service message codes
     enum service_code : uint32_t {
-        connect_request  = 0x101,    ///< Connect to named service.
-        connect_reply    = 0x201,    ///< Response to connect request.
+        connect_request        = 0x101, ///< Connect to named service.
+        // request format: string service, string protocol
+        connect_reply          = 0x201, ///< Response to connect request.
+        // reply format: reply code, string description
+        list_services_request  = 0x102, ///< Spec 4.4 end
+        list_services_reply    = 0x202, ///< with human-readable descriptions
+        /// reply format: array of pairs <service, service_desc>
+        list_protocols_request = 0x103, ///< List protocols for given service
+        /// request format: string service_name
+        list_protocols_reply   = 0x203, ///< with descriptions
+        /// reply format: array of pairs <protocol, protocol_desc>
 
         reply_ok         = 0,        ///< Service request accepted.
         reply_not_found  = 1,        ///< Specified service pair not found.
@@ -146,6 +155,7 @@ public:
 
     // Maximum size of a service request or response record
     static constexpr int max_service_record_size = 128;
+    // @fixme Could become bigger if list commands are implemented.
 
     /**
      * Type for identifying streams uniquely across channels.
