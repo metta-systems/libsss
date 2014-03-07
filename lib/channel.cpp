@@ -855,6 +855,15 @@ uint32_t channel::make_second_header_word(uint8_t ack_count, uint32_t ack_sequen
     constexpr uint32_t ack_seq_bits = 24;
     constexpr uint32_t ack_seq_mask = (1 << ack_seq_bits) - 1;
 
+    if (ack_count > ack_cnt_mask) {
+        ack_count = ack_cnt_mask;
+    }
+
+    // @todo
+    if (ack_sequence > ack_seq_mask) {
+        logger::fatal() << "ACK sequence number wrapped";
+    }
+
     // 31-28: reserved field
     // 27-24: ack count
     // 23-0: ack sequence number
@@ -868,6 +877,13 @@ bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
     // Include implicit acknowledgment of the latest packet(s) we've acked
     uint32_t ack_seq =
         make_second_header_word(pimpl_->state_->rx_ack_count_, pimpl_->state_->rx_ack_sequence_);
+
+// @todo verify that ackct is always 0xf in case no packets were dropped
+// (that can nicely be a unit test)
+// override channel's armor to a fixture one, with transmit_encode() actually examining
+// packets to be sent and receive_decode() examining packets "received".
+// then prove that ackct goes up from 1 to 15 and stays there.
+
     if (pimpl_->state_->rx_unacked_)
     {
         pimpl_->state_->rx_unacked_ = 0;
