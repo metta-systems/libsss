@@ -284,6 +284,12 @@ void base_stream::recalculate_transmit_window(uint8_t window_byte)
 {
     int32_t old_window = tx_window_;
 
+    if (window_byte > 158) // Spec 4.10.1
+    {
+        logger::warning() << "Received invalid window byte " << dec << window_byte;
+        window_byte = 158;
+    }
+
     // Calculate the new transmit window
     int i = window_byte & 0x1f;
     tx_window_ = (1 << i) - 1;
@@ -1051,7 +1057,7 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
     header->stream_id = sid;
     header->type_subtype = type_and_subtype(packet_type::reset, flags);
-    header->window = 0;
+    header->window = 0; // No space
 
     // Transmit it on the current channel.
     packet_seq_t pktseq;
