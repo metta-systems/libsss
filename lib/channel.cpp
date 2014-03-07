@@ -24,7 +24,7 @@ namespace ssu {
 //=================================================================================================
 
 /// Size of rxmask, rxackmask, and txackmask fields in bits
-static constexpr int maskBits = 32;
+static constexpr int maskBits = 64;
 
 static constexpr int max_ack_count = 0xf;
 
@@ -83,7 +83,7 @@ public:
     /// Time at which marked packet was sent.
     bp::ptime mark_time_;
     /// Mask of packets transmitted and ACK'd (fictitious packet 0 already received)
-    uint32_t tx_ack_mask_{1};
+    uint64_t tx_ack_mask_{1};
     /// Data packets currently in flight.
     uint32_t tx_inflight_count_{0};
     /// Data bytes currently in flight.
@@ -102,7 +102,7 @@ public:
     /// Highest sequence number received so far.
     packet_seq_t rx_sequence_{0};
     /// Mask of packets received so far (1 = fictitious packet 0)
-    uint32_t rx_mask_{1};
+    uint64_t rx_mask_{1};
 
     // Receive-side ACK state
     /// Highest sequence number acknowledged so far.
