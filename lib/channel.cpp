@@ -757,7 +757,7 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
         else
         {
             logger::debug() << "End-to-end rtt " << rtt
-                << " cumulative rtt " << congestion_control->cumulative_rtt_;
+                << " cumulative rtt " << congestion_control->cumulative_rtt_;//fixme, nullptr access?
         }
     }
 
