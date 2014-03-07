@@ -161,7 +161,7 @@ public:
     /**@{*/
 
     /// Sequence at which fast recovery finishes.
-    packet_seq_t recovseq;
+    packet_seq_t recovseq{1};
 
     // TCP congestion control
     uint32_t ssthresh;   ///< Slow start threshold
@@ -198,8 +198,6 @@ public:
         : state_(state)
     {
         reset();
-        // Initialize transmit congestion control state
-        recovseq = 1;
     }
 
     /// Reset congestion control.
