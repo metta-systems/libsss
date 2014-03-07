@@ -1008,7 +1008,7 @@ void channel::retransmit_timeout(bool failed)
     set_link_status(failed ? link::status::down : link::status::stalled);
 }
 
-void channel::acknowledge(uint16_t pktseq, bool send_ack)
+void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
 {
     constexpr int min_ack_packets = 2;
     constexpr int max_ack_packets = 4;

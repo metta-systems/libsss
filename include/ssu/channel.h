@@ -92,8 +92,7 @@ public:
      * if 'send_ack' is true, make sure an acknowledgment gets sent soon:
      * in the next transmitted packet, or in an ack packet if needed.
      */
-    void acknowledge(uint16_t pktseq, bool send_ack);
-
+    void acknowledge(packet_seq_t pktseq, bool send_ack);
 
     /**
      * Set the encryption/authentication method for this channel.
