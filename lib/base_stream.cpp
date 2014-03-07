@@ -388,7 +388,7 @@ void base_stream::attach_for_transmit()
     }
 
     //-----------------------------------------
-    // Allocate a stream_id_t for this stream.
+    // Allocate a new USID for this stream.
     //-----------------------------------------
 
     // Scan forward through our SID space a little ways for a free SID;
@@ -401,7 +401,7 @@ void base_stream::attach_for_transmit()
     {
         if (++slot == max_attachments) {
             logger::fatal() << "Base stream attach_for_transmit - all slots are in use.";
-            // @fixme: Free up some slot.
+            // @todo: Free up some slot.
         }
     }
 
