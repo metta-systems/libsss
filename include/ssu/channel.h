@@ -79,7 +79,7 @@ public:
 
     /// Check congestion control state and return the number of new packets,
     /// if any, that flow control says we may transmit now.
-    virtual int may_transmit();
+    int may_transmit() override;
 
     inline byte_array tx_channel_id() {
         return tx_channel_id_;
