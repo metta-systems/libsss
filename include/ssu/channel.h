@@ -36,6 +36,11 @@ class channel : public link_channel
     byte_array   rx_channel_id_;                   ///< Receive ID of the channel.
     link::status link_status_{link::status::down}; ///< Link online status.
 
+    /**
+     * When packet sequence reaches this number, the channel is no longer usable
+     * and must be terminated.
+     * It is advised to create a new channel long before reaching this limit.
+     */
     static constexpr packet_seq_t max_packet_sequence = ~0ULL;
 
 public:
