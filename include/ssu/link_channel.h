@@ -37,7 +37,8 @@ public:
      * Start the channel.
      * @param initiate Initiate the key exchange using key_initiator.
      */
-    inline virtual void start(bool initiate) {
+    inline virtual void start(bool initiate)
+    {
         assert(remote_channel_number_);
         active_ = true;
     }
@@ -130,7 +131,8 @@ protected:
      */
     virtual int may_transmit();
 
-    inline bool send(const byte_array& pkt) const {
+    inline bool send(const byte_array& pkt) const
+    {
         assert(active_);
         if (auto l = link_) {
             return l->send(remote_ep_, pkt);

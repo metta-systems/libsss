@@ -76,11 +76,16 @@ public:
     /// if any, that flow control says we may transmit now.
     virtual int may_transmit();
 
-    inline byte_array tx_channel_id() { return tx_channel_id_; }
-    inline byte_array rx_channel_id() { return rx_channel_id_; }
+    inline byte_array tx_channel_id() {
+        return tx_channel_id_;
+    }
+    inline byte_array rx_channel_id() {
+        return rx_channel_id_;
+    }
 
     /// Set the channel IDs for this channel.
-    inline void set_channel_ids(byte_array const& tx_id, byte_array const& rx_id) {
+    inline void set_channel_ids(byte_array const& tx_id, byte_array const& rx_id)
+    {
         tx_channel_id_ = tx_id;
         rx_channel_id_ = rx_id;
     }
@@ -105,7 +110,9 @@ public:
     /**
      * Return the current link status as observed by this channel.
      */
-    inline link::status link_status() const { return link_status_; }
+    inline link::status link_status() const {
+        return link_status_;
+    }
 
     typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
 
