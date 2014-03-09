@@ -24,7 +24,7 @@ namespace ssu {
 //=================================================================================================
 
 /// Size of rxmask, rxackmask, and txackmask fields in bits
-static constexpr int maskBits = 64;
+static constexpr int mask_bits = 64;
 
 static constexpr int max_ack_count = 0xf;
 
@@ -121,7 +121,7 @@ public:
         : host_(host)
         , mark_time_(host->current_time())
     {
-        static_assert(sizeof(tx_ack_mask_)*8 == maskBits);
+        static_assert(sizeof(tx_ack_mask_)*8 == mask_bits, "Invalid TX ack mask size");
     }
 
     /// Compute the time elapsed since the mark.
@@ -1167,14 +1167,14 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     logger::debug() << "Channel receive - rxseq " << pktseq << ", size " << pkt.size();
 
     // Immediately drop too-old or already-received packets
-    static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == maskBits, "Invalid rx_mask size");
+    static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == mask_bits, "Invalid RX mask size");
 
     if (seqdiff > 0) {
         if (pktseq < pimpl_->state_->rx_sequence_) {
             logger::warning() << "Channel receive - 64-bit wraparound detected!";
             return;
         }
-    } else if (seqdiff <= -maskBits) {
+    } else if (seqdiff <= -mask_bits) {
         logger::debug() << "Channel receive - too-old packet dropped";
         return;
     } else if (seqdiff <= 0) {
@@ -1200,13 +1200,13 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // Roll rxseq and rxmask forward appropriately.
         pimpl_->state_->rx_sequence_ = pktseq;
         // @fixme This if is not necessary...
-        if (seqdiff < maskBits)
+        if (seqdiff < mask_bits)
             pimpl_->state_->rx_mask_ = (pimpl_->state_->rx_mask_ << seqdiff) | 1;
         else
             pimpl_->state_->rx_mask_ = 1; // bit 0 = packet just received
     } else {
         // Set appropriate bit in rx_mask_
-        assert(seqdiff < 0 and seqdiff > -maskBits);
+        assert(seqdiff < 0 and seqdiff > -mask_bits);
         pimpl_->state_->rx_mask_ |= (1 << -seqdiff);
     }
 
@@ -1238,7 +1238,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // Received acknowledgment for one or more new packets.
         // Roll forward tx_ack_sequence_ and tx_ack_mask_.
         pimpl_->state_->tx_ack_sequence_ = ackseq;
-        if (ack_diff < maskBits)
+        if (ack_diff < mask_bits)
             pimpl_->state_->tx_ack_mask_ <<= ack_diff;
         else
             pimpl_->state_->tx_ack_mask_ = 0;
@@ -1310,9 +1310,9 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
         // Finally, notice packets as they exit our ack window,
         // and garbage collect their transmit records,
         // since they can never be acknowledged after that.
-        if (pimpl_->state_->tx_ack_sequence_ > maskBits)
+        if (pimpl_->state_->tx_ack_sequence_ > mask_bits)
         {
-            while (pimpl_->state_->tx_event_sequence_ <= pimpl_->state_->tx_ack_sequence_ - maskBits)
+            while (pimpl_->state_->tx_event_sequence_ <= pimpl_->state_->tx_ack_sequence_ - mask_bits)
             {
                 logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_ << " expired";
                 assert(!pimpl_->state_->tx_events_.front().pipe_);
@@ -1352,7 +1352,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
     if ((pimpl_->state_->tx_ack_mask_ & newmask) != newmask) {
         for (unsigned i = 0; i <= ackct; i++) {
             int bit = -ack_diff + i;
-            if (bit >= maskBits)
+            if (bit >= mask_bits)
                 break;
             if (pimpl_->state_->tx_ack_mask_ & (1 << bit))
                 continue;   // already ACKed
