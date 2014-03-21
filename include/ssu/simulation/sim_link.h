@@ -8,7 +8,9 @@
 //
 #pragma once
 
-#include "ssu/link.h"
+#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
+// when decoupled, should not need host.h include above
+#include "comm/socket.h"
 
 namespace ssu {
 
@@ -19,7 +21,7 @@ namespace simulation {
 class sim_host;
 class simulator;
 
-class sim_link : public link, public std::enable_shared_from_this<sim_link>
+class sim_link : public uia::comm::socket, public std::enable_shared_from_this<sim_link>
 {
     std::shared_ptr<simulator> simulator_;
     std::shared_ptr<sim_host> host_;
@@ -29,19 +31,19 @@ public:
     sim_link(std::shared_ptr<sim_host> host);
     ~sim_link();
 
-    bool bind(endpoint const& ep) override;
+    bool bind(uia::comm::endpoint const& ep) override;
     void unbind() override;
 
-    bool send(const endpoint& ep, const char *data, size_t size) override;
+    bool send(uia::comm::endpoint const& ep, const char *data, size_t size) override;
 
-    std::vector<endpoint> local_endpoints() override;
+    std::vector<uia::comm::endpoint> local_endpoints() override;
     inline uint16_t local_port() override {
         return port_;
     }
     inline std::string error_string() override {
         return "";
     }
-    using link::receive;
+    using uia::comm::socket::receive;
 };
 
 } // simulation namespace

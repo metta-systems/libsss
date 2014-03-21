@@ -9,9 +9,10 @@
 #pragma once
 
 #include <stdexcept>
-#include "ssu/link.h"
+#include <boost/asio.hpp> // @todo Include only header for boost::asio::ip::address
 #include "arsenal/byte_array.h"
 #include "ssu/peer_id.h"
+#include "comm/socket_endpoint.h"
 #include "krypto/sign_key.h"
 
 class settings_provider;
@@ -137,12 +138,12 @@ public:
      * Construct a non-cryptographic EID from an endpoint IP address.
      * Non-cryptographic identifiers cannot have signing keys.
      */
-    static identity from_endpoint(endpoint const& ep);
+    static identity from_endpoint(uia::comm::endpoint const& ep);
 
     /**
      * Extract the endpoint (IP address and port pair) from an EID that describes an endpoint.
      */
-    endpoint get_endpoint() const; /// Actually @todo Rename endpoint to endpoint_t?
+    uia::comm::endpoint get_endpoint() const; /// Actually @todo Rename endpoint to endpoint_t?
 
     /**
      * Get this identity's short binary EID.

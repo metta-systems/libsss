@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 #include "ssu/host.h"
-#include "ssu/link.h"
+#include "comm/socket.h"
 
 namespace ssu {
 namespace simulation {
@@ -26,7 +26,7 @@ class sim_host : public host
     std::shared_ptr<simulator> simulator_;
 
     /// Virtual network connections of this host.
-    std::unordered_map<endpoint, std::shared_ptr<sim_connection>> connections_;
+    std::unordered_map<uia::comm::endpoint, std::shared_ptr<sim_connection>> connections_;
 
     /// Links bound on this host by port.
     typedef uint16_t port_t;
@@ -57,7 +57,7 @@ public:
     boost::posix_time::ptime current_time() override;
     std::unique_ptr<async::timer_engine> create_timer_engine_for(async::timer* t) override;
 
-    std::shared_ptr<link> create_link() override;
+    std::shared_ptr<uia::comm::socket> create_socket() override;
 
     /** Enqueue packet, assume ownership of the packet. */
     void enqueue_packet(std::shared_ptr<sim_packet> packet);
@@ -70,18 +70,20 @@ public:
      */
     bool packet_on_queue(std::shared_ptr<sim_packet> packet) const;
 
-    void register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
-    void unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn);
-    std::shared_ptr<sim_connection> connection_at(endpoint const& ep);
+    void register_connection_at(uia::comm::endpoint const& address,
+        std::shared_ptr<sim_connection> conn);
+    void unregister_connection_at(uia::comm::endpoint const& address,
+        std::shared_ptr<sim_connection> conn);
+    std::shared_ptr<sim_connection> connection_at(uia::comm::endpoint const& ep);
 
     void register_link_at(uint16_t port, std::shared_ptr<sim_link> link);
     void unregister_link_at(uint16_t port, std::shared_ptr<sim_link> link);
     std::shared_ptr<sim_link> link_for(uint16_t port);
 
-    std::shared_ptr<sim_host> neighbor_at(endpoint const& ep, endpoint& src);
+    std::shared_ptr<sim_host> neighbor_at(uia::comm::endpoint const& ep, uia::comm::endpoint& src);
 
     // Helper for sim_link local_endpoints().
-    std::vector<endpoint> local_endpoints();
+    std::vector<uia::comm::endpoint> local_endpoints();
 };
 
 } // simulation namespace

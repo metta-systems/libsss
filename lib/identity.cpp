@@ -222,14 +222,14 @@ uint16_t identity::ip_port() const
     return port;
 }
 
-identity identity::from_endpoint(endpoint const& ep)
+identity identity::from_endpoint(uia::comm::endpoint const& ep)
 {
     return from_ip_address(ep.address(), ep.port());
 }
 
-endpoint identity::get_endpoint() const
+uia::comm::endpoint identity::get_endpoint() const
 {
-    return endpoint(ip_address(), ip_port());
+    return uia::comm::endpoint(ip_address(), ip_port());
 }
 
 byte_array identity::public_key() const

@@ -11,7 +11,11 @@
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
 #include "ssu/peer_id.h"
-#include "ssu/link.h"
+#include "comm/socket_endpoint.h"
+
+#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
+// when decoupled, should not need host.h include above
+#include "comm/socket.h"
 
 namespace ssu {
 
@@ -170,7 +174,7 @@ public:
      */
     bool connect_to(peer_id const& destination,
         std::string service, std::string protocol,
-        endpoint const& destination_endpoint_hint = endpoint());
+        uia::comm::endpoint const& destination_endpoint_hint = uia::comm::endpoint());
 
     /**
      * Connect to a given service and protocol on a remote host.
@@ -178,7 +182,7 @@ public:
      */
     bool connect_to(identity const& target_identity,
         std::string service, std::string protocol,
-        endpoint const& destination_endpoint_hint = endpoint());
+        uia::comm::endpoint const& destination_endpoint_hint = uia::comm::endpoint());
 
     /**
      * Disconnect the stream from its current peer.
@@ -208,7 +212,7 @@ public:
      * to give SST a hint at where it might find the target
      * in order to re-establish connectivity.
      */
-    void connect_at(endpoint const& ep);
+    void connect_at(uia::comm::endpoint const& ep);
 
     /**@}*/
     //---------------------------------------------------------------
@@ -480,7 +484,7 @@ public:
      * of the host to which this stream is currently connected (if any). The stream layer will
      * use this hint in any current or subsequent attempts to connect to the specified EID.
      */
-    bool add_location_hint(peer_id const& eid, endpoint const& hint);
+    bool add_location_hint(peer_id const& eid, uia::comm::endpoint const& hint);
 
     /**
      * Set an error condition on this stream and emit the error_notify signal.
@@ -569,7 +573,7 @@ public:
      */
     link_status_signal on_link_down;
 
-    typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
+    typedef boost::signals2::signal<void (uia::comm::socket::status)> link_status_changed_signal;
     /**
      * Emitted when this stream observes a change in link status.
      */

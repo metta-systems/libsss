@@ -160,8 +160,8 @@ sim_connection::~sim_connection()
     disconnect();
 }
 
-void sim_connection::connect(std::shared_ptr<sim_host> downlink, endpoint downlink_address,
-                             std::shared_ptr<sim_host> uplink, endpoint uplink_address)
+void sim_connection::connect(std::shared_ptr<sim_host> downlink, uia::comm::endpoint downlink_address,
+                             std::shared_ptr<sim_host> uplink, uia::comm::endpoint uplink_address)
 {
     assert(downlink != uplink);
     assert(downlink_address != uplink_address);
@@ -222,12 +222,12 @@ sim_connection::uplink_for(std::shared_ptr<sim_host> downlink) const
     return nullptr;
 }
 
-endpoint
+uia::comm::endpoint
 sim_connection::address_for(std::shared_ptr<sim_host> link) const
 {
     if (link == downlink_) return downlink_address_;
     if (link == uplink_) return uplink_address_;
-    return endpoint();
+    return uia::comm::endpoint();
 }
 
 sim_connection::params const&

@@ -770,7 +770,7 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
 //=================================================================================================
 
 channel::channel(shared_ptr<host> host)
-    : link_channel()
+    : socket_channel()
     , pimpl_(stdext::make_unique<private_data>(host))
 {
     pimpl_->retransmit_timer_.on_timeout.connect([this](bool fail) {
@@ -799,10 +799,10 @@ void channel::start(bool initiate)
 
     super::start(initiate);
 
-    pimpl_->nocc_ = is_link_congestion_controlled();
+    pimpl_->nocc_ = is_socket_congestion_controlled();
 
     // We're ready to go!
-    set_link_status(link::status::up);
+    set_link_status(uia::comm::socket::status::up);
     on_ready_transmit();
     start_retransmit_timer();
 }
@@ -816,7 +816,7 @@ void channel::stop()
 
     super::stop();
 
-    set_link_status(link::status::down);
+    set_link_status(uia::comm::socket::status::down);
 }
 
 int channel::may_transmit()
@@ -1005,7 +1005,7 @@ void channel::retransmit_timeout(bool failed)
 
     // If we exceed a threshold timeout, signal a failed connection.
     // The subclass has no obligation to do anything about this, however.
-    set_link_status(failed ? link::status::down : link::status::stalled);
+    set_link_status(failed ? uia::comm::socket::status::down : uia::comm::socket::status::stalled);
 }
 
 void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
@@ -1138,7 +1138,8 @@ void channel::expire(uint64_t txseq, int npackets)
     logger::debug() << "Channel " << this << " - tx seq " << txseq << " expired";
 }
 
-void channel::receive(byte_array const& pkt, link_endpoint const& src)
+void
+channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
 {
     logger::debug() << "Channel " << this << " - receive from " << src;
 
@@ -1324,7 +1325,7 @@ void channel::receive(byte_array const& pkt, link_endpoint const& src)
 
         // Reset the retransmission timer, since we've made progress.
         // Only re-arm it if there's still outstanding unACKed data.
-        set_link_status(link::status::up);
+        set_link_status(uia::comm::socket::status::up);
         if (pimpl_->state_->tx_inflight_count_ > 0)
         {
             start_retransmit_timer();

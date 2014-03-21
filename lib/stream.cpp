@@ -111,7 +111,7 @@ bool stream::is_link_up() const
 
 bool stream::connect_to(peer_id const& destination,
     string service, string protocol,
-    endpoint const& destination_endpoint_hint)
+    uia::comm::endpoint const& destination_endpoint_hint)
 {
     // Determine a suitable target EID.
     // If the caller didn't specify one (doesn't know the target's EID),
@@ -143,8 +143,9 @@ bool stream::connect_to(peer_id const& destination,
     // setOpenMode(ReadWrite | Unbuffered);
 
     // If we were given a location hint, record it for setting up channels.
-    if (destination_endpoint_hint != endpoint())
+    if (destination_endpoint_hint != uia::comm::endpoint()) {
         connect_at(destination_endpoint_hint);
+    }
 
     return true;
 }
@@ -156,19 +157,19 @@ void stream::connect_link_status_signal()
 
     internal::stream_peer* peer = host_->stream_peer(stream_->peerid_);
 
-    peer->on_link_status_changed.connect([this](link::status new_status) {
+    peer->on_link_status_changed.connect([this](uia::comm::socket::status new_status) {
         on_link_status_changed(new_status);
     });
     status_signal_connected_ = true;
 }
 
-void stream::connect_at(endpoint const& ep)
+void stream::connect_at(uia::comm::endpoint const& ep)
 {
     if (!stream_) return;
     host_->stream_peer(stream_->peerid_)->add_location_hint(ep);
 }
 
-bool stream::add_location_hint(peer_id const& eid, endpoint const& hint)
+bool stream::add_location_hint(peer_id const& eid, uia::comm::endpoint const& hint)
 {
     if (eid.is_empty()) {
         set_error("No target EID for location hint");
@@ -424,11 +425,11 @@ class stream_responder : public negotiation::key_responder, public stream_protoc
     void created_client(ur::client *rc);
     void client_ready();
     void lookup_notify(ssu::peer_id const& target_peer,
-        ssu::endpoint const& peer_ep,
+        uia::comm::endpoint const& peer_ep,
         uia::routing::client_profile const& peer_profile);
     /**@}*/
 
-    channel* create_channel(link_endpoint const& initiator_ep,
+    channel* create_channel(uia::comm::socket_endpoint const& initiator_ep,
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out) override;
 
@@ -451,7 +452,7 @@ stream_responder::stream_responder(shared_ptr<host> host)
 }
 
 /// @todo Return unique_ptr<channel>?
-channel* stream_responder::create_channel(link_endpoint const& initiator_ep,
+channel* stream_responder::create_channel(uia::comm::socket_endpoint const& initiator_ep,
             byte_array const& initiator_eid, byte_array const&, byte_array&)
 {
     internal::stream_peer* peer = get_host()->stream_peer(initiator_eid);
@@ -477,7 +478,7 @@ void stream_responder::connect_routing_client(ur::client *c)
     connected_clients_.insert(c);
     c->on_ready.connect([this] { client_ready(); });
     c->on_lookup_notify.connect([this](ssu::peer_id const& target_peer,
-                                       ssu::endpoint const& peer_ep,
+                                       uia::comm::endpoint const& peer_ep,
                                        uia::routing::client_profile const& peer_profile)
     {
         lookup_notify(target_peer, peer_ep, peer_profile);
@@ -500,7 +501,8 @@ void stream_responder::client_ready()
     }
 }
 
-void stream_responder::lookup_notify(ssu::peer_id const& target_peer, ssu::endpoint const& peer_ep,
+void stream_responder::lookup_notify(ssu::peer_id const& target_peer,
+    uia::comm::endpoint const& peer_ep,
     uia::routing::client_profile const& peer_profile)
 {
     logger::debug() << "Stream responder - send r0 punch packet in response to lookup notify";

@@ -9,8 +9,10 @@
 #pragma once
 
 #include "arsenal/byte_array.h"
-#include "ssu/link.h"
-#include "ssu/link_channel.h"
+#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
+// when decoupled, should not need host.h include above
+#include "comm/socket.h"
+#include "ssu/socket_channel.h"
 #include "ssu/channel_armor.h"
 
 namespace ssu {
@@ -20,11 +22,11 @@ class host;
 /**
  * Abstract base class representing a channel between a local link and a remote endpoint.
  */
-class channel : public link_channel
+class channel : public socket_channel
 {
     friend class base_stream; // @fixme *sigh*
 
-    typedef link_channel super;
+    typedef socket_channel super;
 
     class private_data;
     std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
@@ -34,7 +36,7 @@ class channel : public link_channel
     /// Stream layer uses these in assigning USIDs to new streams.
     byte_array   tx_channel_id_;                   ///< Transmit ID of the channel.
     byte_array   rx_channel_id_;                   ///< Receive ID of the channel.
-    link::status link_status_{link::status::down}; ///< Link online status.
+    uia::comm::socket::status link_status_{uia::comm::socket::status::down}; ///< Link online status.
 
     /**
      * When packet sequence reaches this number, the channel is no longer usable
@@ -115,11 +117,11 @@ public:
     /**
      * Return the current link status as observed by this channel.
      */
-    inline link::status link_status() const {
+    inline uia::comm::socket::status link_status() const {
         return link_status_;
     }
 
-    typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
+    typedef boost::signals2::signal<void (uia::comm::socket::status)> link_status_changed_signal;
 
     /// Indicates when this channel observes a change in link status.
     link_status_changed_signal on_link_status_changed;
@@ -185,13 +187,13 @@ private:
      * @param msg Incoming encrypted packet.
      * @param src Origin endpoint.
      */
-    void receive(const byte_array& msg, const link_endpoint& src) override;
+    void receive(const byte_array& msg, uia::comm::socket_endpoint const& src) override;
 
     /// Repeat stall indications but not other link status changes.
     /// XXX hack - maybe "stall severity" or "stall time" should be part of status?
     /// Or perhaps status should be (up, stalltime)?
-    inline void set_link_status(link::status new_status) {
-        if (link_status_ != new_status or new_status == link::status::stalled) {
+    inline void set_link_status(uia::comm::socket::status new_status) {
+        if (link_status_ != new_status or new_status == uia::comm::socket::status::stalled) {
             link_status_ = new_status;
             on_link_status_changed(new_status);
         }

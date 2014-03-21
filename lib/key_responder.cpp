@@ -15,7 +15,6 @@
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
 #include "ssu/channel.h"
-#include "ssu/link.h"
 #include "arsenal/make_unique.h"
 #include "arsenal/algorithm.h"
 
@@ -129,7 +128,8 @@ namespace {
 /**
  * Send complete prepared key_message.
  */
-byte_array send(key_message& m, link_endpoint const& target)
+byte_array
+send(key_message& m, uia::comm::socket_endpoint const& target)
 {
     byte_array msg;
     {
@@ -143,14 +143,16 @@ byte_array send(key_message& m, link_endpoint const& target)
 /**
  * Send a dummy "probing" packet to punch a hole in the NAT.
  */
-void send_r0(magic_t magic, link_endpoint const& to)
+void
+send_r0(magic_t magic, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     m.magic = magic;
     send(m, to);
 }
 
-void send(magic_t magic, dh_init1_chunk& r, link_endpoint const& to)
+void
+send(magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -164,7 +166,8 @@ void send(magic_t magic, dh_init1_chunk& r, link_endpoint const& to)
     send(m, to);
 }
 
-void send(magic_t magic, dh_init2_chunk& r, link_endpoint const& to)
+void
+send(magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -178,7 +181,8 @@ void send(magic_t magic, dh_init2_chunk& r, link_endpoint const& to)
     send(m, to);
 }
 
-void send(magic_t magic, dh_response1_chunk& r, link_endpoint const& to)
+void
+send(magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -193,7 +197,7 @@ void send(magic_t magic, dh_response1_chunk& r, link_endpoint const& to)
 }
 
 byte_array
-send(magic_t magic, dh_response2_chunk& r, link_endpoint const& to)
+send(magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -214,10 +218,11 @@ send(magic_t magic, dh_response2_chunk& r, link_endpoint const& to)
 //=================================================================================================
 
 key_responder::key_responder(shared_ptr<host> host, magic_t magic)
-    : link_receiver(host, magic)
+    : socket_receiver(host, magic)
 {}
 
-bool key_responder::is_initiator_acceptable(link_endpoint const& initiator_ep,
+bool
+key_responder::is_initiator_acceptable(uia::comm::socket_endpoint const& initiator_ep,
             byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data)
 {
     return true;
@@ -230,7 +235,7 @@ byte_array
 key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
     byte_array const& responder_nonce,
     byte_array const& initiator_hashed_nonce,
-    ssu::link_endpoint const& src)
+    uia::comm::socket_endpoint const& src)
 {
     byte_array data;
     {
@@ -246,7 +251,8 @@ key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey
     return crypto::sha256::keyed_hash(hostkey->hmac_secret_key_, data);
 }
 
-void key_responder::receive(const byte_array& msg, const link_endpoint& src)
+void
+key_responder::receive(const byte_array& msg, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "key_responder::receive " << dec << msg.size() << " bytes from " << src;
 
@@ -281,7 +287,8 @@ void key_responder::receive(const byte_array& msg, const link_endpoint& src)
     return got_probe0(src);
 }
 
-void key_responder::got_probe0(link_endpoint const& src)
+void
+key_responder::got_probe0(uia::comm::socket_endpoint const& src)
 {
     // Trigger a retransmission of the dh_init1 packet
     // for each outstanding initiation attempt to the given target.
@@ -308,7 +315,8 @@ void key_responder::got_probe0(link_endpoint const& src)
     // }
 }
 
-void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src)
+void
+key_responder::got_dh_init1(const dh_init1_chunk& data, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "Got dh_init1 from " << src;
 
@@ -349,7 +357,8 @@ void key_responder::got_dh_init1(const dh_init1_chunk& data, const link_endpoint
 /**
  * We got a response, this means we might've sent a request first, find the corresponding initiator.
  */
-void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src)
+void
+key_responder::got_dh_response1(const dh_response1_chunk& data, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "Got dh_response1 from " << src;
 
@@ -446,7 +455,8 @@ void key_responder::got_dh_response1(const dh_response1_chunk& data, const link_
 /**
  * We got init2, this means the init1/response1 phase might have been done.
  */
-void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src)
+void
+key_responder::got_dh_init2(const dh_init2_chunk& data, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "Got dh_init2 from " << src;
 
@@ -645,7 +655,8 @@ void key_responder::got_dh_init2(const dh_init2_chunk& data, const link_endpoint
     chan->start(false);
 }
 
-void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src)
+void
+key_responder::got_dh_response2(const dh_response2_chunk& data, const uia::comm::socket_endpoint& src)
 {
     shared_ptr<key_initiator> initiator = get_host()->get_initiator(data.initiator_hashed_nonce);
     if (!initiator or initiator->state_ != key_initiator::state::init2)
@@ -761,12 +772,13 @@ void key_responder::got_dh_response2(const dh_response2_chunk& data, const link_
     initiator->channel_->start(true);
 }
 
-void key_responder::send_probe0(endpoint const& dest)
+void
+key_responder::send_probe0(uia::comm::endpoint const& dest)
 {
     logger::debug() << "Send probe0 to " << dest;
-    for (link *l : get_host()->active_links())
+    for (auto s : get_host()->active_sockets())
     {
-        link_endpoint ep(l, dest);
+        uia::comm::socket_endpoint ep(s, dest);
         send_r0(magic(), ep);
     }
 }
@@ -788,7 +800,7 @@ key_initiator::key_initiator(channel* channel,
 {
     logger::debug() << "Creating key_initiator " << this;
 
-    assert(target_ != endpoint());
+    assert(target_ != uia::comm::endpoint());
     assert(channel->is_bound());
     assert(!channel->is_active());
 
@@ -926,14 +938,14 @@ key_host_state::get_initiator(byte_array nonce)
 }
 
 pair<key_host_state::ep_iterator, key_host_state::ep_iterator>
-key_host_state::get_initiators(endpoint const& ep)
+key_host_state::get_initiators(uia::comm::endpoint const& ep)
 {
     return ep_initiators_.equal_range(ep);
 }
 
 void
 key_host_state::register_dh_initiator(byte_array const& nonce,
-                                   endpoint const& ep,
+                                   uia::comm::endpoint const& ep,
                                    shared_ptr<ssu::negotiation::key_initiator> ki)
 {
     dh_initiators_.insert(make_pair(nonce, ki));
@@ -941,7 +953,7 @@ key_host_state::register_dh_initiator(byte_array const& nonce,
 }
 
 void
-key_host_state::unregister_dh_initiator(byte_array const& nonce, endpoint const& ep)
+key_host_state::unregister_dh_initiator(byte_array const& nonce, uia::comm::endpoint const& ep)
 {
     dh_initiators_.erase(nonce);
     ep_initiators_.erase(ep);

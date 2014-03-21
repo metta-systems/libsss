@@ -78,12 +78,12 @@ void stream_channel::got_ready_transmit()
     } while (!sending_streams_.empty() and may_transmit());
 }
 
-void stream_channel::got_link_status_changed(link::status new_status)
+void stream_channel::got_link_status_changed(uia::comm::socket::status new_status)
 {
     logger::debug() << "Stream channel - link status changed, new status "
-        << link::status_string(new_status);
+        << uia::comm::socket::status_string(new_status);
 
-    if (new_status != link::status::down)
+    if (new_status != uia::comm::socket::status::down)
         return;
 
     // Link went down indefinitely - self-destruct.

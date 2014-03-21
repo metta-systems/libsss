@@ -21,13 +21,13 @@ private:
 public:
     shell_client(std::shared_ptr<ssu::host> host);
 
-    inline void connect_to(const ssu::peer_id& dst_eid, const ssu::endpoint& location_hint)
+    inline void connect_to(ssu::peer_id const& dst_eid, uia::comm::endpoint const& location_hint)
     {
         assert(!stream_->is_connected());
         stream_->connect_to(dst_eid, service_name, protocol_name, location_hint);
     }
 
-    inline void connect_at(ssu::endpoint const& ep)
+    inline void connect_at(uia::comm::endpoint const& ep)
     {
         stream_->connect_at(ep);
     }

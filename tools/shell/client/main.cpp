@@ -97,13 +97,13 @@ int main(int argc, char **argv)
 
     // Connect to the shell service
     shell_client sc(host);
-    ssu::endpoint init_ep(boost::asio::ip::address::from_string(location_hints[0]), port);
+    uia::comm::endpoint init_ep(boost::asio::ip::address::from_string(location_hints[0]), port);
     sc.connect_to(eid, init_ep);
 
     // Register the list of target address hints
     for (auto epstr : location_hints)
     {
-        ssu::endpoint ep(boost::asio::ip::address::from_string(epstr), port);
+        uia::comm::endpoint ep(boost::asio::ip::address::from_string(epstr), port);
         logger::debug() << "Connecting at location hint " << ep;
         sc.connect_at(ep);
     }

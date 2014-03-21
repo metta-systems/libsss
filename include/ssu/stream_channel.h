@@ -86,7 +86,7 @@ class stream_channel : public channel, public stream_protocol
     stream_id_t ack_sid_;
 
     // Handlers.
-    void got_link_status_changed(link::status new_status);
+    void got_link_status_changed(uia::comm::socket::status new_status);
     void got_ready_transmit();
 
 public:

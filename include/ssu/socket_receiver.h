@@ -13,9 +13,14 @@
 
 class byte_array;
 
+namespace uia {
+namespace comm {
+class socket_endpoint;
+}
+}
+
 namespace ssu {
 
-class link_endpoint;
 class host;
 
 /**
@@ -25,30 +30,39 @@ class host;
  * A control protocol is identified by a 32-bit magic value,
  * whose topmost byte must be zero to distinguish it from channels.
  */
-class link_receiver
+class socket_receiver
 {
     std::shared_ptr<host> host_;
     magic_t magic_{0};
 
 protected:
-    inline link_receiver(std::shared_ptr<host> host) : host_(host)
+    inline socket_receiver(std::shared_ptr<host> host) : host_(host)
     {}
 
-    inline link_receiver(std::shared_ptr<host> host, magic_t magic) : host_(host) {
+    inline socket_receiver(std::shared_ptr<host> host, magic_t magic) : host_(host) {
         bind(magic);
     }
 
-    inline ~link_receiver() { unbind(); }
+    inline ~socket_receiver() {
+        unbind();
+    }
 
     void bind(magic_t magic);
     void unbind();
 
-    inline magic_t magic() const { return magic_; }
-    inline bool is_bound() const { return magic_ != 0; }
+    inline magic_t magic() const {
+        return magic_;
+    }
 
-    virtual std::shared_ptr<host> get_host() { return host_; }
+    inline bool is_bound() const {
+        return magic_ != 0;
+    }
 
-    // @fixme Possibly set_magic() might set a magic on default link_receiver and bind() it.
+    virtual std::shared_ptr<host> get_host() {
+        return host_;
+    }
+
+    // @fixme Possibly set_magic() might set a magic on default socket_receiver and bind() it.
 
 public:
     /**
@@ -56,7 +70,7 @@ public:
      * @param msg Data packet.
      * @param src Origin endpoint.
      */
-    virtual void receive(byte_array const& msg, link_endpoint const& src) = 0;
+    virtual void receive(byte_array const& msg, uia::comm::socket_endpoint const& src) = 0;
 };
 
 } // ssu namespace

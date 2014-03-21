@@ -9,12 +9,12 @@
 #pragma once
 
 #include "ssu/dh.h"
-#include "ssu/link.h"
 #include "ssu/timer.h"
 #include "ssu/identity.h"
-#include "ssu/negotiation/key_responder.h"
-#include "ssu/private/stream_host_state.h"
+#include "ssu/negotiation/key_host_state.h"
+#include "ssu/internal/stream_host_state.h"
 #include "ssu/routing_host_state.h"
+#include "ssu/socket_host_state.h"
 #include "arsenal/logging.h"
 
 class settings_provider;
@@ -35,7 +35,7 @@ namespace ssu {
  */
 class host
     : public std::enable_shared_from_this<host>
-    , public link_host_state
+    , public socket_host_state
     , public dh_host_state
     , public key_host_state
     , public identity_host_state

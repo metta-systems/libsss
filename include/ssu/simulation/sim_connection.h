@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/link.h"
+#include "comm/socket_endpoint.h"
 #include "ssu/timer.h"
 
 namespace ssu {
@@ -41,8 +41,8 @@ public:
     sim_connection(preset p = eth_100);
     ~sim_connection();
 
-    void connect(std::shared_ptr<sim_host> downlink, endpoint downlink_address,
-                 std::shared_ptr<sim_host> uplink, endpoint uplink_address);
+    void connect(std::shared_ptr<sim_host> downlink, uia::comm::endpoint downlink_address,
+                 std::shared_ptr<sim_host> uplink, uia::comm::endpoint uplink_address);
     void disconnect();
 
     void set_preset(preset p);
@@ -55,14 +55,14 @@ public:
     }
 
     std::shared_ptr<sim_host> uplink_for(std::shared_ptr<sim_host> downlink) const;
-    endpoint address_for(std::shared_ptr<sim_host> link) const;
+    uia::comm::endpoint address_for(std::shared_ptr<sim_host> link) const;
 
     params const& params_for(std::shared_ptr<sim_host> host) const;
     boost::posix_time::ptime& arrival_time_for(std::shared_ptr<sim_host> host);
 
 private:
     std::shared_ptr<sim_host> uplink_, downlink_;
-    endpoint uplink_address_, downlink_address_;
+    uia::comm::endpoint uplink_address_, downlink_address_;
     params uplink_params_, downlink_params_;
     // Current arrival times for packets in uplink and downlink directions.
     boost::posix_time::ptime uplink_arrival_time_, downlink_arrival_time_;

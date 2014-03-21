@@ -35,7 +35,7 @@ stream_peer::stream_peer(shared_ptr<host> const& host,
     // then also use it as a destination address hint.
     identity ident(remote_id_.id());
     if (ident.is_ip_key_scheme()) {
-        endpoint ep(ident.get_endpoint());
+        uia::comm::endpoint ep(ident.get_endpoint());
         if (ep.port() == 0) {
             ep.port(stream_protocol::default_port);
         }
@@ -62,7 +62,7 @@ void stream_peer::connect_channel()
 {
     assert(!remote_id_.is_empty());
 
-    if (primary_channel_ and primary_channel_->link_status() == link::status::up)
+    if (primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up)
         return; // Already have a working channel; don't need another yet.
 
     // @todo Need a way to determine if streams need to send. If no streams waiting to send
@@ -90,11 +90,11 @@ void stream_peer::connect_channel()
 
     // Initiate key exchange attempts to all already-known endpoints
     // using each of the network links we have available.
-    for (auto link : host_->active_links())
+    for (auto s : host_->active_sockets())
     {
         for (auto endpoint : locations_)
         {
-            initiate_key_exchange(link, endpoint);
+            initiate_key_exchange(s, endpoint);
         }
     }
 
@@ -123,7 +123,7 @@ void stream_peer::connect_routing_client(ur::client *rc)
 
     // Listen for the lookup response
     rc->on_lookup_done.connect([this, rc](ssu::peer_id const& target_peer,
-                                      ssu::endpoint const& peer_endpoint,
+                                      uia::comm::endpoint const& peer_endpoint,
                                       ur::client_profile const& peer_profile)
     {
         lookup_done(rc, target_peer, peer_endpoint, peer_profile);
@@ -163,7 +163,7 @@ affinity(address const& a, address const& b)
 
 void
 stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
-    ssu::endpoint const& peer_endpoint,
+    uia::comm::endpoint const& peer_endpoint,
     ur::client_profile const& peer_profile)
 {
     if (target_peer != remote_id_) {
@@ -273,7 +273,7 @@ void stream_peer::regclient_destroyed(ur::client *rc)
 void stream_peer::retry_timeout()
 {
     // If we actually have an active flow now, do nothing.
-    if (primary_channel_ and primary_channel_->link_status() == link::status::up)
+    if (primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up)
         return;
 
     // Notify any waiting streams of failure
@@ -285,24 +285,24 @@ void stream_peer::retry_timeout()
     connect_channel();
 }
 
-void stream_peer::initiate_key_exchange(link* l, const endpoint& ep)
+void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoint const& ep)
 {
-    assert(ep != endpoint());
+    assert(ep != uia::comm::endpoint());
 
     // No need to initiate new channels if we already have a working one.
-    if (primary_channel_ and primary_channel_->link_status() == link::status::up)
+    if (primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up)
         return;
 
     // Don't simultaneously initiate multiple channels to the same endpoint.
     // @todo Eventually multipath support is needed.
-    link_endpoint lep(l, ep);
+    uia::comm::socket_endpoint lep(l, ep);
     if (contains(key_exchanges_initiated_, lep))
     {
         logger::debug() << "Already attempting connection to " << ep;
         return;
     }
 
-    logger::debug() << "Initiating key exchange from link " << l << " to remote endpoint " << ep;
+    logger::debug() << "Initiating key exchange from socket " << l << " to remote endpoint " << ep;
 
     // Make sure our stream_responder exists to receive and dispatch incoming
     // key exchange control packets.
@@ -335,12 +335,12 @@ void stream_peer::channel_started(stream_channel* channel)
 
     assert(channel->is_active());
     assert(channel->target_peer() == this);
-    assert(channel->link_status() == link::status::up);
+    assert(channel->link_status() == uia::comm::socket::status::up);
 
     if (primary_channel_)
     {
         // If we already have a working primary channel, we don't need a new one.
-        if (primary_channel_->link_status() == link::status::up)
+        if (primary_channel_->link_status() == uia::comm::socket::status::up)
             return;
 
         // But if the current primary is on the blink, replace it.
@@ -355,14 +355,14 @@ void stream_peer::channel_started(stream_channel* channel)
 
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
     primary_channel_link_status_connection_ =
-        primary_channel_->on_link_status_changed.connect([this](link::status new_status)
+        primary_channel_->on_link_status_changed.connect([this](uia::comm::socket::status new_status)
         {
             primary_status_changed(new_status);
         });
 
     // Notify all waiting streams
     on_channel_connected();
-    on_link_status_changed(link::status::up);
+    on_link_status_changed(uia::comm::socket::status::up);
 }
 
 void stream_peer::clear_primary_channel()
@@ -381,7 +381,7 @@ void stream_peer::clear_primary_channel()
     old_primary->detach_all();
 }
 
-void stream_peer::add_location_hint(endpoint const& hint)
+void stream_peer::add_location_hint(uia::comm::endpoint const& hint)
 {
     assert(!remote_id_.is_empty());
     // assert(!hint.empty());
@@ -396,8 +396,8 @@ void stream_peer::add_location_hint(endpoint const& hint)
     locations_.insert(hint);
 
     // Attempt a connection to this endpoint
-    for (auto link : host_->active_links()) {
-        initiate_key_exchange(link, hint);
+    for (auto s : host_->active_sockets()) {
+        initiate_key_exchange(s, hint);
     }
 }
 
@@ -409,7 +409,7 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     // (e.g., if key agreement failed).
     //
     // @todo Delete channel automatically if key_initiator failed...
-    link_endpoint lep = ki->remote_endpoint();
+    uia::comm::socket_endpoint lep = ki->remote_endpoint();
 
     logger::debug() << "Stream peer key exchange for ID " << remote_id_ << " to " << lep
         << " completed " << (success ? "successfully" : "erroneously");
@@ -436,14 +436,14 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     // so servers don't have to initiate back-channels to their clients.
 
     // @todo This invariant doesn't hold here, fixme.
-    // assert(primary_channel_ and primary_channel_->link_status() == link::status::up);
+    // assert(primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up);
 }
 
-void stream_peer::primary_status_changed(link::status new_status)
+void stream_peer::primary_status_changed(uia::comm::socket::status new_status)
 {
     assert(primary_channel_);
 
-    if (new_status == link::status::up)
+    if (new_status == uia::comm::socket::status::up)
     {
         stall_warnings_ = 0;
         // Now that we (again?) have a working primary channel, cancel and delete all
@@ -472,7 +472,7 @@ void stream_peer::primary_status_changed(link::status new_status)
         return on_link_status_changed(new_status);
     }
 
-    if (new_status == link::status::stalled)
+    if (new_status == uia::comm::socket::status::stalled)
     {
         if (++stall_warnings_ < stall_warnings_max)
         {

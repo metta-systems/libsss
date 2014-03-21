@@ -10,7 +10,8 @@
 
 #include <memory>
 #include <boost/signals2/signal.hpp>
-#include "ssu/link.h"
+#include "comm/socket_endpoint.h"
+#include "ssu/socket_receiver.h"
 #include "ssu/timer.h"
 #include "krypto/krypto.h"
 #include "ssu/peer_id.h"
@@ -35,7 +36,7 @@ class dh_hostkey_t;
  *
  * The implemented subclass of this abstract base is stream_responder.
  */
-class key_responder : public link_receiver
+class key_responder : public socket_receiver
 {
 public:
     /**
@@ -50,7 +51,7 @@ public:
      * @param msg [description]
      * @param src [description]
      */
-    void receive(const byte_array& msg, const link_endpoint& src) override;
+    void receive(const byte_array& msg, uia::comm::socket_endpoint const& src) override;
 
     /**
      * Send an R0 chunk to some network address,
@@ -58,7 +59,7 @@ public:
      * in order to punch a hole in any NATs we may be behind
      * and prod the client into (re-)sending us its I1 immediately.
      */
-    void send_probe0(endpoint const& dest);
+    void send_probe0(uia::comm::endpoint const& dest);
 
 protected:
     /**
@@ -66,7 +67,7 @@ protected:
      * before actually bothering to verify the initiator's identity.
      * The default implementation always returns true.
      */
-    virtual bool is_initiator_acceptable(link_endpoint const& initiator_ep,
+    virtual bool is_initiator_acceptable(uia::comm::socket_endpoint const& initiator_ep,
             byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data);
 
     /**
@@ -78,16 +79,16 @@ protected:
      * and the 'user_data_out' block will be passed back to the client.
      * This method can return nullptr to reject the incoming connection.
      */
-    virtual channel* create_channel(link_endpoint const& initiator_ep,
+    virtual channel* create_channel(uia::comm::socket_endpoint const& initiator_ep,
             byte_array const& initiator_eid,
             byte_array const& user_data_in, byte_array& user_data_out) = 0;
 
 private:
-    void got_probe0(const link_endpoint& src);
-    void got_dh_init1(const dh_init1_chunk& data, const link_endpoint& src);
-    void got_dh_response1(const dh_response1_chunk& data, const link_endpoint& src);
-    void got_dh_init2(const dh_init2_chunk& data, const link_endpoint& src);
-    void got_dh_response2(const dh_response2_chunk& data, const link_endpoint& src);
+    void got_probe0(uia::comm::socket_endpoint const& src);
+    void got_dh_init1(const dh_init1_chunk& data, uia::comm::socket_endpoint const& src);
+    void got_dh_response1(const dh_response1_chunk& data, uia::comm::socket_endpoint const& src);
+    void got_dh_init2(const dh_init2_chunk& data, uia::comm::socket_endpoint const& src);
+    void got_dh_response2(const dh_response2_chunk& data, uia::comm::socket_endpoint const& src);
 
     byte_array
     calc_dh_cookie(std::shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,

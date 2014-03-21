@@ -16,7 +16,7 @@ namespace ssu {
 namespace simulation {
 
 sim_link::sim_link(shared_ptr<sim_host> host)
-    : link(host)
+    : uia::comm::socket(host)
     , simulator_(host->get_simulator())
     , host_(host)
 {}
@@ -27,7 +27,7 @@ sim_link::~sim_link()
 }
 
 bool
-sim_link::bind(endpoint const& ep)
+sim_link::bind(uia::comm::endpoint const& ep)
 {
     assert(port_ == 0);
 
@@ -64,11 +64,11 @@ sim_link::unbind()
 
 // Target address must be routable to in order to send.
 // Find the destination host in the "routing table" (a simple list of neighbors).
-bool sim_link::send(const endpoint& ep, const char *data, size_t size)
+bool sim_link::send(uia::comm::endpoint const& ep, const char *data, size_t size)
 {
     assert(port_ > 0);
 
-    endpoint src;
+    uia::comm::endpoint src;
     src.port(port_);
     shared_ptr<sim_host> dest_host = host_->neighbor_at(ep, src);
     if (!dest_host) {
@@ -84,12 +84,11 @@ bool sim_link::send(const endpoint& ep, const char *data, size_t size)
     return true;
 }
 
-vector<endpoint>
+vector<uia::comm::endpoint>
 sim_link::local_endpoints()
 {
-    vector<endpoint> result;
-    for (auto ep : host_->local_endpoints())
-    {
+    vector<uia::comm::endpoint> result;
+    for (auto ep : host_->local_endpoints()) {
         result.emplace_back(ep.address(), local_port());
     }
     return result;

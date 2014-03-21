@@ -10,26 +10,27 @@
 
 #include "arsenal/byte_array.h"
 #include "ssu/protocol.h"
-#include "ssu/link.h"
+#include "comm/socket_endpoint.h"
+#include "comm/socket.h"
 
 namespace ssu {
 
 /**
- * Base class for link-based channels,
+ * Base class for socket-based channels,
  * for dispatching received packets based on endpoint and channel number.
  * May be used as an abstract base by overriding the receive() method,
  * or used as a concrete class by connecting to the on_received signal.
  */
-class link_channel
+class socket_channel
 {
-    link*          link_{nullptr};            ///< Link we're currently bound to, if any.
-    endpoint       remote_ep_;                ///< Endpoint of the remote side.
-    channel_number local_channel_number_{0};  ///< Channel number of this channel at local node.
-    channel_number remote_channel_number_{0}; ///< Channel number of this channel at remote node.
-    bool           active_{false};            ///< True if we're sending and accepting packets.
+    uia::comm::socket*  socket_{nullptr};          ///< Socket we're currently bound to, if any.
+    uia::comm::endpoint remote_ep_;                ///< Endpoint of the remote side.
+    channel_number      local_channel_number_{0};  ///< Channel number of this channel at local node.
+    channel_number      remote_channel_number_{0}; ///< Channel number of this channel at remote node.
+    bool                active_{false};            ///< True if we're sending and accepting packets.
 
 public:
-    inline virtual ~link_channel() {
+    inline virtual ~socket_channel() {
         unbind();
     }
 
@@ -50,21 +51,26 @@ public:
         active_ = false;
     }
 
-    inline bool is_active() const { return active_; }
-    inline bool is_bound()  const { return link_ != nullptr; }
+    inline bool is_active() const {
+        return active_;
+    }
+
+    inline bool is_bound()  const {
+        return socket_ != nullptr;
+    }
 
     /**
-     * Test whether underlying link is already congestion controlled.
+     * Test whether underlying socket is already congestion controlled.
      */
-    inline bool is_link_congestion_controlled() {
-        return link_->is_congestion_controlled(remote_ep_);
+    inline bool is_socket_congestion_controlled() {
+        return socket_->is_congestion_controlled(remote_ep_);
     }
 
     /**
      * Return the remote endpoint we're bound to, if any.
      */
-    inline link_endpoint remote_endpoint() const {
-        return link_endpoint(link_, remote_ep_);
+    inline uia::comm::socket_endpoint remote_endpoint() const {
+        return uia::comm::socket_endpoint(socket_, remote_ep_);
     }
 
     /**
@@ -72,22 +78,22 @@ public:
      * allocating and binding a local channel number in the process.
      * @returns 0 if no channels are available for specified endpoint.
      */
-    channel_number bind(link* link, const endpoint& remote_ep);
+    channel_number bind(uia::comm::socket* socket, uia::comm::endpoint const& remote_ep);
     /**
      * Set up for communication with specified remote endpoint,
      * allocating and binding a local channel number in the process.
      * @returns 0 if no channels are available for specified endpoint.
      * @override
      */
-    inline channel_number bind(const link_endpoint& remote_ep) {
-        return bind(remote_ep.link(), remote_ep);
+    inline channel_number bind(uia::comm::socket_endpoint const& remote_ep) {
+        return bind(remote_ep.socket(), remote_ep);
     }
 
     /**
      * Bind to a particular channel number.
      * @returns false if the channel is already in use and cannot be bound to.
      */
-    bool bind(link* link, const endpoint& remote_ep, channel_number chan);
+    bool bind(uia::comm::socket* socket, uia::comm::endpoint const& remote_ep, channel_number chan);
 
     /**
      * Stop channel and unbind from any currently bound remote endpoint.
@@ -97,22 +103,35 @@ public:
     /**
      * Return current local channel number.
      */
-    inline channel_number local_channel() const { return local_channel_number_; }
+    inline channel_number local_channel() const {
+        return local_channel_number_;
+    }
+
     /**
      * Return current remote channel number.
      */
-    inline channel_number remote_channel() const { return remote_channel_number_; }
+    inline channel_number remote_channel() const {
+        return remote_channel_number_;
+    }
 
     /**
      * Set the channel number to direct packets to the remote endpoint.
      * This MUST be done before a new channel can be activated.
      */
-    inline void set_remote_channel(channel_number ch) { remote_channel_number_ = ch; }
+    inline void set_remote_channel(channel_number ch) {
+        remote_channel_number_ = ch;
+    }
+
+    inline virtual void receive(byte_array const& msg, uia::comm::socket_endpoint const& src) {
+        on_received(msg, src);
+    }
 
     /** @name Signals. */
     /**@{*/
     // Provide access to signal types for clients
-    typedef boost::signals2::signal<void (byte_array const&, link_endpoint const&)> received_signal;
+    typedef
+        boost::signals2::signal<void (byte_array const&, uia::comm::socket_endpoint const&)>
+        received_signal;
     typedef boost::signals2::signal<void ()> ready_transmit_signal;
 
     received_signal on_received;
@@ -123,10 +142,8 @@ public:
     /**@}*/
 
 protected:
-    friend class link; // @fixme no need for extra friendliness
-
     /**
-     * When the underlying link is already congestion-controlled, this function returns
+     * When the underlying socket is already congestion-controlled, this function returns
      * the number of packets that channel control says we may transmit now, 0 if none.
      */
     virtual int may_transmit();
@@ -134,14 +151,10 @@ protected:
     inline bool send(const byte_array& pkt) const
     {
         assert(active_);
-        if (auto l = link_) {
+        if (auto l = socket_) {
             return l->send(remote_ep_, pkt);
         }
         return false;
-    }
-
-    inline virtual void receive(byte_array const& msg, link_endpoint const& src) {
-        on_received(msg, src);
     }
 };
 

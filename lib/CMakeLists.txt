@@ -16,7 +16,7 @@ if (WIN32)
         platform-win.cpp)
 endif()
 
-add_library(ssu STATIC 
+add_library(ssu STATIC
     abstract_stream.cpp
     base_stream.cpp
     datagram_stream.cpp
@@ -26,8 +26,12 @@ add_library(ssu STATIC
     host.cpp
     identity.cpp
     key_responder.cpp
-    link.cpp
-    link_channel.cpp
+    comm/socket.cpp
+    comm/udp_socket.cpp
+    comm/socket_endpoint.cpp
+    socket_channel.cpp
+    socket_receiver.cpp
+    socket_host_state.cpp
     protocol.cpp
     server.cpp
     stream.cpp

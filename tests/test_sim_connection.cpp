@@ -15,6 +15,7 @@
 #include "ssu/simulation/sim_connection.h"
 
 using namespace std;
+using namespace uia;
 using namespace ssu;
 using namespace ssu::simulation;
 
@@ -31,8 +32,8 @@ BOOST_AUTO_TEST_CASE(connection_sides_correct)
     shared_ptr<sim_host> another_host(make_shared<sim_host>(sim));
 
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
-    conn->connect(another_host, endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),0),
-                  one_host, endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),0));
+    conn->connect(another_host, comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),0),
+                  one_host, comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),0));
 
     BOOST_CHECK(conn->uplink_for(one_host) == another_host);
     BOOST_CHECK(conn->uplink_for(another_host) == one_host);

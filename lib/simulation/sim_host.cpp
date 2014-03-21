@@ -63,8 +63,8 @@ sim_host::create_timer_engine_for(async::timer* t)
     return stdext::make_unique<sim_timer_engine>(t, simulator_);
 }
 
-std::shared_ptr<link>
-sim_host::create_link()
+shared_ptr<uia::comm::socket>
+sim_host::create_socket()
 {
     return make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this()));
 }
@@ -101,28 +101,30 @@ sim_host::packet_on_queue(shared_ptr<sim_packet> packet) const
 }
 
 void
-sim_host::register_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn)
+sim_host::register_connection_at(uia::comm::endpoint const& address,
+    shared_ptr<sim_connection> conn)
 {
     assert(!contains(connections_, address));
     connections_.insert(std::make_pair(address, conn));
 }
 
 void
-sim_host::unregister_connection_at(endpoint const& address, std::shared_ptr<sim_connection> conn)
+sim_host::unregister_connection_at(uia::comm::endpoint const& address,
+    shared_ptr<sim_connection> conn)
 {
     assert(contains(connections_, address));
     assert(connections_.find(address)->second == conn);
     connections_.erase(address);
 }
 
-std::shared_ptr<sim_connection>
-sim_host::connection_at(endpoint const& ep)
+shared_ptr<sim_connection>
+sim_host::connection_at(uia::comm::endpoint const& ep)
 {
     return connections_[ep];
 }
 
-std::shared_ptr<sim_host>
-sim_host::neighbor_at(endpoint const& dst, endpoint& src)
+shared_ptr<sim_host>
+sim_host::neighbor_at(uia::comm::endpoint const& dst, uia::comm::endpoint& src)
 {
     for (auto conn : connections_)
     {
@@ -157,10 +159,10 @@ sim_host::link_for(uint16_t port)
     return links_[port];
 }
 
-std::vector<endpoint>
+vector<uia::comm::endpoint>
 sim_host::local_endpoints()
 {
-    std::vector<endpoint> eps;
+    vector<uia::comm::endpoint> eps;
     for (auto v : connections_) {
         eps.push_back(v.first);
     }

@@ -8,7 +8,8 @@
 //
 #pragma once
 
-#include "ssu/link.h"
+#include "ssu/host.h"//@todo Remove because of ssu::host dependency in comm/socket
+#include "comm/socket.h"
 #include "ssu/timer.h"
 
 namespace ssu {
@@ -22,7 +23,7 @@ class sim_packet : public std::enable_shared_from_this<sim_packet>
 {
     boost::posix_time::ptime arrival_time_;
     std::shared_ptr<simulator> simulator_;
-    endpoint from_, to_;
+    uia::comm::endpoint from_, to_;
     std::shared_ptr<sim_host> target_host_;
     std::shared_ptr<sim_connection> pipe_;
     byte_array data_;
@@ -31,8 +32,8 @@ class sim_packet : public std::enable_shared_from_this<sim_packet>
     void arrive();
 
 public:
-    sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& src,
-        std::shared_ptr<sim_connection> pipe, endpoint const& dst,
+    sim_packet(std::shared_ptr<sim_host> source_host, uia::comm::endpoint const& src,
+        std::shared_ptr<sim_connection> pipe, uia::comm::endpoint const& dst,
         byte_array data);
     ~sim_packet();
 

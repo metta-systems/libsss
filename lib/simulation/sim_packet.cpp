@@ -20,8 +20,8 @@ namespace simulation {
 
 static const int packet_overhead = 32; // Bytes of link/inet overhead per packet
 
-sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, endpoint const& src,
-                       std::shared_ptr<sim_connection> pipe, endpoint const& dst,
+sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, uia::comm::endpoint const& src,
+                       std::shared_ptr<sim_connection> pipe, uia::comm::endpoint const& dst,
                        byte_array data)
     : simulator_(source_host->get_simulator())
     , from_(src)
@@ -117,7 +117,7 @@ void sim_packet::arrive()
 
     target_host_->dequeue_packet(self);
 
-    link_endpoint src_ep(link.get(), from_);
+    uia::comm::socket_endpoint src_ep(link.get(), from_);
     link->receive(data_, src_ep);
 
     self.reset(); // We are ought to be deleted now.

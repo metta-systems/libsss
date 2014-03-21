@@ -6,19 +6,20 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/link.h"
 #include "ssu/host.h"
+#include "ssu/udp_socket.h"
 
 using namespace std;
 using namespace ssu;
+using namespace uia;
 
 int main()
 {
 	try
 	{
 		shared_ptr<host> host(make_shared<host>());
-		endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
-		udp_link l(host);
+		comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
+		udp_socket l(host);
 		l.bind(local_ep);
 		l.send(local_ep, "\0SSUohai!", 10);
 		host->run_io_service();

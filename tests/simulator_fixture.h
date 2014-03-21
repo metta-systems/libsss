@@ -24,14 +24,14 @@ struct simulator_fixture
 
     std::shared_ptr<ssu::simulation::sim_host> server_host;
     ssu::peer_id server_host_eid;
-    ssu::endpoint server_host_address;
-    std::shared_ptr<ssu::link> server_link;
+    uia::comm::endpoint server_host_address;
+    std::shared_ptr<uia::comm::socket> server_link;
     std::shared_ptr<ssu::server> server;
 
     std::shared_ptr<ssu::simulation::sim_host> client_host;
     ssu::peer_id client_host_eid;
-    ssu::endpoint client_host_address;
-    std::shared_ptr<ssu::link> client_link;
+    uia::comm::endpoint client_host_address;
+    std::shared_ptr<uia::comm::socket> client_link;
     std::shared_ptr<ssu::stream> client;
 
     simulator_fixture() {
@@ -61,10 +61,11 @@ struct simulator_fixture
         server_host = ssu::simulation::sim_host::create(simulator);
         BOOST_CHECK(server_host != nullptr);
         server_host_eid = server_host->host_identity().id();
-        server_host_address = ssu::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),
-                                            ssu::stream_protocol::default_port);
+        server_host_address = uia::comm::endpoint(
+            boost::asio::ip::address_v4::from_string("10.0.0.2"),
+            ssu::stream_protocol::default_port);
 
-        server_link = server_host->create_link();
+        server_link = server_host->create_socket();
         BOOST_CHECK(server_link != nullptr);
         server_link->bind(server_host_address);
         BOOST_CHECK(server_link->is_active());
@@ -80,10 +81,11 @@ struct simulator_fixture
         client_host = ssu::simulation::sim_host::create(simulator);
         BOOST_CHECK(client_host != nullptr);
         client_host_eid = client_host->host_identity().id();
-        client_host_address = ssu::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),
-                                            ssu::stream_protocol::default_port);
+        client_host_address = uia::comm::endpoint(
+            boost::asio::ip::address_v4::from_string("10.0.0.1"),
+            ssu::stream_protocol::default_port);
 
-        client_link = client_host->create_link();
+        client_link = client_host->create_socket();
         BOOST_CHECK(client_link != nullptr);
         client_link->bind(client_host_address);
         BOOST_CHECK(client_link->is_active());

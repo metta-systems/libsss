@@ -9,8 +9,8 @@
 #define BOOST_TEST_MODULE Test_ssu_link
 #include <boost/test/unit_test.hpp>
 
-#include "ssu/link.h"
-#include "ssu/host.h"
+#include "ssu/host.h"//@todo
+#include "ssu/udp_socket.h"
 #include "ssu/negotiation/key_message.h"
 #include "ssu/negotiation/key_responder.h"
 #include "arsenal/byte_array_wrap.h"
@@ -18,12 +18,13 @@
 
 using namespace std;
 using namespace ssu;
+using namespace uia;
 
 BOOST_AUTO_TEST_CASE(receive_too_small_packet)
 {
     shared_ptr<host> host(make_shared<host>());
-    endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
-    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
+    shared_ptr<udp_socket> link(make_shared<udp_socket>(host));
     link->bind(local_ep);
 
     byte_array msg({'a', 'b', 'c'});
@@ -34,8 +35,8 @@ BOOST_AUTO_TEST_CASE(receive_too_small_packet)
 BOOST_AUTO_TEST_CASE(local_endpoints)
 {
     shared_ptr<host> host(make_shared<host>());
-    endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
-    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
+    shared_ptr<udp_socket> link(make_shared<udp_socket>(host));
     link->bind(local_ep);
 
     link->local_endpoints();
@@ -44,8 +45,8 @@ BOOST_AUTO_TEST_CASE(local_endpoints)
 BOOST_AUTO_TEST_CASE(bound_link_is_active)
 {
     shared_ptr<host> host(make_shared<host>());
-    endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
-    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
+    shared_ptr<udp_socket> link(make_shared<udp_socket>(host));
     link->bind(local_ep);
     BOOST_CHECK(link->is_active() == true);
 }
@@ -53,8 +54,8 @@ BOOST_AUTO_TEST_CASE(bound_link_is_active)
 BOOST_AUTO_TEST_CASE(receive_and_log_key_message)
 {
     shared_ptr<host> host(make_shared<host>());
-    endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
-    shared_ptr<udp_link> link(make_shared<udp_link>(host));
+    comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
+    shared_ptr<udp_socket> link(make_shared<udp_socket>(host));
     link->bind(local_ep);
 
     // Add key responder to link. - this is done automagically when server::listen()s
