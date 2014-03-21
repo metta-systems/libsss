@@ -8,7 +8,7 @@
 //
 #include "arsenal/algorithm.h"
 #include "ssu/stream_channel.h"
-#include "ssu/private/stream_peer.h"
+#include "ssu/internal/stream_peer.h"
 #include "arsenal/logging.h"
 
 using namespace std;

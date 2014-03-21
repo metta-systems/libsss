@@ -12,7 +12,7 @@
 #include "arsenal/algorithm.h"
 #include "ssu/stream.h"
 #include "ssu/stream_channel.h"
-#include "ssu/private/stream_peer.h"
+#include "ssu/internal/stream_peer.h"
 #include "ssu/base_stream.h"
 #include "ssu/identity.h"
 #include "ssu/host.h"

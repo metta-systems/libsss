@@ -67,8 +67,8 @@ class stream_peer : public stream_protocol
     std::unordered_set<uia::routing::client*> connected_routing_clients_; // Set of RegClients we've connected to so far
 
     // For channels under construction:
-    std::unordered_set<endpoint> locations_; ///< Potential locations known
-    std::map<link_endpoint, std::shared_ptr<negotiation::key_initiator>> key_exchanges_initiated_;
+    std::unordered_set<uia::comm::endpoint> locations_; ///< Potential locations known
+    std::map<uia::comm::socket_endpoint, std::shared_ptr<negotiation::key_initiator>> key_exchanges_initiated_;
 
     // All existing streams involving this peer.
     std::unordered_set<base_stream*> all_streams_;
@@ -92,7 +92,7 @@ private:
      * Initiate a key exchange attempt to a given endpoint,
      * if such an attempt isn't already in progress.
      */
-    void initiate_key_exchange(link* l, const endpoint& ep);
+    void initiate_key_exchange(uia::comm::socket* s, uia::comm::endpoint const& ep);
 
     /**
      * Called by stream_channel::start() whenever a new channel
@@ -107,14 +107,14 @@ private:
 
     // Handlers.
     void completed(std::shared_ptr<negotiation::key_initiator> ki, bool success);
-    void primary_status_changed(link::status new_status);
+    void primary_status_changed(uia::comm::socket::status new_status);
 
     void routing_client_ready(uia::routing::client *rc);
     void connect_routing_client(uia::routing::client *rc);
 
     // Routing client handlers
     void lookup_done(uia::routing::client *rc, ssu::peer_id const& target_peer,
-        ssu::endpoint const& peer_endpoint,
+        uia::comm::endpoint const& peer_endpoint,
         uia::routing::client_profile const& peer_profile);
     void regclient_destroyed(uia::routing::client *rc);
     void retry_timeout();
@@ -135,10 +135,10 @@ public:
     /**
      * Supply an endpoint hint that may be useful for finding this peer.
      */
-    void add_location_hint(endpoint const& hint);
+    void add_location_hint(uia::comm::endpoint const& hint);
 
     typedef boost::signals2::signal<void (void)> channel_state_signal;
-    typedef boost::signals2::signal<void (link::status)> link_status_changed_signal;
+    typedef boost::signals2::signal<void (uia::comm::socket::status)> link_status_changed_signal;
 
     /**
      * Primary channel connection attempt succeeded.

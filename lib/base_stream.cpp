@@ -13,9 +13,9 @@
 #include "ssu/base_stream.h"
 #include "ssu/datagram_stream.h"
 #include "ssu/host.h"
-#include "ssu/private/stream_peer.h"
 #include "ssu/stream_channel.h"
 #include "ssu/server.h"
+#include "ssu/internal/stream_peer.h"
 
 using namespace std;
 
