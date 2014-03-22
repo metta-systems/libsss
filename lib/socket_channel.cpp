@@ -6,12 +6,16 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/link_channel.h"
+#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
+// when decoupled, should not need host.h include above
+
+#include "ssu/socket_channel.h"
 #include "arsenal/logging.h"
 
 namespace ssu {
 
-channel_number link_channel::bind(link* link, const endpoint& remote_ep)
+channel_number
+socket_channel::bind(uia::comm::socket* link, uia::comm::endpoint const& remote_ep)
 {
     assert(link);
     assert(!is_active()); // can't bind while channel is active
@@ -20,19 +24,23 @@ channel_number link_channel::bind(link* link, const endpoint& remote_ep)
     // Find a free channel number for this remote endpoint.
     // Never assign channel zero - that's reserved for control packets.
     channel_number chan = 1;
-    while (link->channel_for(remote_ep, chan) != nullptr) {
-        if (++chan == 0)
+    while (link->channel_for(remote_ep, chan) != nullptr)
+    {
+        if (++chan == 0) {
             return 0;   // wraparound - no channels available
+        }
     }
 
     // Bind to this channel
-    if (!bind(link, remote_ep, chan))
+    if (!bind(link, remote_ep, chan)) {
         return 0;
+    }
 
     return chan;
 }
 
-bool link_channel::bind(link* link, const endpoint& remote_ep, channel_number chan)
+bool
+socket_channel::bind(uia::comm::socket* link, uia::comm::endpoint const& remote_ep, channel_number chan)
 {
     assert(link);
     assert(!is_active()); // can't bind while channel is active
@@ -50,25 +58,28 @@ bool link_channel::bind(link* link, const endpoint& remote_ep, channel_number ch
 
     logger::debug() << "Bound local channel " << int(chan) << " for " << remote_ep << " to " << link;
 
-    link_ = link;
+    socket_ = link;
     return true;
 }
 
-void link_channel::unbind()
+void
+socket_channel::unbind()
 {
     stop();
     assert(!is_active());
-    if (link_) {
-        link_->unbind_channel(remote_ep_, local_channel_number_);
-        link_ = nullptr;
+    if (socket_)
+    {
+        socket_->unbind_channel(remote_ep_, local_channel_number_);
+        socket_ = nullptr;
         local_channel_number_ = 0;
     }
 }
 
-int link_channel::may_transmit()
+int
+socket_channel::may_transmit()
 {
-    assert(link_);
-    return link_->may_transmit(remote_ep_);
+    assert(socket_);
+    return socket_->may_transmit(remote_ep_);
 }
 
 } // ssu namespace
