@@ -17,12 +17,7 @@
  *  - response to different line error rates.
  */
 
-#include "ssu/stream.h"
-#include "ssu/server.h"
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_host.h"
-#include "ssu/simulation/sim_link.h"
-#include "ssu/simulation/sim_connection.h"
+#include "simulator_fixture.h"
 
 using namespace std;
 using namespace ssu;
@@ -32,38 +27,10 @@ static constexpr int DATAGRAMS_TO_SEND = 100;
 static constexpr int max_datagram_size_log2 = 20;   // Max dgram size: 2^20 = 1MB
 static constexpr int max_datagram_size = 1 << max_datagram_size_log2;
 
-BOOST_AUTO_TEST_CASE(transmit_datagrams)
+BOOST_FIXTURE_TEST_CASE(transmit_datagrams, simulator_fixture)
 {
-    shared_ptr<simulator> sim(make_shared<simulator>());
-    BOOST_CHECK(sim != nullptr);
-
-    shared_ptr<sim_host> client_host(sim_host::create(sim));
-    BOOST_CHECK(client_host != nullptr);
-    endpoint client_host_address(boost::asio::ip::address_v4::from_string("10.0.0.1"), stream_protocol::default_port);
-    shared_ptr<sim_host> server_host(sim_host::create(sim));
-    BOOST_CHECK(server_host != nullptr);
-    endpoint server_host_address(boost::asio::ip::address_v4::from_string("10.0.0.2"), stream_protocol::default_port);
-
-    shared_ptr<sim_connection> conn = make_shared<sim_connection>();
-    BOOST_CHECK(conn != nullptr);
-    conn->connect(server_host, server_host_address,
-                  client_host, client_host_address);
-
-    shared_ptr<ssu::link> link = client_host->create_link();
-    BOOST_CHECK(link != nullptr);
-    link->bind(client_host_address);
-    BOOST_CHECK(link->is_active());
-
-    shared_ptr<ssu::link> other_link = server_host->create_link();
-    BOOST_CHECK(other_link != nullptr);
-    other_link->bind(server_host_address);
-    BOOST_CHECK(other_link->is_active());
-
     int n_datagrams_arrived{0};
     shared_ptr<ssu::stream> server_stream{nullptr};
-
-    shared_ptr<ssu::server> server(make_shared<ssu::server>(server_host));
-    BOOST_CHECK(server != nullptr);
 
     auto got_datagram = [&] {
         byte_array dg = server_stream->read_datagram();
@@ -87,14 +54,6 @@ BOOST_AUTO_TEST_CASE(transmit_datagrams)
         got_datagram();
     });
 
-    bool listening = server->listen("regress", "Regression tests", "dgram", "Datagram protocol");
-    BOOST_CHECK(listening == true);
-
-    shared_ptr<ssu::stream> client(make_shared<stream>(client_host));
-    BOOST_CHECK(client != nullptr);
-    bool hinted = client->add_location_hint(server_host->host_identity().id(), server_host_address); // no routing yet
-    BOOST_CHECK(hinted == true);
-
     // Fire off a bunch of datagrams
     client->on_link_up.connect([&] {
         static int log2 = 4; // Min dgram size: 2^4 = 16 bytes
@@ -108,13 +67,13 @@ BOOST_AUTO_TEST_CASE(transmit_datagrams)
             if (++log2 > max_datagram_size_log2) {
                 log2 = 4;
             }
-            sim->post([&] { client->on_link_up(); });
+            simulator->post([&] { client->on_link_up(); });
         }
     });
 
-    client->connect_to(server_host->host_identity().id(), "regress", "dgram", server_host_address);
+    client->connect_to(server_host_eid, "simulator", "test", server_host_address);
 
-    sim->run();
+    simulator->run();
 
     logger::debug() << "Datagram test completed: " << n_datagrams_arrived
         << " of " << DATAGRAMS_TO_SEND << " datagrams delivered";
