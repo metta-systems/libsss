@@ -14,7 +14,6 @@
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
 #include "ssu/negotiation/key_message.h"
-#include "ssu/link.h"
 #include "test_data_helper.h"
 #include "arsenal/logging.h"
 
