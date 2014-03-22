@@ -817,7 +817,8 @@ key_initiator::~key_initiator()
     cancel();
 }
 
-void key_initiator::exchange_keys()
+void
+key_initiator::exchange_keys()
 {
     logger::debug() << "Initiating key exchange connection to " << target_ << " peer id " << remote_id_;
 
@@ -832,7 +833,8 @@ void key_initiator::exchange_keys()
     retransmit_timer_.start();
 }
 
-void key_initiator::retransmit(bool fail)
+void
+key_initiator::retransmit(bool fail)
 {
     if (fail)
     {
@@ -857,7 +859,8 @@ void key_initiator::retransmit(bool fail)
     retransmit_timer_.restart();
 }
 
-void key_initiator::done()
+void
+key_initiator::done()
 {
     bool send_signal = (state_ != state::done);
     logger::debug() << "Key exchange completed with " << target_ << (send_signal ? " (signaling upper layer)" : "");
@@ -868,14 +871,16 @@ void key_initiator::done()
     }
 }
 
-void key_initiator::cancel()
+void
+key_initiator::cancel()
 {
     logger::debug() << "Stop initiating to " << target_;
     retransmit_timer_.stop();
     host_->unregister_dh_initiator(initiator_hashed_nonce_, target_);
 }
 
-void key_initiator::send_dh_init1()
+void
+key_initiator::send_dh_init1()
 {
     logger::debug() << "Send dh_init1 to " << target_;
     state_ = state::init1;
@@ -900,7 +905,8 @@ void key_initiator::send_dh_init1()
     send(magic(), init, target_);
 }
 
-void key_initiator::send_dh_init2()
+void
+key_initiator::send_dh_init2()
 {
     logger::debug() << "Send dh_init2 to " << target_;
     state_ = state::init2;

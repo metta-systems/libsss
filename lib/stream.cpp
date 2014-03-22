@@ -152,8 +152,9 @@ bool stream::connect_to(peer_id const& destination,
 
 void stream::connect_link_status_signal()
 {
-    if (status_signal_connected_ or !stream_)
+    if (status_signal_connected_ or !stream_) {
         return;
+    }
 
     internal::stream_peer* peer = host_->stream_peer(stream_->peerid_);
 

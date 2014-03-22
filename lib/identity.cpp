@@ -33,8 +33,9 @@ identity::identity(peer_id const& id)
 identity::identity(byte_array const& id, byte_array const& key)
     : id_(id)
 {
-    if (!set_key(key))
+    if (!set_key(key)) {
         throw bad_key();
+    }
 }
 
 void identity::clear_key()

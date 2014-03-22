@@ -21,7 +21,7 @@ namespace ssu {
 namespace simulation {
 
 shared_ptr<sim_host>
-sim_host::create(std::shared_ptr<simulator> sim)
+sim_host::create(shared_ptr<simulator> sim)
 {
     auto host = make_shared<sim_host>(sim);
     host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
@@ -32,7 +32,7 @@ sim_host::create(std::shared_ptr<simulator> sim)
     return host;
 }
 
-sim_host::sim_host(std::shared_ptr<simulator> sim)
+sim_host::sim_host(shared_ptr<simulator> sim)
     : host()
     , simulator_(sim)
 {}
@@ -40,12 +40,14 @@ sim_host::sim_host(std::shared_ptr<simulator> sim)
 sim_host::~sim_host()
 {
     // Close all links.
-    for (auto link : links_)
+    for (auto link : links_) {
         link.second->unbind();
+    }
 
     // Disconnect from other hosts.
-    for (auto conn : connections_)
+    for (auto conn : connections_) {
         conn.second->disconnect();
+    }
     assert(connections_.empty());
 
     packet_queue_.clear();
@@ -57,7 +59,7 @@ sim_host::current_time()
     return simulator_->current_time();
 }
 
-std::unique_ptr<async::timer_engine>
+unique_ptr<async::timer_engine>
 sim_host::create_timer_engine_for(async::timer* t)
 {
     return stdext::make_unique<sim_timer_engine>(t, simulator_);
@@ -128,8 +130,8 @@ sim_host::neighbor_at(uia::comm::endpoint const& dst, uia::comm::endpoint& src)
 {
     for (auto conn : connections_)
     {
-        std::shared_ptr<sim_host> uplink =
-            conn.second->uplink_for(std::static_pointer_cast<sim_host>(shared_from_this()));
+        shared_ptr<sim_host> uplink =
+            conn.second->uplink_for(static_pointer_cast<sim_host>(shared_from_this()));
         if (conn.second->address_for(uplink) == dst)
         {
             src = conn.first;
@@ -153,7 +155,7 @@ sim_host::unregister_link_at(uint16_t port, std::shared_ptr<sim_link> link)
     links_.erase(port);
 }
 
-std::shared_ptr<sim_link>
+shared_ptr<sim_link>
 sim_host::link_for(uint16_t port)
 {
     return links_[port];
