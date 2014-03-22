@@ -90,7 +90,7 @@ void stream_channel::got_link_status_changed(uia::comm::socket::status new_statu
     auto peer = target_peer();
     assert(peer);
 
-    // If we were our target's primary flow, disconnect us.
+    // If we were our target's primary channel, disconnect us.
     if (peer->primary_channel_ == this)
     {
         logger::debug() << "Primary channel to host ID " << peer->remote_host_id()
@@ -99,7 +99,7 @@ void stream_channel::got_link_status_changed(uia::comm::socket::status new_statu
         peer->clear_primary_channel();
     }
 
-    // Stop and destroy this flow.
+    // Stop and destroy this channel.
     delete this;
 }
 

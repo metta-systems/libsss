@@ -1597,6 +1597,11 @@ bool base_stream::rx_reset_packet(packet_seq_t pktseq,
     logger::warning() << "Base stream rx_reset_packet UNIMPLEMENTED.";
     // auto header = as_header<reset_header>(pkt);
     // bool local_sid = hdr->type & flags::reset_remote_sid;
+    //
+    // if sid not found: do nothing
+    //
+    // @todo...
+    //
     return false;
 }
 
