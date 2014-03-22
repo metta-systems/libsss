@@ -8,15 +8,18 @@
 //
 #pragma once
 
-#include <string>
+#include <vector>
+#include "comm/socket_endpoint.h"
 
-namespace ssu {
+namespace uia {
+namespace comm {
 namespace platform {
 
 /**
- * Find the current user's name according to the operating system.
+ * Find all of the local host's IP addresses (platform-specific).
  */
-std::string user_name();
+std::vector<endpoint> local_endpoints();
 
 } // platform namespace
-} // ssu namespace
+} // comm namespace
+} // uia namespace

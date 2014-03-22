@@ -9,11 +9,13 @@ set(simulator_SOURCES
 set(platform_SOURCES)
 if (UNIX)
     list(APPEND platform_SOURCES
-        platform-unix.cpp)
+        platform-unix.cpp
+        comm/platform-unix.cpp)
 endif()
 if (WIN32)
     list(APPEND platform_SOURCES
-        platform-win.cpp)
+        platform-win.cpp
+        comm/platform-win.cpp)
 endif()
 
 add_library(ssu STATIC
