@@ -12,6 +12,14 @@ class socket_channel;//?
 namespace uia {
 namespace comm {
 
+class socket_interface
+{
+public:
+    virtual void activate_socket(socket*) = 0;
+    virtual void deactivate_socket(socket*) = 0;
+    virtual socket_receiver* receiver(magic_t) = 0;
+};
+
 /**
  * Abstract base class for entity connecting two endpoints using some network.
  * Socket manages connection lifetime and maintains the connection status info.
