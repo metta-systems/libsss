@@ -15,9 +15,9 @@ namespace comm {
 std::string socket::status_string(socket::status s)
 {
     switch (s) {
-        case status::down: return "down";
+        case status::down:    return "down";
         case status::stalled: return "stalled";
-        case status::up: return "up";
+        case status::up:      return "up";
     }
 }
 
