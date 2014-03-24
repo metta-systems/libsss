@@ -24,11 +24,12 @@ namespace ssu {
 class host;
 
 /**
- * This mixin class encapsulates link-related part of host state.
+ * This mixin class encapsulates socket-related part of host state.
  * @see host
  */
 class socket_host_state : virtual public asio_host_state /* jeez, damn asio! */
     , public uia::comm::socket_host_interface
+    , public uia::comm::receiver_host_interface
 {
     /**
      * Lookup table of all registered socket_receiver for this host,
@@ -70,6 +71,7 @@ protected:
         uint16_t default_port = stream_protocol::default_port);
 
 public:
+    /*@{*/
     /**
      * Create a receiver and bind it to control channel magic.
      */
@@ -88,6 +90,7 @@ public:
     bool has_receiver_for(magic_t magic) {
         return contains(receivers_, magic);
     }
+    /*@}*/
 
     /*@{*/
     /**
