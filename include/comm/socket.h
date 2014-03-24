@@ -4,20 +4,26 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "arsenal/algorithm.h"
 
 namespace ssu {
 class socket_channel;//?
+class socket_receiver;
 }
 
 namespace uia {
 namespace comm {
 
-class socket_interface
+class socket;
+
+// Interface used by socket to register itself on the host
+// and find a receiver based on packet magic value.
+class socket_host_interface
 {
 public:
     virtual void activate_socket(socket*) = 0;
     virtual void deactivate_socket(socket*) = 0;
-    virtual socket_receiver* receiver(magic_t) = 0;
+    virtual ssu::socket_receiver* receiver(ssu::magic_t) = 0;
 };
 
 /**
@@ -31,7 +37,7 @@ class socket //: public std::enable_shared_from_this<socket>
     /**
      * Host state instance this socket is attached to.
      */
-    std::shared_ptr<ssu::host> host_; // @todo Remove, replace with an interface
+    socket_host_interface* host_interface_;
     /**
      * Channels working through this socket at the moment.
      */
@@ -51,7 +57,7 @@ public:
 
     static std::string status_string(status s);
 
-    socket(std::shared_ptr<ssu::host> host) : host_(host) {}
+    socket(socket_host_interface* hi) : host_interface_(hi) {}
     virtual ~socket();
 
     /**

@@ -1,4 +1,4 @@
-#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
+#include "arsenal/logging.h"
 #include "ssu/socket_channel.h"
 // when decoupled, should not need host.h include above
 #include "comm/socket.h"
@@ -34,10 +34,10 @@ socket::set_active(bool active)
 {
     active_ = active;
     if (active_) {
-        host_->activate_socket(this);
+        host_interface_->activate_socket(this);
     }
     else {
-        host_->deactivate_socket(this);
+        host_interface_->deactivate_socket(this);
     }
 }
 
@@ -88,7 +88,7 @@ socket::receive(const byte_array& msg, const socket_endpoint& src)
     try {
         ssu::magic_t magic = msg.as<big_uint32_t>()[0];
 
-        ssu::socket_receiver* recvr = host_->receiver(magic);
+        ssu::socket_receiver* recvr = host_interface_->receiver(magic);
         if (recvr) {
             return recvr->receive(msg, src);
         }

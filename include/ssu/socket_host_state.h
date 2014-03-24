@@ -28,6 +28,7 @@ class host;
  * @see host
  */
 class socket_host_state : virtual public asio_host_state /* jeez, damn asio! */
+    , public uia::comm::socket_host_interface
 {
     /**
      * Lookup table of all registered socket_receiver for this host,
@@ -88,22 +89,24 @@ public:
         return contains(receivers_, magic);
     }
 
+    /*@{*/
     /**
      * Find and return a receiver for given control channel magic value.
      */
-    virtual socket_receiver* receiver(magic_t magic);
+    socket_receiver* receiver(magic_t magic) override;//@todo move to receiver_host_interface
 
-    inline void activate_socket(uia::comm::socket* l)
+    inline void activate_socket(uia::comm::socket* l) override
     {
         active_sockets_.insert(l);
         on_active_sockets_changed();
     }
 
-    inline void deactivate_socket(uia::comm::socket* l)
+    inline void deactivate_socket(uia::comm::socket* l) override
     {
         active_sockets_.erase(l);
         on_active_sockets_changed();
     }
+    /*@}*/
 
     /**
      * Obtain a list of all currently active sockets.
