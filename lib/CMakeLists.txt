@@ -31,8 +31,8 @@ add_library(ssu STATIC
     comm/socket.cpp
     comm/udp_socket.cpp
     comm/socket_endpoint.cpp
-    socket_channel.cpp
-    socket_receiver.cpp
+    comm/socket_channel.cpp
+    comm/socket_receiver.cpp
     socket_host_state.cpp
     protocol.cpp
     server.cpp
