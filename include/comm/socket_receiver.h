@@ -16,15 +16,8 @@ class byte_array;
 namespace uia {
 namespace comm {
 
+class comm_host_interface;
 class socket_endpoint;
-
-class receiver_host_interface
-{
-public:
-    virtual void bind_receiver(magic_t, socket_receiver*) = 0;
-    virtual void unbind_receiver(magic_t) = 0;
-    virtual bool has_receiver_for(magic_t) = 0;
-};
 
 /**
  * Abstract base class for control protocol receivers.
@@ -35,14 +28,14 @@ public:
  */
 class socket_receiver
 {
-    receiver_host_interface* host_interface_{nullptr};
+    comm_host_interface* host_interface_{nullptr};
     magic_t magic_{0};
 
 protected:
-    inline socket_receiver(receiver_host_interface* hi) : host_interface_(hi)
+    inline socket_receiver(comm_host_interface* hi) : host_interface_(hi)
     {}
 
-    inline socket_receiver(receiver_host_interface* host, magic_t magic) : host_interface_(hi) {
+    inline socket_receiver(comm_host_interface* host, magic_t magic) : host_interface_(hi) {
         bind(magic);
     }
 
@@ -59,10 +52,6 @@ protected:
 
     inline bool is_bound() const {
         return magic_ != 0;
-    }
-
-    virtual std::shared_ptr<host> get_host() {
-        return host_;
     }
 
     // @fixme Possibly set_magic() might set a magic on default socket_receiver and bind() it.

@@ -28,8 +28,7 @@ class host;
  * @see host
  */
 class socket_host_state : virtual public asio_host_state /* jeez, damn asio! */
-    , public uia::comm::socket_host_interface
-    , public uia::comm::receiver_host_interface
+    , public uia::comm::comm_host_interface
 {
     /**
      * Lookup table of all registered socket_receiver for this host,

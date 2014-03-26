@@ -6,25 +6,14 @@
 #include <vector>
 #include "arsenal/algorithm.h"
 
-namespace ssu {
-class socket_channel;//?
-class socket_receiver;
-}
-
 namespace uia {
 namespace comm {
 
-class socket;
+typedef uint8_t channel_number;
 
-// Interface used by socket to register itself on the host
-// and find a receiver based on packet magic value.
-class socket_host_interface
-{
-public:
-    virtual void activate_socket(socket*) = 0;
-    virtual void deactivate_socket(socket*) = 0;
-    virtual ssu::socket_receiver* receiver(ssu::magic_t) = 0;
-};
+class socket;
+class socket_receiver;
+class socket_channel;
 
 /**
  * Abstract base class for entity connecting two endpoints using some network.
@@ -37,7 +26,7 @@ class socket //: public std::enable_shared_from_this<socket>
     /**
      * Host state instance this socket is attached to.
      */
-    socket_host_interface* host_interface_;
+    comm_host_interface* host_interface_;
     /**
      * Channels working through this socket at the moment.
      */
@@ -57,7 +46,7 @@ public:
 
     static std::string status_string(status s);
 
-    socket(socket_host_interface* hi) : host_interface_(hi) {}
+    socket(comm_host_interface* hi) : host_interface_(hi) {}
     virtual ~socket();
 
     /**
