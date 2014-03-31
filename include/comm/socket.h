@@ -9,8 +9,6 @@
 namespace uia {
 namespace comm {
 
-typedef uint8_t channel_number;
-
 class socket;
 class socket_receiver;
 class socket_channel;

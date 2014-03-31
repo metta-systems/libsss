@@ -60,7 +60,7 @@ enum class dh_group_type : uint32_t {
 
 struct initiator_identity_chunk
 {
-    channel_number initiator_channel_number;
+    uia::comm::channel_number initiator_channel_number;
     byte_array     initiator_eid;
     byte_array     responder_eid; // Desired EID of responder
     byte_array     initiator_id_public_key;  // Initiator's identity public key
@@ -98,7 +98,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, initiator_identity_c
 
 struct responder_identity_chunk
 {
-    channel_number responder_channel_number;
+    uia::comm::channel_number responder_channel_number;
     byte_array     responder_eid;
     byte_array     responder_id_public_key;
     byte_array     responder_signature; // Responder's parameter signature
@@ -379,7 +379,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, key_chunk& kc)
 
 struct key_message
 {
-    uint32_t magic;
+    uia::comm::magic_t magic;
     /**
      * Negotiate encryption, authentication and compression features for this session using
      * a list of strings in 'features' vector.

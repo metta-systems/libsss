@@ -9,12 +9,12 @@
 #define BOOST_TEST_MODULE Test_ssu_link
 #include <boost/test/unit_test.hpp>
 
-#include "ssu/host.h"//@todo
-#include "ssu/udp_socket.h"
-#include "ssu/negotiation/key_message.h"
-#include "ssu/negotiation/key_responder.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
+#include "comm/udp_socket.h"
+#include "ssu/host.h"//@todo
+#include "ssu/negotiation/key_message.h"
+#include "ssu/negotiation/key_responder.h"
 
 using namespace std;
 using namespace ssu;

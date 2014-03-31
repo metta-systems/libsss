@@ -14,20 +14,9 @@
 #include "arsenal/opaque_endian.h"
 #include "arsenal/flurry.h"
 #include "arsenal/hash_combine.h"
+#include "comm/host_interface.h"
 
 namespace ssu {
-
-/**
- * Protocol magic marker, must have 0x00 as the highest byte (channel number).
- */
-typedef uint32_t magic_t;
-
-/**
- * An 8-bit channel number distinguishes different channels
- * between the same pair of link-layer endpoints. Channel number 0 is always invalid.
- * Up to 255 simultaneous channels possible.
- */
-typedef uint8_t channel_number;
 
 /**
  * Packet sequence numbers are 64-bit unsigned integers.
@@ -57,7 +46,7 @@ public:
     // Control chunk magic value for the structured streams.
     // Top byte is channel number and must be zero.
     // 0x535355 = 'SSU': 'Structured Streams Unleashed'
-    static constexpr magic_t magic_id = 0x00535355;
+    static constexpr uia::comm::magic_t magic_id = 0x00535355;
 
     typedef uint64_t counter_t;    ///< Counter for SID assignment.
     typedef uint16_t stream_id_t;  ///< Stream ID within channel.

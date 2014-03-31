@@ -1,6 +1,5 @@
 #include "arsenal/logging.h"
-#include "ssu/socket_receiver.h"
-#include "ssu/host.h"
+#include "comm/socket_receiver.h"
 
 namespace uia {
 namespace comm {

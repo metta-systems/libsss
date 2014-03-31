@@ -6,17 +6,17 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/host.h"//@fixme First because of ssu::host dependency in comm/socket
-#include "comm/socket.h"
-#include "ssu/socket_channel.h"
-#include "ssu/socket_receiver.h"
 #include "arsenal/logging.h"
 #include "arsenal/flurry.h"
 #include "arsenal/any_int_cast.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/settings_provider.h"
 #include "comm/platform.h"
-#include "ssu/udp_socket.h"
+#include "comm/socket.h"
+#include "comm/socket_channel.h"
+#include "comm/socket_receiver.h"
+#include "comm/udp_socket.h"
+#include "ssu/socket_host_state.h"
 
 using namespace std;
 using namespace boost::asio;
@@ -27,8 +27,8 @@ namespace ssu {
 // socket_host_state
 //=================================================================================================
 
-socket_receiver*
-socket_host_state::receiver(magic_t magic)
+uia::comm::socket_receiver*
+socket_host_state::receiver_for(uia::comm::magic_t magic)
 {
     auto it = receivers_.find(magic);
     if (it == receivers_.end())

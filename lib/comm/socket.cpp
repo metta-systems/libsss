@@ -1,7 +1,8 @@
 #include "arsenal/logging.h"
-#include "ssu/socket_channel.h"
-// when decoupled, should not need host.h include above
+#include "arsenal/algorithm.h"
 #include "comm/socket.h"
+#include "comm/socket_channel.h"
+#include "comm/socket_receiver.h"
 
 using namespace std;
 
@@ -77,8 +78,8 @@ socket::receive(const byte_array& msg, const socket_endpoint& src)
 
     // First byte should be a channel number.
     // Try to find an endpoint-specific channel.
-    ssu::channel_number cn = msg.at(0);
-    ssu::socket_channel* chan = channel_for(src, cn);
+    channel_number cn = msg.at(0);
+    socket_channel* chan = channel_for(src, cn);
     if (chan) {
         return chan->receive(msg, src);
     }
@@ -86,11 +87,11 @@ socket::receive(const byte_array& msg, const socket_endpoint& src)
     // If that doesn't work, it may be a global control packet:
     // if so, pass it to the appropriate socket_receiver.
     try {
-        ssu::magic_t magic = msg.as<big_uint32_t>()[0];
+        magic_t magic = msg.as<big_uint32_t>()[0];
 
-        ssu::socket_receiver* recvr = host_interface_->receiver(magic);
-        if (recvr) {
-            return recvr->receive(msg, src);
+        socket_receiver* receiver = host_interface_->receiver_for(magic);
+        if (receiver) {
+            return receiver->receive(msg, src);
         }
         else
         {
@@ -106,7 +107,7 @@ socket::receive(const byte_array& msg, const socket_endpoint& src)
 }
 
 bool
-socket::bind_channel(endpoint const& ep, ssu::channel_number chan, ssu::socket_channel* lc)
+socket::bind_channel(endpoint const& ep, channel_number chan, socket_channel* lc)
 {
     assert(channel_for(ep, chan) == nullptr);
     channels_.insert(make_pair(make_pair(ep, chan), lc));
@@ -114,7 +115,7 @@ socket::bind_channel(endpoint const& ep, ssu::channel_number chan, ssu::socket_c
 }
 
 void
-socket::unbind_channel(endpoint const& ep, ssu::channel_number chan)
+socket::unbind_channel(endpoint const& ep, channel_number chan)
 {
     channels_.erase(make_pair(ep, chan));
 }

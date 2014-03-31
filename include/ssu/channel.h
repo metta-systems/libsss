@@ -9,10 +9,9 @@
 #pragma once
 
 #include "arsenal/byte_array.h"
-#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
-// when decoupled, should not need host.h include above
 #include "comm/socket.h"
-#include "ssu/socket_channel.h"
+#include "comm/socket_channel.h"
+#include "ssu/protocol.h"
 #include "ssu/channel_armor.h"
 
 namespace ssu {
@@ -22,11 +21,11 @@ class host;
 /**
  * Abstract base class representing a channel between a local link and a remote endpoint.
  */
-class channel : public socket_channel
+class channel : public uia::comm::socket_channel
 {
     friend class base_stream; // @fixme *sigh*
 
-    typedef socket_channel super;
+    typedef uia::comm::socket_channel super;
 
     class private_data;
     std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
@@ -62,7 +61,7 @@ public:
 
     // Layout of the first header word: channel number, tx sequence
     // Transmitted in cleartext.
-    static uint32_t make_first_header_word(channel_number channel, uint32_t tx_sequence);
+    static uint32_t make_first_header_word(uia::comm::channel_number channel, uint32_t tx_sequence);
 
     // Layout of the second header word: ACK count, ACK sequence number
     // Encrypted for transmission.

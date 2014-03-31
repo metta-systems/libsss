@@ -12,10 +12,11 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <boost/signals2/signal.hpp>
-#include "ssu/asio_host_state.h"
-#include "ssu/socket_receiver.h"
 #include "arsenal/algorithm.h"
 #include "comm/socket.h"
+#include "comm/socket_receiver.h"
+#include "ssu/asio_host_state.h"
+#include "ssu/protocol.h" // only for default port?
 
 class settings_provider;
 
@@ -34,7 +35,7 @@ class socket_host_state : virtual public asio_host_state /* jeez, damn asio! */
      * Lookup table of all registered socket_receiver for this host,
      * keyed on their 24-bit magic control packet type.
      */
-    std::unordered_map<magic_t, socket_receiver*> receivers_;
+    std::unordered_map<uia::comm::magic_t, uia::comm::socket_receiver*> receivers_;
     /**
      * List of all currently-active links.
      */
@@ -71,10 +72,11 @@ protected:
 
 public:
     /*@{*/
+    /*@name comm_host_interface implementation */
     /**
      * Create a receiver and bind it to control channel magic.
      */
-    void bind_receiver(magic_t magic, socket_receiver* receiver)
+    void bind_receiver(uia::comm::magic_t magic, uia::comm::socket_receiver* receiver)
     {
         if (magic & 0xff000000) {
             throw "Invalid magic value for binding a receiver.";
@@ -82,20 +84,18 @@ public:
         receivers_.insert(std::make_pair(magic, receiver)); // @todo: Will NOT replace existing element.
     }
 
-    void unbind_receiver(magic_t magic) {
+    void unbind_receiver(uia::comm::magic_t magic) {
         receivers_.erase(magic);
     }
 
-    bool has_receiver_for(magic_t magic) {
+    bool has_receiver_for(uia::comm::magic_t magic) {
         return contains(receivers_, magic);
     }
-    /*@}*/
 
-    /*@{*/
     /**
      * Find and return a receiver for given control channel magic value.
      */
-    socket_receiver* receiver(magic_t magic) override;//@todo move to receiver_host_interface
+    uia::comm::socket_receiver* receiver_for(uia::comm::magic_t magic) override;
 
     inline void activate_socket(uia::comm::socket* l) override
     {

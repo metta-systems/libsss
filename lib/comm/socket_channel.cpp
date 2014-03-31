@@ -6,16 +6,14 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
-// when decoupled, should not need host.h include above
-
-#include "ssu/socket_channel.h"
 #include "arsenal/logging.h"
+#include "comm/socket_channel.h"
 
-namespace ssu {
+namespace uia {
+namespace comm {
 
 channel_number
-socket_channel::bind(uia::comm::socket* link, uia::comm::endpoint const& remote_ep)
+socket_channel::bind(socket* link, endpoint const& remote_ep)
 {
     assert(link);
     assert(!is_active()); // can't bind while channel is active
@@ -40,7 +38,7 @@ socket_channel::bind(uia::comm::socket* link, uia::comm::endpoint const& remote_
 }
 
 bool
-socket_channel::bind(uia::comm::socket* link, uia::comm::endpoint const& remote_ep, channel_number chan)
+socket_channel::bind(socket* link, endpoint const& remote_ep, channel_number chan)
 {
     assert(link);
     assert(!is_active()); // can't bind while channel is active
@@ -82,4 +80,5 @@ socket_channel::may_transmit()
     return socket_->may_transmit(remote_ep_);
 }
 
-} // ssu namespace
+} // comm namespace
+} // uia namespace

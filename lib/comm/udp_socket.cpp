@@ -1,8 +1,7 @@
-#include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
-// when decoupled, should not need host.h include above
-
-#include "ssu/udp_socket.h"
+#include "arsenal/logging.h"
 #include "comm/platform.h"
+#include "comm/udp_socket.h"
+#include "ssu/host.h"//for get_io_service() on host
 
 using namespace std;
 using namespace boost::asio;
@@ -38,8 +37,9 @@ bool bind_socket(boost::asio::ip::udp::socket& sock,
 // udp_socket
 //=================================================================================================
 
+// @fixme Get_io_service is asio thing
 udp_socket::udp_socket(shared_ptr<host> host)
-    : socket(host)
+    : socket(host.get())
     , udp_socket_(host->get_io_service())
     , received_from_(this, uia::comm::endpoint()) // @fixme Dummy endpoint initializer here... init in bind()?
     , strand_(host->get_io_service())

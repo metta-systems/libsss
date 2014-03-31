@@ -838,7 +838,7 @@ int channel::may_transmit()
     return 0;
 }
 
-uint32_t channel::make_first_header_word(channel_number channel, uint32_t tx_sequence)
+uint32_t channel::make_first_header_word(uia::comm::channel_number channel, uint32_t tx_sequence)
 {
     constexpr uint32_t seq_bits = 24;
     constexpr uint32_t seq_mask = (1 << seq_bits) - 1;
@@ -1156,7 +1156,7 @@ channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
     // Determine the full 64-bit packet sequence number
     uint32_t tx_seq = pkt.as<big_uint32_t>()[0];
 
-    channel_number pktchan = tx_seq >> 24;
+    uia::comm::channel_number pktchan = tx_seq >> 24;
     assert(pktchan == local_channel());    // Enforced by link
     (void)pktchan;
 

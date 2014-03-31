@@ -32,7 +32,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     peer_id               remote_id_; ///< Target's host id (empty if unspecified).
     bool                  early_{true}; ///< This initiator can still be canceled.
 
-    magic_t               magic_{0};
+    uia::comm::magic_t               magic_{0};
     uint32_t              allowed_methods_{0}; ///< Bitwise set of allowed security methods
 
     enum methods {
@@ -80,7 +80,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     void done();
 
 protected:
-    inline magic_t magic() const { return magic_; }
+    inline uia::comm::magic_t magic() const { return magic_; }
 
 public:
     /// Start key negotiation for a channel that has been bound to a link but not yet activated.
@@ -89,7 +89,7 @@ public:
     /// so that if it is deleted the incomplete channel will be too.
     /// The client must therefore re-parent the channel
     /// after successful key exchange before deleting the key_initiator.
-    key_initiator(channel* chn, magic_t magic, peer_id const& target_peer);
+    key_initiator(channel* chn, uia::comm::magic_t magic, peer_id const& target_peer);
     ~key_initiator();
 
     /**

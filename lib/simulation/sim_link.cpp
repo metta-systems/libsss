@@ -16,7 +16,7 @@ namespace ssu {
 namespace simulation {
 
 sim_link::sim_link(shared_ptr<sim_host> host)
-    : uia::comm::socket(host)
+    : uia::comm::socket(host.get())
     , simulator_(host->get_simulator())
     , host_(host)
 {}

@@ -144,7 +144,7 @@ send(key_message& m, uia::comm::socket_endpoint const& target)
  * Send a dummy "probing" packet to punch a hole in the NAT.
  */
 void
-send_r0(magic_t magic, uia::comm::socket_endpoint const& to)
+send_r0(uia::comm::magic_t magic, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     m.magic = magic;
@@ -152,7 +152,7 @@ send_r0(magic_t magic, uia::comm::socket_endpoint const& to)
 }
 
 void
-send(magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
+send(uia::comm::magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -167,7 +167,7 @@ send(magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
 }
 
 void
-send(magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
+send(uia::comm::magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -182,7 +182,7 @@ send(magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
 }
 
 void
-send(magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
+send(uia::comm::magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -197,7 +197,7 @@ send(magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
 }
 
 byte_array
-send(magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
+send(uia::comm::magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     key_chunk chunk;
@@ -217,8 +217,9 @@ send(magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
 // key_responder
 //=================================================================================================
 
-key_responder::key_responder(shared_ptr<host> host, magic_t magic)
-    : socket_receiver(host, magic)
+key_responder::key_responder(shared_ptr<host> host, uia::comm::magic_t magic)
+    : socket_receiver(host.get(), magic)
+    , host_(host)
 {}
 
 bool
@@ -788,7 +789,7 @@ key_responder::send_probe0(uia::comm::endpoint const& dest)
 //=================================================================================================
 
 key_initiator::key_initiator(channel* channel,
-                             magic_t magic,
+                             uia::comm::magic_t magic,
                              peer_id const& target_peer)
     : host_(channel->get_host())
     , channel_(channel)

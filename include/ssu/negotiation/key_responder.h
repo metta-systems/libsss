@@ -42,7 +42,7 @@ public:
      * for control messages with the specified magic protocol identifier.
      * @fixme The new key_responder becomes a child of the link.
      */
-    key_responder(std::shared_ptr<host> host, magic_t magic);
+    key_responder(std::shared_ptr<host> host, uia::comm::magic_t magic);
 
     /**
      * Link calls this with control messages intended for us.
