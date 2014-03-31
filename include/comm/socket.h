@@ -1,10 +1,10 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
-#include "arsenal/algorithm.h"
+#include "comm/socket_endpoint.h"
+#include "comm/host_interface.h"
 
 namespace uia {
 namespace comm {
@@ -19,16 +19,20 @@ class socket_channel;
  * For connected sockets there may be a number of channels established using their
  * own keying schemes. Socket orchestrates initiation of key exchanges and scheme setup.
  */
-class socket //: public std::enable_shared_from_this<socket>
+class socket
 {
     /**
      * Host state instance this socket is attached to.
      */
     comm_host_interface* host_interface_;
+
     /**
      * Channels working through this socket at the moment.
+     * Socket does NOT own the channels.
+     * @todo Make a weak_ptr?
      */
-    std::map<std::pair<endpoint, ssu::channel_number>, ssu::socket_channel*> channels_;
+    std::map<std::pair<endpoint, channel_number>, socket_channel*> channels_;
+
     /**
      * True if this socket is fair game for use by upper level protocols.
      */
@@ -52,7 +56,9 @@ public:
      * Only active socket are returned by socket_host_state::active_sockets().
      * @return true if socket is active.
      */
-    inline bool is_active() const { return active_; }
+    inline bool is_active() const {
+        return active_;
+    }
 
     /**
      * Activate or deactivate this socket.
@@ -67,6 +73,7 @@ public:
      * @return    true if bind successfull, false otherwise.
      */
     virtual bool bind(endpoint const& ep) = 0;
+
     /**
      * Unbind and close the underlying socket.
      */
@@ -79,7 +86,7 @@ public:
      * @param size the packet size.
      * @return true if send was successful.
      */
-    virtual bool send(endpoint const& ep, const char* data, size_t size) = 0;
+    virtual bool send(endpoint const& ep, char const* data, size_t size) = 0;
 
     /**
      * Send a packet on this socket.
@@ -97,6 +104,7 @@ public:
      * @return a list of endpoint objects.
      */
     virtual std::vector<endpoint> local_endpoints() = 0;
+
     /**
      * Return local port number at which this socket is bound on the host.
      * @return local open port number.
@@ -111,23 +119,19 @@ public:
     /**
      * Find channel associations attached to this socket.
      */
-    ssu::socket_channel* channel_for(endpoint const& src, ssu::channel_number cn) {
-        auto key = std::make_pair(src, cn);
-        if (!contains(channels_, key))
-            return nullptr;
-        return channels_[key];
-    }
+    socket_channel* channel_for(endpoint const& src, channel_number cn);
 
     /**
      * Bind a new socket_channel to this socket.
      * Called by socket_channel::bind() to register in the table of channels.
      */
-    bool bind_channel(endpoint const& ep, ssu::channel_number chan, ssu::socket_channel* lc);
+    bool bind_channel(endpoint const& ep, channel_number chan, socket_channel* lc);
+
     /**
      * Unbind a socket_channel associated with endpoint @a ep and channel number @a chan.
      * Called by socket_channel::unbind() to unregister from the table of channels.
      */
-    void unbind_channel(endpoint const& ep, ssu::channel_number chan);
+    void unbind_channel(endpoint const& ep, channel_number chan);
 
     /**
      * Returns true if this socket provides congestion control
@@ -148,7 +152,6 @@ protected:
      * @param src the source from which the packet arrived.
      */
     void receive(byte_array const& msg, socket_endpoint const& src);
-
 };
 
 } // comm namespace

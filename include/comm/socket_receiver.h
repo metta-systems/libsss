@@ -9,7 +9,7 @@
 #pragma once
 
 #include <memory>
-#include "ssu/protocol.h"
+#include "comm/host_interface.h"
 
 class byte_array;
 
@@ -35,7 +35,7 @@ protected:
     inline socket_receiver(comm_host_interface* hi) : host_interface_(hi)
     {}
 
-    inline socket_receiver(comm_host_interface* host, magic_t magic) : host_interface_(hi) {
+    inline socket_receiver(comm_host_interface* hi, magic_t magic) : host_interface_(hi) {
         bind(magic);
     }
 

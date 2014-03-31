@@ -8,7 +8,8 @@ namespace comm {
 // socket_receiver
 //=================================================================================================
 
-void socket_receiver::bind(magic_t magic)
+void
+socket_receiver::bind(magic_t magic)
 {
     assert(!is_bound());
     // Receiver's magic value must leave the upper byte 0
@@ -21,7 +22,8 @@ void socket_receiver::bind(magic_t magic)
     host_interface_->bind_receiver(magic_, this);
 }
 
-void socket_receiver::unbind()
+void
+socket_receiver::unbind()
 {
     if (is_bound())
     {

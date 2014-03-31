@@ -13,9 +13,10 @@ namespace comm {
 // socket
 //=================================================================================================
 
-std::string socket::status_string(socket::status s)
+string socket::status_string(socket::status s)
 {
-    switch (s) {
+    switch (s)
+    {
         case status::down:    return "down";
         case status::stalled: return "stalled";
         case status::up:      return "up";
@@ -28,6 +29,15 @@ socket::~socket()
     for (auto v : channels_) {
         v.second->unbind();
     }
+}
+
+socket_channel*
+socket::channel_for(endpoint const& src, channel_number cn)
+{
+    auto key = make_pair(src, cn);
+    if (!contains(channels_, key))
+        return nullptr;
+    return channels_[key];
 }
 
 void
@@ -46,7 +56,7 @@ socket::set_active(bool active)
  * Two packet types we could receive are stream packet (multiple types), starting with channel header
  * with non-zero channel number. It is handled by specific socket_channel.
  * Another type is negotiation packet which usually attempts to start a session negotiation, it should
- * have zero channel number. It is handled by registered socket_receiver (XXX rename to socket_responder?).
+ * have zero channel number. It is handled by registered socket_receiver.
  *
  *  Channel header (8 bytes)
  *   31          24 23                                0
@@ -66,7 +76,7 @@ socket::set_active(bool active)
  *  +--------------------------------------------------+
  */
 void
-socket::receive(const byte_array& msg, const socket_endpoint& src)
+socket::receive(byte_array const& msg, socket_endpoint const& src)
 {
     if (msg.size() < 4)
     {
@@ -84,7 +94,12 @@ socket::receive(const byte_array& msg, const socket_endpoint& src)
         return chan->receive(msg, src);
     }
 
-    // If that doesn't work, it may be a global control packet:
+    if (cn) {
+        logger::warning() << "No handler for channel number " << cn;
+        return;
+    }
+
+    // Channel number zero must be a global control packet:
     // if so, pass it to the appropriate socket_receiver.
     try {
         magic_t magic = msg.as<big_uint32_t>()[0];
@@ -95,7 +110,7 @@ socket::receive(const byte_array& msg, const socket_endpoint& src)
         }
         else
         {
-            logger::debug() << "Received an invalid message, ignoring unknown channel/receiver "
+            logger::debug() << "Received an invalid message, ignoring unknown receiver "
                             << hex(magic, 8, true) << " buffer contents " << msg;
         }
     }

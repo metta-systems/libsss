@@ -10,11 +10,12 @@
 
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
-#include "ssu/protocol.h"
+// #include "ssu/protocol.h"
 #include "comm/socket_endpoint.h"
 #include "comm/socket.h"
 
-namespace ssu {
+namespace uia {
+namespace comm {
 
 /**
  * Base class for socket-based channels,
@@ -24,11 +25,11 @@ namespace ssu {
  */
 class socket_channel
 {
-    uia::comm::socket*  socket_{nullptr};          ///< Socket we're currently bound to, if any.
-    uia::comm::endpoint remote_ep_;                ///< Endpoint of the remote side.
-    channel_number      local_channel_number_{0};  ///< Channel number of this channel at local node.
-    channel_number      remote_channel_number_{0}; ///< Channel number of this channel at remote node.
-    bool                active_{false};            ///< True if we're sending and accepting packets.
+    socket*        socket_{nullptr};          ///< Socket we're currently bound to, if any.
+    endpoint       remote_ep_;                ///< Endpoint of the remote side.
+    channel_number local_channel_number_{0};  ///< Channel number of this channel at local node.
+    channel_number remote_channel_number_{0}; ///< Channel number of this channel at remote node.
+    bool           active_{false};            ///< True if we're sending and accepting packets.
 
 public:
     inline virtual ~socket_channel() {
@@ -70,7 +71,7 @@ public:
     /**
      * Return the remote endpoint we're bound to, if any.
      */
-    inline uia::comm::socket_endpoint remote_endpoint() const {
+    inline socket_endpoint remote_endpoint() const {
         return uia::comm::socket_endpoint(socket_, remote_ep_);
     }
 
@@ -79,14 +80,15 @@ public:
      * allocating and binding a local channel number in the process.
      * @returns 0 if no channels are available for specified endpoint.
      */
-    channel_number bind(uia::comm::socket* socket, uia::comm::endpoint const& remote_ep);
+    channel_number bind(socket* socket, endpoint const& remote_ep);
+
     /**
      * Set up for communication with specified remote endpoint,
      * allocating and binding a local channel number in the process.
      * @returns 0 if no channels are available for specified endpoint.
      * @override
      */
-    inline channel_number bind(uia::comm::socket_endpoint const& remote_ep) {
+    inline channel_number bind(socket_endpoint const& remote_ep) {
         return bind(remote_ep.socket(), remote_ep);
     }
 
@@ -94,7 +96,7 @@ public:
      * Bind to a particular channel number.
      * @returns false if the channel is already in use and cannot be bound to.
      */
-    bool bind(uia::comm::socket* socket, uia::comm::endpoint const& remote_ep, channel_number chan);
+    bool bind(socket* socket, endpoint const& remote_ep, channel_number chan);
 
     /**
      * Stop channel and unbind from any currently bound remote endpoint.
@@ -123,7 +125,7 @@ public:
         remote_channel_number_ = ch;
     }
 
-    inline virtual void receive(byte_array const& msg, uia::comm::socket_endpoint const& src) {
+    inline virtual void receive(byte_array const& msg, socket_endpoint const& src) {
         on_received(msg, src);
     }
 
@@ -131,7 +133,7 @@ public:
     /**@{*/
     // Provide access to signal types for clients
     typedef
-        boost::signals2::signal<void (byte_array const&, uia::comm::socket_endpoint const&)>
+        boost::signals2::signal<void (byte_array const&, socket_endpoint const&)>
         received_signal;
     typedef boost::signals2::signal<void ()> ready_transmit_signal;
 
@@ -149,14 +151,15 @@ protected:
      */
     virtual int may_transmit();
 
-    inline bool send(const byte_array& pkt) const
+    inline bool send(byte_array const& pkt) const
     {
         assert(active_);
-        if (auto l = socket_) {
-            return l->send(remote_ep_, pkt);
+        if (auto s = socket_) {
+            return s->send(remote_ep_, pkt);
         }
         return false;
     }
 };
 
-} // ssu namespace
+} // comm namespace
+} // uia namespace

@@ -11,7 +11,7 @@
 #include <memory>
 #include <boost/signals2/signal.hpp>
 #include "comm/socket_endpoint.h"
-#include "ssu/socket_receiver.h"
+#include "comm/socket_receiver.h"
 #include "ssu/timer.h"
 #include "ssu/negotiation/key_message.h"
 
@@ -34,8 +34,10 @@ class dh_hostkey_t;
  *
  * The implemented subclass of this abstract base is stream_responder.
  */
-class key_responder : public socket_receiver
+class key_responder : public uia::comm::socket_receiver
 {
+    std::shared_ptr<host> host_;
+
 public:
     /**
      * Create a key_responder and set it listening on a particular link
@@ -43,6 +45,8 @@ public:
      * @fixme The new key_responder becomes a child of the link.
      */
     key_responder(std::shared_ptr<host> host, uia::comm::magic_t magic);
+
+    virtual std::shared_ptr<host> get_host() { return host_; }
 
     /**
      * Link calls this with control messages intended for us.
