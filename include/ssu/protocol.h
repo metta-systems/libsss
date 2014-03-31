@@ -78,7 +78,8 @@ public:
     /**
      * Major packet type codes (4 bits).
      */
-    enum class packet_type : uint8_t {
+    enum class packet_type : uint8_t
+    {
         invalid  = 0x0, ///< Always invalid
         init     = 0x1, ///< Initiate new stream
         reply    = 0x2, ///< Reply to new stream
@@ -125,7 +126,8 @@ public:
     }
 
     /// Service message codes
-    enum service_code : uint32_t {
+    enum service_code : uint32_t
+    {
         connect_request        = 0x101, ///< Connect to named service.
         // request format: string service, string protocol
         connect_reply          = 0x201, ///< Response to connect request.
