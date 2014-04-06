@@ -11,7 +11,7 @@
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
-#include "ssu/protocol.h"
+#include "ssu/stream_protocol.h"
 #include "ssu/negotiation/key_message.h"
 
 /**

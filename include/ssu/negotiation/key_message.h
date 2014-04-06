@@ -13,7 +13,7 @@
 #include "arsenal/flurry.h"
 #include "arsenal/underlying.h"
 #include "arsenal/opaque_endian.h"
-#include "ssu/protocol.h"
+#include "ssu/stream_protocol.h"
 
 namespace ssu {
 namespace negotiation {

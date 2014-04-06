@@ -11,7 +11,7 @@
 #include "arsenal/byte_array.h"
 #include "comm/socket.h"
 #include "comm/socket_channel.h"
-#include "ssu/protocol.h"
+#include "ssu/stream_protocol.h"
 #include "ssu/channel_armor.h"
 
 namespace ssu {

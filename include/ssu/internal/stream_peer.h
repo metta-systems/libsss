@@ -13,7 +13,7 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "ssu/protocol.h"
+#include "ssu/stream_protocol.h"
 #include "ssu/host.h"
 #include "ssu/peer_id.h"
 

@@ -16,7 +16,7 @@
 #include "comm/socket.h"
 #include "comm/socket_receiver.h"
 #include "ssu/asio_host_state.h"
-#include "ssu/protocol.h" // only for default port?
+#include "ssu/stream_protocol.h" // only for default port?
 
 class settings_provider;
 

@@ -34,11 +34,11 @@ add_library(ssu STATIC
     comm/socket_channel.cpp
     comm/socket_receiver.cpp
     socket_host_state.cpp
-    protocol.cpp
     server.cpp
     stream.cpp
     stream_channel.cpp
     stream_peer.cpp
+    stream_protocol.cpp
     timer.cpp
     ${simulator_SOURCES}
     ${platform_SOURCES})

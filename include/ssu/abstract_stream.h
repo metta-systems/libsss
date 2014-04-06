@@ -9,7 +9,7 @@
 #pragma once
 
 #include "arsenal/byte_array.h"
-#include "ssu/protocol.h"
+#include "ssu/stream_protocol.h"
 #include "ssu/peer_id.h"
 #include "ssu/stream.h"
 #include "arsenal/underlying.h"
