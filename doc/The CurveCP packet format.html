@@ -1,0 +1,286 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<style type=text/css>pre{font-size:large;}tt{font-size:large;}</style>
+<title>
+The CurveCP packet format
+</title>
+</head>
+<body>
+<table width="100%">
+  <tr>
+    <td align=middle><h1><font color="#000080">CurveCP: Usable security for the Internet</h1></font></td>
+  </tr>
+</table>
+<hr>
+<table width="100%"><tr>
+<td width="15%" align=left valign=top><table border width="100%" bgcolor="#E0E0E0"><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="index.html" style="text-decoration:none"><font color="#000080">Introduction</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Main features:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="security.html" style="text-decoration:none"><font color="#000080">Confidentiality</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="security.html" style="text-decoration:none"><font color="#000080">Integrity</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="availability.html" style="text-decoration:none"><font color="#000080">Availability</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="efficiency.html" style="text-decoration:none"><font color="#000080">Efficiency</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="decongestion.html" style="text-decoration:none"><font color="#000080">Decongestion</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="addressing.html" style="text-decoration:none"><font color="#000080">Addressing</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Protocol details:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#FFFF80"><font color="#000000">Packets</font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="nonces.html" style="text-decoration:none"><font color="#000080">Nonces</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="messages.html" style="text-decoration:none"><font color="#000080">Messages</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Integration:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="httpcurve.html" style="text-decoration:none"><font color="#000080">HTTP</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="smtpcurve.html" style="text-decoration:none"><font color="#000080">SMTP</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Programming:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="messageapi.html" style="text-decoration:none"><font color="#000080">Message handlers</font></a></td></tr>
+</table></td></tr></table>
+</td><td align=left valign=top>
+<h2>The CurveCP packet format</h2>
+This page describes the four different types of packets that appear in CurveCP:
+Hello, Cookie, Initiate, and Message.
+<h3>Connection overview</h3>
+A CurveCP connection begins with
+a Hello packet from the client,
+a Cookie packet from the server,
+and an Initiate packet from the client.
+The server is free to send any number of Message packets after it sees the Initiate packet.
+The client is free to send any number of Message packets
+after it sees the server's first Message packet.
+<p>
+If the client does not see a Cookie packet
+then it will send another Hello packet.
+The server sends a Cookie packet in response to each Hello packet,
+rather than limiting the client to one Hello packet.
+Similarly, the client can send several Initiate packets.
+<p>
+The following diagram indicates how these packets are encrypted
+and summarizes the contents of the packets.
+Important notation: Box[X](C->S)
+is a cryptographic box, encrypting and authenticating X
+from the client's public key C to the server's public key S.
+The only people who can create or decipher Box[X](C->S)
+are the people who know the secret key corresponding to C
+and the people who know the secret key corresponding to S.
+(Note to readers familiar with BAN logic etc.:
+Box[X](C->S) should not be confused with the traditional concept {X}_K
+of something encrypted under secret key K without authentication.)
+<p>
+<table border>
+<tr>
+<th>Client to server</th>
+<th>Server to client</th>
+</tr>
+<tr>
+<td>Hello packet:
+<br>(C',0,Box[0'](C'->S))
+<br>where C' is the client's short-term public key
+<br>and S is the server's long-term public key
+<br>and 0 is zero-padding
+<br>and 0' is zero-padding
+</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Cookie packet:
+<br>(Box[S',K](S->C'))
+<br>where S' is the server's short-term public key
+<br>and K is a cookie
+</td>
+</tr>
+<tr>
+<td>Initiate packet with Vouch subpacket:
+<br>(C',K,Box[C,V,N,...](C'->S'))
+<br>where C is the client's long-term public key
+<br>and V=Box[C'](C->S)
+<br>and N is the server's domain name
+<br>and ... is a message
+</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Message packet:
+<br>(Box[...](S'->C'))
+<br>where ... is a message</td>
+</tr>
+<tr>
+<td>Message packet:
+<br>(C',Box[...](C'->S'))
+<br>where ... is a message</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Message packet:
+<br>(Box[...](S'->C'))
+<br>where ... is a message</td>
+</tr>
+<tr>
+<td>Message packet:
+<br>(C',Box[...](C'->S'))
+<br>where ... is a message</td>
+<td></td>
+</tr>
+</table>
+<p>
+The cookie K is Box[C',s'](t),
+where s' is the secret key corresponding to S',
+and t is a secret "minute key" maintained by the server.
+This is a cryptographic box that can be created and understood only by t.
+<h3>Summary of the packet format</h3>
+Each packet begins with an 8-byte identifier of the type of packet.
+If the packet happens to be delivered to some non-CurveCP application
+then these bytes will prevent the non-CurveCP application from being confused.
+A secondary function of this identifier is to allow, e.g.,
+the server to quickly distinguish Hello packets from Initiate packets.
+<p>
+Each packet continues with a 16-byte receiver 
+<a href="addressing.html">extension</a>
+and a 16-byte sender extension.
+Gateways can process these extensions
+without parsing the rest of the packet.
+<p>
+Each packet from the client continues
+with the client's short-term public key C'.
+The server reuses this key as an identifier to index active connections.
+<p>
+Each packet continues with a cryptographic box
+(preceded by padding for Hello packets,
+and preceded by the server's cookie K for Initiate packets),
+as summarized in the diagram above.
+A <a href="nonces.html">nonce</a> is attached to each cryptographic box,
+preventing replays and preventing confusion between the boxes in different types of packets;
+the nonces are not shown in the diagram above.
+A packet with an unopenable box (i.e., a box that fails cryptographic verification)
+is discarded by the receiver.
+<h3>Client Hello packet details</h3>
+A Hello packet is a 224-byte packet with the following contents:
+<ul>
+<li>8 bytes: the ASCII bytes "QvnQ5XlH".
+<li>16 bytes: the server's extension.
+<li>16 bytes: the client's extension.
+<li>32 bytes: the client's short-term public key C'.
+<li>64 bytes: all zero.
+<li>8 bytes: a client-selected compressed nonce in little-endian form.
+This compressed nonce is implicitly prefixed
+by "CurveCP-client-H" to form a 24-byte nonce.
+<li>80 bytes: a cryptographic box encrypted and authenticated
+to the server's long-term public key S
+from the client's short-term public key C'
+using this 24-byte nonce.
+The 64-byte plaintext inside the box has the following contents:
+<ul>
+<li>64 bytes: all zero.
+</ul>
+</ul>
+<p>
+Current servers enforce the 64-byte length requirement
+but <i>do not</i> enforce the all-zero requirement.
+The all-zero bytes in this packet are an anti-amplification mechanism,
+ensuring that Hello packets are as long as Cookie packets;
+this is why the 64-byte length requirement is enforced.
+They are also an extension mechanism,
+allowing future protocol extensions such as hashcash;
+this is why the all-zero requirement is not enforced.
+Clients must nevertheless be careful to follow the all-zero requirement
+to avoid confusing future servers that support extensions.
+<h3>Server Cookie packet details</h3>
+A Cookie packet is a 200-byte packet with the following format:
+<ul>
+<li>8 bytes: the ASCII bytes "RL3aNMXK".
+<li>16 bytes: the client's extension.
+<li>16 bytes: the server's extension.
+<li>16 bytes: a server-selected compressed nonce in little-endian form.
+This compressed nonce is implicitly prefixed by "CurveCPK" to form a 24-byte nonce.
+<li>144 bytes: a cryptographic box encrypted and authenticated
+to the client's short-term public key C'
+from the server's long-term public key S
+using this 24-byte nonce.
+The 128-byte plaintext inside the box has the following contents:
+<ul>
+<li>32 bytes: the server's short-term public key S'.
+<li>96 bytes: the server's cookie.
+</ul>
+</ul>
+<h3>Client Initiate packet details</h3>
+An Initiate packet is a (544+M)-byte packet with the following contents,
+where M is a multiple of 16 between 16 and 640:
+<ul>
+<li>8 bytes: the ASCII bytes "QvnQ5XlI".
+<li>16 bytes: the server's extension.
+<li>16 bytes: the client's extension.
+<li>32 bytes: the client's short-term public key C'.
+<li>96 bytes: the server's cookie.
+<li>8 bytes: a client-selected compressed nonce in little-endian form.
+This compressed nonce is implicitly prefixed
+by "CurveCP-client-I" to form a 24-byte nonce.
+<li>368+M bytes: a cryptographic box encrypted and authenticated
+to the server's short-term public key S'
+from the client's short-term public key C'
+using this 24-byte nonce.
+The (352+M)-byte plaintext inside the box has the following contents:
+<ul>
+<li>32 bytes: the client's long-term public key C.
+<li>16 bytes: a client-selected compressed nonce in little-endian form.
+This compressed nonce is implicitly prefixed by "CurveCPV" to form a 24-byte nonce.
+<li>48 bytes: a cryptographic box encrypted and authenticated
+to the server's long-term public key S
+from the client's long-term public key C
+using this 24-byte nonce.
+The 32-byte plaintext inside the box has the following contents:
+<ul>
+<li>32 bytes: the client's short-term public key C'.
+</ul>
+<li>256 bytes: the server's domain name, in DNS format
+(between 1 and 255 bytes), zero-padded to 256 bytes.
+<li>M bytes: a <a href="messages.html">message</a>.
+</ul>
+</ul>
+<h3>Server Message packet details</h3>
+A Message packet from the server is a (64+M)-byte packet with the following contents,
+where M is a multiple of 16 between 16 and 1088:
+<ul>
+<li>8 bytes: the ASCII bytes "RL3aNMXM".
+<li>16 bytes: the client's extension.
+<li>16 bytes: the server's extension.
+<li>8 bytes: a server-selected compressed nonce in little-endian form.
+This compressed nonce is implicitly prefixed
+by "CurveCP-server-M" to form a 24-byte nonce.
+<li>16+M bytes: a cryptographic box encrypted and authenticated
+to the client's short-term public key C'
+from the server's short-term public key S'
+using this 24-byte nonce.
+The M-byte plaintext inside the box has the following contents:
+<ul>
+<li>M bytes: a <a href="messages.html">message</a>.
+</ul>
+</ul>
+<h3>Client Message packet details</h3>
+A Message packet from the client is a (96+M)-byte packet with the following contents,
+where M is a multiple of 16 between 16 and 1088:
+<ul>
+<li>8 bytes: the ASCII bytes "QvnQ5XlM".
+<li>16 bytes: the server's extension.
+<li>16 bytes: the client's extension.
+<li>32 bytes: the client's short-term public key C'.
+<li>8 bytes: a client-selected compressed nonce in little-endian form.
+This compressed nonce is implicitly prefixed
+by "CurveCP-client-M" to form a 24-byte nonce.
+<li>16+M bytes: a cryptographic box encrypted and authenticated
+to the server's short-term public key S'
+from the client's short-term public key C'
+using this 24-byte nonce.
+The M-byte plaintext inside the box has the following contents:
+<ul>
+<li>M bytes: a <a href="messages.html">message</a>.
+</ul>
+</ul>
+<h3>Version</h3>
+This is version 2011.02.11 of the packets.html web page.
+</td></tr></table>
+</body>
+</html>

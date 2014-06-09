@@ -1,0 +1,226 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<style type=text/css>pre{font-size:large;}tt{font-size:large;}</style>
+<title>
+Nonces in CurveCP
+</title>
+</head>
+<body>
+<table width="100%">
+  <tr>
+    <td align=middle><h1><font color="#000080">CurveCP: Usable security for the Internet</h1></font></td>
+  </tr>
+</table>
+<hr>
+<table width="100%"><tr>
+<td width="15%" align=left valign=top><table border width="100%" bgcolor="#E0E0E0"><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="index.html" style="text-decoration:none"><font color="#000080">Introduction</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Main features:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="security.html" style="text-decoration:none"><font color="#000080">Confidentiality</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="security.html" style="text-decoration:none"><font color="#000080">Integrity</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="availability.html" style="text-decoration:none"><font color="#000080">Availability</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="efficiency.html" style="text-decoration:none"><font color="#000080">Efficiency</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="decongestion.html" style="text-decoration:none"><font color="#000080">Decongestion</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="addressing.html" style="text-decoration:none"><font color="#000080">Addressing</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Protocol details:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="packets.html" style="text-decoration:none"><font color="#000080">Packets</font></a></td></tr>
+<tr><td width="100%" bgcolor="#FFFF80"><font color="#000000">Nonces</font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="messages.html" style="text-decoration:none"><font color="#000080">Messages</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Integration:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="httpcurve.html" style="text-decoration:none"><font color="#000080">HTTP</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="smtpcurve.html" style="text-decoration:none"><font color="#000080">SMTP</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Programming:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="messageapi.html" style="text-decoration:none"><font color="#000080">Message handlers</font></a></td></tr>
+</table></td></tr></table>
+</td><td align=left valign=top>
+<h2>Nonces in CurveCP</h2>
+CurveCP protects data by putting the data into a cryptographic box.
+This box is encrypted and authenticated
+from a sender's secret key to a receiver's public key.
+<p>
+Attached to the box is a public 24-byte <b>nonce</b> chosen by the sender.
+Nonce means "number used once."
+After a particular nonce has been used to encrypt a packet,
+the same nonce must never be used to encrypt another packet
+from the sender's secret key to this receiver's public key,
+and the same nonce must never be used to encrypt another packet
+from the receiver's secret key to this sender's public key.
+This requirement is essential for cryptographic security.
+<p>
+There are four different key pairs involved in a CurveCP connection,
+using four different types of nonces:
+<table border>
+<tr><th>Key pair</th><th>Nonce format</th></tr>
+<tr>
+<td>The server's long-term secret key s and long-term public key S.
+The client knows S before making a CurveCP connection.
+</td><td>
+The 8-byte ASCII string "CurveCPK"
+followed by a 16-byte compressed nonce.
+</td>
+</tr>
+<tr>
+<td>The client's long-term secret key c and long-term public key C.
+Some servers differentiate between clients on the basis of known values of C.
+</td><td>
+The 8-byte ASCII string "CurveCPV"
+followed by a 16-byte compressed nonce.
+</td>
+</tr>
+<tr>
+<td>The server's short-term secret key s' and short-term public key S'.
+These are specific to this connection and help provide
+<a href="security.html#forward">forward secrecy</a>.
+</td><td>
+The 16-byte ASCII string "CurveCP-server-M"
+followed by an 8-byte compressed nonce.
+The compressed nonce represents a 64-bit integer in little-endian form.
+These integers are generated in increasing order.
+</td>
+</tr>
+<tr>
+<td>The client's short-term secret key c' and short-term public key C'.
+These are also specific to this connection.
+</td><td>
+A 16-byte ASCII string
+followed by an 8-byte compressed nonce.
+The string is	
+"CurveCP-client-H" for a Hello packet,
+"CurveCP-client-I" for an Initiate packet,
+or
+"CurveCP-client-M" for a Message packet.
+The compressed nonce represents a 64-bit integer in little-endian form.
+These integers are generated in increasing order.
+</td>
+</tr>
+</table>
+The rest of this page describes in detail how the CurveCP nonces are chosen
+by these four secret keys s, c, s', c'.
+<h3>Nonces for short-term keys</h3>
+Most CurveCP packets are encrypted by the short-term client secret key c'
+or by the short-term server secret key s'.
+The short-term client secret key c' uses nonces
+"CurveCP-client-H\0\0\0\0\0\0\0\0" (containing integer 0),
+"CurveCP-client-H\1\0\0\0\0\0\0\0" (containing integer 1),
+"CurveCP-client-H\2\0\0\0\0\0\0\0" (containing integer 2),
+etc. for its Hello packets,
+or the same with I instead of H for its Initiate packets,
+or the same with M instead of H for its Message packets.
+The short-term server secret key s' uses nonces
+"CurveCP-server-M\0\0\0\0\0\0\0\0",
+"CurveCP-server-M\1\0\0\0\0\0\0\0",
+"CurveCP-server-M\2\0\0\0\0\0\0\0",
+etc.
+<p>
+The client cannot send more than 2^64 packets in this connection;
+once its nonce reaches
+"CurveCP-client-M\377\377\377\377\377\377\377\377",
+it must immediately abort the connection.
+Same for the server.
+Note that
+sending 2^64 packets at a rate of 1 billion packets per second
+would take nearly 600 years.
+<p>
+Each nonce used by the short-term client secret key c'
+is strictly larger than all nonces previously used by c'.
+("Larger" means that the first 16 bytes are larger or equal in lexicographic order
+and that the remaining 8 bytes are larger in reverse lexicographic order.)
+Once the server has successfully verified a packet with a particular nonce,
+the server is free to immediately discard any packets
+whose nonces are the same or smaller
+from (allegedly) the same client.
+Some servers might keep track of the top two or three nonces
+to allow network reordering of a few packets,
+but the client must still generate nonces in increasing order.
+<p>
+Similarly,
+each nonce used by the short-term server secret key s'
+is strictly larger than all nonces previously used by s'.
+<p>
+The client is not required to start from 0,
+and is not required to increase the integer by precisely 1 for each packet.
+Current clients start from a random integer between 0 and 2^48-1,
+and then increase the nonce by 1 for each packet,
+but servers cannot rely on this behavior.
+Similarly,
+the server is not required to start from 0,
+and is not required to increase the integer by precisely 1 for each packet.
+<p>
+Note that a spy who intercepts two packets from this connection,
+say one packet now and one packet in an hour,
+can immediately see how many packets were sent in between,
+and can therefore estimate the overall data-sending rate for the connection.
+However,
+even without the nonces,
+a spy can quickly estimate the overall data-sending rate for the connection
+by watching for a few consecutive packets.
+The number of packets in a connection should not be viewed as hidden information;
+clients that want some privacy for this information
+need an anonymizing network that combines many connections.
+<h3>Nonces for the server's long-term key</h3>
+The first packet sent by the server in a CurveCP connection
+is a Cookie packet
+encrypted by the server's long-term secret key s.
+<p>
+Nonces for this packet are between
+"CurveCPK\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+and
+"CurveCPK\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377".
+The server is <i>not</i> required to generate these nonces in increasing order.
+<p>
+The server generates a 16-byte compressed nonce as follows:
+concatenate an 8-byte counter with 8 random bytes to obtain a 16-byte block;
+encrypt this block invertibly under a secret "nonce key".
+Without the encryption, the counter would leak information,
+showing each client the number of connections made by other clients.
+<p>
+A different strategy to avoid leaking nonce information across connections
+is to choose nonces as high-precision timestamps
+(falling back to counters if timestamps behave oddly).
+However,
+even if the system's clock is reasonably accurate,
+disclosing high-precision clock values
+gives away information about the clock hardware,
+presumably enough information to fingerprint the server computer
+and to leak some information about what is running on the computer.
+<p>
+An additional problem is that the server might crash,
+losing any information it has stored in RAM about the previous counter.
+Long-term keys (unlike connections and short-term keys) survive crashes.
+To guarantee that counters continue to increase after a crash,
+the server periodically stores a safe new counter on disk alongside its key
+(e.g., whenever the counter passes a multiple of 1048576,
+store the same counter plus 2097152),
+and starts from the safe counter in case of a crash.
+<h3>Nonce separation</h3>
+An administrator can set up several CurveCP servers
+sharing a long-term secret key.
+The servers then have to support <b>nonce separation</b>:
+for example,
+the first of four servers is configured to use counters with bottom bits 00,
+the second is configured to use counters with bottom bits 01,
+the third is configured to use counters with bottom bits 10,
+and
+the fourth is configured to use counters with bottom bits 11.
+<h3>Nonces for the client's long-term key</h3>
+The plaintext inside the client's Initiate packet
+includes a Vouch subpacket encrypted by the long-term client secret key c.
+<p>
+Each Vouch nonce is between
+"CurveCPV\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+and
+"CurveCPV\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377".
+The client is <i>not</i> required to generate these nonces in increasing order.
+<p>
+Current clients choose these nonces in the same way
+that servers choose nonces for long-term server keys.
+<h3>Version</h3>
+This is version 2011.02.14 of the nonces.html web page.
+</td></tr></table>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<style type=text/css>pre{font-size:large;}tt{font-size:large;}</style>
+<title>
+Messages in CurveCP
+</title>
+</head>
+<body>
+<table width="100%">
+  <tr>
+    <td align=middle><h1><font color="#000080">CurveCP: Usable security for the Internet</h1></font></td>
+  </tr>
+</table>
+<hr>
+<table width="100%"><tr>
+<td width="15%" align=left valign=top><table border width="100%" bgcolor="#E0E0E0"><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="index.html" style="text-decoration:none"><font color="#000080">Introduction</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Main features:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="security.html" style="text-decoration:none"><font color="#000080">Confidentiality</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="security.html" style="text-decoration:none"><font color="#000080">Integrity</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="availability.html" style="text-decoration:none"><font color="#000080">Availability</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="efficiency.html" style="text-decoration:none"><font color="#000080">Efficiency</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="decongestion.html" style="text-decoration:none"><font color="#000080">Decongestion</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="addressing.html" style="text-decoration:none"><font color="#000080">Addressing</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Protocol details:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="packets.html" style="text-decoration:none"><font color="#000080">Packets</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="nonces.html" style="text-decoration:none"><font color="#000080">Nonces</font></a></td></tr>
+<tr><td width="100%" bgcolor="#FFFF80"><font color="#000000">Messages</font></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Integration:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="httpcurve.html" style="text-decoration:none"><font color="#000080">HTTP</font></a></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="smtpcurve.html" style="text-decoration:none"><font color="#000080">SMTP</font></a></td></tr>
+</table></td></tr><tr><td width="100%"><table width="100%">
+<tr><td width="100%" bgcolor="#000080"><font color="#FFFFFF"><b>Programming:</b></font></td></tr>
+<tr><td width="100%" bgcolor="#E0E0E0"><a href="messageapi.html" style="text-decoration:none"><font color="#000080">Message handlers</font></a></td></tr>
+</table></td></tr></table>
+</td><td align=left valign=top>
+<h2>Messages in CurveCP</h2>
+This page explains the format of CurveCP messages.
+<p>
+CurveCP messages should not be confused with
+<a href="packets.html">CurveCP packets</a>.
+Packets are copied to and from the network and are visible to eavesdroppers.
+Some packets contain encrypted authenticated messages;
+the contents of the messages are not visible to eavesdroppers.
+<p>
+CurveCP messages should also not be confused
+with the streams of data sent by applications that use CurveCP:
+a byte stream from the client to the server,
+and a byte stream from the server to the client.
+Messages contain blocks of data from these streams,
+but they also contain extra header information,
+for example to accommodate lost packets.
+<p>
+A byte stream is a string of bytes,
+between 0 bytes and 2^60-1 bytes
+(allowing more than 200 gigabits per second continuously for a year),
+followed by either success or failure.
+The bytes in an N-byte stream have positions 0,1,2,...,N-1;
+the success/failure bit has position N.
+A message from the sender can include a block of bytes of data
+from anywhere in the stream; a block can include as many as 1024 bytes.
+A message from the receiver can acknowledge
+one or more ranges of data that have been successfully received.
+The first range acknowledged in a message always begins with position 0.
+Subsequent ranges acknowledged in the same message
+are limited to 65535 bytes.
+Each range boundary sent by the receiver
+matches a boundary of a block previously sent by the sender,
+but a range normally includes many blocks.
+<p>
+Once the receiver has acknowledged a range of bytes,
+the receiver is taking responsibility for all of those bytes;
+the sender is expected to discard those bytes and never send them again.
+(This differs from the behavior of TCP SACK:
+TCP allows selective acknowledgments to be subsequently retracted.)
+The sender <i>can</i> send the bytes again;
+usually this occurs because the first acknowledgment was lost.
+The receiver discards the redundant bytes
+and generates a new acknowledgment covering those bytes.
+<h3>What are the contents of a message?</h3>
+A message has the following contents:
+<ul>
+<li>4 bytes: a message ID chosen by the sender.
+<li>4 bytes: if nonzero, a message ID received by the sender
+immediately before this message was sent.
+<li>8 bytes: a 64-bit unsigned integer in little-endian form,
+    the number of bytes in the first range being acknowledged as part of this message.
+    A range can include 0 bytes, in which case it does not actually acknowledge anything.
+<li>4 bytes: a 32-bit unsigned integer in little-endian form,
+    the number of bytes between the first range and the second range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes in the second range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes between the second range and the third range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes in the third range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes between the third range and the fourth range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes in the fourth range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes between the fourth range and the fifth range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes in the fifth range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes between the fifth range and the sixth range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+    the number of bytes in the sixth range.
+<li>2 bytes: a 16-bit unsigned integer in little-endian form,
+the sum of the following integers:
+  <ul>
+  <li>D, an integer between 0 and 1024,
+      the size of the data block being sent as part of this message.
+  <li>SUCC, either 0 or 2048, where 2048 means that this block is known to be
+  at the end of the stream followed by success.
+  <li>FAIL, either 0 or 4096, where 4096 means that this block is known to be
+  at the end of the stream followed by failure.
+  </ul>
+<li>8 bytes:
+a 64-bit unsigned integer in little-endian form,
+the position of the first byte in the data block being sent.
+If D=0 but SUCC&gt;0 or FAIL&gt;0
+then this is the success/failure position,
+i.e., the total number of bytes in the stream.
+<li>Zero-padding.
+This padding produces a total message length that is a multiple of 16 bytes,
+at least 16 bytes and at most 1088 bytes.
+<li>D bytes: the data block being sent.
+</ul>
+The zero-padding is not limited to 15 bytes;
+i.e., it does not necessarily produce the smallest possible multiple of 16 bytes.
+Some message creators pad to a more restricted set of lengths
+to reduce the amount of information
+that the message length reveals about the length of the data block.
+Note, however, that
+<a href="security.html#traffic">traffic analysis</a>
+continues to reveal a tremendous amount of information.
+<h3>Does CurveCP provide flow control?</h3>
+Yes.
+<a href="decongestion.html">Decongestion</a>, when used properly,
+automatically provides flow control.
+The receiver simply adds the sender's incoming messages to a queue,
+without looking at the messages.
+The receiver can impose whatever size limits it wants upon the queue,
+static or dynamic, without notification to the sender.
+When the receiver is ready to handle more data,
+it processes the message at the front of the queue,
+generating an acknowledgment if necessary.
+<p>
+Using decongestion to handle flow control simplifies the protocol,
+eliminating any need to coordinate window updates
+and eliminating common mistakes such as silly-window syndrome.
+It slightly reduces packet sizes
+and sometimes eliminates entire window-update packets.
+It can slightly increase traffic on the occasions
+that a computer is unable to keep up with its own network link,
+but decongestion automatically keeps this increase under control.
+<h3>Does CurveCP allow configuration of the maximum segment size?</h3>
+No.
+The maximum CurveCP data-block size is 1024 bytes.
+The maximum CurveCP message size is 1088 bytes (or 640 bytes inside Initiate packets).
+The maximum CurveCP packet size, including lower-layer overhead,
+is smaller than
+the 1280-byte datagrams allowed by IPv6 on all networks,
+the 1492-byte datagrams that have always been supported by Ethernet,
+the 2272-byte datagrams supported by 802.11 wireless networks, etc.
+<p>
+CurveCP's total packet overhead,
+including lower-layer overhead,
+is under 15% for bulk data transfer.
+In theory, allowing larger packets would measurably reduce this overhead;
+in practice, attempts to maximize packet size
+have a long and continuing history of damaging Internet connectivity.
+<h3>Version</h3>
+This is version 2011.02.15 of the messages.html web page.
+</td></tr></table>
+</body>
+</html>
