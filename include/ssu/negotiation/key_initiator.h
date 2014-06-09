@@ -57,7 +57,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
 
     // Protocol state set up before sending init1
     byte_array                                 initiator_nonce_;
-    boost::array<uint8_t, crypto::hash::size>  initiator_hashed_nonce_;
+    byte_array /*boost::array<uint8_t, crypto::hash::size>*/  initiator_hashed_nonce_;
     byte_array                                 initiator_public_key_;
 
     // Set after receiving response1
