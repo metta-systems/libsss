@@ -169,8 +169,7 @@ public:
             return half_channel_id_.is_empty();
         }
 
-        inline bool operator ==(unique_stream_id_t const& other) const
-        {
+        inline bool operator ==(unique_stream_id_t const& other) const {
             return counter_ == other.counter_ and half_channel_id_ == other.half_channel_id_;
         }
     };
