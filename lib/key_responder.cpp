@@ -23,6 +23,58 @@ using namespace ssu;
 using namespace crypto;
 
 //=================================================================================================
+// Key negotiation protocol for curvecp
+// NEED TO KNOW SERVER PUBLIC KEY IN ADVANCE
+// From http://curvecp.org
+//=================================================================================================
+/*
+Client->Server
+init1
+
+Hello = short_pk + '0' + box('0', short_pk, server_pk)
+
+Hello packet:
+(C',0,Box[0'](C'->S))
+where C' is the client's short-term public key
+and S is the server's long-term public key
+and 0 is zero-padding
+and 0' is zero-padding
+
+Server->Client
+init1_reply
+
+Cookie packet:
+(Box[S',K](S->C'))
+where S' is the server's short-term public key
+and K is a cookie
+
+Client->Server
+init2
+
+Initiate packet with Vouch subpacket:
+(C',K,Box[C,V,N,...](C'->S'))
+where C is the client's long-term public key
+and V=Box[C'](C->S)
+and N is the server's domain name
+and ... is a message
+
+Server->Client
+message
+already data stream!
+
+Message packet:
+(Box[...](S'->C'))
+where ... is a message
+
+Client->Server
+message
+
+Message packet:
+(Box[...](C'->S'))
+where ... is a message
+
+*/
+//=================================================================================================
 // Supplemental functions.
 //=================================================================================================
 
