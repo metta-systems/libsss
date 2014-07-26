@@ -32,7 +32,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     uia::peer_identity    remote_id_; ///< Target's host id (empty if unspecified).
     bool                  early_{true}; ///< This initiator can still be canceled.
 
-    uia::comm::magic_t               magic_{0};
+    uia::comm::magic_t    magic_{0};
     uint32_t              allowed_methods_{0}; ///< Bitwise set of allowed security methods
 
     enum methods {
