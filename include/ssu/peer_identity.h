@@ -11,13 +11,13 @@
 #include <stdexcept>
 #include <boost/asio.hpp> // @todo Include only header for boost::asio::ip::address
 #include "arsenal/byte_array.h"
-#include "ssu/peer_id.h"
+#include "arsenal/base32.h"
 #include "comm/socket_endpoint.h"
 #include "krypto/sign_key.h"
 
 class settings_provider;
 
-namespace ssu {
+namespace uia {
 
 /**
  * Represents an endpoint identifier and optionally an associated cryptographic signing key.
@@ -32,10 +32,10 @@ namespace ssu {
  * filename/URL-compatible base32 text encoding, in which the first character
  * encodes the scheme number.
  */
-class identity
+class peer_identity
 {
     std::shared_ptr<crypto::sign_key> key_{nullptr};
-    peer_id                           id_;
+    byte_array                        id_;
 
 public:
     /**
@@ -53,34 +53,40 @@ public:
      * via the first character in its base32 representation.
      */
     enum scheme {
-        null = 0,     ///< Reserved for the "null" identity.
+        null = 0,        ///< Reserved for the "null" identity.
 
         // Non-cryptographic legacy address schemes
-        mac   = 1,    ///< IEEE MAC address
-        ipv4  = 2,    ///< IPv4 address with optional port
-        ipv6  = 3,    ///< IPv6 address with optional port
+        mac   = 1,       ///< IEEE MAC address
+        ipv4  = 2,       ///< IPv4 address with optional port
+        ipv6  = 3,       ///< IPv6 address with optional port
 
         // Cryptographic identity schemes
-        dsa160  = 10, ///< DSA with SHA-256, yielding 160-bit IDs
-        rsa160  = 11, ///< RSA with SHA-256, yielding 160-bit IDs
+        dsa160  = 10,    ///< DSA with SHA-256, yielding 160-bit IDs
+        rsa160  = 11,    ///< RSA with SHA-256, yielding 160-bit IDs
+
+        curve25519 = 12, ///< EC Curve25519 key yielding 256-bit public key as ID
+
+        scheme_max = 31, ///< Maximum that fits into 5 bits
     };
 
     /**
      * Create an invalid identity.
      */
-    identity() = default;
+    peer_identity() = default;
 
     /**
      * Create an identity with a given binary identifier.
      * @param id the binary identifier.
      */
-    identity(byte_array const& id);
+    peer_identity(byte_array const& id);
 
     /**
-     * Create an identity with a given binary identifier.
-     * @param id the binary peer identifier.
+     * Create an identity with a given base32 representation of binary identifier.
+     * @param base32 the binary identifier in base32 text encoding.
      */
-    identity(peer_id const& id);
+    inline peer_identity(std::string base32)
+        : peer_identity(encode::from_base32(base32))
+    {}
 
     /**
      * Create an identity with a binary identifier and corresponding key.
@@ -88,7 +94,7 @@ public:
      * @param id the binary identifier.
      * @param key the binary representation of the key associated with the identifier.
      */
-    identity(byte_array const& id, byte_array const& key);
+    peer_identity(byte_array const& id, byte_array const& key);
 
     /**
      * Generate a new cryptographic identity with unique private key, using reasonable
@@ -97,7 +103,7 @@ public:
      * @param bits the desired key strength in bits, or 0 to use the selected scheme's default.
      * @return the generated identity.
      */
-    static identity generate(scheme sch = rsa160, int bits = 0);
+    static peer_identity generate(scheme sch = rsa160, int bits = 0);
 
     /**
      * Create an identity representing a non-cryptographic IEEE MAC address.
@@ -105,7 +111,7 @@ public:
      * @param mac the 6-byte MAC address.
      * @return the resulting identity.
      */
-    static identity from_mac_address(byte_array const& mac);
+    static peer_identity from_mac_address(byte_array const& mac);
 
     /**
      * Extract the IEEE MAC address from an identifier with the MAC scheme.
@@ -119,7 +125,7 @@ public:
      * @param addr the IP address.
      * @param port an optional transport-layer port number.
      */
-    static identity from_ip_address(boost::asio::ip::address const& addr, uint16_t port = 0);
+    static peer_identity from_ip_address(boost::asio::ip::address const& addr, uint16_t port = 0);
 
     /**
      * Extract the host address part of an identifier in the IP scheme.
@@ -138,7 +144,7 @@ public:
      * Construct a non-cryptographic EID from an endpoint IP address.
      * Non-cryptographic identifiers cannot have signing keys.
      */
-    static identity from_endpoint(uia::comm::endpoint const& ep);
+    static peer_identity from_endpoint(uia::comm::endpoint const& ep);
 
     /**
      * Extract the endpoint (IP address and port pair) from an EID that describes an endpoint.
@@ -149,15 +155,16 @@ public:
      * Get this identity's short binary EID.
      * @return the binary identifier as a byte_array.
      */
-    peer_id id() const {
+    byte_array id() const {
         return id_;
     }
+
     /**
      * Set the identity's short binary EID.
      * Clears any associated key information.
      * @param id the binary identifier.
      */
-    inline void set_id(peer_id const& id) {
+    inline void set_id(byte_array const& id) {
         id_ = id;
         clear_key();
     }
@@ -200,7 +207,7 @@ public:
     }
 
     inline bool is_ip_key_scheme() const {
-        return key_scheme() == identity::scheme::ipv4 or key_scheme() == identity::scheme::ipv6;
+        return key_scheme() == ipv4 or key_scheme() == ipv6;
     }
 
     /**
@@ -267,28 +274,38 @@ public:
         assert(key_);
         return key_->verify(digest, sig);
     }
+
+    inline std::string to_string() const { return encode::to_base32(id_); }
 };
+
+inline bool operator == (peer_identity const& a, peer_identity const& b) { return a.id() == b.id(); }
+inline bool operator != (peer_identity const& a, peer_identity const& b) { return a.id() != b.id(); }
+
+inline std::ostream& operator << (std::ostream& os, peer_identity const& id)
+{
+    return os << id.to_string();
+}
 
 /**
  * Host state mixin relevant to identity management.
  */
 class identity_host_state
 {
-    identity host_identity_;
+    peer_identity host_identity_;
 public:
     /**
      * Create if necessary and return the host's global cryptographic identity.
      * Generates a new identity and private key if one isn't already set.
      * @return the primary host identity.
      */
-    identity host_identity();
+    peer_identity host_identity();
 
     /**
      * Set host identity from the outside. Given identity must have a private key,
      * otherwise this host will be impossible to connect to or from.
      * @param ident Replacement host identity.
      */
-    void set_host_identity(identity const& ident);
+    void set_host_identity(peer_identity const& ident);
 
     /**
      * Initialize our primary host identity using a settings_provider for persistence.
@@ -308,4 +325,37 @@ public:
     void init_identity(settings_provider* settings);
 };
 
-} // ssu namespace
+} // uia namespace
+
+namespace flurry {
+
+inline flurry::oarchive& operator << (flurry::oarchive& oa, uia::peer_identity const& id)
+{
+    oa << id.id();
+    return oa;
+}
+
+inline flurry::iarchive& operator >> (flurry::iarchive& ia, uia::peer_identity& id)
+{
+    byte_array i;
+    ia >> i;
+    id = i;
+    return ia;
+}
+
+} // flurry namespace
+
+// Hash specialization for peer_id
+namespace std {
+
+template<>
+struct hash<uia::peer_identity> : public std::unary_function<uia::peer_identity, size_t>
+{
+    inline size_t operator()(uia::peer_identity const& a) const noexcept
+    {
+        return std::hash<byte_array>()(a.id());
+    }
+};
+
+} // std namespace
+

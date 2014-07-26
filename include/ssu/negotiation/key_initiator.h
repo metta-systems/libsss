@@ -2,7 +2,7 @@
 
 #include <memory>
 #include "comm/socket_endpoint.h"
-#include "ssu/peer_id.h"
+#include "ssu/peer_identity.h"
 #include "krypto/krypto.h"
 
 namespace ssu {
@@ -29,7 +29,7 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
     std::shared_ptr<host> host_;
     channel*              channel_{nullptr}; ///< Channel for which we initiated key exchange.
     uia::comm::socket_endpoint  target_;     ///< Remote endpoint we're trying to contact.
-    peer_id               remote_id_; ///< Target's host id (empty if unspecified).
+    uia::peer_identity    remote_id_; ///< Target's host id (empty if unspecified).
     bool                  early_{true}; ///< This initiator can still be canceled.
 
     uia::comm::magic_t               magic_{0};
@@ -89,7 +89,7 @@ public:
     /// so that if it is deleted the incomplete channel will be too.
     /// The client must therefore re-parent the channel
     /// after successful key exchange before deleting the key_initiator.
-    key_initiator(channel* chn, uia::comm::magic_t magic, peer_id const& target_peer);
+    key_initiator(channel* chn, uia::comm::magic_t magic, peer_identity const& target_peer);
     ~key_initiator();
 
     /**

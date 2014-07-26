@@ -10,7 +10,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
-#include "ssu/peer_id.h"
+#include "ssu/peer_identity.h"
 #include "comm/socket_endpoint.h"
 
 #include "ssu/host.h" // @todo Remove, temporarily used to make socket.h below compile
