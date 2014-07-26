@@ -18,6 +18,8 @@ class secretbox_armor : public ssu::channel_armor
     typedef sodiumpp::nonce<crypto_box_NONCEBYTES-8, 8> nonce64;
     std::string tx_key_;
     std::string rx_key_;
+    nonce64 tx_nonce_;
+    nonce64 rx_nonce_;
 
 public:
     secretbox_armor(std::string tx_key, std::string rx_key);

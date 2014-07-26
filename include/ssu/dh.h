@@ -8,8 +8,12 @@
 //
 #pragma once
 
+//
+// @todo: How to implement DH without openssl?
+//
+
 #include <unordered_map>
-#include <openssl/dh.h>
+// #include <openssl/dh.h>
 #include "arsenal/byte_array.h"
 #include "ssu/timer.h"
 #include "ssu/negotiation/key_message.h"

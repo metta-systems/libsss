@@ -16,6 +16,9 @@ using namespace sodiumpp;
 
 namespace ssu {
 
+// If we have a proper peer_identity, we could extract remote public key from it.
+// So, two peers knowing public key of each other may start communicating with cryptobox_armor
+// right away without any set up?
 cryptobox_armor::cryptobox_armor(secret_key local_key, public_key remote_key)
     : boxer_(remote_key, local_key)
     , unboxer_(remote_key, local_key)
