@@ -10,32 +10,30 @@
 
 #include <stdexcept>
 #include <boost/asio.hpp> // @todo Include only header for boost::asio::ip::address
-#include "arsenal/byte_array.h"
+// #include "arsenal/byte_array.h"
 #include "arsenal/base32.h"
 #include "comm/socket_endpoint.h"
-#include "krypto/sign_key.h"
+// #include "krypto/sign_key.h"
 
 class settings_provider;
 
 namespace uia {
 
 /**
- * Represents an endpoint identifier and optionally an associated cryptographic signing key.
+ * Represents a cryptographically self-certifying endpoint identifier.
+ * It is a curve25519 public key (256 bits).
  *
  * SSU uses EIDs in place of IP addresses to identify hosts or virtual endpoint identities
  * on a particular host (e.g., identites for specific user accounts on multiuser hosts).
- * An EID is a variable-length binary string of bytes, whose exact interpretation depends
- * on the scheme number embedded in the first 5 bits of each EID.
- * EIDs can represent both cryptographically self-certifying identifiers and legacy addresses
- * such as IP addresses and IP/port pairs.
  * Although EIDs are not usually intended to be seen by the user, they have a standard
- * filename/URL-compatible base32 text encoding, in which the first character
- * encodes the scheme number.
+ * filename/URL-compatible base32 text encoding. A 16-word proquint encoding is also possible.
+ * Yet another way to exchange the EIDs between two users is QR-code.
+ * User profile classes handle this, as they also attach profile information to generated QR-codes.
  */
 class peer_identity
 {
-    std::shared_ptr<crypto::sign_key> key_{nullptr};
-    byte_array                        id_;
+    std::string id_;
+    std::string private_key_;
 
 public:
     /**
@@ -44,29 +42,6 @@ public:
     class bad_key final : public std::runtime_error {
     public:
         explicit inline bad_key() : std::runtime_error("bad identity key") {}
-    };
-
-    /**
-     * Endpoint identifier scheme numbers.
-     * The scheme number occupies the top 5 bits in any EID,
-     * making the EID's scheme easily recognizable
-     * via the first character in its base32 representation.
-     */
-    enum scheme {
-        null = 0,        ///< Reserved for the "null" identity.
-
-        // Non-cryptographic legacy address schemes
-        mac   = 1,       ///< IEEE MAC address
-        ipv4  = 2,       ///< IPv4 address with optional port
-        ipv6  = 3,       ///< IPv6 address with optional port
-
-        // Cryptographic identity schemes
-        dsa160  = 10,    ///< DSA with SHA-256, yielding 160-bit IDs
-        rsa160  = 11,    ///< RSA with SHA-256, yielding 160-bit IDs
-
-        curve25519 = 12, ///< EC Curve25519 key yielding 256-bit public key as ID
-
-        scheme_max = 31, ///< Maximum that fits into 5 bits
     };
 
     /**
@@ -89,7 +64,7 @@ public:
     {}
 
     /**
-     * Create an identity with a binary identifier and corresponding key.
+     * Create an identity with a binary identifier and corresponding private key.
      * Throws bad_key if key data is invalid.
      * @param id the binary identifier.
      * @param key the binary representation of the key associated with the identifier.
@@ -99,57 +74,9 @@ public:
     /**
      * Generate a new cryptographic identity with unique private key, using reasonable
      * default parameters.
-     * @param scheme the signing scheme to use.
-     * @param bits the desired key strength in bits, or 0 to use the selected scheme's default.
      * @return the generated identity.
      */
-    static peer_identity generate(scheme sch = rsa160, int bits = 0);
-
-    /**
-     * Create an identity representing a non-cryptographic IEEE MAC address.
-     * Non-cryptographic identities cannot have signing keys.
-     * @param mac the 6-byte MAC address.
-     * @return the resulting identity.
-     */
-    static peer_identity from_mac_address(byte_array const& mac);
-
-    /**
-     * Extract the IEEE MAC address from an identifier with the MAC scheme.
-     * @return the 6-byte MAC address.
-     */
-    byte_array mac_address() const;
-
-    /**
-     * Create an identity representing a non-cryptographic IP address.
-     * Non-cryptographic identifiers cannot have signing keys.
-     * @param addr the IP address.
-     * @param port an optional transport-layer port number.
-     */
-    static peer_identity from_ip_address(boost::asio::ip::address const& addr, uint16_t port = 0);
-
-    /**
-     * Extract the host address part of an identifier in the IP scheme.
-     * @param out_port if non-NULL, location to receive optional port number.
-     * @return an IPv4 or an IPv6 address.
-     */
-    boost::asio::ip::address ip_address(uint16_t* out_port = nullptr) const;
-
-    /**
-     * Extract the port number part of an identifier in the IP scheme.
-     * @return the 16-bit port number, 0 if the EID contains no port.
-     */
-    uint16_t ip_port() const;
-
-    /**
-     * Construct a non-cryptographic EID from an endpoint IP address.
-     * Non-cryptographic identifiers cannot have signing keys.
-     */
-    static peer_identity from_endpoint(uia::comm::endpoint const& ep);
-
-    /**
-     * Extract the endpoint (IP address and port pair) from an EID that describes an endpoint.
-     */
-    uia::comm::endpoint get_endpoint() const; /// Actually @todo Rename endpoint to endpoint_t?
+    static peer_identity generate();
 
     /**
      * Get this identity's short binary EID.
@@ -168,17 +95,6 @@ public:
         id_ = id;
         clear_key();
     }
-
-    /**
-     * Determine the scheme number this ID uses.
-     * @return the scheme number.
-     */
-    scheme key_scheme() const;
-
-    /**
-     * Return textual description of the identity scheme.
-     */
-    std::string scheme_name() const;
 
     /**
      * Determine whether this identifier contains an associated key
@@ -206,10 +122,6 @@ public:
         return key_scheme() == scheme::null;
     }
 
-    inline bool is_ip_key_scheme() const {
-        return key_scheme() == ipv4 or key_scheme() == ipv6;
-    }
-
     /**
      * Get this identity's binary-encoded public key.
      * @return the key serialized into a byte_array.
@@ -220,7 +132,7 @@ public:
      * Get this identity's binary-encoded public and private keys.
      * @return the key serialized into a byte_array.
      */
-    byte_array private_key() const;
+    byte_array secret_key() const;
 
     /**
      * Set the public or private key associated with this identity.
@@ -232,48 +144,6 @@ public:
     bool set_key(byte_array const& key);
 
     void clear_key();
-
-    /**
-     * Hash a block of data using this identity scheme's hash function.
-     * This is just a convenience function based on create_hash().
-     * @param data a pointer to the data to hash.
-     * @param len the number of bytes to hash.
-     * @return the resulting hash, in a byte_array.
-     */
-    byte_array hash(char const* data, int len) const;
-
-    /**
-     * Hash a byte_array using this identity scheme's hash function.
-     * This is just a convenience function based on create_hash().
-     * @param data the byte_array to hash.
-     * @return the resulting hash, in a byte_array.
-     */
-    inline byte_array hash(byte_array const& data) const {
-        return hash(data.const_data(), data.size());
-    }
-
-    /**
-     * Sign a message.
-     * This identity must contain a valid private key.
-     * @param digest the hash digest of the message to be signed.
-     * @return the resulting signature, in a byte_array.
-     */
-    inline byte_array sign(byte_array const& digest) {
-        assert(key_);
-        return key_->sign(digest);
-    }
-
-    /**
-     * Verify a signature.
-     * This identity must contain a valid public key.
-     * @param digest the hash digest of the signed message.
-     * @param sig the signature to be verified.
-     * @return true if signature verification succeeds.
-     */
-    inline bool verify(byte_array const& digest, byte_array const& sig) const {
-        assert(key_);
-        return key_->verify(digest, sig);
-    }
 
     inline std::string to_string() const { return encode::to_base32(id_); }
 };
