@@ -21,7 +21,7 @@ BaseStream         | base_stream           | base.h         | ssu/base_stream.h
 StreamFlow         | stream_channel        | sflow.h        | ssu/stream_channel.h
 StreamPeer         | stream_peer           | peer.h         | ssu/internal/stream_peer.h
 StreamServer       | server                | stream.h       | ssu/server.h
-StreamResponder    | stream_responder      | stream.h       | ssu/stream_responder.h
+StreamResponder    | stream_responder      | stream.h       | ssu/stream_responder.cpp
 KeyResponder       | key_responder         | key.h          | ssu/negotiation/key_responder.h
 KeyInitiator       | key_initiator         | key.h          | ssu/negotiation/key_responder.h
 KeyHostState       | key_host_state        | key.h          | ssu/negotiation/key_responder.h

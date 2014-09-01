@@ -36,6 +36,7 @@ add_library(ssu STATIC
     socket_host_state.cpp
     server.cpp
     stream.cpp
+    stream_responder.cpp
     stream_channel.cpp
     stream_peer.cpp
     stream_protocol.cpp
