@@ -16,8 +16,6 @@ namespace negotiation {
  * Key initiator maintains host state with respect to initiated key exchanges.
  * One initiator keeps state about key exchange with one peer.
  *
- * XXX we should really have a separate Idle state,
- * so that clients can hookup signals before starting key exchange.
  * XXX make key_initiator an abstract base class like key_responder,
  * calling a create_channel() method when it needs to set up a channel
  * rather than requiring the channel to be passed in at the outset.
@@ -41,34 +39,23 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
 
     /**
      * Current phase of the protocol negotiation.
+     * CurveCP-style.
      */
     enum class state {
-        idle, init1, init2, done
+        idle,
+        hello /*init1*/,  // gives server short-term client pk
+        cookie /*init2*/, // gives client server's short-term pk
+        initiate,         // exchanges long-term sk between server and client - auth phase
+        done
     } state_{state::idle};
 
     ssu::async::timer retransmit_timer_;
 
-    // AES/SHA256 with DH key agreement
-
-    /// DH group to use
-    ssu::negotiation::dh_group_type            dh_group_{dh_group_type::dh_group_3072};
-    /// AES key length to use
-    int                                        key_min_length_{0};
-
     // Protocol state set up before sending init1
     byte_array                                 initiator_nonce_;
     byte_array /*boost::array<uint8_t, crypto::hash::size>*/  initiator_hashed_nonce_;
-    byte_array                                 initiator_public_key_;
-
-    // Set after receiving response1
-    byte_array                                 responder_nonce_;
+    byte_array                                 initiator_short_term_public_key_;
     byte_array                                 responder_public_key_;
-    byte_array                                 responder_challenge_cookie_;
-    byte_array                                 shared_master_secret_;
-    /**
-     * Encrypted and authenticated identity information.
-     */
-    byte_array                                 encrypted_identity_info_;
 
     /**
      * Opaque user info block transmitted in init2 phase.
@@ -81,6 +68,8 @@ class key_initiator : public std::enable_shared_from_this<key_initiator>
 
 protected:
     inline uia::comm::magic_t magic() const { return magic_; }
+
+    virtual std::shared_ptr<channel> create_channel() = 0;
 
 public:
     /// Start key negotiation for a channel that has been bound to a link but not yet activated.
@@ -97,8 +86,12 @@ public:
      */
     void exchange_keys();
 
+    /**
+     * Cancel all of this KeyInitiator's activities (without actually deleting the object just yet).
+     */
+    void cancel();
+
     inline uia::comm::socket_endpoint remote_endpoint() const { return target_; }
-    inline ssu::negotiation::dh_group_type group() const { return dh_group_; }
     inline bool is_done() const { return state_ == state::done; }
 
     /// Returns true if this key_initiator hasn't gotten far enough
@@ -112,11 +105,6 @@ public:
     inline bool is_early() const { return early_; }
 
     /**
-     * Cancel all of this KeyInitiator's activities (without actually deleting the object just yet).
-     */
-    void cancel();
-
-    /**
      * Set/get the opaque information block to pass to the responder.
      * the info block is passed encrypted and authenticated in our init2;
      * the responder can use it to decide whether to accept the connection
@@ -125,10 +113,9 @@ public:
     inline byte_array user_data() const { return user_data_in_; }
     inline void set_user_data(byte_array const& user_data) { user_data_in_ = user_data; }
 
-    void send_dh_init1();
-    void send_dh_response1();
-    void send_dh_init2();
-    void send_dh_response2();
+    void send_hello();    // client->server
+    void send_cookie();   // server->client
+    void send_initiate(); // client->server
 
     /**
      * Send completion signal, indicating success when true or failure when false.
