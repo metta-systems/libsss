@@ -28,6 +28,7 @@ add_library(ssu STATIC
     host.cpp
     identity.cpp
     key_responder.cpp
+    key_initiator.cpp
     comm/socket.cpp
     comm/udp_socket.cpp
     comm/socket_endpoint.cpp
