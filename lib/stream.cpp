@@ -106,7 +106,7 @@ bool stream::is_link_up() const
     return stream_->is_link_up();
 }
 
-bool stream::connect_to(peer_id const& destination,
+bool stream::connect_to(peer_identity const& destination,
     string service, string protocol,
     uia::comm::endpoint const& destination_endpoint_hint)
 {
@@ -114,6 +114,7 @@ bool stream::connect_to(peer_id const& destination,
     // If the caller didn't specify one (doesn't know the target's EID),
     // then use the location hint as a surrogate peer identity.
     byte_array eid = destination.id();
+    // this won't work anymore @fixme
     if (eid.is_empty()) {
         eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
         assert(!eid.is_empty());
@@ -163,13 +164,16 @@ void stream::connect_link_status_signal()
 
 void stream::connect_at(uia::comm::endpoint const& ep)
 {
-    if (!stream_) return;
+    if (!stream_) {
+        return;
+    }
     host_->stream_peer(stream_->peerid_)->add_location_hint(ep);
 }
 
-bool stream::add_location_hint(peer_id const& eid, uia::comm::endpoint const& hint)
+bool stream::add_location_hint(peer_identity const& eid, uia::comm::endpoint const& hint)
 {
-    if (eid.is_empty()) {
+    if (eid.is_empty())
+    {
         set_error("No target EID for location hint");
         return false;
     }
@@ -180,7 +184,8 @@ bool stream::add_location_hint(peer_id const& eid, uia::comm::endpoint const& hi
 
 void stream::set_priority(int priority)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return;
     }
@@ -235,7 +240,8 @@ ssize_t stream::pending_record_size() const
 
 ssize_t stream::read_record(char* data, ssize_t max_size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return -1;
     }
@@ -244,7 +250,8 @@ ssize_t stream::read_record(char* data, ssize_t max_size)
 
 byte_array stream::read_record(ssize_t max_size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return byte_array();
     }
@@ -253,7 +260,8 @@ byte_array stream::read_record(ssize_t max_size)
 
 ssize_t stream::read_data(char* data, ssize_t max_size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return -1;
     }
@@ -275,7 +283,8 @@ byte_array stream::read_data(ssize_t max_size)
 
 ssize_t stream::write_data(const char* data, ssize_t size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return -1;
     }
@@ -284,7 +293,8 @@ ssize_t stream::write_data(const char* data, ssize_t size)
 
 ssize_t stream::write_record(const char* data, ssize_t size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return -1;
     }
@@ -293,7 +303,8 @@ ssize_t stream::write_record(const char* data, ssize_t size)
 
 ssize_t stream::read_datagram(char* data, ssize_t max_size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return -1;
     }
@@ -302,7 +313,8 @@ ssize_t stream::read_datagram(char* data, ssize_t max_size)
 
 byte_array stream::read_datagram(ssize_t max_size)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return byte_array();
     }
@@ -311,41 +323,51 @@ byte_array stream::read_datagram(ssize_t max_size)
 
 ssize_t stream::write_datagram(const char* data, ssize_t size, datagram_type is_reliable)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->write_datagram(data, size, is_reliable);
 }
 
-peer_id stream::local_host_id() const
+peer_identity stream::local_host_id() const
 {
-    if (!stream_) return peer_id();
+    if (!stream_) {
+        return peer_identity();
+    }
     return stream_->local_host_id();
 }
 
-peer_id stream::remote_host_id() const
+peer_identity stream::remote_host_id() const
 {
-    if (!stream_) return peer_id();
+    if (!stream_) {
+        return peer_identity();
+    }
     return stream_->remote_host_id();
 }
 
 void stream::set_receive_buffer_size(ssize_t size)
 {
-    if (!stream_) return;
+    if (!stream_) {
+        return;
+    }
     stream_->set_receive_buffer_size(size);
 }
 
 void stream::set_child_receive_buffer_size(ssize_t size)
 {
-    if (!stream_) return;
+    if (!stream_) {
+        return;
+    }
     stream_->set_child_receive_buffer_size(size);
 }
 
 void stream::dump()
 {
-    if (!stream_) {
-        logger::debug() << this << " detached user stream";
+    if (!stream_)
+    {
+        logger::debug() << this << " is a detached user stream";
         return;
     }
     stream_->dump();
@@ -357,13 +379,15 @@ void stream::dump()
 
 shared_ptr<stream> stream::accept_substream()
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return nullptr;
     }
 
     auto new_stream = stream_->accept_substream();
-    if (!new_stream) {
+    if (!new_stream)
+    {
         set_error("No waiting substreams");
         return nullptr;
     }
@@ -373,13 +397,15 @@ shared_ptr<stream> stream::accept_substream()
 
 shared_ptr<stream> stream::open_substream()
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return nullptr;
     }
 
     auto new_stream = stream_->open_substream();
-    if (!new_stream) {
+    if (!new_stream)
+    {
         set_error("Unable to create substream"); // @todo Forward stream_'s error?
         return nullptr;
     }
@@ -389,7 +415,8 @@ shared_ptr<stream> stream::open_substream()
 
 void stream::listen(listen_mode mode)
 {
-    if (!stream_) {
+    if (!stream_)
+    {
         set_error("Stream not connected");
         return;
     }
@@ -418,7 +445,8 @@ stream_host_state::all_peers() const
 
 internal::stream_peer* stream_host_state::stream_peer(peer_id const& id)
 {
-    if (!contains(peers_, id)) {
+    if (!contains(peers_, id))
+    {
         peers_[id] = make_shared<internal::stream_peer>(get_host(), id,
             internal::stream_peer::private_tag{});
     }
