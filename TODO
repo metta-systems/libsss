@@ -1,6 +1,9 @@
+Add test run of cryptobox message exchange and channel setup.
+
+
  ☐ Multithreaded send/receive ruins everything - add locking/asynchronicity
    ☐ Easily reproducible with opus-streaming.
- ☐ Need to bind to both ipv4 and ipv6 sockets.
+ ✔ Need to bind to both ipv4 and ipv6 sockets. @done (14-09-02 02:38)
  ✔ Implement basic settings_provider for storing host key @done (13-10-10 00:12)
    ☐ and friend list.
  ☐ Implement basic DHT in 'routing' to let nodes find each other.
@@ -11,9 +14,7 @@
   ☐ make own version of QIODevice-style interface,
   ☐ an iostreams interface maybe a nice add-on.
  ☐ Implement deterministic packet loss. e.g. connection->lose_packet(3); or delay certain packets
- ☐ And yes, it would really awesome if people stopped fiddling with 1024-bit RSA keys and moved to elliptic curve crypto.
-  ☐ make rsa/dsa keylength 3072 by default, remove 1024 from options
-  ☐ check if new openssl supports 4096 bits and longer than 160 bits keylengths for signing
+ ✔ And yes, it would really awesome if people stopped fiddling with 1024-bit RSA keys and moved to elliptic curve crypto. @done (14-09-02 02:38)
  ☐ host identity management
   ☐ peer_id from identity
  ☐ sketch workings of the streams/substreams
@@ -23,9 +24,9 @@
     instead of deleteLater() it should hold a shared_ptr to itself and do reset() for cleanup.
     owner would instead hold a weak_ptr<> to internal stream...
 
+Some links to the professional cryptoanalysts:
  ☐ Consult professional cryptoanalysts for code review.
 
-Some links to the professional cryptoanalysts:
   Ronald Volgers
   https://github.com/saltstack/salt/commit/5dd304276ba5745ec21fc1e6686a0b28da29e6fc#commitcomment-3525158
 

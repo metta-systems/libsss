@@ -46,4 +46,4 @@ There can be multiple servers and streams connected to multiple endpoints.
   [1]: http://pdos.csail.mit.edu/uia/ "UIA"
   [2]: https://github.com/berkus/mettanode "MettaNode"
   [3]: https://github.com/berkus/libsupport "support"
-  [4]: http://pdos.csail.mit.edu/uia/sst/ "SST"
+  [4]: http://pdos.csail.mit.edu/uia/sst/ "Structured Streams Transport"
