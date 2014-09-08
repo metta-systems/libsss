@@ -26,9 +26,9 @@ add_library(ssu STATIC
     armor_secretbox.cpp
     dh.cpp
     host.cpp
-    identity.cpp
-    key_responder.cpp
-    key_initiator.cpp
+    peer_identity.cpp
+    kex_responder.cpp
+    kex_initiator.cpp
     comm/socket.cpp
     comm/udp_socket.cpp
     comm/socket_endpoint.cpp
