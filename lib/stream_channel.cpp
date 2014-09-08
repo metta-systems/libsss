@@ -26,7 +26,7 @@ constexpr stream_protocol::stream_id_t root_sid = 0x0000;
 
 stream_channel::stream_channel(shared_ptr<host> host,
                                internal::stream_peer* peer,
-                               const peer_id& id)
+                               peer_identity const& id)
     : channel(host)
     , peer_(peer)
     , root_(make_shared<base_stream>(host, id, nullptr))

@@ -90,7 +90,9 @@ class stream_channel : public channel, public stream_protocol
     void got_ready_transmit();
 
 public:
-    stream_channel(std::shared_ptr<host> host, internal::stream_peer* peer, const peer_id& id);
+    stream_channel(std::shared_ptr<host> host,
+        internal::stream_peer* peer,
+        peer_identity const& id);
     ~stream_channel();
 
     void start(bool initiate) override;

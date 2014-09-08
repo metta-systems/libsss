@@ -10,7 +10,7 @@
 
 #include "arsenal/byte_array.h"
 #include "ssu/stream_protocol.h"
-#include "ssu/peer_id.h"
+#include "ssu/peer_identity.h"
 #include "ssu/stream.h"
 #include "arsenal/underlying.h"
 
@@ -45,7 +45,7 @@ protected:
     std::shared_ptr<host> host_;    ///< Per-host state.
     std::weak_ptr<stream> owner_;   ///< Back-pointer to stream object,
                                     ///< or nullptr if stream has been deleted.
-    peer_id peerid_;                ///< EID of peer we're connected to.
+    peer_identity peerid_;                ///< EID of peer we're connected to.
 
 private:
     int                 priority_{0};    ///< Current priority level
@@ -62,13 +62,13 @@ public:
      * as used in connecting the current stream.
      * Only valid if the stream is connected.
      */
-    peer_id local_host_id() const;
+    peer_identity local_host_id() const;
 
     /**
      * Returns the endpoint identifier of the remote host
      * to which this stream is connected.
      */
-    peer_id remote_host_id() const;
+    peer_identity remote_host_id() const;
 
     /**
      * Returns true if the underlying link is currently connected

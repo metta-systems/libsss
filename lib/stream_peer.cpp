@@ -23,7 +23,7 @@ constexpr int stream_peer::stall_warnings_max;
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
 stream_peer::stream_peer(shared_ptr<host> const& host,
-                         peer_id const& remote_id,
+                         peer_identity const& remote_id,
                          stream_peer::private_tag)
     : host_(host)
     , remote_id_(remote_id)
@@ -122,7 +122,7 @@ void stream_peer::connect_routing_client(ur::client *rc)
     connected_routing_clients_.insert(rc);
 
     // Listen for the lookup response
-    rc->on_lookup_done.connect([this, rc](ssu::peer_id const& target_peer,
+    rc->on_lookup_done.connect([this, rc](ssu::peer_identity const& target_peer,
                                       uia::comm::endpoint const& peer_endpoint,
                                       ur::client_profile const& peer_profile)
     {
@@ -162,7 +162,7 @@ affinity(address const& a, address const& b)
 #endif
 
 void
-stream_peer::lookup_done(ur::client *rc, ssu::peer_id const& target_peer,
+stream_peer::lookup_done(ur::client *rc, ssu::peer_identity const& target_peer,
     uia::comm::endpoint const& peer_endpoint,
     ur::client_profile const& peer_profile)
 {

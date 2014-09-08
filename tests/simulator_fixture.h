@@ -23,13 +23,13 @@ struct simulator_fixture
     std::shared_ptr<ssu::simulation::sim_connection> server_client_connection;
 
     std::shared_ptr<ssu::simulation::sim_host> server_host;
-    ssu::peer_id server_host_eid;
+    ssu::peer_identity server_host_eid;
     uia::comm::endpoint server_host_address;
     std::shared_ptr<uia::comm::socket> server_link;
     std::shared_ptr<ssu::server> server;
 
     std::shared_ptr<ssu::simulation::sim_host> client_host;
-    ssu::peer_id client_host_eid;
+    ssu::peer_identity client_host_eid;
     uia::comm::endpoint client_host_address;
     std::shared_ptr<uia::comm::socket> client_link;
     std::shared_ptr<ssu::stream> client;

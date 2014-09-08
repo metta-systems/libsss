@@ -68,7 +68,7 @@ protected:
      * The default implementation always returns true.
      */
     virtual bool is_initiator_acceptable(uia::comm::socket_endpoint const& initiator_ep,
-            byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data);
+            byte_array/*peer_identity?*/ const& initiator_eid, byte_array const& user_data);
 
     /**
      * kex_responder calls this to create a channel requested by a client.

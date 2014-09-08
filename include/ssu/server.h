@@ -12,7 +12,7 @@
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
 #include "ssu/host.h"
-#include "ssu/peer_id.h"
+#include "ssu/peer_identity.h"
 #include "ssu/stream.h"
 
 namespace ssu {
@@ -86,10 +86,12 @@ public:
      * Accept an incoming connection, and obtain the EID of the originating host.
      * @overload
      */
-    inline std::shared_ptr<stream> accept(peer_id& from_host)
+    inline std::shared_ptr<stream> accept(peer_identity& from_host)
     {
         auto stream = accept();
-        if (stream) from_host = stream->remote_host_id();
+        if (stream) {
+            from_host = stream->remote_host_id();
+        }
         return stream;
     }
 

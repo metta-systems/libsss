@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     // Initialize SST and read or create our own host identity
     shared_ptr<host> host(host::create(settings.get()));
 
-    peer_id eid{peer};
+    peer_identity eid{peer};
 
     // Find any existing information we have about the requested nickname.
     // privsettings->beginGroup(QString("nickname:") + nickname);

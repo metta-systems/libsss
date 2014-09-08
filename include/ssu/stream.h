@@ -172,15 +172,7 @@ public:
      * @return true if successful, false if an error occurred.
      * @see ssu::identity
      */
-    bool connect_to(peer_id const& destination,
-        std::string service, std::string protocol,
-        uia::comm::endpoint const& destination_endpoint_hint = uia::comm::endpoint());
-
-    /**
-     * Connect to a given service and protocol on a remote host.
-     * @overload
-     */
-    bool connect_to(identity const& target_identity,
+    bool connect_to(peer_identity const& destination,
         std::string service, std::string protocol,
         uia::comm::endpoint const& destination_endpoint_hint = uia::comm::endpoint());
 
@@ -416,12 +408,12 @@ public:
      * Returns the endpoint identifier of the local host as used in connecting the current stream.
      * Only valid if the stream is connected.
      */
-    peer_id local_host_id() const;
+    peer_identity local_host_id() const;
 
     /**
      * Returns the endpoint identifier of the remote host to which this stream is connected.
      */
-    peer_id remote_host_id() const;
+    peer_identity remote_host_id() const;
 
     /**
      * Returns true if the stream is logically connected and network connectivity is currently
@@ -484,7 +476,7 @@ public:
      * of the host to which this stream is currently connected (if any). The stream layer will
      * use this hint in any current or subsequent attempts to connect to the specified EID.
      */
-    bool add_location_hint(peer_id const& eid, uia::comm::endpoint const& hint);
+    bool add_location_hint(peer_identity const& eid, uia::comm::endpoint const& hint);
 
     /**
      * Set an error condition on this stream and emit the error_notify signal.

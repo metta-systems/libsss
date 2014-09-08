@@ -35,7 +35,7 @@ class stream_responder : public negotiation::kex_responder, public stream_protoc
     // Handlers:
     void created_client(ur::client *rc);
     void client_ready();
-    void lookup_notify(ssu::peer_id const& target_peer,
+    void lookup_notify(ssu::peer_identity const& target_peer,
         uia::comm::endpoint const& peer_ep,
         uia::routing::client_profile const& peer_profile);
     /**@}*/

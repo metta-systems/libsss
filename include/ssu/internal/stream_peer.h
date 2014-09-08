@@ -15,7 +15,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "ssu/stream_protocol.h"
 #include "ssu/host.h"
-#include "ssu/peer_id.h"
+#include "ssu/peer_identity.h"
 
 namespace uia {
 namespace routing {
@@ -55,7 +55,7 @@ class stream_peer : public stream_protocol
     static constexpr int stall_warnings_max = 3;
 
     std::shared_ptr<host> host_;               ///< Per-host state.
-    const peer_id         remote_id_;          ///< Host ID of target.
+    const peer_identity   remote_id_;          ///< Host ID of target.
     stream_channel*       primary_channel_{0}; ///< Current primary channel.
     int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
     /// @internal
@@ -77,7 +77,7 @@ class stream_peer : public stream_protocol
     std::unordered_map<unique_stream_id_t, base_stream*> usid_streams_;
 
 private:
-    inline peer_id remote_host_id() const { return remote_id_; }
+    inline peer_identity remote_host_id() const { return remote_id_; }
 
     inline bool no_lookups_possible() {
         return lookups_.empty() and key_exchanges_initiated_.empty();
@@ -113,7 +113,7 @@ private:
     void connect_routing_client(uia::routing::client *rc);
 
     // Routing client handlers
-    void lookup_done(uia::routing::client *rc, ssu::peer_id const& target_peer,
+    void lookup_done(uia::routing::client *rc, ssu::peer_identity const& target_peer,
         uia::comm::endpoint const& peer_endpoint,
         uia::routing::client_profile const& peer_profile);
     void regclient_destroyed(uia::routing::client *rc);
@@ -122,7 +122,7 @@ private:
     struct private_tag {};
 
 public:
-    stream_peer(std::shared_ptr<host> const& host, peer_id const& remote_id, private_tag);
+    stream_peer(std::shared_ptr<host> const& host, peer_identity const& remote_id, private_tag);
     ~stream_peer();
 
     /**

@@ -21,7 +21,8 @@ private:
 public:
     shell_client(std::shared_ptr<ssu::host> host);
 
-    inline void connect_to(ssu::peer_id const& dst_eid, uia::comm::endpoint const& location_hint)
+    inline void connect_to(ssu::peer_identity const& dst_eid,
+        uia::comm::endpoint const& location_hint)
     {
         assert(!stream_->is_connected());
         stream_->connect_to(dst_eid, service_name, protocol_name, location_hint);

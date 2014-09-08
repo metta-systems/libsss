@@ -443,7 +443,7 @@ stream_host_state::all_peers() const
     return values;
 }
 
-internal::stream_peer* stream_host_state::stream_peer(peer_id const& id)
+internal::stream_peer* stream_host_state::stream_peer(peer_identity const& id)
 {
     if (!contains(peers_, id))
     {
@@ -453,7 +453,7 @@ internal::stream_peer* stream_host_state::stream_peer(peer_id const& id)
     return peers_[id].get();
 }
 
-internal::stream_peer* stream_host_state::stream_peer_if_exists(peer_id const& id)
+internal::stream_peer* stream_host_state::stream_peer_if_exists(peer_identity const& id)
 {
     if (!contains(peers_, id)) {
         return nullptr;

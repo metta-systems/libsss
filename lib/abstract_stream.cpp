@@ -20,12 +20,12 @@ void abstract_stream::set_priority(int priority)
     priority_ = priority;
 }
 
-peer_id abstract_stream::local_host_id() const
+peer_identity abstract_stream::local_host_id() const
 {
     return host_->host_identity().id();
 }
 
-peer_id abstract_stream::remote_host_id() const
+peer_identity abstract_stream::remote_host_id() const
 {
     return peerid_;
 }

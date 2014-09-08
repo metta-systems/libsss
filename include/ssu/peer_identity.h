@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <boost/asio.hpp> // @todo Include only header for boost::asio::ip::address
 // #include "arsenal/byte_array.h"
-#include "arsenal/base32.h"
+#include "arsenal/proquint.h"
 #include "comm/socket_endpoint.h"
 // #include "krypto/sign_key.h"
 
@@ -32,7 +32,7 @@ namespace uia {
  */
 class peer_identity
 {
-    std::string id_;
+    std::string id_; // public key
     std::string private_key_;
 
 public:
@@ -56,11 +56,11 @@ public:
     peer_identity(byte_array const& id);
 
     /**
-     * Create an identity with a given base32 representation of binary identifier.
-     * @param base32 the binary identifier in base32 text encoding.
+     * Create an identity with a given proquint representation of binary identifier.
+     * @param proquint the binary identifier in proquint text encoding.
      */
-    inline peer_identity(std::string base32)
-        : peer_identity(encode::from_base32(base32))
+    inline peer_identity(std::string proquint)
+        : peer_identity(byte_array(encode::from_proquint(proquint)))
     {}
 
     /**
@@ -145,7 +145,7 @@ public:
 
     void clear_key();
 
-    inline std::string to_string() const { return encode::to_base32(id_); }
+    inline std::string to_string() const { return encode::to_proquint(id_); }
 };
 
 inline bool operator == (peer_identity const& a, peer_identity const& b) { return a.id() == b.id(); }

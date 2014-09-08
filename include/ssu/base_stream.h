@@ -397,7 +397,7 @@ public:
      *        or a non-cryptographic legacy address as defined by the Ident class.
      * @param parent the parent stream, or nullptr if none (yet).
      */
-    base_stream(std::shared_ptr<host> h, peer_id const& peer, std::shared_ptr<base_stream> parent);
+    base_stream(std::shared_ptr<host> h, peer_identity const& peer, std::shared_ptr<base_stream> parent);
     virtual ~base_stream();
 
     //-------------------------------------------
