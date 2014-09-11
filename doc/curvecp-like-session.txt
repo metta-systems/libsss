@@ -29,7 +29,7 @@ Initiate packet
 
 PROBLEMS
 In SSU both parties may be trying to establish connection to each other. This may lead to two
-completely separate channels being set up.
+completely separate channels being set up. -- this can be actually a feature.
 ============
 
 

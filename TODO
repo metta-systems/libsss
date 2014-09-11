@@ -1,5 +1,5 @@
-Add test run of cryptobox message exchange and channel setup.
-
+ ✔ Add test run of cryptobox message exchange @done (14-09-11 02:17)
+   ☐ and channel setup.
 
  ☐ Multithreaded send/receive ruins everything - add locking/asynchronicity
    ☐ Easily reproducible with opus-streaming.
