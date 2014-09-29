@@ -46,15 +46,66 @@ Endpoint | ||    |     +-------------------------------------------+ | | Endpoin
 10.0.0.1 | ||    |     +-------------------------------------------+ | | 10.0.0.2
 +------->| ||    |     |  Stream USID (Application Root)           | | +-------->
          | ||    |     +-------------------------------------------+ | |
-         | ||    |     +-------------------------------------------+ | | +-+-----------------------+
-         | ||    |     |  Stream USID                              | | | | | Feedback (ACKs)       |
-         | ||    |     +-------------------------------------------+ | | | +-----------------------+
-         | ||    |     +-------------------------------------------+ | | | | Privacy (en-/decrypt) |
-         | ||    |     |  Stream USID                              | | | | +-----------------------+
-         | |+----+     +-------------------------------------------+ | | | | Integrity (MAC)       |
-         | +---------------------------------------------------------+ | | +-----------------------+
-         | +---------------------------------------------------------+ | | | Encoding (FEC)        |
-         | |Channel N (2-255)                                        | | | +-----------------------+
-         | +---------------------------------------------------------+ | |   Sequencing (TSNs)     |
-         +-------------------------------------------------------------+ +-------------------------+
+         | ||    |     +-------------------------------------------+ | |
+         | ||    |     |  Stream USID                              | | |
+         | ||    |     +-------------------------------------------+ | |
+         | ||    |     +-------------------------------------------+ | |
+         | ||    |     |  Stream USID                              | | |
+         | |+----+     +-------------------------------------------+ | |
+         | +---------------------------------------------------------+ |
+         | +---------------------------------------------------------+ |
+         | |Channel N (2-255)                                        | |
+         | +---------------------------------------------------------+ |
+         +-------------------------------------------------------------+
 ```
+
+Channel holds short-term keys for encryption session. Closing a channel destroys those keys,
+providing forward secrecy.
+
+Channels are closed after arbitrary amount of time to flush keys.
+
+Streams in channels keep their global IDs and continue delivering data.
+
+Streams are uni- or bi-directional flows of data between two endpoints. Streams group logically
+communications between two parties.
+Streams are identified by stream IDs, which
+
+
+base_stream::tx_waiting_ack_ must be reviewed:
+- there can be at most five unaccepted ranges in the stream
+- if new packet creates more unaccepted ranges - silently drop it
+- there may be more unaccepted ranges in the local send/recv state
+- overlapping ranges need range ariths (covering and merging range holes)
+
+datagram_stream
++--data_stream (adds retransmission and congestion control strategy)
++--audio_stream
++--video_stream
+
+===================================================
+App level: data streams
+- long term keys
+- ssu::host
+===================================================
+Stream level:
+- sending mux/demux (multiple app streams with priorities)
+- data retransmission and congestion control
+- distinguish real-time and background data
+- special streams for datagrams (dg stream, audio stream, video stream)
+- ssu::stream
+===================================================
+Channel level: curvecp-like
+- short term keys
+- packet end-to-end encryption
+- forward secrecy
+- ssu::channel
+===================================================
+Pluggable congestion control: e.g. LEDBAT for file sync, Chicago for active sessions etc.
+- ssu::decongestion
+===================================================
+UDP level:
+- receive datagrams and demux them to channels
+- boost::asio::udp (uia::comm::socket)
+===================================================
+
+http://tools.ietf.org/html/rfc908 RDP Reliable Data Protocol
