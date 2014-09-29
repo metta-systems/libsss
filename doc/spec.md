@@ -16,14 +16,14 @@ Requirements:
  * End-to-end cryptographic security
 
 
-[channels][http://www.asciidraw.com/#5074225503160675365/76617341]
+[channels](http://www.asciidraw.com/#5074225503160675365/76617341)
 
 
 One problem (at least with normal implementations) is that the application cannot access the packets coming after a lost packet until the retransmitted copy of the lost packet is received. This causes problems for real-time applications such as streaming media, real-time multiplayer games and voice over IP (VoIP) where it is generally more useful to get most of the data in a timely fashion than it is to get all of the data in order.
 
 ## 2 Design Overview
 
-Figure 1: Protocol Architecture [source][http://www.asciidraw.com/#5612283093966789321/1974720956]
+Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966789321/1974720956)
 ```
   +------------------------------------------------------------------------+
   |                      Application Protocol                              |
@@ -92,7 +92,7 @@ a new channel through a fresh run of the negotiation protocol and terminating us
 
 ## 3 Channel Protocol
 
-Figure 3: Channel protocol packet layout [source][http://www.asciidraw.com/#608745302879820887/460823121]
+Figure 3: Channel protocol packet layout [source](http://www.asciidraw.com/#608745302879820887/460823121)
 ```
               31                        16 15                      0
           +-   +--------------------------+------------------------+
