@@ -21,6 +21,9 @@ Requirements:
 
 One problem (at least with normal implementations) is that the application cannot access the packets coming after a lost packet until the retransmitted copy of the lost packet is received. This causes problems for real-time applications such as streaming media, real-time multiplayer games and voice over IP (VoIP) where it is generally more useful to get most of the data in a timely fashion than it is to get all of the data in order.
 
+A packet is routinely delayed when a packet is lost, such as due to congestion, and it must be retransmitted. A better multiplexed transport should delay only one stream when a single packet is lost.
+
+
 ## 2 Design Overview
 
 Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966789321/1974720956)
