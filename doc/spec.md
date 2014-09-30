@@ -105,7 +105,7 @@ Pluggable congestion control: e.g. LEDBAT for file sync, Chicago for active sess
 
 Socket Protocol level:
   - receive datagrams and demux them to channels
-  - boost::asio::udp (uia::comm::socket)
+  - `boost::asio::udp` (`uia::comm::socket`)
 
 ### 2.1 Interface Abstractions
 
@@ -176,19 +176,19 @@ Streams are partitioned into frames for placement into channel packets. Whenever
 #### 2.1.4 Application interface
 
 To better support an efficient and tight binding with an application, the following current statistics are plausibly expected to be made visible to the application:
-1. RTT (current smoothed estimate)
-2. Packet size (including all overhead;; also excluding overhead, only including payload)
-3. Bandwidth (current smoothed estimate across of entire connection)
-4. Peak Sustained Bandwidth (across entire connection)
-5. Congestion window size (expressed in packets)
-6. Queue size (packets that have been formed, but not yet emitted over a wire)
-7. Bytes in queue
-8. Per-stream queue size (either bytes per stream, or unsent packets, both??)
+  1. RTT (current smoothed estimate)
+  2. Packet size (including all overhead;; also excluding overhead, only including payload)
+  3. Bandwidth (current smoothed estimate across of entire connection)
+  4. Peak Sustained Bandwidth (across entire connection)
+  5. Congestion window size (expressed in packets)
+  6. Queue size (packets that have been formed, but not yet emitted over a wire)
+  7. Bytes in queue
+  8. Per-stream queue size (either bytes per stream, or unsent packets, both??)
 
 Notification should also be provided, or access for the following events [granularity of notification is TBD, and there should be no requirement on timeliness of the notifications, but any notification or status should include a best estimate of when the actual event took place]:
-1. Queue size has dropped to zero
-2. All required ACKs have been received (connection may be closed with no transmission state loss.)
-  a. ACK of specific packet (section of stream?) has been received (not all streams support this. [Should this be queryable, rather than a notification??])
+  1. Queue size has dropped to zero
+  2. All required ACKs have been received (connection may be closed with no transmission state loss.)
+    a. ACK of specific packet (section of stream?) has been received (not all streams support this. [Should this be queryable, rather than a notification??])
 
 
 ## 3 Channel Protocol
@@ -262,7 +262,7 @@ may contain stream data from one or more streams and other control information.
 Frames use tagged chunks format, where each chunk follows a certain format with a header and optionally
 content part.
 
-### 4.2
+
 
 ## 5 The Negotiation Protocol
 
@@ -373,7 +373,7 @@ session negotiation.
 ```
 TOTAL: 168 bytes
 
-## INITIATE packet format
+#### 5.2.4 INITIATE packet format
 
 ```
 0   : 8     : magic
@@ -398,7 +398,7 @@ M size is in multiples of 16 between 16 and 1024 bytes.
 When Initiate packet is accepted, starting a session, cookie must be placed into a cache
 and cleaned when minute key is rotated to avoid replay attacks.
 
-## RESPONDER MESSAGE packet format
+#### 5.2.5 RESPONDER MESSAGE packet format
 
 Responder and Initiator message packets differ only in the kind of short term key and direction
 of encryption of the box. Each side sends packets with their own short-term public key as identifier.
@@ -414,7 +414,7 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 
 TOTAL: 64+M bytes
 
-## INITIATOR MESSAGE packet format
+#### 5.2.6 INITIATOR MESSAGE packet format
 
 ```
 0   : 8    : magic
@@ -427,7 +427,8 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 
 TOTAL: 64+M bytes
 
-## MESSAGE internal format
+#### 5.2.7 MESSAGE internal format
+
 After decrypting, we will have a plaintext payload block that will consist of:
 Integers are in network (big-endian) order. All numbers are unsigned.
 
@@ -441,7 +442,7 @@ S+? : ?    : Series of self-identifying Frames
              is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
 ```
 
-## FRAMES
+### FRAMES
 
 
 Old CurveCP description:
