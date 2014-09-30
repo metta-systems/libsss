@@ -145,6 +145,13 @@ A given channel always uses one set of key pairs and negotiated parameters, howe
 to re-key a communication session (e.g., to ensure freshness of keys), it does so by creating
 a new channel through a fresh run of the negotiation protocol and terminating use of the old channel.
 
+It is possible that both peers will try and initialize channels towards their second peer at the same
+time. If this happens and peers detect it, they SHOULD migrate their streams toward the more recent
+channel. However, they MAY decide to not do it for increased security or logical packet separation.
+
+Since channels rotate rather frequently (once in bout 30 minutes), streams may be grouped differently
+onto each new set of channels, for example if a channel is set up and another channel expires, its streams may be reattached onto already existing channel.
+
 The initial flow in a zero-RTT setup is potentially less forward secure than possible so we should assume that the connection will upgrade to a truly ephemeral key for subsequent flows on the same connection.
 ^^ it is not if client already supplies its ephemeral public key with the first packet?
 
