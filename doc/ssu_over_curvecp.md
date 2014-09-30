@@ -29,6 +29,13 @@ reply_ok         = 0,        ///< Service request accepted.
 reply_not_found  = 1,        ///< Specified service pair not found.
 ```
 
+http://codesinchaos.wordpress.com/2012/09/09/curvecp-1/ comments on protocol security
+^^ READ IT AGAIN ^^
+
+PROBLEMS
+In SSU both parties may be trying to establish connection to each other. This may lead to two
+completely separate channels being set up. -- this can be actually a feature.
+
 ```
          +-------------------------------------------------------------+
          |  Link                                                       |
@@ -58,11 +65,6 @@ Endpoint | ||    |     +-------------------------------------------+ | | Endpoin
          | +---------------------------------------------------------+ |
          +-------------------------------------------------------------+
 ```
-
-Channel holds short-term keys for encryption session. Closing a channel destroys those keys,
-providing forward secrecy.
-
-Channels are closed after arbitrary amount of time to flush keys.
 
 Streams in channels keep their global IDs and continue delivering data.
 
@@ -108,4 +110,6 @@ UDP level:
 - boost::asio::udp (uia::comm::socket)
 ===================================================
 
-http://tools.ietf.org/html/rfc908 RDP Reliable Data Protocol
+https://tools.ietf.org/html/rfc908 RDP Reliable Data Protocol
+https://tools.ietf.org/html/rfc3168 ECN in IP
+https://tools.ietf.org/html/rfc1323 TCP extensions for highperf
