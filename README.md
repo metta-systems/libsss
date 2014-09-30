@@ -3,7 +3,7 @@ Structured Streams Unleashed
 
 SSU provides secure encrypted and authenticated data connection between endpoints. In the future SSU will also provide routing services for the so-called [Unmanaged Internet Architecture (UIA)][1].
 
-Builds as part of [mettanode][2], or standalone with [libsupport][3] dependency.
+Builds as part of [mettanode][2], or standalone with [libarsenal][3] dependency.
 
 ### Introduction
 
@@ -43,7 +43,7 @@ There can be multiple servers and streams connected to multiple endpoints.
 
 [![Build Status](https://travis-ci.org/berkus/libssu.png?branch=develop)](https://travis-ci.org/berkus/libssu) [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/berkus/libssu/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
-  [1]: http://pdos.csail.mit.edu/uia/ "UIA"
+  [1]: http://pdos.csail.mit.edu/uia/ "Unmanaged Internet Architecture"
+  [4]: http://pdos.csail.mit.edu/uia/sst/ "Structured Streams Transport"
   [2]: https://github.com/berkus/mettanode "MettaNode"
   [3]: https://github.com/berkus/libarsenal "arsenal"
-  [4]: http://pdos.csail.mit.edu/uia/sst/ "Structured Streams Transport"

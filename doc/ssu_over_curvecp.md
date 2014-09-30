@@ -1,4 +1,4 @@
-packet types
+-8<-packet->8- frame types
 ```
 invalid  = 0x0, ///< Always invalid
 init     = 0x1, ///< Initiate new stream
@@ -9,6 +9,16 @@ ack      = 0x5, ///< Explicit acknowledgment
 reset    = 0x6, ///< Reset stream
 attach   = 0x7, ///< Attach stream
 detach   = 0x8, ///< Detach stream
+```
+
+Frames in QUIC:
+```
+stream
+ack
+congestion_control
+reset_stream
+connection_close
+goaway_stream
 ```
 
 service request codes
@@ -72,7 +82,6 @@ Streams are uni- or bi-directional flows of data between two endpoints. Streams 
 communications between two parties.
 Streams are identified by stream IDs, which
 
-
 base_stream::tx_waiting_ack_ must be reviewed:
 - there can be at most five unaccepted ranges in the stream
 - if new packet creates more unaccepted ranges - silently drop it
@@ -84,32 +93,7 @@ datagram_stream
 +--audio_stream
 +--video_stream
 
-===================================================
-App level: data streams
-- long term keys
-- ssu::host
-===================================================
-Stream level:
-- sending mux/demux (multiple app streams with priorities)
-- data retransmission and congestion control
-- distinguish real-time and background data
-- special streams for datagrams (dg stream, audio stream, video stream)
-- ssu::stream
-===================================================
-Channel level: curvecp-like
-- short term keys
-- packet end-to-end encryption
-- forward secrecy
-- ssu::channel
-===================================================
-Pluggable congestion control: e.g. LEDBAT for file sync, Chicago for active sessions etc.
-- ssu::decongestion
-===================================================
-UDP level:
-- receive datagrams and demux them to channels
-- boost::asio::udp (uia::comm::socket)
-===================================================
-
 https://tools.ietf.org/html/rfc908 RDP Reliable Data Protocol
 https://tools.ietf.org/html/rfc3168 ECN in IP
 https://tools.ietf.org/html/rfc1323 TCP extensions for highperf
+http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1#TOC-2.5-Data-flow

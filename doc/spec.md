@@ -5,21 +5,21 @@ Structured Streams
 
 ### Goals (@sa QUIC)
 We’d like to develop a transport that supports the following goals:
-1. Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
-2. Reduced head-of-line blocking due to packet loss (losing one packet will not generally impair other multiplexed streams)
-3. Low latency (minimal round-trip costs, both during setup/resumption, and in response to packet loss)
-  a. Significantly reduced connection startup latency (Commonly zero RTT connection, cryptographic hello, and initial request(s))
-  b. Attempt to use Forward Error Correcting (FEC) codes to reduce retransmission latency after packet loss.
-4. Improved support for mobile, in terms of latency and efficiency (as opposed to TCP connections which are torn down during radio shutdowns)
-5. Congestion avoidance support comparable to, and friendly to, TCP (unified across multiplexed streams)
-  a. Individual stream flow control, to prevent a stream with a fast source and slow sink from flooding memory at receiver end, and allow back-pressure to appear at the send end.
-6. Privacy assurances comparable to TLS (without requiring in-order transport or in-order decryption)
-7. Reliable and safe resource requirements scaling, both server-side and client-side (including reasonable buffer management and aids to avoid facilitating DoS magnification attacks)
-8. Reduced bandwidth consumption and increased channel status responsiveness (via unified signaling of channel status across all multiplexed streams)
-9. Reduced packet-count, if not in conflict with other goals.
-10. Support reliable transport for multiplexed streams (can simulate TCP on the multiplexed streams)
-11. Efficient demux-mux properties for proxies, if not in conflict with other goals.
-12. Reuse, or evolve, existing protocols at any point where it is plausible to do so, without sacrificing our stated goals (e.g., consider LEDBAT, DCCP, TCP minion)
+  1. Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
+  2. Reduced head-of-line blocking due to packet loss (losing one packet will not generally impair other multiplexed streams)
+  3. Low latency (minimal round-trip costs, both during setup/resumption, and in response to packet loss)
+    a. Significantly reduced connection startup latency (Commonly zero RTT connection, cryptographic hello, and initial request(s))
+    b. Attempt to use Forward Error Correcting (FEC) codes to reduce retransmission latency after packet loss.
+  4. Improved support for mobile, in terms of latency and efficiency (as opposed to TCP connections which are torn down during radio shutdowns)
+  5. Congestion avoidance support comparable to, and friendly to, TCP (unified across multiplexed streams)
+    a. Individual stream flow control, to prevent a stream with a fast source and slow sink from flooding memory at receiver end, and allow back-pressure to appear at the send end.
+  6. Privacy assurances comparable to TLS (without requiring in-order transport or in-order decryption)
+  7. Reliable and safe resource requirements scaling, both server-side and client-side (including reasonable buffer management and aids to avoid facilitating DoS magnification attacks)
+  8. Reduced bandwidth consumption and increased channel status responsiveness (via unified signaling of channel status across all multiplexed streams)
+  9. Reduced packet-count, if not in conflict with other goals.
+  10. Support reliable transport for multiplexed streams (can simulate TCP on the multiplexed streams)
+  11. Efficient demux-mux properties for proxies, if not in conflict with other goals.
+  12. Reuse, or evolve, existing protocols at any point where it is plausible to do so, without sacrificing our stated goals (e.g., consider LEDBAT, DCCP, TCP minion)
 
 ### Requirements:
  * Multiplex many application streams onto one network connection
@@ -47,7 +47,9 @@ A packet is routinely delayed when a packet is lost, such as due to congestion, 
 
 ### 1.1 Packet loss
 
-Packet loss in the Internet is broadly estimated to be in the range of 1-2% of all packets. These numbers have been confirmed by tests of clients, such as Chrome, recording stats for test streams of UDP packets to server farms around the world. The primary cause for packet loss is believed to be congestion, where routers perform switching operations, and output buffer sizes are exceeded. This issue is fundamental to the design of the Internet, and TCP, where packet loss is used as a signal of congestion, and the protocol is required to respond by reducing the flow across the congested path. Packet loss can also be caused by analog factors on transmission lines, but such losses are believed to be much lower in rate, and hence negligible.
+Packet loss in the Internet is broadly estimated to be in the range of 1-2% of all packets. These numbers have been confirmed by tests of clients, such as Chrome, recording stats for test streams of UDP packets to server farms around the world.
+It is extremely unlikely that over 100 packets can be received without a loss, and certainly not 200.
+The primary cause for packet loss is believed to be congestion, where routers perform switching operations, and output buffer sizes are exceeded. This issue is fundamental to the design of the Internet, and TCP, where packet loss is used as a signal of congestion, and the protocol is required to respond by reducing the flow across the congested path. Packet loss can also be caused by analog factors on transmission lines, but such losses are believed to be much lower in rate, and hence negligible.
 
 Packet loss will be handled by two mechanisms: Packet-level error correcting codes, and lost data retransmission. The ultimate fallback when all else fails will be retransmission of lost data. When data is retransmitted as a response to a lost packet, the original packet is not retransmitted. Instead, the encapsulated data is placed in a new packet, and that new packet is sent.
 
@@ -81,6 +83,29 @@ Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966
   +-------------------------------------------------------------------------+
 ```
 
+Application Protocol: data streams
+  - long term keys
+  - `ssu::host`
+
+Stream Protocol:
+  - sending mux/demux (multiple app streams with priorities)
+  - data retransmission and congestion control
+  - distinguish real-time and background data
+  - special streams for datagrams (dg stream, audio stream, video stream)
+  - `ssu::stream`
+
+Channel Protocol: curvecp-like
+  - short term keys
+  - packet end-to-end encryption
+  - forward secrecy
+  - `ssu::channel`
+
+Pluggable congestion control: e.g. LEDBAT for file sync, Chicago for active sessions etc.
+  - `ssu::decongestion`
+
+Socket Protocol level:
+  - receive datagrams and demux them to channels
+  - boost::asio::udp (uia::comm::socket)
 
 ### 2.1 Interface Abstractions
 
