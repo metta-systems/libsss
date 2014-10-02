@@ -21,6 +21,8 @@ SPDY and QUIC extend with packet framing, encoding and a set of goals to achieve
 
 CurveCP adds non-transparent cryptoboxes for all crucial contents and a session initiation protocol.
 
+Note: Integers are in network (big-endian) order. All numbers are unsigned.
+
 ### Goals (@sa QUIC)
 We’d like to develop a transport that supports the following goals:
   1. Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
@@ -324,25 +326,6 @@ TOTAL: 64+M bytes
 
 M size is in multiples of 16 between 48 and 1088 bytes.
 
-#### 3.2.7 MESSAGE internal format
-
-Integers are in network (big-endian) order. All numbers are unsigned.
-
-After decrypting, we will have a plaintext payload block that will consist of:
- * A packet header, consisting of:
-   * Flags
-     * Sizes of optional packet header fields
-     * Optimistic ACK entropy bit
-     * Last FEC group packet bit
-   * Protocol version number (variable size)
-   * Packet sequence number (variable size)
-   * FEC group number (optional?)
-   * Packet ACKs?
- * One or more tagged frames (see 5.1)
- * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
-
-#### 3.2.8 Packet header format
-
 ## 4 Channel Protocol
 
 Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, controls congestion and provides
@@ -381,35 +364,53 @@ Figure 2: Channel protocol packet layout [source](http://www.asciidraw.com/#6087
                +---------------------------------------------------+
 ```
 
-As a final step in session negotiation channel layer sets up a decongestion strategy (see 3.2.8 Packet header format).
+As a final step in session negotiation channel layer sets up a decongestion strategy.
 
-### 4.1 Framing
+### 4.1 MESSAGE box format
+
+After decrypting, we will have a plaintext payload block.
+
+A non-FEC packet is a data packet and consists of one or more frames. Each frame has it's type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group and can be used to recover one lost packet in this FEC group.
+
+Non-FEC packet payload consists of:
+ * A packet header (see 4.1.1)
+ * One (Zero?) or more tagged frames (see 4.2)
+ * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
+
+#### 4.1.1 Packet header format
+
+   * Flags
+     * Sizes of optional packet header fields
+     * Optimistic ACK entropy bit
+     * Last FEC group packet bit
+   * Protocol version number (variable size)
+   * Packet sequence number (variable size)
+   * FEC group number (optional?)
+   * Packet ACKs?
+
+### 4.2 Framing
 
 Frames are stream containers within a channel packet. Packet contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks format, where each chunk follows a certain format with a header and optionally content part.
 
 Frames are inside the channel message cryptobox, prevented from peeking into by any eavesdroppers.
 
-#### 4.1.1 Framed data packet
-
-See 3.2.7 MESSAGE internal format for the packet header. A non-FEC packet is a data packet and consists of one or more frames. Each frame has it's type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group.
-
-#### 4.1.2 STREAM frame
+#### 4.2.1 STREAM frame
 
 Stream frame is used to transfer data on each individual stream. It also serves as an ATTACH packet
 to initiate a new stream.
 
-#### 4.1.3 DETACH frame
+#### 4.2.2 DETACH frame
 
 Detach frame allows stream to detach from current channel without shutting down the stream.
 
-#### 4.1.4 ACK frame
+#### 4.2.3 ACK frame
 
-#### 4.1.5 DECONGESTION frame
+#### 4.2.4 DECONGESTION frame
 
 Decongestion feedback frame contents are specific to chosen decongestion method in the channel.
 Frame format for several implemented methods will be listed here.
 
-##### 4.1.5.1 Congestion control feedback for TCP Cubic
+##### 4.2.4.1 Congestion control feedback for TCP Cubic
 
 Similar to TCP protocol, packet loss and receive window size are provided.
 
@@ -423,9 +424,9 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Num lost packets: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
  * Receive window: The TCP receive window.
 
-##### 4.1.5.2 Congestion control feedback for CurveCP Chicago
-##### 4.1.5.3 Congestion control feedback for UDP LEDBAT
-##### 4.1.5.4 Congestion control feedback for WebRTC Inter-arrival
+##### 4.2.4.2 Congestion control feedback for CurveCP Chicago
+##### 4.2.4.3 Congestion control feedback for UDP LEDBAT
+##### 4.2.4.4 Congestion control feedback for WebRTC Inter-arrival
 
 ```
           0         1         2         3         4         5         6         7
@@ -445,11 +446,11 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Packet Delta: A 16 bit unsigned value specifying the sequence number delta from the smallest received. Always followed immediately by a corresponding Packet Time Delta.
  * Packet Time Delta: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
 
-#### 4.1.6 RESET frame
+#### 4.2.5 RESET frame
 
 Abort stream.
 
-#### 4.1.7 CLOSE frame
+#### 4.2.6 CLOSE frame
 
 Close connection.
 
