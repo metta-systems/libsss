@@ -180,9 +180,175 @@ packet
       +--redundant data for single-packet recovery
 ```
 
-## 3 Channel Protocol
+## 3 The Negotiation Protocol
 
-Figure 3: Channel protocol packet layout [source](http://www.asciidraw.com/#608745302879820887/460823121)
+SSU’s negotiation protocol is responsible for setting up new channels for use by the channel and stream protocols. The negotiation protocol is responsible for performing short-term key agreement and host identity verification.
+
+### 3.1 Basic Design Principles
+
+The negotiation protocol is asymmetric in that the two participants have clearly delineated "initiator" and "responder" roles. The protocol supports peer-to-peer as well as client/server styles of communication, however, and the channels resulting from negotiation are symmetric and can be used by either endpoint to initiate new logical streams to the other endpoint.
+
+The INITIATE packet from the initiator must contain proper responder cookie or be discarded. The more general technique of "remote storage" eliminates storage on a responder in favor of storage inside the network: the responder sends data as an encrypted authenticated message to itself via the initiator inside an opaque cookie.
+
+#### 3.1.1 Anti-amplification Measures
+
+First Initiator message - HELLO packet - must be bigger from the connecting initiator than the responder COOKIE reply to reduce amplification attack possibility.
+
+The responder doesn't retransmit its first packet, the COOKIE packet. The initiator is responsible for repeating its HELLO packet to ask for another COOKIE packet.
+
+#### 3.1.2 Replay Attacks Protection
+
+If the attacker makes copies of a legitimate initiator's HELLO packets then the attacker will receive responder COOKIE packets without affecting the responder state; these COOKIE packets do not leak information and will be rejected by the legitimate initiator. If the attacker makes copies of other initiator packets then the copies will be rejected by this responder and by other responders. If the attacker makes copies of responder packets then the copies will be rejected by this initiator and by other initiators.
+
+#### 3.1.3 Forward Secrecy
+
+Protocol provides forward secrecy for the initiator's long-term public key. Two minutes after a connection is closed, the responder is unable to extract the initiator's _long-term public key_ from the network packets that were sent to that responder, and is unable to verify the initiator's long-term public key from the network packets -- that is because initiator is always using short-term public key to encrypt -- the only place where initiator's long-term public key is revealed is in Vouch subpacket, which is inside a crypto box.
+
+Here's how the forward secrecy works. At the beginning of a connection, the Responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the Initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
+
+ * Packets from the Initiator contain, unencrypted, the short-term public key C'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
+ * The first packet from the Initiator contains a cryptographic box that can be opened by __c' and by s__ (not s'; the initiator does not know S' at this point). This box contains Initiator's long-term public key C for validation against black-list by the Responder.
+ * The first packet from the Responder contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the Responder's short-term public key S', which is generated randomly for this connection, and a cookie, discussed below.
+ * The second packet from the Initiator contains a cookie from the Responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the Responder. Two minutes later the Responder has discarded this key and is unable to extract any information from the cookie.
+ * At the end of the connection, both sides throw away the short-term secret keys s' and c'.
+
+Channel holds short-term keys for encryption session. Closing a channel destroys those keys, providing forward secrecy.
+
+Channels are closed after arbitrary amount of time to flush keys.
+
+#### 3.1.4 Security requirements for nonces
+
+Attached to the box is a public 24-byte nonce chosen by the sender. Nonce means "number used once." After a particular nonce has been used to encrypt a packet, the same nonce must never be used to encrypt another packet from the sender's secret key to this receiver's public key, and the same nonce must never be used to encrypt another packet from the receiver's secret key to this sender's public key. This requirement is essential for cryptographic security.
+
+### 3.2 Negotiation Protocol Packet Format
+
+Negotiation protocol uses 3-way message exchange to verify peer's identity and start secure channel. Actual data transfer may start already with the third packet. A faster Zero-RTT connection establishment is not used to provide better forward secrecy guarantees.
+
+#### 3.2.1 Responder Cookie format
+
+```
+16 bytes: compressed nonce, prefix with "minute-k"
+80 bytes: secretbox under minute-key, containing:
+    32 bytes: initiator short-term public key
+    32 bytes: responder short-term secret key
+TOTAL: 96 bytes
+```
+
+When the minute key expires, the cookie could not be decrypted and will make connection attempts with this cookie ignored.
+
+#### 3.2.2 HELLO packet format
+
+First packet sent by the Initiator willing to establish a connection. This packet is artificially padded with zeros to make it larger than the response packet, reducing amplification attacks possibility.
+
+```
+0   : 8  : magic
+8   : 32 : initiator short-term public key
+40  : 64 : zero
+104 : 8  : compressed nonce
+112 : 80 : box C'->S containing:
+            0  : 32 : initiator long-term public key (for pre-auth)
+            32 : 32 : zero
+TOTAL: 192 bytes
+```
+
+#### 3.2.3 COOKIE packet format
+
+In response to HELLO packet, the Responder does not allocate any state. Instead, it encodes information about the Initiator into the returned Cookie. If the Initiator is willing to continue session it responds with an Initiate packet, which may contain initial message data along with identifying Cookie.
+
+In response, Responder encodes initiator's short-term public key and own short-term secret key using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
+
+```
+0  : 8   : magic
+8  : 16  : compressed nonce
+24 : 144 : box S->C' containing:
+            0  : 32 : responder short-term public key
+            Responder Cookie:
+            32 : 16 : compressed nonce
+            48 : 80 : minute-key secretbox containing:
+                       0  : 32 : initiator short-term public key
+                       32 : 32 : responder short-term secret key
+TOTAL: 168 bytes
+```
+
+#### 3.2.4 INITIATE packet format
+
+When Initiate packet is accepted, starting a session, cookie must be placed into a cache and cleaned when minute key is rotated to avoid replay attacks.
+
+@todo Require a congestion control negotiation frame inside INITIATE message before sending any stream data.
+
+```
+0   : 8     : magic
+8   : 32    : initiator short-term public key
+40  : 96    : responder's cookie
+               0  : 16 : compressed nonce
+               16 : 80 : minute-key secretbox containing:
+                          0  : 32 : initiator short-term public key
+                          32 : 32 : responder short-term secret key
+136 : 8     : compressed nonce
+144 : 112+M : box C'->S' containing:
+144 :          0   : 32  : initiator long-term public key
+176 :          32  : 16  : compressed nonce
+192 :          48  : 48  : box C->S containing Vouch subpacket:
+                            0 : 32 : initiator short-term public key
+240 :          96  : M   : message
+TOTAL: 240+M+16 bytes
+```
+
+M size is in multiples of 16 between 16 and 1024 bytes.
+
+#### 3.2.5 INITIATOR MESSAGE packet format
+
+Responder and Initiator message packets differ only in the kind of short term key and direction of encryption of the box. Each side sends packets with their own short-term public key as identifier.
+
+```
+0   : 8    : magic
+8   : 32   : initiator short-term public key C'
+40  : 8    : compressed nonce
+48  : 16+M : box C'->S' containing:
+              0 : M : message
+TOTAL: 64+M bytes
+```
+
+M size is in multiples of 16 between 48 and 1088 bytes.
+
+#### 3.2.6 RESPONDER MESSAGE packet format
+
+```
+0  : 8    : magic
+8  : 32   : responder short-term public key S'
+40 : 8    : compressed nonce
+48 : 16+M : box S'->C' containing:
+             0 : M : message
+TOTAL: 64+M bytes
+```
+
+M size is in multiples of 16 between 48 and 1088 bytes.
+
+#### 3.2.7 MESSAGE internal format
+
+Integers are in network (big-endian) order. All numbers are unsigned.
+
+After decrypting, we will have a plaintext payload block that will consist of:
+ * A packet header, consisting of:
+   * Flags
+     * Sizes of optional packet header fields
+     * Optimistic ACK entropy bit
+     * Last FEC group packet bit
+   * Protocol version number (variable size)
+   * Packet sequence number (variable size)
+   * FEC group number (optional?)
+   * Packet ACKs?
+ * One or more tagged frames (see 5.1)
+ * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
+
+#### 3.2.8 Packet header format
+
+## 4 Channel Protocol
+
+Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, controls congestion and provides
+out-of-band signaling for streams management.
+
+Figure 2: Channel protocol packet layout [source](http://www.asciidraw.com/#608745302879820887/460823121)
 ```
               31                        16 15                      0
           +-   +--------------------------+------------------------+
@@ -215,36 +381,7 @@ Figure 3: Channel protocol packet layout [source](http://www.asciidraw.com/#6087
                +---------------------------------------------------+
 ```
 
-
-## 4 Stream Protocol
-
-Streams are independent sequences of uni- or bi­directional data flows cut into stream frames. Streams group logically communications between two parties. Streams can be created by either peer side; can concurrently send data interleaved with other streams; and can be cancelled.
-
-Streams must be attached to channels to be able to send. Streams that need to send data attach onto a channel based on their integer priority. Stream with absolute largest priority on the channel wins and will always send first as long as it has data to send.
-
-Streams in channels keep their global IDs and continue delivering data even after channel switch.
-
-> Old CurveCP description:
-
-A byte stream is a string of bytes, between 0 bytes and 2^60-1 bytes (allowing more than 200 gigabits per second continuously for a year), followed by either success or failure. The bytes in an N-byte stream have positions 0,1,2,...,N-1; the success/failure bit has position N. A message from the sender can include a block of bytes of data from anywhere in the stream; a block can include as many as 1024 bytes. A message from the receiver can acknowledge one or more ranges of data that have been successfully received.
-
-The first range acknowledged in a message always begins with position 0. Subsequent ranges acknowledged in the same message are limited to 65535 bytes. Each range boundary sent by the receiver matches a boundary of a block previously sent by the sender, but a range normally includes many blocks.
-
-Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
-
-##### Starting new stream.
-###### Initiating root stream (LSID 0)
-###### Initiating sub-streams
-
-##### Stream data exchange
-
-Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the fin bit is set. Once the FIN has been sent, the stream is considered to be half­-closed.
-
-##### Stream half­-close
-
-When one side of the stream sends a frame with FIN set to true, the stream is considered to be half-­closed from that side. The sender of the FIN is indicating that no further data will be sent from the sender on this stream. When both sides have half­closed, the stream is considered to be closed. (@sa Stream close)
-
-##### Stream close
+As a final step in session negotiation channel layer sets up a decongestion strategy (see 3.2.8 Packet header format).
 
 ### 4.1 Framing
 
@@ -254,7 +391,7 @@ Frames are inside the channel message cryptobox, prevented from peeking into by 
 
 #### 4.1.1 Framed data packet
 
-See 5.2.7 MESSAGE internal format for the packet header. A non-FEC packet is a data packet and consists of one or more frames. Each frame has it's type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group.
+See 3.2.7 MESSAGE internal format for the packet header. A non-FEC packet is a data packet and consists of one or more frames. Each frame has it's type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group.
 
 #### 4.1.2 STREAM frame
 
@@ -309,162 +446,47 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Packet Time Delta: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
 
 #### 4.1.6 RESET frame
+
+Abort stream.
+
 #### 4.1.7 CLOSE frame
 
-## 5 The Negotiation Protocol
+Close connection.
 
-SSU’s negotiation protocol is responsible for setting up new channels for use by the channel and stream protocols. The negotiation protocol is responsible for performing short-term key agreement and host identity verification.
+## 5 Stream Protocol
 
-### 5.1 Basic Design Principles
+Streams are independent sequences of uni- or bi­directional data flows cut into stream frames. Streams group logically communications between two parties. Streams can be created by either peer; can concurrently send data interleaved with other streams; and can be cancelled.
 
-The negotiation protocol is asymmetric in that the two participants have clearly delineated "initiator" and "responder" roles. The protocol supports peer-to-peer as well as client/server styles of communication, however, and the channels resulting from negotiation are symmetric and can be used by either endpoint to initiate new logical streams to the other endpoint.
+Streams must be attached to channels to be able to send. Streams that need to send data attach onto a channel based on their integer priority. Stream with absolute largest priority on the channel wins and will always send first as long as it has data to send.
 
-Does CurveCP stop replay attacks? Yes. If the attacker makes copies of a legitimate client's Hello packets then the attacker will receive server Cookie packets without affecting the server state; these Cookie packets do not leak information and will be rejected by the legitimate client. If the attacker makes copies of other client packets then the copies will be rejected by this server and by other servers. If the attacker makes copies of server packets then the copies will be rejected by this client and by other clients.
+Streams have a unique ID, used to distinguish this stream after switching to a newly established channel. Streams in channels keep their global IDs and continue delivering data even after channel switch.
 
-CurveCP also provides forward secrecy for the client's long-term public key. Two minutes after a connection is closed, the server is unable to extract the client's _long-term public key_ from the network packets that were sent to that server, and is unable to verify the client's long-term public key from the network packets. -- that is because client is always using short-term public key to encrypt -- the only place where client's long-term public key is revealed is in Vouch subpacket.
+> Old CurveCP description:
 
-The Initiate from the client must contain proper server Cookie or be discarded. The more general technique of "remote storage" eliminates storage on a server in favor of storage inside the network: the server sends data as an encrypted authenticated message to itself via the client. I.e. the cookie from client is actually a blob of information necessary for server to establish connection.
+A byte stream is a string of bytes, between 0 bytes and 2^60-1 bytes (allowing more than 200 gigabits per second continuously for a year), followed by either success or failure. The bytes in an N-byte stream have positions 0,1,2,...,N-1; the success/failure bit has position N. A message from the sender can include a block of bytes of data from anywhere in the stream; a block can include as many as 1024 bytes. A message from the receiver can acknowledge one or more ranges of data that have been successfully received.
 
-#### 5.1.1 Anti-amplification Measures
+The first range acknowledged in a message always begins with position 0. Subsequent ranges acknowledged in the same message are limited to 65535 bytes. Each range boundary sent by the receiver matches a boundary of a block previously sent by the sender, but a range normally includes many blocks.
 
-First Initiator message - HELLO packet - must be bigger from the connecting client than the Responder COOKIE reply to reduce amplification attack possibility.
+Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
 
-The server doesn't retransmit its first packet, the Cookie packet. The client is responsible for repeating its Hello packet to ask for another Cookie packet.
+##### Starting new stream.
 
-#### 5.1.2 Forward Secrecy
+New stream is started by posting STREAM frame with INIT flag set.
 
-Here's how the forward secrecy works. At the beginning of a connection, the Responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the Initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
+###### Initiating root stream (LSID 0)
+###### Initiating sub-streams
 
- * Packets from the Initiator contain, unencrypted, the short-term public key C'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
- * The first packet from the Initiator contains a cryptographic box that can be opened by __c' and by s__ (not s'; the initiator does not know S' at this point). This box contains Initiator's long-term public key C for validation against black-list by the Responder.
- * The first packet from the Responder contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the Responder's short-term public key S', which is generated randomly for this connection, and a cookie, discussed below.
- * The second packet from the Initiator contains a cookie from the Responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the Responder. Two minutes later the Responder has discarded this key and is unable to extract any information from the cookie.
- * At the end of the connection, both sides throw away the short-term secret keys s' and c'.
+##### Stream data exchange
 
-Channel holds short-term keys for encryption session. Closing a channel destroys those keys, providing forward secrecy.
+Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the fin bit is set. Once the FIN has been sent, the stream is considered to be half­-closed.
 
-Channels are closed after arbitrary amount of time to flush keys.
+##### Stream half­-close
 
-#### 5.1.3 Encryption requirements (@todo move section)
+When one side of the stream sends a frame with FIN set to true, the stream is considered to be half-­closed from that side. The sender of the FIN is indicating that no further data will be sent from the sender on this stream. When both sides have half­closed, the stream is considered to be closed.
 
-Attached to the box is a public 24-byte nonce chosen by the sender. Nonce means "number used once."After a particular nonce has been used to encrypt a packet, the same nonce must never be used to encrypt another packet from the sender's secret key to this receiver's public key, and the same nonce must never be used to encrypt another packet from the receiver's secret key to this sender's public key. This requirement is essential for cryptographic security.
+##### Stream close
 
-### 5.2 Negotiation Protocol Packet Format
-
-These are the packets sent between Initiator and Responder in the negotiation protocol.
-
-#### 5.2.1 Responder Cookie format
-
-```
-16 bytes: compressed nonce, prefix with "minute-k"
-80 bytes: secretbox under minute-key, containing:
-    32 bytes: initiator short-term public key
-    32 bytes: responder short-term secret key
-```
-
-Once the minute key expires, the cookie could not be decrypted and will make connection attempts with this cookie ignored.
-
-#### 5.2.2 HELLO packet format
-
-```
-0   : 8  : magic
-8   : 32 : initiator short-term public key
-40  : 64 : zero
-104 : 8  : compressed nonce
-112 : 80 : box C'->S containing:
-            0  : 32 : initiator long-term public key (for pre-auth)
-            32 : 32 : zero
-```
-TOTAL: 192 bytes
-
-#### 5.2.3 COOKIE packet format
-
-In response to Hello packet, the Responder does not allocate any state. Instead, it encodes information about the Initiator into the returned Cookie. If the Initiator is willing to continue session it responds with an Initiate packet, which may contain initial message data along with identifying Cookie.
-
-In response, Responder encodes initiator's short-term public key and own short-term secret key using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
-
-```
-0  : 8   : magic
-8  : 16  : compressed nonce
-24 : 144 : box S->C' containing:
-            0  : 32 : responder short-term public key
-            32 : 16 : compressed nonce
-            48 : 80 : minute-key secretbox containing:
-                       0  : 32 : initiator short-term public key
-                       32 : 32 : responder short-term secret key
-```
-TOTAL: 168 bytes
-
-#### 5.2.4 INITIATE packet format
-
-```
-0   : 8     : magic
-8   : 32    : initiator short-term public key
-40  : 96    : responder's cookie
-               0  : 16 : compressed nonce
-               16 : 80 : minute-key secretbox containing:
-                          0  : 32 : initiator short-term public key
-                          32 : 32 : responder short-term secret key
-136 : 8     : compressed nonce
-144 : 112+M : box C'->S' containing:
-144 :          0   : 32  : initiator long-term public key
-176 :          32  : 16  : compressed nonce
-192 :          48  : 48  : box C->S containing Vouch subpacket:
-                            0 : 32 : initiator short-term public key
-240 :          96  : M   : message
-```
-TOTAL: 240+M+16 bytes
-
-M size is in multiples of 16 between 16 and 1024 bytes.
-
-When Initiate packet is accepted, starting a session, cookie must be placed into a cache and cleaned when minute key is rotated to avoid replay attacks.
-
-@todo Require a congestion control negotiation frame inside INITIATE message before sending any stream data.
-
-#### 5.2.5 INITIATOR MESSAGE packet format
-
-Responder and Initiator message packets differ only in the kind of short term key and direction of encryption of the box. Each side sends packets with their own short-term public key as identifier.
-
-```
-0   : 8    : magic
-8   : 32   : initiator short-term public key C'
-40  : 8    : compressed nonce
-48  : 16+M : box C'->S' containing:
-              0 : M : message
-```
-M size is in multiples of 16 between 48 and 1088 bytes.
-
-TOTAL: 64+M bytes
-
-#### 5.2.6 RESPONDER MESSAGE packet format
-
-```
-0  : 8    : magic
-8  : 32   : responder short-term public key S'
-40 : 8    : compressed nonce
-48 : 16+M : box S'->C' containing:
-             0 : M : message
-```
-M size is in multiples of 16 between 48 and 1088 bytes.
-
-TOTAL: 64+M bytes
-
-#### 5.2.7 MESSAGE internal format
-
-Integers are in network (big-endian) order. All numbers are unsigned.
-
-After decrypting, we will have a plaintext payload block that will consist of:
- * A packet header, consisting of:
-   * Flags
-     * Sizes of optional packet header fields
-     * Optimistic ACK entropy bit
-     * Last FEC group packet bit
-   * Protocol version number (variable size)
-   * Packet sequence number (variable size)
-   * FEC group number (optional?)
-   * Packet ACKs?
- * One or more tagged frames (see 4.2)
- * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
+When both sides have indicated their desire to stop sending on the stream, stream becomes closed.
 
 ## 6. References
 
