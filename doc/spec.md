@@ -270,18 +270,17 @@ The server doesn't retransmit its first packet, the Cookie packet. The client is
 
 #### 5.1.3 Forward Secrecy
 
-Here's how the forward secrecy works. At the beginning of a connection, the CurveCP server generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the CurveCP client generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of CurveCP packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
+Here's how the forward secrecy works. At the beginning of a connection, the Responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the Initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
 
- * Packets from the client contain, unencrypted, the short-term public key C'. This public key is generated randomly for this CurveCP connection; it is tied to the connection but does not leak any other information.
- * The first packet from the client contains a cryptographic box that can be opened by __c' and by s__ (not s'; the client does not know S' at this point). However, this box contains nothing other than constant padding.
- * The first packet from the server contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the server's short-term public key S', which is generated randomly for this CurveCP connection, and a cookie, discussed below.
- * The second packet from the client contains a cookie from the server. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the server. Two minutes later the server has discarded this key and is unable to extract any information from the cookie.
+ * Packets from the Initiator contain, unencrypted, the short-term public key C'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
+ * The first packet from the Initiator contains a cryptographic box that can be opened by __c' and by s__ (not s'; the initiator does not know S' at this point). This box contains Initiator's long-term public key C for validation against black-list by the Responder.
+ * The first packet from the Responder contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the Responder's short-term public key S', which is generated randomly for this connection, and a cookie, discussed below.
+ * The second packet from the Initiator contains a cookie from the Responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the Responder. Two minutes later the Responder has discarded this key and is unable to extract any information from the cookie.
  * At the end of the connection, both sides throw away the short-term secret keys s' and c'.
 
 Channel holds short-term keys for encryption session. Closing a channel destroys those keys, providing forward secrecy.
 
 Channels are closed after arbitrary amount of time to flush keys.
-
 
 #### 5.1.1 Encryption requirements (@todo move section)
 
