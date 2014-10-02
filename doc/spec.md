@@ -224,6 +224,14 @@ Streams must be attached to channels to be able to send. Streams that need to se
 
 Streams in channels keep their global IDs and continue delivering data even after channel switch.
 
+> Old CurveCP description:
+
+A byte stream is a string of bytes, between 0 bytes and 2^60-1 bytes (allowing more than 200 gigabits per second continuously for a year), followed by either success or failure. The bytes in an N-byte stream have positions 0,1,2,...,N-1; the success/failure bit has position N. A message from the sender can include a block of bytes of data from anywhere in the stream; a block can include as many as 1024 bytes. A message from the receiver can acknowledge one or more ranges of data that have been successfully received.
+
+The first range acknowledged in a message always begins with position 0. Subsequent ranges acknowledged in the same message are limited to 65535 bytes. Each range boundary sent by the receiver matches a boundary of a block previously sent by the sender, but a range normally includes many blocks.
+
+Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
+
 ##### Starting new stream.
 ###### Initiating root stream (LSID 0)
 ###### Initiating sub-streams
@@ -245,10 +253,63 @@ Frames are stream containers within a channel packet. Packet contents are sliced
 Frames are inside the channel message cryptobox, prevented from peeking into by any eavesdroppers.
 
 #### 4.1.1 Framed data packet
-#### 4.1.2 ATTACH frame
+
+See 5.2.7 MESSAGE internal format for the packet header. A non-FEC packet is a data packet and consists of one or more frames. Each frame has it's type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group.
+
+#### 4.1.2 STREAM frame
+
+Stream frame is used to transfer data on each individual stream. It also serves as an ATTACH packet
+to initiate a new stream.
+
 #### 4.1.3 DETACH frame
-#### 4.1.4 RESET frame
+
+Detach frame allows stream to detach from current channel without shutting down the stream.
+
+#### 4.1.4 ACK frame
+
 #### 4.1.5 DECONGESTION frame
+
+Decongestion feedback frame contents are specific to chosen decongestion method in the channel.
+Frame format for several implemented methods will be listed here.
+
+##### 4.1.5.1 Congestion control feedback for TCP Cubic
+
+Similar to TCP protocol, packet loss and receive window size are provided.
+
+```
+      0         1         2         3         4
+ +---------+---------+---------+---------+---------+
+ | Type(1) | Num lost packets  |   Receive window  |
+ +---------+---------+---------+---------+---------+
+```
+ * Type: The congestion control type (1 for TCP Cubic)
+ * Num lost packets: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
+ * Receive window: The TCP receive window.
+
+##### 4.1.5.2 Congestion control feedback for CurveCP Chicago
+##### 4.1.5.3 Congestion control feedback for UDP LEDBAT
+##### 4.1.5.4 Congestion control feedback for WebRTC Inter-arrival
+
+```
+          0         1         2         3         4         5         6         7
+     +---------+---------+---------+---------+---------+---------+---------+---------+
+  +0 | Type(4) | Num lost packets  | Received|                     Smallest Received |
+     +---------+---------+---------+---------+---------+---------+---------+---------+
+  +8 | Packet            |                              Smallest Delta Time          |
+     +---------+---------+---------+---------+---------+---------+---------+---------+
+ +16 |                   |   Packet Delta    |           Packet Time Delta           |
+     +---------+---------+---------+---------+---------+---------+---------+---------+
+```
+ * Type: The congestion control type (4 for Inter-arrival)
+ * Num lost packets: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
+ * Received: An 8 bit unsigned value specifying the number of received packets in this update.
+ * Smallest Received Packet: The lower 48 bits of the smallest sequence number represented in this update.
+ * Smallest Delta Time: A 64 bit unsigned value specifying the delta time from connection creation when the above packet was received.
+ * Packet Delta: A 16 bit unsigned value specifying the sequence number delta from the smallest received. Always followed immediately by a corresponding Packet Time Delta.
+ * Packet Time Delta: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
+
+#### 4.1.6 RESET frame
+#### 4.1.7 CLOSE frame
 
 ## 5 The Negotiation Protocol
 
@@ -358,6 +419,8 @@ M size is in multiples of 16 between 16 and 1024 bytes.
 
 When Initiate packet is accepted, starting a session, cookie must be placed into a cache and cleaned when minute key is rotated to avoid replay attacks.
 
+@todo Require a congestion control negotiation frame inside INITIATE message before sending any stream data.
+
 #### 5.2.5 INITIATOR MESSAGE packet format
 
 Responder and Initiator message packets differ only in the kind of short term key and direction of encryption of the box. Each side sends packets with their own short-term public key as identifier.
@@ -391,31 +454,21 @@ TOTAL: 64+M bytes
 Integers are in network (big-endian) order. All numbers are unsigned.
 
 After decrypting, we will have a plaintext payload block that will consist of:
-
-```
-0   : 1    : Public field Flags
-1   : S    : Packet sequence number
-S+1 : 1    : Private Flags
-S+2 : 1?   : FEC Group number
-S+? : ?    : Series of self-identifying Frames
-?   : *    : Zero-padding. This padding produces a total message length that
-             is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
-```
-
-### FRAMES
-
-
-Old CurveCP description:
-
-A byte stream is a string of bytes, between 0 bytes and 2^60-1 bytes (allowing more than 200 gigabits per second continuously for a year), followed by either success or failure. The bytes in an N-byte stream have positions 0,1,2,...,N-1; the success/failure bit has position N. A message from the sender can include a block of bytes of data from anywhere in the stream; a block can include as many as 1024 bytes. A message from the receiver can acknowledge one or more ranges of data that have been successfully received.
-
-The first range acknowledged in a message always begins with position 0. Subsequent ranges acknowledged in the same message are limited to 65535 bytes. Each range boundary sent by the receiver matches a boundary of a block previously sent by the sender, but a range normally includes many blocks.
-
-Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
+ * A packet header, consisting of:
+   * Flags
+     * Sizes of optional packet header fields
+     * Optimistic ACK entropy bit
+     * Last FEC group packet bit
+   * Protocol version number (variable size)
+   * Packet sequence number (variable size)
+   * FEC group number (optional?)
+   * Packet ACKs?
+ * One or more tagged frames (see 4.2)
+ * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
 
 ## 6. References
 
-[RDP Reliable Data Protocol](https://tools.ietf.org/html/rfc908)
-[ECN in IP](https://tools.ietf.org/html/rfc3168)
-[TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
-[SPDY protocol](http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1)
+ * [RDP Reliable Data Protocol](https://tools.ietf.org/html/rfc908)
+ * [ECN in IP](https://tools.ietf.org/html/rfc3168)
+ * [TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
+ * [SPDY protocol](http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1)

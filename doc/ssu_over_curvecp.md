@@ -1,24 +1,24 @@
 -8<-packet->8- frame types
 ```
 invalid  = 0x0, ///< Always invalid
-init     = 0x1, ///< Initiate new stream
-reply    = 0x2, ///< Reply to new stream
-data     = 0x3, ///< Regular data packet
-datagram = 0x4, ///< Best-effort datagram
-ack      = 0x5, ///< Explicit acknowledgment
-reset    = 0x6, ///< Reset stream
-attach   = 0x7, ///< Attach stream
-detach   = 0x8, ///< Detach stream
+init     = 0x1, ///< Initiate new stream STREAM
+reply    = 0x2, ///< Reply to new stream STREAM?
+data     = 0x3, ///< Regular data packet STREAM
+datagram = 0x4, ///< Best-effort datagram STREAM?
+ack      = 0x5, ///< Explicit acknowledgment ACK
+reset    = 0x6, ///< Reset stream RESET
+attach   = 0x7, ///< Attach stream STREAM
+detach   = 0x8, ///< Detach stream DETACH
 ```
 
 Frames in QUIC:
 ```
-stream              ///< Initiate new stream, Attach stream, Regular data packet
-ack                 ///< Explicit acknowledgment
-congestion_control  ///< Congestion parameters from the other side
-reset_stream        ///< Reset stream
-connection_close    ///< Detach stream
-goaway_stream       ///< Stopped listening
+stream              ///< Initiate new stream, Attach stream, Regular data packet STREAM
+ack                 ///< Explicit acknowledgment ACK
+congestion_control  ///< Congestion parameters from the other side DECONGESTION
+reset_stream        ///< Reset stream RESET
+connection_close    ///< Detach stream(s) and close whole connection CLOSE
+goaway_stream       ///< Stopped listening ??
 ```
 
 service request codes
