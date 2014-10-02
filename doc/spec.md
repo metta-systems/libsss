@@ -61,7 +61,7 @@ For reduced latency of shorter streams, and for the tail-end of some (all?) stre
 
 ## 2 Design Overview
 
-Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966789321/1974720956)
+Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966789321/1974720956) [advanced diagram](https://dl.dropboxusercontent.com/s/6ck76plbu7lrun3/2014-10-02%20at%2012.21.png?dl=0)
 ```
   +------------------------------------------------------------------------+
   |                      Application Protocol                              |
@@ -129,7 +129,7 @@ The channel abstraction provides the interface between the channel protocol and 
 
 In SSU both parties may be trying to establish connection to each other. This may lead to two completely separate channels being set up. If this happens and peers detect it, they SHOULD migrate their streams toward the more recent channel. However, they MAY decide to not do it for increased security or logical packet separation.
 
-Since channels rotate rather frequently (once in bout 30 minutes), streams may be grouped differently onto each new set of channels, for example if a channel is set up and another channel expires, its streams may be reattached onto already existing channel.
+Since channels rotate rather frequently (once in about 30 minutes), streams may be grouped differently onto each new set of channels, for example if a channel is set up and another channel expires, its streams may be reattached onto already existing channel.
 
 The initial flow in a zero-RTT setup is potentially less forward secure than possible so we should assume that the connection will upgrade to a truly ephemeral key for subsequent flows on the same connection.
 ^^ it is not if client already supplies its ephemeral public key with the first packet?
@@ -145,7 +145,7 @@ We expect that different streams will have distinct transport characteristics wh
  * Adjustable redundancy levels (trade bandwidth for latency savings)
  * Adjustable prioritization levels.
 
-We expect that some control channel, which may be viewed as an out-of-band stream, will always be available and may be used to signal state changes for the rest of the streams. The control channel will likely consist of special purpose frames (control frames), as well a reserved stream, for cryptographic negotiations.
+We expect that some control channel, which may be viewed as an out-of-band stream, will always be available and may be used to signal state changes for the rest of the streams. The control channel will likely consist of special purpose frames (control frames).
 
 Streams are partitioned into frames for placement into channel packets. Whenever possible, any particular packet's payload should come from only one stream. Such dedication will reduce the probability that a single packet loss will impede progress of more than one stream. When there is not sufficient data in a stream to fill a packet, then frames from more than one stream may be packed into a single packet. Such packing should reduce the packet-count-overhead, and diminish serialization latency.
 
@@ -218,9 +218,11 @@ Figure 3: Channel protocol packet layout [source](http://www.asciidraw.com/#6087
 
 ## 4 Stream Protocol
 
-Streams are independent sequences of bi­directional data cut into stream frames. Streams can be created either by the client or the server; can concurrently send data interleaved with other streams; and can be cancelled.
+Streams are independent sequences of uni- or bi­directional data flows cut into stream frames. Streams group logically communications between two parties. Streams can be created by either peer side; can concurrently send data interleaved with other streams; and can be cancelled.
 
 Streams must be attached to channels to be able to send. Streams that need to send data attach onto a channel based on their integer priority. Stream with absolute largest priority on the channel wins and will always send first as long as it has data to send.
+
+Streams in channels keep their global IDs and continue delivering data even after channel switch.
 
 ##### Starting new stream.
 ###### Initiating root stream (LSID 0)
@@ -262,13 +264,13 @@ CurveCP also provides forward secrecy for the client's long-term public key. Two
 
 The Initiate from the client must contain proper server Cookie or be discarded. The more general technique of "remote storage" eliminates storage on a server in favor of storage inside the network: the server sends data as an encrypted authenticated message to itself via the client. I.e. the cookie from client is actually a blob of information necessary for server to establish connection.
 
-#### 5.1.2 Anti-amplification Measures
+#### 5.1.1 Anti-amplification Measures
 
 First Initiator message - HELLO packet - must be bigger from the connecting client than the Responder COOKIE reply to reduce amplification attack possibility.
 
 The server doesn't retransmit its first packet, the Cookie packet. The client is responsible for repeating its Hello packet to ask for another Cookie packet.
 
-#### 5.1.3 Forward Secrecy
+#### 5.1.2 Forward Secrecy
 
 Here's how the forward secrecy works. At the beginning of a connection, the Responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the Initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
 
@@ -282,7 +284,7 @@ Channel holds short-term keys for encryption session. Closing a channel destroys
 
 Channels are closed after arbitrary amount of time to flush keys.
 
-#### 5.1.1 Encryption requirements (@todo move section)
+#### 5.1.3 Encryption requirements (@todo move section)
 
 Attached to the box is a public 24-byte nonce chosen by the sender. Nonce means "number used once."After a particular nonce has been used to encrypt a packet, the same nonce must never be used to encrypt another packet from the sender's secret key to this receiver's public key, and the same nonce must never be used to encrypt another packet from the receiver's secret key to this sender's public key. This requirement is essential for cryptographic security.
 
@@ -356,22 +358,9 @@ M size is in multiples of 16 between 16 and 1024 bytes.
 
 When Initiate packet is accepted, starting a session, cookie must be placed into a cache and cleaned when minute key is rotated to avoid replay attacks.
 
-#### 5.2.5 RESPONDER MESSAGE packet format
+#### 5.2.5 INITIATOR MESSAGE packet format
 
 Responder and Initiator message packets differ only in the kind of short term key and direction of encryption of the box. Each side sends packets with their own short-term public key as identifier.
-
-```
-0  : 8    : magic
-8  : 32   : responder short-term public key S'
-40 : 8    : compressed nonce
-48 : 16+M : box S'->C' containing:
-             0 : M : message
-```
-M size is in multiples of 16 between 48 and 1088 bytes.
-
-TOTAL: 64+M bytes
-
-#### 5.2.6 INITIATOR MESSAGE packet format
 
 ```
 0   : 8    : magic
@@ -379,6 +368,19 @@ TOTAL: 64+M bytes
 40  : 8    : compressed nonce
 48  : 16+M : box C'->S' containing:
               0 : M : message
+```
+M size is in multiples of 16 between 48 and 1088 bytes.
+
+TOTAL: 64+M bytes
+
+#### 5.2.6 RESPONDER MESSAGE packet format
+
+```
+0  : 8    : magic
+8  : 32   : responder short-term public key S'
+40 : 8    : compressed nonce
+48 : 16+M : box S'->C' containing:
+             0 : M : message
 ```
 M size is in multiples of 16 between 48 and 1088 bytes.
 
@@ -410,3 +412,10 @@ A byte stream is a string of bytes, between 0 bytes and 2^60-1 bytes (allowing m
 The first range acknowledged in a message always begins with position 0. Subsequent ranges acknowledged in the same message are limited to 65535 bytes. Each range boundary sent by the receiver matches a boundary of a block previously sent by the sender, but a range normally includes many blocks.
 
 Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
+
+## 6. References
+
+[RDP Reliable Data Protocol](https://tools.ietf.org/html/rfc908)
+[ECN in IP](https://tools.ietf.org/html/rfc3168)
+[TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
+[SPDY protocol](http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1)

@@ -13,12 +13,12 @@ detach   = 0x8, ///< Detach stream
 
 Frames in QUIC:
 ```
-stream
-ack
-congestion_control
-reset_stream
-connection_close
-goaway_stream
+stream              ///< Initiate new stream, Attach stream, Regular data packet
+ack                 ///< Explicit acknowledgment
+congestion_control  ///< Congestion parameters from the other side
+reset_stream        ///< Reset stream
+connection_close    ///< Detach stream
+goaway_stream       ///< Stopped listening
 ```
 
 service request codes
@@ -41,10 +41,6 @@ reply_not_found  = 1,        ///< Specified service pair not found.
 
 http://codesinchaos.wordpress.com/2012/09/09/curvecp-1/ comments on protocol security
 ^^ READ IT AGAIN ^^
-
-PROBLEMS
-In SSU both parties may be trying to establish connection to each other. This may lead to two
-completely separate channels being set up. -- this can be actually a feature.
 
 ```
          +-------------------------------------------------------------+
@@ -76,12 +72,6 @@ Endpoint | ||    |     +-------------------------------------------+ | | Endpoin
          +-------------------------------------------------------------+
 ```
 
-Streams in channels keep their global IDs and continue delivering data.
-
-Streams are uni- or bi-directional flows of data between two endpoints. Streams group logically
-communications between two parties.
-Streams are identified by stream IDs, which
-
 base_stream::tx_waiting_ack_ must be reviewed:
 - there can be at most five unaccepted ranges in the stream
 - if new packet creates more unaccepted ranges - silently drop it
@@ -92,8 +82,3 @@ datagram_stream
 +--data_stream (adds retransmission and congestion control strategy)
 +--audio_stream
 +--video_stream
-
-https://tools.ietf.org/html/rfc908 RDP Reliable Data Protocol
-https://tools.ietf.org/html/rfc3168 ECN in IP
-https://tools.ietf.org/html/rfc1323 TCP extensions for highperf
-http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1#TOC-2.5-Data-flow
