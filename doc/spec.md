@@ -394,23 +394,45 @@ Frames are stream containers within a channel packet. Packet contents are sliced
 
 Frames are inside the channel message cryptobox, prevented from peeking into by any eavesdroppers.
 
-#### 4.2.1 STREAM frame
+#### 4.2.1 Frame types
+```
++----------------------+------------------------+
+|     Type value       |     Frame type         |
++----------------------+------------------------+
+|      fioood00        |  STREAM                |
+|      00000001        |  ACK                   |
+|      00000011        |  PADDING               |
+|      00000111        |  DECONGESTION          |
+|      00001111        |  DETACH                |
+|      01011111        |  RESET                 |
+|      01111111        |  CLOSE                 |
++----------------------+------------------------+
+```
+
+#### 4.2.2 STREAM frame
 
 Stream frame is used to transfer data on each individual stream. It also serves as an ATTACH packet
 to initiate a new stream.
 
-#### 4.2.2 DETACH frame
+Frame type: 0
+Flags: FIN, INIT, OFFSET, DATA LENGTH
 
-Detach frame allows stream to detach from current channel without shutting down the stream.
+When INIT bit is set, this frame initiates the stream by providing stream and parent unique IDs.
+When FIN bit is set, this frame marks last transmission on this stream in this direction.
+OFFSET bits encode length of the stream offset field.
+When DATA LENGTH bit is set, this frame has a limited number of bytes for this stream, provided in
+length field, otherwise stream data occupies the rest of the packet.
 
 #### 4.2.3 ACK frame
 
-#### 4.2.4 DECONGESTION frame
+#### 4.2.4 PADDING frame
+
+#### 4.2.5 DECONGESTION frame
 
 Decongestion feedback frame contents are specific to chosen decongestion method in the channel.
 Frame format for several implemented methods will be listed here.
 
-##### 4.2.4.1 Congestion control feedback for TCP Cubic
+##### 4.2.5.1 Congestion control feedback for TCP Cubic
 
 Similar to TCP protocol, packet loss and receive window size are provided.
 
@@ -424,9 +446,9 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Num lost packets: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
  * Receive window: The TCP receive window.
 
-##### 4.2.4.2 Congestion control feedback for CurveCP Chicago
-##### 4.2.4.3 Congestion control feedback for UDP LEDBAT
-##### 4.2.4.4 Congestion control feedback for WebRTC Inter-arrival
+##### 4.2.5.2 Congestion control feedback for CurveCP Chicago
+##### 4.2.5.3 Congestion control feedback for UDP LEDBAT
+##### 4.2.5.4 Congestion control feedback for WebRTC Inter-arrival
 
 ```
           0         1         2         3         4         5         6         7
@@ -446,11 +468,15 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Packet Delta: A 16 bit unsigned value specifying the sequence number delta from the smallest received. Always followed immediately by a corresponding Packet Time Delta.
  * Packet Time Delta: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
 
-#### 4.2.5 RESET frame
+#### 4.2.6 DETACH frame
 
-Abort stream.
+Detach frame allows stream to detach from current channel without shutting down the stream.
 
-#### 4.2.6 CLOSE frame
+#### 4.2.7 RESET frame
+
+Abort stream. (Might combine detach and reset frames into STOP frame!)
+
+#### 4.2.8 CLOSE frame
 
 Close connection.
 
@@ -470,22 +496,29 @@ The first range acknowledged in a message always begins with position 0. Subsequ
 
 Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
 
-##### Starting new stream.
+### 5.1 Initiating root stream (LSID 0)
+
+Root stream does not have a unique ID and therefore is always implicitly started on a channel. It is used to spawn first application-level stream and for out-of-band signaling about other streams.
+
+### 5.2 Starting new stream.
 
 New stream is started by posting STREAM frame with INIT flag set.
 
-###### Initiating root stream (LSID 0)
-###### Initiating sub-streams
+### 5.3 Initiating sub-streams
 
-##### Stream data exchange
+### 5.4 Attaching a stream to channel
 
-Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the fin bit is set. Once the FIN has been sent, the stream is considered to be half­-closed.
+### 5.5 Detaching a stream from channel
 
-##### Stream half­-close
+### 5.6 Stream data exchange
 
-When one side of the stream sends a frame with FIN set to true, the stream is considered to be half-­closed from that side. The sender of the FIN is indicating that no further data will be sent from the sender on this stream. When both sides have half­closed, the stream is considered to be closed.
+Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the FIN bit is sent. Once the FIN has been sent, the stream is considered to be half­-closed.
 
-##### Stream close
+### 5.7 Stream half­-close
+
+When one side of the stream sends a frame with FIN set to true, the stream is considered to be half-­closed from that side. The sender of the FIN is indicating that no further data will be sent from the sender on this stream. When both sides have half­-closed, the stream is considered to be closed.
+
+### 5.8 Stream close
 
 When both sides have indicated their desire to stop sending on the stream, stream becomes closed.
 
