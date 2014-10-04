@@ -459,12 +459,12 @@ Data in an ACK frame is divided into two sections:
 ##### Sent Packet Data
 
  * Sent Entropy `uint8_t`: Cumulative hash of entropy in all sent packets up to the packet with sequence number one less than the least unacked packet.
- * Least Unacked: The lower 48 bits of the smallest sequence number of any packet for which the sender is still awaiting an ack. If the receiver is missing any packets smaller than this value, the receiver should consider those packets to be irrecoverably lost.
+ * Least Unacked `big_uint48_t`: The lower 48 bits of the smallest sequence number of any packet for which the sender is still awaiting an ack. If the receiver is missing any packets smaller than this value, the receiver should consider those packets to be irrecoverably lost.
 
 ##### Received Packet Data
 
  * Received Entropy `uint8_t`: Cumulative hash of entropy in all received packets up to the largest observed packet.
- * Largest Observed: If the value of Missing Packets includes every packet observed to be missing since the last ACK_FRAME transmitted by the sender, then this value shall be the lower 48 bits of the largest observed sequence number. If there are packets known to be missing which are not present in Missing Packets (due to size limitations), then this value shall be the lower 48 bits of the largest sequence number smaller than the first missing packet which this ack does not include. (If multiple consecutive packets are lost, the value of Largest Observed may also appear in Missing Packets.)
+ * Largest Observed `big_uint48_t`: If the value of Missing Packets includes every packet observed to be missing since the last ACK_FRAME transmitted by the sender, then this value shall be the lower 48 bits of the largest observed sequence number. If there are packets known to be missing which are not present in Missing Packets (due to size limitations), then this value shall be the lower 48 bits of the largest sequence number smaller than the first missing packet which this ack does not include. (If multiple consecutive packets are lost, the value of Largest Observed may also appear in Missing Packets.)
  * Largest Observed Delta Time `big_uint32_t`: Time elapsed in microseconds from when largest observed was received until this Ack frame was sent.
  * Num Missing `uint8_t`: Number of missing packets between largest observed and least unacked.
  * Missing Packets `big_uint48_t[]`: A series of the lower 48 bits of the sequence numbers of packets which have not yet been received.
@@ -554,7 +554,8 @@ The RESET frame allows for abnormal termination of a stream. When sent by the cr
 ```
      0        1       2         3        4       5        6        7
 +--------+--------+--------+--------+--------+--------+--------+--------+
-|Type(9) |    Stream ID (32 bits)            | Error code (32 bits) -> +--------+--------+--------+--------+--------+--------+--------+--------+
+|Type(9) |    Stream ID (32 bits)            | Error code (32 bits) ->
++--------+--------+--------+--------+--------+--------+--------+--------+
      8        9       10      11-X
 +--------+--------+--------+--------+--------+--------+--------+--------+
    Error | Reason phrase   | Reason phrase (variable length: may be 0)  |
