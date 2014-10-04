@@ -21,8 +21,6 @@ SPDY and QUIC extend with packet framing, encoding and a set of goals to achieve
 
 CurveCP adds non-transparent cryptoboxes for all crucial contents and a session initiation protocol.
 
-Note: Integers are in network (big-endian) order. All numbers are unsigned.
-
 ### Goals (@sa QUIC)
 We’d like to develop a transport that supports the following goals:
   1. Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
@@ -377,6 +375,12 @@ Non-FEC packet payload consists of:
  * One (Zero?) or more tagged frames (see 4.2)
  * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
 
+Note: When describing data fields the C-like type notation is used, where
+ * `uint8_t` specifies unsigned 8-bit quantity (an octet)
+ * `big_uint16_t` specifies unsigned 16-bit quantity in network (big-endian) order
+ * `big_uint32_t` specifies unsigned 32-bit quantity in network (big-endian) order
+ * `big_uint64_t` specifies unsigned 64-bit quantity in network (big-endian) order
+
 #### 4.1.1 Packet header format
 
    * Flags
@@ -484,11 +488,11 @@ Similar to TCP protocol, packet loss and receive window size are provided.
 ```
  * Subt `uint8_t`: The congestion control subtype (4 for Inter-arrival)
  * Num lost packets `big_uint16_t`: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
- * Received `uint8_t`: An 8 bit unsigned value specifying the number of received packets in this update.
+ * Received `uint8_t`: Number of received packets in this update.
  * Smallest Received Packet: The lower 48 bits of the smallest sequence number represented in this update.
- * Smallest Delta Time `big_uint64_t`: A 64 bit unsigned value specifying the delta time from connection creation when the above packet was received.
- * Packet Delta `big_uint16_t`: A 16 bit unsigned value specifying the sequence number delta from the smallest received. Always followed immediately by a corresponding Packet Time Delta.
- * Packet Time Delta `big_uint32_t`: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
+ * Smallest Delta Time `big_uint64_t`: Delta time from connection creation when the above packet was received.
+ * Packet Delta `big_uint16_t`: Sequence number delta from the Smallest Received Packet. Always followed immediately by a corresponding Packet Time Delta.
+ * Packet Time Delta `big_uint32_t`: Time delta from smallest time when the preceding packet sequence number was received.
 
 #### 4.2.6 DETACH frame
 
