@@ -379,6 +379,7 @@ Note: When describing data fields the C-like type notation is used, where
  * `uint8_t` specifies unsigned 8-bit quantity (an octet)
  * `big_uint16_t` specifies unsigned 16-bit quantity in network (big-endian) order
  * `big_uint32_t` specifies unsigned 32-bit quantity in network (big-endian) order
+ * `big_uint48_t` specifies unsigned 48-bit quantity in network (big-endian) order
  * `big_uint64_t` specifies unsigned 64-bit quantity in network (big-endian) order
 
 #### 4.1.1 Packet header format
@@ -394,7 +395,7 @@ Note: When describing data fields the C-like type notation is used, where
 
 ### 4.2 Framing
 
-Frames are stream containers within a channel packet. Packet contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks format, where each chunk follows a certain format with a header and optionally content part.
+Frames are stream containers within a channel packet. Packet contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks, where each chunk follows a certain format with a header and optionally content part.
 
 Frames are inside the channel message cryptobox, prevented from peeking into by any eavesdroppers.
 
@@ -427,7 +428,47 @@ OFFSET bits encode length of the stream offset field.
 When DATA LENGTH bit is set, this frame has a limited number of bytes for this stream, provided in
 length field, otherwise stream data occupies the rest of the packet.
 
+
+Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
+We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching.
+
 #### 4.2.3 ACK frame
+
+The ACK frame is sent to inform the peer which packets have been received, as well as which packets are still considered missing by the receiver (the contents of missing packets may need to be resent).
+```
+     0       1        2        3         4        5        6        7
++--------+--------+--------+--------+--------+--------+--------+--------+
+|Type (1)|Sent    | Least unacked (48 bits)                             |
+|        |Entropy |                                                     |
++--------+--------+--------+--------+--------+--------+--------+---------
+     8       9        10       11       12       13       14       15
++--------+--------+--------+--------+--------+--------+--------+--------+
+|Received|               Largest Observed (48 bits)            | Largest Observed ->
+|Entropy |                                                     |   Delta Time
++--------+--------+--------+--------+--------+--------+--------+--------+
+    16       17       18       19      20-X
++--------+--------+--------+--------+--------+--------+--------+--------+
+ Largest Observed (32 bits)| Number |          Missing Packets          |
+   Delta Time (continued)  | Missing|    (variable length: may be 0)    |
++--------+--------+--------+--------+--------+--------+--------+--------+
+```
+ * Frame type `uint8_t`: 1
+
+Data in an ACK frame is divided into two sections:
+
+##### Sent Packet Data
+
+ * Sent Entropy `uint8_t`: Cumulative hash of entropy in all sent packets up to the packet with sequence number one less than the least unacked packet.
+ * Least Unacked: The lower 48 bits of the smallest sequence number of any packet for which the sender is still awaiting an ack. If the receiver is missing any packets smaller than this value, the receiver should consider those packets to be irrecoverably lost.
+
+##### Received Packet Data
+
+ * Received Entropy `uint8_t`: Cumulative hash of entropy in all received packets up to the largest observed packet.
+ * Largest Observed: If the value of Missing Packets includes every packet observed to be missing since the last ACK_FRAME transmitted by the sender, then this value shall be the lower 48 bits of the largest observed sequence number. If there are packets known to be missing which are not present in Missing Packets (due to size limitations), then this value shall be the lower 48 bits of the largest sequence number smaller than the first missing packet which this ack does not include. (If multiple consecutive packets are lost, the value of Largest Observed may also appear in Missing Packets.)
+ * Largest Observed Delta Time `big_uint32_t`: Time elapsed in microseconds from when largest observed was received until this Ack frame was sent.
+ * Num Missing `uint8_t`: Number of missing packets between largest observed and least unacked.
+ * Missing Packets `big_uint48_t[]`: A series of the lower 48 bits of the sequence numbers of packets which have not yet been received.
+
 
 #### 4.2.4 PADDING frame
 
@@ -455,6 +496,7 @@ Frame format for several implemented methods will be listed here.
  | Type(5) | Subtype | Method specific contents    |
  +---------+---------+---------+  .....  +---------+
 ```
+Type `uint8_t`: Frame type byte (5 for decongestion frame)
 
 The following diagrams show method specific contents section starting from subtype byte, type is the same for all these packets and is omitted for brevity.
 
@@ -489,7 +531,7 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Subt `uint8_t`: The congestion control subtype (4 for Inter-arrival)
  * Num lost packets `big_uint16_t`: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
  * Received `uint8_t`: Number of received packets in this update.
- * Smallest Received Packet: The lower 48 bits of the smallest sequence number represented in this update.
+ * Smallest Received Packet `big_uint48_t`: The lower 48 bits of the smallest sequence number represented in this update.
  * Smallest Delta Time `big_uint64_t`: Delta time from connection creation when the above packet was received.
  * Packet Delta `big_uint16_t`: Sequence number delta from the Smallest Received Packet. Always followed immediately by a corresponding Packet Time Delta.
  * Packet Time Delta `big_uint32_t`: Time delta from smallest time when the preceding packet sequence number was received.
@@ -497,14 +539,57 @@ Similar to TCP protocol, packet loss and receive window size are provided.
 #### 4.2.6 DETACH frame
 
 Detach frame allows stream to detach from current channel without shutting down the stream.
+Detaching informs the other side that this stream should not be torn down, but it will not send
+more data on this channel.
+
+```
+```
 
 #### 4.2.7 RESET frame
 
 Abort stream. (Might combine detach and reset frames into STOP frame!)
 
+The RESET frame allows for abnormal termination of a stream. When sent by the creator of a stream, it indicates the creator wishes to cancel the stream. When sent by the receiver of a stream, it indicates an error or that the receiver did not want to accept the stream, so the stream should be closed.
+
+```
+     0        1       2         3        4       5        6        7
++--------+--------+--------+--------+--------+--------+--------+--------+
+|Type(9) |    Stream ID (32 bits)            | Error code (32 bits) -> +--------+--------+--------+--------+--------+--------+--------+--------+
+     8        9       10      11-X
++--------+--------+--------+--------+--------+--------+--------+--------+
+   Error | Reason phrase   | Reason phrase (variable length: may be 0)  |
+   code  | length (16 bits)|                                            |
++--------+--------+--------+--------+--------+--------+--------+--------+
+```
+
+Frame type `uint8_t`: Value specifying that this is a stream rst frame (0x4)
+Stream Id `big_uint32_t`: ID unique to this stream.
+Error code `big_uint32_t`: Error code which indicates why the stream is being closed.
+Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
+Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is not zero-terminated.
+
 #### 4.2.8 CLOSE frame
 
 Close connection.
+
+Immediate close and non-immediate (goaway) close?
+```
+    0        1        2         3       4         5       6         7       X
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|Type(11)| Error code (32 bits)              | Reason phrase   | Reason phrase   | ->
+|        |                                   | length (16 bits)|(variable length)| +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+
+  X-X+Y
++--------+--------+--------+--------+--------+--------+--------+--------+
+|                      AckFrame  (variable length)                      |
++--------+--------+--------+--------+--------+--------+--------+--------+
+```
+Frame type `uint8_t`: Connection close frame type (11)
+Error code `big_uint32_t`: Error code which indicates why the connection is being closed.
+Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
+Reason phrase: An optional human-readable explanation for why the connection was closed.
+AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed.
+
 
 ## 5 Stream Protocol
 
