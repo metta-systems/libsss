@@ -400,12 +400,12 @@ Frames are inside the channel message cryptobox, prevented from peeking into by 
 |     Type value       |     Frame type         |
 +----------------------+------------------------+
 |      fioood00        |  STREAM                |
-|      00000001        |  ACK                   |
-|      00000011        |  PADDING               |
-|      00000111        |  DECONGESTION          |
-|      00001111        |  DETACH                |
-|      01011111        |  RESET                 |
-|      01111111        |  CLOSE                 |
+|      xxxx0001        |  ACK                   |
+|      xxxx0011        |  PADDING               |
+|      xxxx0101        |  DECONGESTION          |
+|      xxxx0111        |  DETACH                |
+|      xxxx1001        |  RESET                 |
+|      xxxx1011        |  CLOSE                 |
 +----------------------+------------------------+
 ```
 
@@ -427,10 +427,32 @@ length field, otherwise stream data occupies the rest of the packet.
 
 #### 4.2.4 PADDING frame
 
+Padding frame indicates padding data within a packet, used to counter traffic analysis attacks. Ideally all packets should be padded to have same final length of 1280 bytes. However, in case of slow connection it may be preferential to not pad the data packets or pad them to a shorter common length.
+Padding frame contents may be anything and are simply ignored. It is recommended to explicitly initialize this padding data area with either random or zero bytes and not leave any old data that might leak information.
+
+```
+      0         1         2         3                 3+L-1
+ +---------+---------+---------+---------+  .....  +---------+
+ | Type(3) | Length of padding |        Padding data         |
+ +---------+---------+---------+---------+  .....  +---------+
+```
+Padding packet may be as small as 3 bytes - type byte and length field, which is zero in this case.
+
+Take note of the rounding requirements - all padding together must pad message size to an integer multiple of 16 bytes.
+
 #### 4.2.5 DECONGESTION frame
 
 Decongestion feedback frame contents are specific to chosen decongestion method in the channel.
 Frame format for several implemented methods will be listed here.
+
+```
+      0         1         2
+ +---------+---------+---------+  .....  +---------+
+ | Type(5) | Subtype | Method specific contents    |
+ +---------+---------+---------+  .....  +---------+
+```
+
+The following diagrams show method specific contents section starting from subtype byte, type is the same for all these packets and is omitted for brevity.
 
 ##### 4.2.5.1 Congestion control feedback for TCP Cubic
 
@@ -439,12 +461,12 @@ Similar to TCP protocol, packet loss and receive window size are provided.
 ```
       0         1         2         3         4
  +---------+---------+---------+---------+---------+
- | Type(1) | Num lost packets  |   Receive window  |
+ | Subt(1) | Num lost packets  |   Receive window  |
  +---------+---------+---------+---------+---------+
 ```
- * Type: The congestion control type (1 for TCP Cubic)
- * Num lost packets: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
- * Receive window: The TCP receive window.
+ * Subt `uint8_t`: The congestion control subtype (1 for TCP Cubic)
+ * Num lost packets `big_uint16_t`: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
+ * Receive window `big_uint16_t`: The TCP receive window.
 
 ##### 4.2.5.2 Congestion control feedback for CurveCP Chicago
 ##### 4.2.5.3 Congestion control feedback for UDP LEDBAT
@@ -453,20 +475,20 @@ Similar to TCP protocol, packet loss and receive window size are provided.
 ```
           0         1         2         3         4         5         6         7
      +---------+---------+---------+---------+---------+---------+---------+---------+
-  +0 | Type(4) | Num lost packets  | Received|                     Smallest Received |
+  +0 | Subt(4) | Num lost packets  | Received|                     Smallest Received |
      +---------+---------+---------+---------+---------+---------+---------+---------+
   +8 | Packet            |                              Smallest Delta Time          |
      +---------+---------+---------+---------+---------+---------+---------+---------+
  +16 |                   |   Packet Delta    |           Packet Time Delta           |
      +---------+---------+---------+---------+---------+---------+---------+---------+
 ```
- * Type: The congestion control type (4 for Inter-arrival)
- * Num lost packets: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
- * Received: An 8 bit unsigned value specifying the number of received packets in this update.
+ * Subt `uint8_t`: The congestion control subtype (4 for Inter-arrival)
+ * Num lost packets `big_uint16_t`: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
+ * Received `uint8_t`: An 8 bit unsigned value specifying the number of received packets in this update.
  * Smallest Received Packet: The lower 48 bits of the smallest sequence number represented in this update.
- * Smallest Delta Time: A 64 bit unsigned value specifying the delta time from connection creation when the above packet was received.
- * Packet Delta: A 16 bit unsigned value specifying the sequence number delta from the smallest received. Always followed immediately by a corresponding Packet Time Delta.
- * Packet Time Delta: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
+ * Smallest Delta Time `big_uint64_t`: A 64 bit unsigned value specifying the delta time from connection creation when the above packet was received.
+ * Packet Delta `big_uint16_t`: A 16 bit unsigned value specifying the sequence number delta from the smallest received. Always followed immediately by a corresponding Packet Time Delta.
+ * Packet Time Delta `big_uint32_t`: A 32 bit unsigned value specifying the time delta from smallest time when the preceding packet sequence number was received.
 
 #### 4.2.6 DETACH frame
 
