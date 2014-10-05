@@ -350,6 +350,14 @@ Figure 2: Channel protocol packet layout [source](http://www.asciidraw.com/#6087
           |    |                     (32 bytes)                    |
           |    +                                                   +
           |    |                                                   |
+          |    +                                                   +
+          |    |                                                   |
+          |    +                                                   +
+          |    |                                                   |
+          |    +                                                   +
+          |    |                                                   |
+          |    +                                                   +
+          |    |                                                   |
           |    +---------------------------------------------------+
           |    |                                                   |
           |    +             Compressed nonce (8 bytes)            +
@@ -359,10 +367,18 @@ Figure 2: Channel protocol packet layout [source](http://www.asciidraw.com/#6087
                |                Message in crypto box              |
                                        ......
                |                                                   |
-               +---------------------------------------------------+
+          +-   +---------------------------------------------------+
+          |    |                                                   |
+          |    +                                                   +
+          |    |            Message Authentication Code            |
+          |    +                                                   +
+          |    |                     (16 bytes)                    |
+          |    +                                                   +
+          |    |                                                   |
+          +-   +---------------------------------------------------+
 ```
 
-As a final step in session negotiation channel layer sets up a decongestion strategy.
+As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet contains a NEGOTIATION frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer?)
 
 ### 4.1 MESSAGE box format
 
@@ -373,7 +389,7 @@ A non-FEC packet is a data packet and consists of one or more frames. Each frame
 Non-FEC packet payload consists of:
  * A packet header (see 4.1.1)
  * One (Zero?) or more tagged frames (see 4.2)
- * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1088 bytes.
+ * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1168(-sizeof(PacketHeader) **@todo**) bytes.
 
 Note: When describing data fields the C-like type notation is used, where
  * `uint8_t` specifies unsigned 8-bit quantity (an octet)
@@ -386,12 +402,11 @@ Note: When describing data fields the C-like type notation is used, where
 
    * Flags
      * Sizes of optional packet header fields
-     * Optimistic ACK entropy bit
+     * Optimistic ACK entropy bit *- comes in ACK frame @fixme*
      * Last FEC group packet bit
    * Protocol version number (variable size)
    * Packet sequence number (variable size)
    * FEC group number (optional?)
-   * Packet ACKs?
 
 ### 4.2 Framing
 
@@ -411,6 +426,7 @@ Frames are inside the channel message cryptobox, prevented from peeking into by 
 |      xxxx0111        |  DETACH                |
 |      xxxx1001        |  RESET                 |
 |      xxxx1011        |  CLOSE                 |
+|      xxxx1101        |  NEGOTIATION           |
 +----------------------+------------------------+
 ```
 
@@ -428,47 +444,78 @@ OFFSET bits encode length of the stream offset field.
 When DATA LENGTH bit is set, this frame has a limited number of bytes for this stream, provided in
 length field, otherwise stream data occupies the rest of the packet.
 
+http://www.asciidraw.com/#717654329840973968/875838298 edit
+```
+      0
+ +----------+
+ | fioood00 |
+ +----------+
+  Init block (I bytes)
+
+
+
+ +----------+
+ |  flags   |
+ +----------+----------------------------------------+
+ |          Stream ID                                |
+ +----------+----------------------------------------+
+ |          Parent Stream ID (optional)              |
+ +---------------------------------------------------+
+
+  Offset field (O bytes)
+  Data length field (2 bytes, specifies packet length D)
+```
 
 Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
 We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching.
 
 #### 4.2.3 ACK frame
 
-The ACK frame is sent to inform the peer which packets have been received, as well as which packets are still considered missing by the receiver (the contents of missing packets may need to be resent).
+The ACK frame is sent to inform the peer which packets have been received, as well as which packets are still considered missing by the receiver (the contents of missing packets may need to be re-sent).
+
 ```
-     0       1        2        3         4        5        6        7
-+--------+--------+--------+--------+--------+--------+--------+--------+
-|Type (1)|Sent    | Least unacked (48 bits)                             |
-|        |Entropy |                                                     |
-+--------+--------+--------+--------+--------+--------+--------+---------
-     8       9        10       11       12       13       14       15
-+--------+--------+--------+--------+--------+--------+--------+--------+
-|Received|               Largest Observed (48 bits)            | Largest Observed ->
-|Entropy |                                                     |   Delta Time
-+--------+--------+--------+--------+--------+--------+--------+--------+
-    16       17       18       19      20-X
-+--------+--------+--------+--------+--------+--------+--------+--------+
- Largest Observed (32 bits)| Number |          Missing Packets          |
-   Delta Time (continued)  | Missing|    (variable length: may be 0)    |
-+--------+--------+--------+--------+--------+--------+--------+--------+
+           0        1        2        3        4        5        6        7
+      +--------+--------+--------+--------+--------+--------+--------+--------+
+  +0  |Type (1)|Sent    |Received| Number |  Least Unacked (64 bits)          |
+      |        |Entropy |Entropy | Missing|                                   |
+      +--------+--------+--------+--------+--------+--------+--------+--------+
+  +8  |                                   |  Largest Observed (64 bits)       |
+      |                                   |                                   |
+      +--------+--------+--------+--------+--------+--------+--------+--------+
+ +16  |                                   |  Largest Observed (32 bits)       |
+      |                                   |    Delta Time                     |
+      +--------+--------+--------+--------+--------+--------+--------+--------+
+ +24  | Missing Packets NACK                                                  |
+      | (variable length: may be 0)                                           |
+      +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
  * Frame type `uint8_t`: 1
 
-Data in an ACK frame is divided into two sections:
+Data in an ACK frame is divided logically into two sections:
 
 ##### Sent Packet Data
 
  * Sent Entropy `uint8_t`: Cumulative hash of entropy in all sent packets up to the packet with sequence number one less than the least unacked packet.
- * Least Unacked `big_uint48_t`: The lower 48 bits of the smallest sequence number of any packet for which the sender is still awaiting an ack. If the receiver is missing any packets smaller than this value, the receiver should consider those packets to be irrecoverably lost.
+ * Least Unacked `big_uint64_t`: The smallest sequence number of any packet for which the sender is still awaiting an ack. If the receiver is missing any packets smaller than this value, the receiver should consider those packets to be irrecoverably lost.
 
 ##### Received Packet Data
 
  * Received Entropy `uint8_t`: Cumulative hash of entropy in all received packets up to the largest observed packet.
- * Largest Observed `big_uint48_t`: If the value of Missing Packets includes every packet observed to be missing since the last ACK_FRAME transmitted by the sender, then this value shall be the lower 48 bits of the largest observed sequence number. If there are packets known to be missing which are not present in Missing Packets (due to size limitations), then this value shall be the lower 48 bits of the largest sequence number smaller than the first missing packet which this ack does not include. (If multiple consecutive packets are lost, the value of Largest Observed may also appear in Missing Packets.)
+ * Largest Observed `big_uint64_t`:
+   * If the value of Missing Packets includes every packet observed to be missing since the last ACK frame transmitted by the sender, then this value shall be the largest observed sequence number.
+   * If there are packets known to be missing which are not present in Missing Packets (due to size limitations), then this value shall be the largest sequence number smaller than the first missing packet which this ack does not include.
+   * If multiple consecutive packets are lost, the value of Largest Observed may also appear in Missing Packets.
  * Largest Observed Delta Time `big_uint32_t`: Time elapsed in microseconds from when largest observed was received until this Ack frame was sent.
  * Num Missing `uint8_t`: Number of missing packets between largest observed and least unacked.
- * Missing Packets `big_uint48_t[]`: A series of the lower 48 bits of the sequence numbers of packets which have not yet been received.
-
+ * Missing Packets `(big_uint48_t+big_uint16_t)[]`: A series of the lower 48 bits of the sequence numbers of packets which have not yet been received (NACK).
+   * RLE encoded with higher 48 bits containing the lower 48 bits of the sequence number and lower 16 bits containing the length of the run starting with this sequence number.
+```
+      0        1        2        3        4        5        6        7
+ +--------+--------+--------+--------+--------+--------+--------+--------+
+ | Missing Packet lower 48 bits of sequence number     | Number of       |
+ |                                                     | missing packets |
+ +--------+--------+--------+--------+--------+--------+--------+--------+
+ ```
 
 #### 4.2.4 PADDING frame
 
