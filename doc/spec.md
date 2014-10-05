@@ -329,19 +329,15 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, controls congestion and provides
 out-of-band signaling for streams management.
 
-Figure 2: Channel protocol packet layout [source](http://www.asciidraw.com/#608745302879820887/460823121)
+Figure 2: Channel protocol packet layout ([source](http://www.asciidraw.com/#9003699700112372205/342236295))
 ```
-              31                        16 15                      0
-          +-   +--------------------------+------------------------+
-      UDP |    |        Source Port       |    Destination Port    |
-   Header |    +--------------------------+------------------------+
-  8 bytes |    |          Length          |       Checksum         |
-          +-   +--------------------------+------------------------+
+                  0      1      2         3      4   5     6    7
+      UDP +-   +------------+------------------+--------+----------+
+   Header |    |Source Port | Destination Port | Length | Checksum |
+  8 bytes +-   +------------+------------------+--------+----------+
 
           +-   +---------------------------------------------------+
-          |    |                                                   |
-          |    +              Packet magic (8 bytes)               +
-          |    |                                                   |
+          |    |              Packet magic (8 bytes)               |
           |    +---------------------------------------------------+
   Channel |    |                                                   |
    Header |    +                                                   +
@@ -350,31 +346,17 @@ Figure 2: Channel protocol packet layout [source](http://www.asciidraw.com/#6087
           |    |                     (32 bytes)                    |
           |    +                                                   +
           |    |                                                   |
-          |    +                                                   +
-          |    |                                                   |
-          |    +                                                   +
-          |    |                                                   |
-          |    +                                                   +
-          |    |                                                   |
-          |    +                                                   +
-          |    |                                                   |
           |    +---------------------------------------------------+
-          |    |                                                   |
-          |    +             Compressed nonce (8 bytes)            +
-          |    |                                                   |
+          |    |             Compressed nonce (8 bytes)            |
           +-   +---------------------------------------------------+
                |                                                   |
                |                Message in crypto box              |
                                        ......
                |                                                   |
           +-   +---------------------------------------------------+
-          |    |                                                   |
-          |    +                                                   +
           |    |            Message Authentication Code            |
           |    +                                                   +
           |    |                     (16 bytes)                    |
-          |    +                                                   +
-          |    |                                                   |
           +-   +---------------------------------------------------+
 ```
 
@@ -407,6 +389,8 @@ Note: When describing data fields the C-like type notation is used, where
    * Protocol version number (variable size)
    * Packet sequence number (variable size)
    * FEC group number (optional?)
+
+**@todo**
 
 ### 4.2 Framing
 
@@ -515,7 +499,9 @@ Data in an ACK frame is divided logically into two sections:
  | Missing Packet lower 48 bits of sequence number     | Number of       |
  |                                                     | missing packets |
  +--------+--------+--------+--------+--------+--------+--------+--------+
- ```
+```
+
+It is expected that with regular loss rate and packet rate, ACK frames will often be the minimal size (24 bytes) and only from time to time contain one or two missed packets. On bad or lossy connections the ACK frame might become big enough to have its own separate full-sized packet.
 
 #### 4.2.4 PADDING frame
 
@@ -562,7 +548,13 @@ Similar to TCP protocol, packet loss and receive window size are provided.
  * Receive window `big_uint16_t`: The TCP receive window.
 
 ##### 4.2.5.2 Congestion control feedback for CurveCP Chicago
+
+**@todo**
+
 ##### 4.2.5.3 Congestion control feedback for UDP LEDBAT
+
+**@todo**
+
 ##### 4.2.5.4 Congestion control feedback for WebRTC Inter-arrival
 
 ```
@@ -650,29 +642,37 @@ Streams have a unique ID, used to distinguish this stream after switching to a n
 
 > Old CurveCP description:
 
-A byte stream is a string of bytes, between 0 bytes and 2^60-1 bytes (allowing more than 200 gigabits per second continuously for a year), followed by either success or failure. The bytes in an N-byte stream have positions 0,1,2,...,N-1; the success/failure bit has position N. A message from the sender can include a block of bytes of data from anywhere in the stream; a block can include as many as 1024 bytes. A message from the receiver can acknowledge one or more ranges of data that have been successfully received.
-
-The first range acknowledged in a message always begins with position 0. Subsequent ranges acknowledged in the same message are limited to 65535 bytes. Each range boundary sent by the receiver matches a boundary of a block previously sent by the sender, but a range normally includes many blocks.
-
 Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
 
 ### 5.1 Initiating root stream (LSID 0)
 
 Root stream does not have a unique ID and therefore is always implicitly started on a channel. It is used to spawn first application-level stream and for out-of-band signaling about other streams.
 
+**@todo**
+
 ### 5.2 Starting new stream.
 
 New stream is started by posting STREAM frame with INIT flag set.
 
+**@todo**
+
 ### 5.3 Initiating sub-streams
+
+**@todo**
 
 ### 5.4 Attaching a stream to channel
 
+**@todo**
+
 ### 5.5 Detaching a stream from channel
+
+**@todo**
 
 ### 5.6 Stream data exchange
 
 Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the FIN bit is sent. Once the FIN has been sent, the stream is considered to be half­-closed.
+
+**@todo**
 
 ### 5.7 Stream half­-close
 
@@ -682,9 +682,13 @@ When one side of the stream sends a frame with FIN set to true, the stream is co
 
 When both sides have indicated their desire to stop sending on the stream, stream becomes closed.
 
+**@todo**
+
 ## 6. References
 
+ * [SST Structured Streams Transport](http://pdos.csail.mit.edu/uia/sst/)
+ * [SPDY protocol](http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1)
+ * [QUIC protocol](@todo)
  * [RDP Reliable Data Protocol](https://tools.ietf.org/html/rfc908)
  * [ECN in IP](https://tools.ietf.org/html/rfc3168)
  * [TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
- * [SPDY protocol](http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1)
