@@ -486,7 +486,7 @@ The ACK frame is sent to inform the peer which packets have been received, as we
       |                                   |    Delta Time                     |
       +--------+--------+--------+--------+--------+--------+--------+--------+
  +24  | Missing Packets NACK                                                  |
-      | (variable length: may be 0)                                           |
+      | (variable length: may be empty)                                       |
       +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
  * Frame type `uint8_t`: 1
@@ -625,7 +625,8 @@ Immediate close and non-immediate (goaway) close?
     0        1        2         3       4         5       6         7       X
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
 |Type(11)| Error code (32 bits)              | Reason phrase   | Reason phrase   | ->
-|        |                                   | length (16 bits)|(variable length)| +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|        |                                   | length (16 bits)|(variable length)|
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
 
   X-X+Y
 +--------+--------+--------+--------+--------+--------+--------+--------+
