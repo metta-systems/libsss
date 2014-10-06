@@ -382,15 +382,31 @@ Note: When describing data fields the C-like type notation is used, where
 
 #### 4.1.1 Packet header format
 
-   * Flags
-     * Sizes of optional packet header fields
-     * Optimistic ACK entropy bit *- comes in ACK frame @fixme*
-     * Last FEC group packet bit
-   * Protocol version number (variable size)
-   * Packet sequence number (variable size)
-   * FEC group number (optional?)
+```
+          0         1         2         3
+      +--------+---------+---------+---------+
+  +0  |Flags   | Version           | FEC     |
+      |000fssgv|                   | group   |
+      +--------+---------+---------+---------+
+  +4  | Packet sequence number (2 to 8 bytes)|
+      +--------+---------+---------+---------+
+  +8  |                                      |
+      +--------+---------+---------+---------+
+```
 
-**@todo**
+* Flags `uint8_t`:
+  * v - version field present, 2 bytes
+  * g - FEC group byte present
+  * ss - size of packet sequence number field
+    * 00 = 2 bytes
+    * 01 = 4 bytes
+    * 10 = 6 bytes
+    * 11 = 8 bytes
+  * f - this is last FEC group packet, in this case packet contains XOR over all zero-padded previous packets in given FEC group (bit g must also be set)
+* Protocol version number (optional, 2 bytes when present)
+* FEC group number (optional, 1 bytes when present)
+* Packet sequence number (variable size, 2 to 8 bytes in 2 byte increments)
+
 
 ### 4.2 Framing
 
@@ -411,6 +427,7 @@ Frames are inside the channel message cryptobox, prevented from peeking into by 
 |      xxxx1001        |  RESET                 |
 |      xxxx1011        |  CLOSE                 |
 |      xxxx1101        |  NEGOTIATION           |
+|      xxxx1111        |  RT_STREAM             |
 +----------------------+------------------------+
 ```
 
@@ -631,6 +648,11 @@ Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be ze
 Reason phrase: An optional human-readable explanation for why the connection was closed.
 AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed.
 
+### 4.2.9 NEGOTIATION frame
+
+### 4.2.10 RT_STREAM frame
+
+RT_STREAM - ignores retransmissions and acks, may use FEC to reduce packet loss. Useful for audio/video/datagrams.
 
 ## 5 Stream Protocol
 
