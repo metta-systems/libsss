@@ -689,7 +689,17 @@ Applications are not generally aware of the existence of channel root streams at
 
 When the application makes a connect request to open a new top-level stream to a given target host and service, the stream protocol on the initiating host creates a service request stream as a substream of a suitable channel’s root stream. The initiating stream protocol then sends a service request message on this new stream.
 
-**@todo** Service request/reply format
+Service request streams also allow to query the application about supported service endpoints.
+
+Service request streams operate with a simple format of commands which include:
+ * Query list of services
+ * Respond with a list of services
+ * Query protocols of a given service
+ * Respond with a list of protocols for a service
+ * Request connection to given service and protocol
+ * Respond with connection results
+
+**@todo** Detail service request/reply format
 
 ### 5.2 Starting new stream.
 
