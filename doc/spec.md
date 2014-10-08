@@ -1,13 +1,13 @@
-Structured Streams
-==================
+Structured Secure Streams
+=========================
 
 ## 1 Introduction
 
-SSU builds on SST, SPDY, QUIC and CurveCP protocols.
+SSS builds on SST, SPDY, QUIC and CurveCP protocols.
 
-SST provides the basis for the following set of features:
+SSS provides the following set of features:
  * Multiplex many application streams onto one network connection
- * Gives streams hereditary structure: applications can spawn lightweight streams from existing ones
+ * Streams with hereditary structure: applications can spawn lightweight streams from existing ones
    * Efficient: no 3-way handshake on startup or TIME-WAIT on close
    * Supports request/response transactions without serializing onto one stream
    * General out-of-band signaling: control requests already in progress
@@ -19,7 +19,7 @@ SST provides the basis for the following set of features:
 
 SPDY and QUIC extend with packet framing, encoding and a set of goals to achieve (see below).
 
-CurveCP adds non-transparent cryptoboxes for all crucial contents and a session initiation protocol.
+CurveCP adds opaque cryptoboxes for all crucial contents and a session initiation protocol.
 
 ### Goals (@sa QUIC)
 We’d like to develop a transport that supports the following goals:
@@ -115,19 +115,19 @@ Socket Protocol level:
 
 #### 2.1.1 Sessions
 
-A session represents a context in which SSU runs over some underlying network protocol such as UDP or IP. Each session represents an association between two network endpoints. A session is always uniquely defined by a pair of endpoints, but the definition of an endpoint depends on the underlying protocol on which SSU runs:
+A session represents a context in which SSS runs over some underlying network protocol such as UDP or IP. Each session represents an association between two network endpoints. A session is always uniquely defined by a pair of endpoints, but the definition of an endpoint depends on the underlying protocol on which SSS runs:
 
- * When SSU is run atop UDP, an endpoint consists of an IP address paired with a 16-bit UDP port number. From the perspective of any given host a session is thus uniquely defined by the 4-tuple (local IP, local port, remote IP, remote port). The session tuple for the opposite host is obtained by swapping the local and remote parts of the tuple.
+ * When SSS is run atop UDP, an endpoint consists of an IP address paired with a 16-bit UDP port number. From the perspective of any given host a session is thus uniquely defined by the 4-tuple (local IP, local port, remote IP, remote port). The session tuple for the opposite host is obtained by swapping the local and remote parts of the tuple.
 
- * If SSU is run directly atop IP as a "native" transport alongside TCP and UDP, then an endpoint consists only of an IP address, and thus an SSU session is uniquely defined by the pair of IP addresses of the hosts involved: (local IP, remote IP). By definition there can be only one such "native" SST session at a time between any pair of hosts.
+ * If SSS is run directly atop IP as a "native" transport alongside TCP and UDP, then an endpoint consists only of an IP address, and thus an SSS session is uniquely defined by the pair of IP addresses of the hosts involved: (local IP, remote IP). By definition there can be only one such "native" SSS session at a time between any pair of hosts.
 
- * If SSU is run atop some other network- or link-layer protocol, then SSU uses as its "endpoints"whatever the underlying protocols uses as an "address" or "host identifier." If SSU were to be run directly atop Ethernet, for example, then SSU’s endpoints would be IEEE MAC addresses, and a session would be uniquely defined by a pair of MAC addresses.
+ * If SSS is run atop some other network- or link-layer protocol, then SSS uses as its "endpoints"whatever the underlying protocols uses as an "address" or "host identifier." If SSS were to be run directly atop Ethernet, for example, then SSS’s endpoints would be IEEE MAC addresses, and a session would be uniquely defined by a pair of MAC addresses.
 
 #### 2.1.2 Channels
 
-The channel abstraction provides the interface between the channel protocol and the stream protocol. The channel protocol can multiplex arbitrary number of channels onto a session. The number of channels is only limited by the machine's available memory. Channel identifiers are 32-byte short-term public keys of the peer; thus, a channel is uniquely identified by the 4-tuple of (local endpoint, local channel, remote endpoint, remote channel). Each channel represents a separate instance of the SSU channel protocol resulting from a successful key exchange and feature negotiation using the negotiation protocol; SSU’s channels are therefore analogous in function to security associations in IPsec. Different channels always use independent key pairs for encryption and authentication. A given channel always uses one set of key pairs and negotiated parameters, however: when SSU needs to re-key a communication session (e.g., to ensure freshness of keys), it does so by creating a new channel through a fresh run of the negotiation protocol and terminating use of the old channel.
+The channel abstraction provides the interface between the channel protocol and the stream protocol. The channel protocol can multiplex arbitrary number of channels onto a session. The number of channels is only limited by the machine's available memory. Channel identifiers are 32-byte short-term public keys of the peer; thus, a channel is uniquely identified by the 4-tuple of (local endpoint, local channel, remote endpoint, remote channel). Each channel represents a separate instance of the SSS channel protocol resulting from a successful key exchange and feature negotiation using the negotiation protocol; SSS’s channels are therefore analogous in function to security associations in IPsec. Different channels always use independent key pairs for encryption and authentication. A given channel always uses one set of key pairs and negotiated parameters, however: when SSS needs to re-key a communication session (e.g., to ensure freshness of keys), it does so by creating a new channel through a fresh run of the negotiation protocol and terminating use of the old channel.
 
-In SSU both parties may be trying to establish connection to each other. This may lead to two completely separate channels being set up. If this happens and peers detect it, they SHOULD migrate their streams toward the more recent channel. However, they MAY decide to not do it for increased security or logical packet separation.
+In SSS both parties may be trying to establish connection to each other. This may lead to two completely separate channels being set up. If this happens and peers detect it, they SHOULD migrate their streams toward the more recent channel. However, they MAY decide to not do it for increased security or logical packet separation.
 
 Since channels rotate rather frequently (once in about 30 minutes), streams may be grouped differently onto each new set of channels, for example if a channel is set up and another channel expires, its streams may be reattached onto already existing channel.
 
@@ -182,7 +182,7 @@ packet
 
 ## 3 The Negotiation Protocol
 
-SSU’s negotiation protocol is responsible for setting up new channels for use by the channel and stream protocols. The negotiation protocol is responsible for performing short-term key agreement and host identity verification.
+SSS’s negotiation protocol is responsible for setting up new channels for use by the channel and stream protocols. The negotiation protocol is responsible for performing short-term key agreement and host identity verification.
 
 ### 3.1 Basic Design Principles
 
@@ -353,25 +353,21 @@ Figure 2: Channel protocol packet layout ([source](http://www.asciidraw.com/#900
                |                Message in crypto box              |
                                        ......
                |                                                   |
-          +-   +---------------------------------------------------+
-          |    |            Message Authentication Code            |
-          |    +                                                   +
-          |    |                     (16 bytes)                    |
-          +-   +---------------------------------------------------+
+               +---------------------------------------------------+
 ```
 
 As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet contains a NEGOTIATION frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer?)
 
 ### 4.1 MESSAGE box format
 
-After decrypting, we will have a plaintext payload block.
+After decrypting, message box becomes a plaintext payload block.
 
-A non-FEC packet is a data packet and consists of one or more frames. Each frame has it's type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group and can be used to recover one lost packet in this FEC group.
+A non-FEC packet is a data packet and consists of one or more frames. Each frame has its type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group and can be used to recover one lost packet in this FEC group.
 
 Non-FEC packet payload consists of:
  * A packet header (see 4.1.1)
- * One (Zero?) or more tagged frames (see 4.2)
- * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1168(-sizeof(PacketHeader) **@todo**) bytes.
+ * One or more tagged frames (see 4.2)
+ * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1168 bytes. This accounts for 40 bytes of IPv6 header, 8 bytes of UDP header and 64 bytes of packet header and cryptobox overhead. The total size of the datagram is thus limited to 1280 bytes - the 1280-byte datagrams are allowed by IPv6 on all networks.
 
 Note: When describing data fields the C-like type notation is used, where
  * `uint8_t` specifies unsigned 8-bit quantity (an octet)
@@ -403,23 +399,32 @@ Note: When describing data fields the C-like type notation is used, where
     * 10 = 6 bytes
     * 11 = 8 bytes
   * f - this is last FEC group packet, in this case packet contains XOR over all zero-padded previous packets in given FEC group (bit g must also be set)
-* Protocol version number (optional, 2 bytes when present)
-* FEC group number (optional, 1 bytes when present)
-* Packet sequence number (variable size, 2 to 8 bytes in 2 byte increments)
+* Protocol version number (optional, `big_uint16_t` when present)
+* FEC group number (optional, `uint8_t` when present)
+* Packet sequence number (variable size, either `big_uint16_t`, `big_uint32_t`, `big_uint48_t` or `big_uint64_t`)
 
+Version field is often only used in the first few packets of the protocol, after some ACKs are received and parties know the agreed version number, it does no longer need to be transmitted.
+
+If FEC is not used, the FEC group byte is not needed. The g bit serves as FEC enable flag.
+
+Shortest packet header is thus only 3 bytes long: flags and 2-byte packet sequence number.
 
 ### 4.2 Framing
 
-Frames are stream containers within a channel packet. Packet contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks, where each chunk follows a certain format with a header and optionally content part.
-
-Frames are inside the channel message cryptobox, prevented from peeking into by any eavesdroppers.
+Frames are stream containers within a channel packet. Streams contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks, where each chunk follows a certain format with a header and optionally content part.
+```
++--------+.........+--------+.........+
+| Type   | Payload | Type   | Payload |
++--------+.........+--------+.........+
+```
+Frames are inside the channel message cryptobox, not visible to any eavesdroppers.
 
 #### 4.2.1 Frame types
 ```
 +----------------------+------------------------+
 |     Type value       |     Frame type         |
 +----------------------+------------------------+
-|      fioood00        |  STREAM                |
+|      fiuoood0        |  STREAM                |
 |      xxxx0001        |  ACK                   |
 |      xxxx0011        |  PADDING               |
 |      xxxx0101        |  DECONGESTION          |
@@ -435,37 +440,34 @@ Frames are inside the channel message cryptobox, prevented from peeking into by 
 
 Stream frame is used to transfer data on each individual stream. It also serves as an ATTACH packet
 to initiate a new stream.
-
+```
 Frame type: 0
-Flags: FIN, INIT, OFFSET, DATA LENGTH
-
-When INIT bit is set, this frame initiates the stream by providing stream and parent unique IDs.
-When FIN bit is set, this frame marks last transmission on this stream in this direction.
-OFFSET bits encode length of the stream offset field.
-When DATA LENGTH bit is set, this frame has a limited number of bytes for this stream, provided in
-length field, otherwise stream data occupies the rest of the packet.
-
-http://www.asciidraw.com/#717654329840973968/875838298 edit
+Flags: FIN, INIT, USID, OFFSET, DATA LENGTH
 ```
-      0
- +----------+
- | fioood00 |
- +----------+
-  Init block (I bytes)
+ * When INIT bit is set, this frame initiates the stream by providing stream and parent unique IDs.
+ * When USID bit is set, this INIT frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. USID bit can only be set when INIT bit is set.
+ * When FIN bit is set, this frame marks last transmission on this stream in this direction.
+ * OFFSET bits encode length of the stream offset field.
+ * When DATA LENGTH bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
 
+Both INIT and FIN bits may be set.
 
-
- +----------+
- |  flags   |
- +----------+----------------------------------------+
- |          Stream ID                                |
- +----------+----------------------------------------+
- |          Parent Stream ID (optional)              |
- +---------------------------------------------------+
-
-  Offset field (O bytes)
-  Data length field (2 bytes, specifies packet length D)
+Possible combinations of bits:
 ```
+INIT
+INIT,USID
+FIN
+INIT,FIN
+INIT,USID,FIN
+```
+
+ * FIN bit does not add any fields to the frame header.
+ * INIT bit adds two LSIDs in sender space - parent LSID and NSID.
+ * USID bit adds full half-stream ID of the USID.
+ * OFFSET bits add between 0 and 8 bytes offset.
+ * DATA LENGTH bit adds 2 bytes of data size.
+
+[edit header here](http://www.asciidraw.com/#717654329840973968/875838298)
 
 Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
 We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching.
@@ -599,6 +601,7 @@ Detaching informs the other side that this stream should not be torn down, but i
 more data on this channel.
 
 ```
+Detach frame only contains LSID of stream that will be detached.
 ```
 
 #### 4.2.7 RESET frame
@@ -608,40 +611,38 @@ Abort stream. (Might combine detach and reset frames into STOP frame!)
 The RESET frame allows for abnormal termination of a stream. When sent by the creator of a stream, it indicates the creator wishes to cancel the stream. When sent by the receiver of a stream, it indicates an error or that the receiver did not want to accept the stream, so the stream should be closed.
 
 ```
-     0        1       2         3        4       5        6        7
-+--------+--------+--------+--------+--------+--------+--------+--------+
-|Type(9) |    Stream ID (32 bits)            | Error code (32 bits) ->
-+--------+--------+--------+--------+--------+--------+--------+--------+
-     8        9       10      11-X
-+--------+--------+--------+--------+--------+--------+--------+--------+
-   Error | Reason phrase   | Reason phrase (variable length: may be 0)  |
-   code  | length (16 bits)|                                            |
-+--------+--------+--------+--------+--------+--------+--------+--------+
+         0        1       2         3        4       5        6        7
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+ +0 |Type(9) |    Stream ID (32 bits)            | Error code (32 bits) ->  |
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+ +8 |  Error | Reason phrase   | Reason phrase (variable length: may be 0)  |
+    |  code  | length (16 bits)|                                            |
+    +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
 
-Frame type `uint8_t`: Value specifying that this is a stream rst frame (0x4)
-Stream Id `big_uint32_t`: ID unique to this stream.
+Frame type `uint8_t`: Value specifying that this is a stream reset frame (9)
+Stream Id `big_uint32_t`: LSID of the stream.
 Error code `big_uint32_t`: Error code which indicates why the stream is being closed.
 Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
-Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is not zero-terminated.
+Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is **not** zero-terminated.
 
 #### 4.2.8 CLOSE frame
 
 Close connection.
 
-Immediate close and non-immediate (goaway) close?
-```
-    0        1        2         3       4         5       6         7       X
-+--------+--------+--------+--------+--------+--------+--------+--------+--------+
-|Type(11)| Error code (32 bits)              | Reason phrase   | Reason phrase   | ->
-|        |                                   | length (16 bits)|(variable length)|
-+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+**@todo** Immediate close and non-immediate (goaway) close?
 
-  X-X+Y
-+--------+--------+--------+--------+--------+--------+--------+--------+
-|                      AckFrame  (variable length)                      |
-+--------+--------+--------+--------+--------+--------+--------+--------+
 ```
+        0        1        2         3       4         5       6         7
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+ +0 |Type(11)| Error code (32 bits)              | Reason phrase   |        |
+    |        |                                   | length (16 bits)|        |
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+ +8 | Reason phrase            |      AckFrame  (variable length)           |
+    |(variable length)         |                                            |
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+```
+
 Frame type `uint8_t`: Connection close frame type (11)
 Error code `big_uint32_t`: Error code which indicates why the connection is being closed.
 Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
@@ -649,6 +650,8 @@ Reason phrase: An optional human-readable explanation for why the connection was
 AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed.
 
 ### 4.2.9 NEGOTIATION frame
+
+Allow to setup some connection parameters.
 
 ### 4.2.10 RT_STREAM frame
 
@@ -662,15 +665,31 @@ Streams must be attached to channels to be able to send. Streams that need to se
 
 Streams have a unique ID, used to distinguish this stream after switching to a newly established channel. Streams in channels keep their global IDs and continue delivering data even after channel switch.
 
-> Old CurveCP description:
+### Stream IDs - USID
 
-Once the receiver has acknowledged a range of bytes, the receiver is taking responsibility for all of those bytes; the sender is expected to discard those bytes and never send them again. The sender can send the bytes again; usually this occurs because the first acknowledgment was lost. The receiver discards the redundant bytes and generates a new acknowledgment covering those bytes.
+SSS assigns each logical stream a permanent Unique Stream Identifier (USID) when the stream is first created, and uses this identifier to refer to the stream if it becomes necessary to detach the stream from its original channel or migrate it to another channel. A USID consists of two components, a 16-byte cryptographic half-channel identifier and a 64-bit stream counter.
+Each channel has two half-channel identifiers, one for each direction of information flow, both of which the negotiation protocol computes for the channel during key exchange. Which of a channel’s half-channel identifiers is assigned to a given stream depends on which participant host originated the stream. The stream counter value, in turn, distinguishes among streams created by that host during the channel’s lifetime.
+**@fixme** Although in theory every stream has a USID, in practice for most short-lived streams that remain attached to their original channel throughout their lifetimes, the stream’s USID is never actually transmitted or used by the wire protocol. Within the context of a particular chan- nel, SSS normally identifies streams using shorter 16-bit Local Stream Identifiers or LSIDs, described in the next section.
 
-### 5.1 Initiating root stream (LSID 0)
+### Stream IDs - LSID
+
+LSID is similar to QUIC stream numbers - it's a 32-bit number, started from different start values by initiator and responder.
+
+At a given point in time a stream may have between zero and four attachments, two for each direction of information flow. Each attachment binds the stream to a particular channel and associates a 32-bit Local Stream Identifier (LSID) to the stream for the purpose of transmitting stream data over that channel. The scope of an LSID is local to a particular channel and flow direction: each endpoint host on a channel has its own LSID space, within which it may assign LSIDs independently of the other endpoint and of other channels.
+SSS allows a stream to have up to two attachments in each direction so that a host can transmit data on a stream continuously using one attachment while setting up a second attachment to a different channel, in order to migrate streams from one channel to another smoothly and transparently to the application. Hosts may detach active streams not only to migrate them but also to free up LSID space; long-lived but inactive streams may remain unattached in one or both flow directions for arbitrary periods of time.
+
+### 5.1 Channel root stream (LSID 0)
 
 Root stream does not have a unique ID and therefore is always implicitly started on a channel. It is used to spawn first application-level stream and for out-of-band signaling about other streams.
 
-**@todo**
+Whenever a pair of SSS hosts set up a new channel via the negotiation protocol, the hosts implicitly create a special stream for the channel called the channel root. A channel’s root stream is always attached to the channel with an LSID of 0 in each direction, and never detaches or migrates to other channels. The channel itself terminates once its root stream is closed in both directions.
+Applications are not generally aware of the existence of channel root streams at all: channel roots merely provide an outermost context in each channel that the stream layer uses to exchange control messages and initiate (or migrate in) other streams on behalf of applications.
+
+### Service request streams
+
+When the application makes a connect request to open a new top-level stream to a given target host and service, the stream protocol on the initiating host creates a service request stream as a substream of a suitable channel’s root stream. The initiating stream protocol then sends a service request message on this new stream.
+
+**@todo** Service request/reply format
 
 ### 5.2 Starting new stream.
 
