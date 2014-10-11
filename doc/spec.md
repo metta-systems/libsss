@@ -718,7 +718,7 @@ First byte is 0x01 for requests and 0x02 for responses. Second byte determines t
 ```
          0           1         2        3       4      5       6       7
     +---------+------------+-------+-------+-------+-------+-------+-------+
- +0 | Type(1) | Reptype(1) |          Status code          | Reply length  |
+ +0 | Type(2) | Reptype(1) |          Status code          | Reply length  |
     +---------+------------+-------+-------+-------+-------+-------+-------+
  +7 |    Reply string                                               .....  |
     +---------+------------+-------+-------+-------+-------+-------+-------+
@@ -727,28 +727,48 @@ First byte is 0x01 for requests and 0x02 for responses. Second byte determines t
 #### Query list of services
 
 ```
-Type(1) | Reqtype(2)
+         0           1
+    +---------+------------+
+ +0 | Type(1) | Reqtype(2) |
+    +---------+------------+
 ```
 
 #### Respond with a list of services
 
 ```
-Type(2) | Reptype(2)
+         0           1         2        3       4      5       6       7
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+ +0 | Type(2) | Reptype(2) |          Status code          | Reply count   |
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+ +7 |    Reply count       | Length| Reply N service name   .....          |
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+                           ^                                               ^
+                           +-----------------------------------------------+
+                                           Reply count times
 ```
 
 #### Query protocols of a given service
 
 ```
-Type(1) | Reqtype(3)
+           0           1         2        3       ....  X
+      +---------+------------+--------+----------------------+
+   +0 | Type(1) | Reqtype(3) | Szserv | Service name string  |
+      +---------+------------+--------+----------------------+
 ```
 
 #### Respond with a list of protocols for a service
 
 ```
-Type(2) | Reptype(3)
+           0           1         2        3       ....                     X
+      +---------+------------+--------+---------+---------+------+------+------+
+   +0 | Type(2) | Reptype(3) | Szserv | Service name string                    |
+      +---------+------------+--------+---------+---------+------+------+------+
+ +X+1 | Protocol name count                     | Szproto | Protocol name      |
+      +---------+------------+--------+---------+---------+------+------+------+
+                                                ^                              ^
+                                                +------------------------------+
+                                                    Protocol name count times
 ```
-
-
 
 ### 5.2 Starting new stream.
 
