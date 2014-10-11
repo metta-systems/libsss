@@ -797,13 +797,19 @@ New stream is started by posting STREAM frame with INIT flag set.
 
 ### 5.3 Initiating sub-streams
 
+Sub streams are started by posting STREAM frame with INIT flag set. Parent LSID field indicates the parent stream to spawn from.
+
 **@todo**
 
 ### 5.4 Attaching a stream to channel
 
+Streams are attached by posting STREAM frame with INIT and USID flags set. USID specifies a unique identifier already known to peer to indicate that this stream is resuming on a new channel.
+
 **@todo**
 
 ### 5.5 Detaching a stream from channel
+
+Stream is detached from channel by sending a DETACH frame.
 
 **@todo**
 
