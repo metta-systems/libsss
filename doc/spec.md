@@ -716,6 +716,7 @@ First byte is 0x01 for requests and 0x02 for responses. Second byte determines t
 #### Respond with connection results
 
 ```
+Success & error replies:
          0           1         2        3       4      5       6       7
     +---------+------------+-------+-------+-------+-------+-------+-------+
  +0 | Type(2) | Reptype(1) |          Status code          | Reply length  |
@@ -736,6 +737,7 @@ First byte is 0x01 for requests and 0x02 for responses. Second byte determines t
 #### Respond with a list of services
 
 ```
+Success reply:
          0           1         2        3       4      5       6       7
     +---------+------------+-------+-------+-------+-------+-------+-------+
  +0 | Type(2) | Reptype(2) |          Status code          | Reply count   |
@@ -745,6 +747,13 @@ First byte is 0x01 for requests and 0x02 for responses. Second byte determines t
                            ^                                               ^
                            +-----------------------------------------------+
                                            Reply count times
+Error reply:
+         0           1         2        3       4      5       6       7
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+ +0 | Type(2) | Reptype(2) |          Status code          | Reply length  |
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+ +7 |    Reply string                                               .....  |
+    +---------+------------+-------+-------+-------+-------+-------+-------+
 ```
 
 #### Query protocols of a given service
@@ -759,15 +768,25 @@ First byte is 0x01 for requests and 0x02 for responses. Second byte determines t
 #### Respond with a list of protocols for a service
 
 ```
-           0           1         2        3       ....                     X
-      +---------+------------+--------+---------+---------+------+------+------+
-   +0 | Type(2) | Reptype(3) | Szserv | Service name string                    |
-      +---------+------------+--------+---------+---------+------+------+------+
- +X+1 | Protocol name count                     | Szproto | Protocol name      |
-      +---------+------------+--------+---------+---------+------+------+------+
-                                                ^                              ^
-                                                +------------------------------+
-                                                    Protocol name count times
+Success reply:
+           0           1         2       3       4       5       6        7
+      +---------+------------+-------+-------+-------+-------+--------+---------+
+   +0 | Type(2) | Reptype(3) |          Status code          | Szserv |         |
+      +---------+------------+-------+-------+-------+-------+--------+---------+
+   +8 | Service name string        ....                                         |
+      +---------+------------+-------+-------+-------+-------+--------+---------+
+ +X+1 | Protocol name count                  |Szproto| Protocol name     ....   |
+      +---------+------------+-------+-------+-------+-------+--------+---------+
+                                             ^                                  ^
+                                             +----------------------------------+
+                                                 Protocol name count times
+Error reply:
+         0           1         2        3       4      5       6       7
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+ +0 | Type(2) | Reptype(3) |          Status code          | Reply length  |
+    +---------+------------+-------+-------+-------+-------+-------+-------+
+ +7 |    Reply string                                               .....  |
+    +---------+------------+-------+-------+-------+-------+-------+-------+
 ```
 
 ### 5.2 Starting new stream.
