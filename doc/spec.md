@@ -415,7 +415,9 @@ Shortest packet header is thus only 3 bytes long: flags and 2-byte packet sequen
 
 ### 4.2 Framing
 
-Frames are stream containers within a channel packet. Streams contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks, where each chunk follows a certain format with a header and optionally content part.
+@todo might need to move framing until after section 5, after stream IDs are explained.
+
+Frames are stream containers within a channel packet. Streams contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks, where each chunk follows a certain format with a header and content part.
 ```
 +--------+.........+--------+.........+
 | Type   | Payload | Type   | Payload |
@@ -451,7 +453,7 @@ Flags: FIN, INIT, USID, OFFSET, DATA LENGTH
  * When `INIT` bit is set, this frame initiates the stream by providing stream and parent unique IDs.
  * When `USID` bit is set, this `INIT` frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. `USID` bit can only be set when `INIT` bit is set.
  * When `FIN` bit is set, this frame marks last transmission on this stream in this direction.
- * `OFFSET` bits encode length of the stream offset field.
+ * `OFFSET` bits encode length of the stream offset field. A 0, 16, 24, 32, 40, 48, 56, or 64 bit unsigned number specifying the byte offset in the stream for this block of data. 000 corresponds to 0 bits and 111 corresponds to 64 bits. (@todo Should offset be always present?)
  * When `DATA LENGTH` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
 
 Both `INIT` and `FIN` bits may be set.
