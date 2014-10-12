@@ -878,5 +878,6 @@ When both sides have indicated their desire to stop sending on the stream, strea
  * [RDP Reliable Data Protocol](https://tools.ietf.org/html/rfc908)
  * [ECN in IP](https://tools.ietf.org/html/rfc3168)
  * [TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
- * SCTP
- * DTLS
+ * [SCTP](http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol)
+ * [DTLS](http://en.wikipedia.org/wiki/Datagram_Transport_Layer_Security)
+ * SSU (Secure Semireliable UDP, an i2p protocol)
