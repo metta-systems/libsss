@@ -691,6 +691,10 @@ Figure 12: Close frame layout
 
 Allow to setup some connection parameters.
 
+Currently supported options:
+  * FEC
+  * Congestion control algorithm
+
 ### 4.2.10 RT_STREAM frame
 
 RT_STREAM - ignores retransmissions and acks, may use FEC to reduce packet loss. Useful for audio/video/datagrams.
