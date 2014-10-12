@@ -71,8 +71,8 @@ Figure 1: Protocol Architecture ([advanced diagram](https://dl.dropboxuserconten
                      +v                                     ||
   +----------------------------------------------+          ||
   |            Stream Protocol                   |          ||                  Structured
-  +----------------------------------------------+          ||                    Streams
-        +^                       +^                         ||
+  +----------------------------------------------+          ||                  Secure
+        +^                       +^                         ||                  Streams
         || Channels              ||                         ||
         v+                       v+                         v+
   +-------------------+    +---------------------+    +---------------------+
@@ -613,7 +613,7 @@ Figure 7: TCP decongestion frame layout
 
 ##### 4.2.5.4 Congestion control feedback for WebRTC Inter-arrival
 
-Figure 10: Interarrival decongestion frame layout
+Figure 10: Inter-arrival decongestion frame layout
 ```
           0         1         2         3         4         5         6         7
      +---------+---------+---------+---------+---------+---------+---------+---------+
