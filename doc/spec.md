@@ -471,10 +471,40 @@ INIT,USID,FIN
  * `OFFSET` bits add between 0 and 8 bytes offset.
  * `DATA LENGTH` bit adds 2 bytes of data size.
 
-[edit header here](http://www.asciidraw.com/#717654329840973968/875838298)
+Figure N: Stream frame layout ([source](http://www.asciidraw.com/#717654329840973968/875838298))
+```
+          0
+     +----------+
+     | fiuoood0 |
+     +----------+
+      When INIT bit is set:
+         0       1       2       3       4       5       6       7
+     +-------+-------+-------+-------+-------+-------+-------+-------+
+  +1 |         Parent SID            |           New SID             |
+     +-------+-------+-------+-------+-------+-------+-------+-------+
+      When USID bit is set:
+         0       1       2       3       4       5       6       7
+     +-------+-------+-------+-------+-------+-------+-------+-------+
+  +9 | Stream USID                                                   |
+     +-------+-------+-------+-------+-------+-------+-------+-------+
+ +17 |                                                               |
+     +-------+-------+-------+-------+-------+-------+-------+-------+
+ +25 |                               |
+     +-------+-------+-------+-------+
+      Depending on OFFSET bits between 0 and 64 bits offset:
+         0       1       2       3       4       5       6       7
+  +1 +-------+-------+-------+-------+-------+-------+-------+-------+
+  +9 |                                                               |
+ +29 +-------+-------+-------+-------+-------+-------+-------+-------+
+      When DATA LENGTH bit is set:
+         0       1
+     +-------+-------+
+     |  Data length  |
+     +-------+-------+
+```
 
 Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
-We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching.
+We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching. Parent must be already attached to initiate a sub-stream, so LSID is enough to distinguish parent stream in wire protocol, even thought USID might have been used internally.
 
 #### 4.2.3 ACK frame
 
