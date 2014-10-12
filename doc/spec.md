@@ -6,7 +6,7 @@ Structured Secure Streams
 SSS builds on SST, SPDY, QUIC and CurveCP protocols.
 
 SSS provides the following set of features:
- * Multiplex many application streams onto one network connection
+ * Multiplex many application streams onto one secure network connection
  * Streams with hereditary structure: applications can spawn lightweight streams from existing ones
    * Efficient: no 3-way handshake on startup or TIME-WAIT on close
    * Supports request/response transactions without serializing onto one stream
@@ -21,39 +21,39 @@ SPDY and QUIC extend with packet framing, encoding and a set of goals to achieve
 
 CurveCP adds opaque cryptoboxes for all crucial contents and a session initiation protocol.
 
-### Goals (@sa QUIC)
+### 1.1 Goals
+
 We’d like to develop a transport that supports the following goals:
   1. Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
   2. Reduced head-of-line blocking due to packet loss (losing one packet will not generally impair other multiplexed streams)
   3. Low latency (minimal round-trip costs, both during setup/resumption, and in response to packet loss)
-    a. Significantly reduced connection startup latency (Commonly zero RTT connection, cryptographic hello, and initial request(s))
+    a. Significantly reduced connection startup latency
     b. Attempt to use Forward Error Correcting (FEC) codes to reduce retransmission latency after packet loss.
   4. Improved support for mobile, in terms of latency and efficiency (as opposed to TCP connections which are torn down during radio shutdowns)
   5. Congestion avoidance support comparable to, and friendly to, TCP (unified across multiplexed streams)
     a. Individual stream flow control, to prevent a stream with a fast source and slow sink from flooding memory at receiver end, and allow back-pressure to appear at the send end.
   6. Privacy assurances comparable to TLS (without requiring in-order transport or in-order decryption)
-  7. Reliable and safe resource requirements scaling, both server-side and client-side (including reasonable buffer management and aids to avoid facilitating DoS magnification attacks)
+  7. Reliable and safe resource requirements scaling, both server-side and client-side (including reasonable buffer management and aids to avoid facilitating DoS amplification attacks)
   8. Reduced bandwidth consumption and increased channel status responsiveness (via unified signaling of channel status across all multiplexed streams)
   9. Reduced packet-count, if not in conflict with other goals.
   10. Support reliable transport for multiplexed streams (can simulate TCP on the multiplexed streams)
   11. Efficient demux-mux properties for proxies, if not in conflict with other goals.
   12. Reuse, or evolve, existing protocols at any point where it is plausible to do so, without sacrificing our stated goals (e.g., consider LEDBAT, DCCP, TCP minion)
 
-#### WHY NOT USE SCTP over DTLS?
+### 1.2 Why not use SCTP over DTLS?
 
-One recurring question is: Why not use SCTP (Stream Control Transmission Protocol) over DTLS (Datagram Transport Layer Security)? SCTP provides (among other things) stream multiplexing, and DTLS provides SSL quality encryption and authentication over a UDP stream. In addition to the fact that both of these protocols are in various levels of standardization, this combination is currently on a standard track, and described in this Network Working Group Internet Draft.
+One recurring question is: Why not use [SCTP (Stream Control Transmission Protocol)](http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol) over [DTLS (Datagram Transport Layer Security)](http://en.wikipedia.org/wiki/Datagram_Transport_Layer_Security)? SCTP provides (among other things) stream multiplexing, and DTLS provides SSL quality encryption and authentication over a UDP stream. In addition to the fact that both of these protocols are in various levels of standardization, this combination is currently on a standard track, and [described in this Network Working Group Internet Draft](http://tools.ietf.org/html/draft-tuexen-tsvwg-sctp-dtls-encaps-00).
 The largest visible issue with using these protocols relates to our goals in the area of connection latency, and is perhaps the most critical conflicting element. In addition, we can also anticipate issues in bandwidth efficiency that may reduce our ability to achieve the goals.
 
-[channels](http://www.asciidraw.com/#5074225503160675365/76617341)
+### 1.3 Packet loss
+
+Packet loss in the Internet is broadly estimated to be in the range of 1-2% of all packets. These numbers have been confirmed by tests of clients, such as Chrome, recording stats for test streams of UDP packets to server farms around the world. It is extremely unlikely that over 100 packets can be received without a loss, and certainly not 200.
+
+The primary cause for packet loss is believed to be congestion, where routers perform switching operations, and output buffer sizes are exceeded. This issue is fundamental to the design of the Internet, and TCP, where packet loss is used as a signal of congestion, and the protocol is required to respond by reducing the flow across the congested path. Packet loss can also be caused by analog factors on transmission lines, but such losses are believed to be much lower in rate, and hence negligible.
 
 One problem (at least with normal implementations) is that the application cannot access the packets coming after a lost packet until the retransmitted copy of the lost packet is received. This causes problems for real-time applications such as streaming media, real-time multiplayer games and voice over IP (VoIP) where it is generally more useful to get most of the data in a timely fashion than it is to get all of the data in order.
 
 A packet is routinely delayed when a packet is lost, such as due to congestion, and it must be retransmitted. A better multiplexed transport should delay only one stream when a single packet is lost.
-
-### 1.1 Packet loss
-
-Packet loss in the Internet is broadly estimated to be in the range of 1-2% of all packets. These numbers have been confirmed by tests of clients, such as Chrome, recording stats for test streams of UDP packets to server farms around the world. It is extremely unlikely that over 100 packets can be received without a loss, and certainly not 200.
-The primary cause for packet loss is believed to be congestion, where routers perform switching operations, and output buffer sizes are exceeded. This issue is fundamental to the design of the Internet, and TCP, where packet loss is used as a signal of congestion, and the protocol is required to respond by reducing the flow across the congested path. Packet loss can also be caused by analog factors on transmission lines, but such losses are believed to be much lower in rate, and hence negligible.
 
 Packet loss will be handled by two mechanisms: Packet-level error correcting codes, and lost data retransmission. The ultimate fallback when all else fails will be retransmission of lost data. When data is retransmitted as a response to a lost packet, the original packet is not retransmitted. Instead, the encapsulated data is placed in a new packet, and that new packet is sent.
 
@@ -61,7 +61,7 @@ For reduced latency of shorter streams, and for the tail-end of some (all?) stre
 
 ## 2 Design Overview
 
-Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966789321/1974720956) [advanced diagram](https://dl.dropboxusercontent.com/s/6ck76plbu7lrun3/2014-10-02%20at%2012.21.png?dl=0)
+Figure 1: Protocol Architecture ([advanced diagram](https://dl.dropboxusercontent.com/s/6ck76plbu7lrun3/2014-10-02%20at%2012.21.png?dl=0))
 ```
   +------------------------------------------------------------------------+
   |                      Application Protocol                              |
@@ -89,27 +89,27 @@ Figure 1: Protocol Architecture [source](http://www.asciidraw.com/#5612283093966
 
 Application Protocol: data streams
   - long term keys
-  - `ssu::host`
+  - `sss::host`
 
 Stream Protocol:
   - sending mux/demux (multiple app streams with priorities)
   - data retransmission and congestion control
   - distinguish real-time and background data
   - special streams for datagrams (dg stream, audio stream, video stream)
-  - `ssu::stream`
+  - `sss::stream`
 
 Channel Protocol: curvecp-like
   - short term keys
   - packet end-to-end encryption
   - forward secrecy
-  - `ssu::channel`
+  - `sss::channel`
 
 Pluggable congestion control: e.g. LEDBAT for file sync, Chicago for active sessions etc.
-  - `ssu::decongestion`
+  - `sss::decongestion`
 
 Socket Protocol level:
   - receive datagrams and demux them to channels
-  - `boost::asio::udp` (`uia::comm::socket`)
+  - `uia::comm::socket` aka `boost::asio::udp`
 
 ### 2.1 Interface Abstractions
 
@@ -138,7 +138,6 @@ We should provide support to pad packets to reduce vulnerability to traffic anal
 
 Datagrams are specified to always fit in the smallest IPv6 datagram, 1280 bytes. (plus a typical 20 byte IPv4 or 40 byte IPv6 and 8 byte UDP header)
 
-
 #### 2.1.3 Streams
 
 We expect that different streams will have distinct transport characteristics which may be set or modified by the application. These include such distinct characteristic settings as:
@@ -161,12 +160,13 @@ To better support an efficient and tight binding with an application, the follow
   7. Bytes in queue
   8. Per-stream queue size (either bytes per stream, or unsent packets, both??)
 
-Notification should also be provided, or access for the following events [granularity of notification is TBD, and there should be no requirement on timeliness of the notifications, but any notification or status should include a best estimate of when the actual event took place]:
+Notification should also be provided, or access for the following events (granularity of notification is TBD, and there should be no requirement on timeliness of the notifications, but any notification or status should include a best estimate of when the actual event took place):
   1. Queue size has dropped to zero
   2. All required ACKs have been received (connection may be closed with no transmission state loss.)
-    a. ACK of specific packet (section of stream?) has been received (not all streams support this. [Should this be queryable, rather than a notification??])
+    a. ACK of specific packet (section of stream?) has been received (not all streams support this. Should this be queryable, rather than a notification?)
 
 ### 2.2 Packet types
+
 ```
 packet
 +--negotiation
@@ -175,7 +175,7 @@ packet
    +--INITIATE
 +--message
    +--data
-      +--frame sequence
+   |  +--frame sequence
    +--FEC
       +--redundant data for single-packet recovery
 ```
@@ -204,17 +204,15 @@ If the attacker makes copies of a legitimate initiator's HELLO packets then the 
 
 Protocol provides forward secrecy for the initiator's long-term public key. Two minutes after a connection is closed, the responder is unable to extract the initiator's _long-term public key_ from the network packets that were sent to that responder, and is unable to verify the initiator's long-term public key from the network packets -- that is because initiator is always using short-term public key to encrypt -- the only place where initiator's long-term public key is revealed is in Vouch subpacket, which is inside a crypto box.
 
-Here's how the forward secrecy works. At the beginning of a connection, the Responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the Initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
+Here's how the forward secrecy works. At the beginning of a connection, the responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
 
- * Packets from the Initiator contain, unencrypted, the short-term public key C'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
- * The first packet from the Initiator contains a cryptographic box that can be opened by __c' and by s__ (not s'; the initiator does not know S' at this point). This box contains Initiator's long-term public key C for validation against black-list by the Responder.
- * The first packet from the Responder contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the Responder's short-term public key S', which is generated randomly for this connection, and a cookie, discussed below.
- * The second packet from the Initiator contains a cookie from the Responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the Responder. Two minutes later the Responder has discarded this key and is unable to extract any information from the cookie.
+ * Packets from the initiator contain, unencrypted, the short-term public key C'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
+ * The first packet from the initiator contains a cryptographic box that can be opened by __c' and by s__ (not s'; the initiator does not know S' at this point). This box contains initiator's long-term public key C for validation against black-list by the responder.
+ * The first packet from the responder contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the responder's short-term public key S', which is generated randomly for this connection, and a cookie, discussed below.
+ * The second packet from the initiator contains a cookie from the responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the responder. Two minutes later the responder has discarded this key and is unable to extract any information from the cookie.
  * At the end of the connection, both sides throw away the short-term secret keys s' and c'.
 
-Channel holds short-term keys for encryption session. Closing a channel destroys those keys, providing forward secrecy.
-
-Channels are closed after arbitrary amount of time to flush keys.
+Channel holds short-term keys for encryption session. Closing a channel destroys those keys, providing forward secrecy. Channels are closed after arbitrary amount of time to destroy keys. The default channel timeout is 30 minutes plus minus a few minutes.
 
 #### 3.1.4 Security requirements for nonces
 
@@ -227,10 +225,12 @@ Negotiation protocol uses 3-way message exchange to verify peer's identity and s
 #### 3.2.1 Responder Cookie format
 
 ```
-16 bytes: compressed nonce, prefix with "minute-k"
-80 bytes: secretbox under minute-key, containing:
-    32 bytes: initiator short-term public key
-    32 bytes: responder short-term secret key
+ofs : sz  : description
+0   : 16  : compressed nonce, prefix with "minute-k"
+16  : 80  : secretbox under minute-key, containing:
+    : ofs : sz  :
+    : 0   : 32  : initiator short-term public key
+    : 32  : 32  : responder short-term secret key
 TOTAL: 96 bytes
 ```
 
@@ -238,16 +238,18 @@ When the minute key expires, the cookie could not be decrypted and will make con
 
 #### 3.2.2 HELLO packet format
 
-First packet sent by the Initiator willing to establish a connection. This packet is artificially padded with zeros to make it larger than the response packet, reducing amplification attacks possibility.
+First packet sent by the initiator willing to establish a connection. This packet is artificially padded with zeros to make it larger than the response packet, reducing amplification attacks possibility.
 
 ```
-0   : 8  : magic
-8   : 32 : initiator short-term public key
-40  : 64 : zero
-104 : 8  : compressed nonce
-112 : 80 : box C'->S containing:
-            0  : 32 : initiator long-term public key (for pre-auth)
-            32 : 32 : zero
+ofs : sz  : description
+0   : 8   : magic
+8   : 32  : initiator short-term public key
+40  : 64  : zero
+104 : 8   : compressed nonce
+112 : 80  : box C'->S containing:
+    : ofs : sz  :
+    : 0   : 32  : initiator long-term public key (for pre-auth)
+    : 32  : 32  : zero
 TOTAL: 192 bytes
 ```
 
@@ -258,15 +260,13 @@ In response to HELLO packet, the Responder does not allocate any state. Instead,
 In response, Responder encodes initiator's short-term public key and own short-term secret key using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
 
 ```
-0  : 8   : magic
-8  : 16  : compressed nonce
-24 : 144 : box S->C' containing:
-            0  : 32 : responder short-term public key
-            Responder Cookie:
-            32 : 16 : compressed nonce
-            48 : 80 : minute-key secretbox containing:
-                       0  : 32 : initiator short-term public key
-                       32 : 32 : responder short-term secret key
+ofs : sz  : description
+0   : 8   : magic
+8   : 16  : compressed nonce
+24  : 144 : box S->C' containing:
+    : ofs : sz  :
+    : 0   : 32  : responder short-term public key
+    : 32  : 96  : Responder Cookie (@sa 3.2.1)
 TOTAL: 168 bytes
 ```
 
@@ -274,23 +274,22 @@ TOTAL: 168 bytes
 
 When Initiate packet is accepted, starting a session, cookie must be placed into a cache and cleaned when minute key is rotated to avoid replay attacks.
 
-@todo Require a congestion control negotiation frame inside INITIATE message before sending any stream data.
+@todo Require a congestion control NEGOTIATION frame inside INITIATE message before sending any stream data.
 
 ```
+ofs : sz    : description
 0   : 8     : magic
 8   : 32    : initiator short-term public key
-40  : 96    : responder's cookie
-               0  : 16 : compressed nonce
-               16 : 80 : minute-key secretbox containing:
-                          0  : 32 : initiator short-term public key
-                          32 : 32 : responder short-term secret key
+40  : 96    : Responder Cookie (@sa 3.2.1)
 136 : 8     : compressed nonce
 144 : 112+M : box C'->S' containing:
-144 :          0   : 32  : initiator long-term public key
-176 :          32  : 16  : compressed nonce
-192 :          48  : 48  : box C->S containing Vouch subpacket:
-                            0 : 32 : initiator short-term public key
-240 :          96  : M   : message
+ofs :   ofs : sz  :
+144 :   0   : 32  : initiator long-term public key
+176 :   32  : 16  : compressed nonce
+192 :   48  : 48  : box C->S containing Vouch subpacket:
+            : ofs : sz  :
+            : 0   : 32  : initiator short-term public key
+240 :   96  : M   : message
 TOTAL: 240+M+16 bytes
 ```
 
@@ -298,14 +297,16 @@ M size is in multiples of 16 between 16 and 1024 bytes.
 
 #### 3.2.5 INITIATOR MESSAGE packet format
 
-Responder and Initiator message packets differ only in the kind of short term key and direction of encryption of the box. Each side sends packets with their own short-term public key as identifier.
+Responder and initiator message packets differ only in the kind of short term key and direction of encryption of the box. Each side sends packets with their own short-term public key as identifier.
 
 ```
+ofs : sz   : description
 0   : 8    : magic
 8   : 32   : initiator short-term public key C'
 40  : 8    : compressed nonce
 48  : 16+M : box C'->S' containing:
-              0 : M : message
+    : ofs  : sz  :
+    : 0    : M   : message
 TOTAL: 64+M bytes
 ```
 
@@ -314,11 +315,13 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 #### 3.2.6 RESPONDER MESSAGE packet format
 
 ```
-0  : 8    : magic
-8  : 32   : responder short-term public key S'
-40 : 8    : compressed nonce
-48 : 16+M : box S'->C' containing:
-             0 : M : message
+ofs : sz   : description
+0   : 8    : magic
+8   : 32   : responder short-term public key S'
+40  : 8    : compressed nonce
+48  : 16+M : box S'->C' containing:
+    : ofs  : sz  :
+    : 0    : M   : message
 TOTAL: 64+M bytes
 ```
 
@@ -356,7 +359,7 @@ Figure 2: Channel protocol packet layout ([source](http://www.asciidraw.com/#900
                +---------------------------------------------------+
 ```
 
-As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet contains a NEGOTIATION frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer?)
+As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet contains a NEGOTIATION frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer? Could be included in RESET or CLOSE frame.)
 
 ### 4.1 MESSAGE box format
 
@@ -378,6 +381,7 @@ Note: When describing data fields the C-like type notation is used, where
 
 #### 4.1.1 Packet header format
 
+Figure 3: Packet header
 ```
           0         1         2         3
       +--------+---------+---------+---------+
@@ -386,7 +390,7 @@ Note: When describing data fields the C-like type notation is used, where
       +--------+---------+---------+---------+
   +4  | Packet sequence number (2 to 8 bytes)|
       +--------+---------+---------+---------+
-  +8  |                                      |
+  +8  | Packet sequence number (contd.)      |
       +--------+---------+---------+---------+
 ```
 
@@ -425,14 +429,14 @@ Frames are inside the channel message cryptobox, not visible to any eavesdropper
 |     Type value       |     Frame type         |
 +----------------------+------------------------+
 |      fiuoood0        |  STREAM                |
-|      xxxx0001        |  ACK                   |
-|      xxxx0011        |  PADDING               |
+|      xxxxxx01        |  ACK                   |
+|      xxxxx011        |  PADDING               |
 |      xxxx0101        |  DECONGESTION          |
 |      xxxx0111        |  DETACH                |
-|      xxxx1001        |  RESET                 |
-|      xxxx1011        |  CLOSE                 |
-|      xxxx1101        |  NEGOTIATION           |
-|      xxxx1111        |  RT_STREAM             |
+|      xxx01001        |  RESET                 |
+|      xxx01011        |  CLOSE                 |
+|      xxx01101        |  NEGOTIATION           |
+|      xxx01111        |  RT_STREAM             |
 +----------------------+------------------------+
 ```
 
@@ -444,13 +448,13 @@ to initiate a new stream.
 Frame type: 0
 Flags: FIN, INIT, USID, OFFSET, DATA LENGTH
 ```
- * When INIT bit is set, this frame initiates the stream by providing stream and parent unique IDs.
- * When USID bit is set, this INIT frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. USID bit can only be set when INIT bit is set.
- * When FIN bit is set, this frame marks last transmission on this stream in this direction.
- * OFFSET bits encode length of the stream offset field.
- * When DATA LENGTH bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
+ * When `INIT` bit is set, this frame initiates the stream by providing stream and parent unique IDs.
+ * When `USID` bit is set, this `INIT` frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. `USID` bit can only be set when `INIT` bit is set.
+ * When `FIN` bit is set, this frame marks last transmission on this stream in this direction.
+ * `OFFSET` bits encode length of the stream offset field.
+ * When `DATA LENGTH` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
 
-Both INIT and FIN bits may be set.
+Both `INIT` and `FIN` bits may be set.
 
 Possible combinations of bits:
 ```
@@ -461,11 +465,11 @@ INIT,FIN
 INIT,USID,FIN
 ```
 
- * FIN bit does not add any fields to the frame header.
- * INIT bit adds two LSIDs in sender space - parent LSID and NSID.
- * USID bit adds full half-stream ID of the USID.
- * OFFSET bits add between 0 and 8 bytes offset.
- * DATA LENGTH bit adds 2 bytes of data size.
+ * `FIN` bit does not add any fields to the frame header.
+ * `INIT` bit adds two LSIDs in sender space - parent LSID and NSID (New Stream ID).
+ * `USID` bit adds full half-stream ID of the USID.
+ * `OFFSET` bits add between 0 and 8 bytes offset.
+ * `DATA LENGTH` bit adds 2 bytes of data size.
 
 [edit header here](http://www.asciidraw.com/#717654329840973968/875838298)
 
@@ -476,6 +480,7 @@ We need unique USID for this stream and USID for its parent stream to inititate 
 
 The ACK frame is sent to inform the peer which packets have been received, as well as which packets are still considered missing by the receiver (the contents of missing packets may need to be re-sent).
 
+Figure 4: ACK frame layout
 ```
            0        1        2        3        4        5        6        7
       +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -527,6 +532,7 @@ It is expected that with regular loss rate and packet rate, ACK frames will ofte
 Padding frame indicates padding data within a packet, used to counter traffic analysis attacks. Ideally all packets should be padded to have same final length of 1280 bytes. However, in case of slow connection it may be preferential to not pad the data packets or pad them to a shorter common length.
 Padding frame contents may be anything and are simply ignored. It is recommended to explicitly initialize this padding data area with either random or zero bytes and not leave any old data that might leak information.
 
+Figure 5: Padding frame layout
 ```
       0         1         2         3                 3+L-1
  +---------+---------+---------+---------+  .....  +---------+
@@ -539,16 +545,16 @@ Take note of the rounding requirements - all padding together must pad message s
 
 #### 4.2.5 DECONGESTION frame
 
-Decongestion feedback frame contents are specific to chosen decongestion method in the channel.
-Frame format for several implemented methods will be listed here.
+Decongestion feedback frame contents are specific to chosen decongestion method in the channel. Frame format for several implemented methods will be listed here.
 
+Figure 6: Decongestion frame layout
 ```
       0         1         2
  +---------+---------+---------+  .....  +---------+
  | Type(5) | Subtype | Method specific contents    |
  +---------+---------+---------+  .....  +---------+
 ```
-Type `uint8_t`: Frame type byte (5 for decongestion frame)
+ * Type `uint8_t`: Frame type byte (5 for decongestion frame)
 
 The following diagrams show method specific contents section starting from subtype byte, type is the same for all these packets and is omitted for brevity.
 
@@ -556,6 +562,7 @@ The following diagrams show method specific contents section starting from subty
 
 Similar to TCP protocol, packet loss and receive window size are provided.
 
+Figure 7: TCP decongestion frame layout
 ```
       0         1         2         3         4
  +---------+---------+---------+---------+---------+
@@ -576,6 +583,7 @@ Similar to TCP protocol, packet loss and receive window size are provided.
 
 ##### 4.2.5.4 Congestion control feedback for WebRTC Inter-arrival
 
+Figure 10: Interarrival decongestion frame layout
 ```
           0         1         2         3         4         5         6         7
      +---------+---------+---------+---------+---------+---------+---------+---------+
@@ -596,9 +604,7 @@ Similar to TCP protocol, packet loss and receive window size are provided.
 
 #### 4.2.6 DETACH frame
 
-Detach frame allows stream to detach from current channel without shutting down the stream.
-Detaching informs the other side that this stream should not be torn down, but it will not send
-more data on this channel.
+Detach frame allows stream to detach from current channel without shutting down the stream. Detaching informs the other side that this stream should not be torn down, but it will not send more data on this channel.
 
 ```
 Detach frame only contains LSID of stream that will be detached.
@@ -610,6 +616,7 @@ Abort stream. (Might combine detach and reset frames into STOP frame!)
 
 The RESET frame allows for abnormal termination of a stream. When sent by the creator of a stream, it indicates the creator wishes to cancel the stream. When sent by the receiver of a stream, it indicates an error or that the receiver did not want to accept the stream, so the stream should be closed.
 
+Figure 11: Reset frame layout
 ```
          0        1       2         3        4       5        6        7
     +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -619,12 +626,11 @@ The RESET frame allows for abnormal termination of a stream. When sent by the cr
     |  code  | length (16 bits)|                                            |
     +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
-
-Frame type `uint8_t`: Value specifying that this is a stream reset frame (9)
-Stream Id `big_uint32_t`: LSID of the stream.
-Error code `big_uint32_t`: Error code which indicates why the stream is being closed.
-Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
-Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is **not** zero-terminated.
+ * Frame type `uint8_t`: Value specifying that this is a stream reset frame (9)
+ * Stream Id `big_uint32_t`: LSID of the stream.
+ * Error code `big_uint32_t`: Error code which indicates why the stream is being closed.
+ * Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
+ * Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is **not** zero-terminated.
 
 #### 4.2.8 CLOSE frame
 
@@ -632,6 +638,7 @@ Close connection.
 
 **@todo** Immediate close and non-immediate (goaway) close?
 
+Figure 12: Close frame layout
 ```
         0        1        2         3       4         5       6         7
     +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -642,12 +649,11 @@ Close connection.
     |(variable length)         |                                            |
     +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
-
-Frame type `uint8_t`: Connection close frame type (11)
-Error code `big_uint32_t`: Error code which indicates why the connection is being closed.
-Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
-Reason phrase: An optional human-readable explanation for why the connection was closed.
-AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed.
+ * Frame type `uint8_t`: Connection close frame type (11)
+ * Error code `big_uint32_t`: Error code which indicates why the connection is being closed.
+ * Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
+ * Reason phrase: An optional human-readable explanation for why the connection was closed.
+ * AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed.
 
 ### 4.2.9 NEGOTIATION frame
 
@@ -699,8 +705,7 @@ Service request streams operate with a simple format of commands which include:
  * Request connection to given service and protocol
  * Respond with connection results
 
-All requests and responses start with a service code. Service codes are 2 bytes in length.
-First byte is 0x01 for requests and 0x02 for responses. Second byte determines the request or response type and is specified in sections below.
+All requests and responses start with a service code. Service codes are 2 bytes in length. First byte is 0x01 for requests and 0x02 for responses. Second byte determines the request or response type and is specified in sections below.
 
 #### Request connection to given service and protocol
 
@@ -837,3 +842,5 @@ When both sides have indicated their desire to stop sending on the stream, strea
  * [RDP Reliable Data Protocol](https://tools.ietf.org/html/rfc908)
  * [ECN in IP](https://tools.ietf.org/html/rfc3168)
  * [TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
+ * SCTP
+ * DTLS
