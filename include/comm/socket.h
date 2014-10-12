@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://atta-metta.net for latest version.
+//
+// Copyright 2007 - 2014, Stanislav Karchebnyy <berkus@atta-metta.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include <map>
@@ -9,29 +17,28 @@
 namespace uia {
 namespace comm {
 
-class socket;
 class socket_receiver;
 class socket_channel;
 
 /**
  * Abstract base class for entity connecting two endpoints using some network.
  * Socket manages connection lifetime and maintains the connection status info.
- * For connected sockets there may be a number of channels established using their
- * own keying schemes. Socket orchestrates initiation of key exchanges and scheme setup.
+ * For connected sockets there may be a number of channels established.
+ * Socket orchestrates initiation of key exchanges (@fixme should it?).
  */
 class socket
 {
     /**
      * Host state instance this socket is attached to.
      */
-    comm_host_interface* host_interface_;
+    comm_host_interface* host_interface_{nullptr};
 
     /**
      * Channels working through this socket at the moment.
      * Socket does NOT own the channels.
-     * @todo Make a weak_ptr?
+     * Channels are distinguished by sender's short-term public key.
      */
-    std::map<std::pair<endpoint, channel_number>, socket_channel*> channels_;
+    std::map<std::string, std::weak_ptr<socket_channel>> channels_;
 
     /**
      * True if this socket is fair game for use by upper level protocols.
@@ -39,11 +46,13 @@ class socket
     bool active_{false};
 
 public:
+    typedef std::weak_ptr<socket> weak_ptr;
+
     // sss expresses current socket status as one of three states:
     enum class status {
         down,    ///< definitely appears to be down.
         stalled, ///< briefly lost connectivity, but may be temporary.
-        up       ///< apparently alive, all's well as far as we know.
+        up       ///< apparently alive, all is well as far as we know.
     };
 
     static std::string status_string(status s);
@@ -53,7 +62,7 @@ public:
 
     /**
      * Determine whether this socket is active.
-     * Only active socket are returned by socket_host_state::active_sockets().
+     * Only active sockets are returned by socket_host_state::active_sockets().
      * @return true if socket is active.
      */
     inline bool is_active() const {
@@ -117,21 +126,24 @@ public:
     virtual std::string error_string() = 0;
 
     /**
-     * Find channel associations attached to this socket.
+     * Find channel attached to this socket.
+     *
+     * @todo channel_key should be enough without the src, since it's 32 bytes chances of collision
+     * are negligible, and it might also keep working if other endpoint changes address.
      */
-    socket_channel* channel_for(endpoint const& src, channel_number cn);
+    std::weak_ptr<socket_channel> channel_for(std::string channel_key);
 
     /**
      * Bind a new socket_channel to this socket.
      * Called by socket_channel::bind() to register in the table of channels.
      */
-    bool bind_channel(endpoint const& ep, channel_number chan, socket_channel* lc);
+    bool bind_channel(std::string channel_key, std::weak_ptr<socket_channel> lc);
 
     /**
-     * Unbind a socket_channel associated with endpoint @a ep and channel number @a chan.
+     * Unbind a socket_channel associated with channel short-term key @a channel_key.
      * Called by socket_channel::unbind() to unregister from the table of channels.
      */
-    void unbind_channel(endpoint const& ep, channel_number chan);
+    void unbind_channel(std::string channel_key);
 
     /**
      * Returns true if this socket provides congestion control
@@ -140,10 +152,10 @@ public:
     virtual bool is_congestion_controlled(endpoint const& ep);
 
     /**
-     * For congestion-controlled sockets, returns the number of packets that may
+     * For congestion-controlled sockets, returns the number of bytes that may
      * be transmitted now to a particular target endpoint.
      */
-    virtual int may_transmit(endpoint const& ep);
+    virtual size_t may_transmit(endpoint const& ep);
 
 protected:
     /**

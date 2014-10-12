@@ -29,7 +29,6 @@ class udp_socket : public uia::comm::socket
      * Underlying socket.
      */
     boost::asio::ip::udp::socket udp_socket_;
-    // boost::asio::ip::udp::socket udp6_socket; ///< ipv6 socket - host manages two udp_sockets instead
     boost::asio::streambuf received_buffer_;
     /**
      * Endpoint we've received the packet from.
@@ -60,7 +59,7 @@ public:
      * @param  ep   Target endpoint - intended receiver of the packet.
      * @param  data Packet data.
      * @param  size Packet size.
-     * @return      If send was successful, i.e. the packet has been sent. It does not say anything
+     * @return true If send was successful, i.e. the packet has been sent. It does not say anything
      *              about the reception of the packet on the other side, if it was ever delivered
      *              or accepted.
      */

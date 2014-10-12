@@ -18,29 +18,33 @@ if (WIN32)
         comm/platform-win.cpp)
 endif()
 
-add_library(sss STATIC
-    abstract_stream.cpp
-    base_stream.cpp
-    datagram_stream.cpp
-    channel.cpp
-    armor_secretbox.cpp
-    dh.cpp
-    host.cpp
-    peer_identity.cpp
-    kex_responder.cpp
-    kex_initiator.cpp
+set(comm_SOURCES
     comm/socket.cpp
     comm/udp_socket.cpp
     comm/socket_endpoint.cpp
     comm/socket_channel.cpp
-    comm/socket_receiver.cpp
-    socket_host_state.cpp
-    server.cpp
+    comm/socket_receiver.cpp)
+
+set(stream_SOURCES
+    abstract_stream.cpp
+    base_stream.cpp
+    datagram_stream.cpp
     stream.cpp
     stream_responder.cpp
     stream_channel.cpp
     stream_peer.cpp
-    stream_protocol.cpp
+    stream_protocol.cpp)
+
+add_library(sss STATIC
+    ${comm_SOURCES}
+    ${stream_SOURCES}
+    channel.cpp
+    peer_identity.cpp
+    kex_responder.cpp
+    kex_initiator.cpp
+    server.cpp
     timer.cpp
+    host.cpp
+    socket_host_state.cpp
     ${simulator_SOURCES}
     ${platform_SOURCES})

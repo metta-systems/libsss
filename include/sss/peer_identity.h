@@ -92,7 +92,7 @@ public:
      * @param id the binary identifier.
      */
     inline void set_id(byte_array const& id) {
-        id_ = id;
+        id_ = id.as_string();
         clear_key();
     }
 
@@ -102,7 +102,7 @@ public:
      * @return true if this identity contains a public key.
      */
     inline bool has_key() const {
-        return key_ and key_->type() != crypto::sign_key::invalid;
+        return !id_.empty();
     }
 
     /**
@@ -111,7 +111,7 @@ public:
      * @return true if this identity contains a private key.
      */
     inline bool has_private_key() const {
-        return key_ and key_->type() == crypto::sign_key::public_and_private;
+        return !private_key_.empty();
     }
 
     /**
@@ -119,7 +119,7 @@ public:
      * @return true if this is a null identity.
      */
     inline bool is_null() const {
-        return key_scheme() == scheme::null;
+        return id_.empty();
     }
 
     /**

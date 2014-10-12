@@ -1,23 +1,30 @@
+//
+// Part of Metta OS. Check http://atta-metta.net for latest version.
+//
+// Copyright 2007 - 2014, Stanislav Karchebnyy <berkus@atta-metta.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 namespace uia {
 namespace comm {
 
-/**
- * Protocol magic marker, must have 0x00 as the highest byte (channel number).
- */
-typedef uint32_t magic_t;
-
-/**
- * An 8-bit channel number distinguishes different channels
- * between the same pair of link-layer endpoints. Channel number 0 is always invalid.
- * Up to 255 simultaneous channels possible.
- */
-typedef uint8_t channel_number;
+// Probably not in the host_interface.h, rather somewhere in protocol.h
+namespace magic {
+const std::string hello    = "hellopkt";
+const std::string cookie   = "cookipkt";
+const std::string initiate = "init-pkt";
+const std::string message  = "messagep";
+}
 
 class socket;
 class socket_receiver;
-class socket_channel;
+
+// bind_receiver(magic::hello, kex_responder)
+// bind_receiver(magic::initiate, kex_responder)
+// bind_receiver(magic::cookie, kex_initiator)
 
 // Interface used by socket layer to work with the host state.
 // Must be implemented by real host implementation, for example the one in sss.
@@ -28,11 +35,11 @@ public:
     virtual void activate_socket(socket*) = 0;
     virtual void deactivate_socket(socket*) = 0;
 
-    // Interface to bind and lookup receivers based on channel magic value.
-    virtual void bind_receiver(magic_t, socket_receiver*) = 0;
-    virtual void unbind_receiver(magic_t) = 0;
-    virtual bool has_receiver_for(magic_t) = 0;
-    virtual socket_receiver* receiver_for(magic_t) = 0;
+    // Interface to bind and lookup receivers based on packet magic value.
+    virtual void bind_receiver(std::string, std::weak_ptr<socket_receiver>) = 0;
+    virtual void unbind_receiver(std::string) = 0;
+    virtual bool has_receiver_for(std::string) = 0;
+    virtual std::weak_ptr<socket_receiver> receiver_for(std::string) = 0;
 };
 
 } // comm namespace

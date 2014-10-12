@@ -41,7 +41,7 @@ bool bind_socket(boost::asio::ip::udp::socket& sock,
 udp_socket::udp_socket(shared_ptr<host> host)
     : socket(host.get())
     , udp_socket_(host->get_io_service())
-    , received_from_(this, uia::comm::endpoint()) // @fixme Dummy endpoint initializer here... init in bind()?
+    // , received_from_(this, uia::comm::endpoint()) // @fixme Dummy endpoint initializer here... init in bind()?
     , strand_(host->get_io_service())
 {}
 
@@ -83,9 +83,6 @@ udp_socket::local_port()
 bool
 udp_socket::bind(uia::comm::endpoint const& ep)
 {
-    // if (ep.address().is_v6()) {
-        // udp_socket.set_option(ip::v6_only(true));
-    // }
     logger::debug() << "udp_socket bind on endpoint " << ep;
     if (!bind_socket(udp_socket_, ep, error_string_))
         return false;
@@ -122,8 +119,8 @@ udp_socket::udp_ready_read(boost::system::error_code const& error, size_t bytes_
     if (!error)
     {
         logger::debug() << "Received "
-            << dec << bytes_transferred << " bytes via UDP link from " << received_from_
-            << " on link " << this;
+            << dec << bytes_transferred << " bytes via UDP from " << received_from_
+            << " on socket " << this;
         byte_array b(buffer_cast<char const*>(received_buffer_.data()), bytes_transferred);
         receive(b, received_from_);
         received_buffer_.consume(bytes_transferred);

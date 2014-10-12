@@ -1,7 +1,16 @@
+//
+// Part of Metta OS. Check http://atta-metta.net for latest version.
+//
+// Copyright 2007 - 2014, Stanislav Karchebnyy <berkus@atta-metta.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
-#include <boost/asio.hpp> // @todo Include only header for boost::asio::ip::udp::endpoint
+#include <boost/asio/ip/udp.hpp>
 #include "arsenal/flurry.h"
+#include "arsenal/hash_combine.h"
 
 namespace uia {
 namespace comm {
@@ -10,9 +19,8 @@ class socket;
 
 /**
  * Currently only UDP endpoints/sockets are supported.
- * System implementation might also have to work over
- * IP or even Ethernet endpoints - this will require
- * architectural change.
+ * System implementation might also have to work over IP or even Ethernet endpoints
+ * - this will require architectural change.
  */
 using endpoint = boost::asio::ip::udp::endpoint;
 // See below for the implementation of hash function for endpoint.
@@ -22,18 +30,18 @@ using endpoint = boost::asio::ip::udp::endpoint;
  */
 class socket_endpoint : public endpoint
 {
-    socket* socket_{nullptr}; ///< Associated socket, if any. @todo weak_ptr
+    std::weak_ptr<socket> socket_; ///< Associated socket, if any.
 
 public:
     socket_endpoint() {}
-    socket_endpoint(socket_endpoint const& other) : endpoint(other), socket_(other.socket_) {}
-    /**
-     * This here should technically use shared_ptr and let socket_endpoint maintain a weak_ptr,
-     * but practically, as the only factory creating socket_endpoints is the udp_socket,
-     * it will outlive them and a simple pointer suffices.
-     * @todo Make it nicer once the usage pattern is more clear here.
-     */
-    socket_endpoint(socket* l, endpoint const& other) : endpoint(other), socket_(l) {}
+    socket_endpoint(socket_endpoint const& other)
+        : endpoint(other)
+        , socket_(other.socket_)
+    {}
+    socket_endpoint(std::weak_ptr<socket> l, endpoint const& other)
+        : endpoint(other)
+        , socket_(l)
+    {}
 
     /**@{*/
     /**
@@ -49,7 +57,7 @@ public:
     /**
      * Obtain a pointer to this endpoint's socket.
      */
-    socket* socket() const { return socket_; }
+    std::weak_ptr<socket> socket() const { return socket_; }
 };
 
 } // comm namespace
@@ -63,9 +71,10 @@ struct hash<uia::comm::endpoint> : public std::unary_function<uia::comm::endpoin
 {
     inline size_t operator()(uia::comm::endpoint const& a) const noexcept
     {
-        // @todo Use hash_combine() here
-        // this is a crappy slow hash until we can get ahold of a good c++1y hash
-        return hash<std::string>()(a.address().to_string()) ^ (hash<int>()(a.port()) << 1);
+        size_t seed = 0xdeadbeef;
+        stdext::hash_combine(seed, a.address().to_string());
+        stdext::hash_combine(seed, a.port());
+        return seed;
     }
 };
 
@@ -76,10 +85,12 @@ namespace flurry {
 // Flurry specialization for endpoint
 inline flurry::oarchive& operator << (flurry::oarchive& oa, uia::comm::endpoint const& ep)
 {
-    if (ep.address().is_v4())
+    if (ep.address().is_v4()) {
         oa << byte_array(ep.address().to_v4().to_bytes());
-    else
+    }
+    else {
         oa << byte_array(ep.address().to_v6().to_bytes());
+    }
     oa << ep.port();
     return oa;
 }

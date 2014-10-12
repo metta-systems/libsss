@@ -19,41 +19,28 @@
 namespace sss {
 
 /**
- * Packet sequence numbers are 64-bit unsigned integers.
- */
-typedef uint64_t packet_seq_t;
-
-static constexpr packet_seq_t max_packet_seq = ~0ULL;
-
-/**
  * SSU stream protocol definitions.
- * This class simply provides SSU protcol definition constants
- * for use in the other stream classes.
+ * This class simply provides SSU protcol definition constants for use in other stream classes.
  */
 class stream_protocol
 {
 public:
     static constexpr uint16_t default_port = 9660;
 
-    static constexpr size_t mtu = 1200; // @fixme This needs to be a per-link variable.
-    static constexpr size_t min_receive_buffer_size = mtu * 2; // @fixme Should be dynamic based on mtu.
+    static constexpr size_t mtu = 1280; // an ipv6 frame size, not fragmentable
+    static constexpr size_t min_receive_buffer_size = mtu * 2;
 
     // Maximum size of datagram to send using the stateless optimization.
     // @fixme Should be dynamic.
     // Datagram reassembly not yet supported, when done it could be around 2x-4x MTU size?
     static constexpr size_t max_stateless_datagram_size = mtu;
 
-    // Control chunk magic value for the structured streams.
-    // Top byte is channel number and must be zero.
-    // 0x535355 = 'SSU': 'Structured Streams Unleashed'
-    static constexpr uia::comm::magic_t magic_id = 0x00535355;
-
     typedef uint64_t counter_t;    ///< Counter for SID assignment.
     typedef uint16_t stream_id_t;  ///< Stream ID within channel.
 
     struct stream_header
     {
-        big_uint16_t stream_id;
+        big_uint16_t stream_id;    // LSID
         uint8_t      type_subtype; // Field consists of two 4 bit fields - type and flags
         uint8_t      window;
     } __attribute__((packed));
@@ -150,8 +137,6 @@ public:
 
     /**
      * Type for identifying streams uniquely across channels.
-     *
-     * XXX should contain a "keying method identifier" of some kind?
      */
     struct unique_stream_id_t
     {
@@ -202,7 +187,8 @@ flurry::iarchive& operator >> (flurry::iarchive& ia, stream_protocol::unique_str
 namespace std {
 
 template<>
-struct hash<sss::stream_protocol::unique_stream_id_t> : public std::unary_function<sss::stream_protocol::unique_stream_id_t, size_t>
+struct hash<sss::stream_protocol::unique_stream_id_t>
+    : public std::unary_function<sss::stream_protocol::unique_stream_id_t, size_t>
 {
     inline size_t operator()(sss::stream_protocol::unique_stream_id_t const& a) const noexcept
     {

@@ -36,8 +36,7 @@ namespace sss {
 class host
     : public std::enable_shared_from_this<host>
     , public socket_host_state
-    , public dh_host_state
-    , public key_host_state
+    , public kex_host_state
     , public identity_host_state
     , public stream_host_state
     , public virtual asio_host_state

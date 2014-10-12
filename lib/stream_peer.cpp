@@ -14,6 +14,8 @@
 
 using namespace std;
 namespace ur = uia::routing;
+using uia::comm::socket::status;
+using kex_initiator_ptr = std::shared_ptr<negotiation::kex_initiator>;
 
 namespace sss {
 namespace internal {
@@ -62,7 +64,7 @@ void stream_peer::connect_channel()
 {
     assert(!remote_id_.is_empty());
 
-    if (primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up)
+    if (primary_channel_ and primary_channel_->link_status() == status::up)
         return; // Already have a working channel; don't need another yet.
 
     // @todo Need a way to determine if streams need to send. If no streams waiting to send
@@ -273,7 +275,7 @@ void stream_peer::regclient_destroyed(ur::client *rc)
 void stream_peer::retry_timeout()
 {
     // If we actually have an active flow now, do nothing.
-    if (primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up)
+    if (primary_channel_ and primary_channel_->link_status() == status::up)
         return;
 
     // Notify any waiting streams of failure
@@ -290,7 +292,7 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     assert(ep != uia::comm::endpoint());
 
     // No need to initiate new channels if we already have a working one.
-    if (primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up)
+    if (primary_channel_ and primary_channel_->link_status() == status::up)
         return;
 
     // Don't simultaneously initiate multiple channels to the same endpoint.
@@ -317,11 +319,9 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     }
 
     // Start the key exchange process for the channel.
-    shared_ptr<negotiation::key_initiator> init =
-        make_shared<negotiation::key_initiator>(chan, magic_id, remote_id_);
+    kex_initiator_ptr init = make_shared<negotiation::kex_initiator>(chan, magic_id, remote_id_);
 
-    init->on_completed.connect([this](std::shared_ptr<negotiation::key_initiator> ki, bool success)
-    {
+    init->on_completed.connect([this](kex_initiator_ptr ki, bool success) {
         completed(ki, success);
     });
 
@@ -335,13 +335,13 @@ void stream_peer::channel_started(stream_channel* channel)
 
     assert(channel->is_active());
     assert(channel->target_peer() == this);
-    assert(channel->link_status() == uia::comm::socket::status::up);
+    assert(channel->link_status() == status::up);
 
     if (primary_channel_)
     {
         // If we already have a working primary channel, we don't need a new one.
-        if (primary_channel_->link_status() == uia::comm::socket::status::up)
-            return;
+        if (primary_channel_->link_status() == status::up)
+            return; // Shutdown the channel?
 
         // But if the current primary is on the blink, replace it.
         clear_primary_channel();
@@ -355,14 +355,14 @@ void stream_peer::channel_started(stream_channel* channel)
 
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
     primary_channel_link_status_connection_ =
-        primary_channel_->on_link_status_changed.connect([this](uia::comm::socket::status new_status)
+        primary_channel_->on_link_status_changed.connect([this](status new_status)
         {
             primary_status_changed(new_status);
         });
 
     // Notify all waiting streams
     on_channel_connected();
-    on_link_status_changed(uia::comm::socket::status::up);
+    on_link_status_changed(status::up);
 }
 
 void stream_peer::clear_primary_channel()
@@ -401,7 +401,7 @@ void stream_peer::add_location_hint(uia::comm::endpoint const& hint)
     }
 }
 
-void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool success)
+void stream_peer::completed(key_initiator_ptr ki, bool success)
 {
     assert(ki and ki->is_done());
 
@@ -412,7 +412,7 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     uia::comm::socket_endpoint lep = ki->remote_endpoint();
 
     logger::debug() << "Stream peer key exchange for ID " << remote_id_ << " to " << lep
-        << " completed " << (success ? "successfully" : "erroneously");
+        << (success ? " succeeded" : " failed");
 
     assert(!contains(key_exchanges_initiated_, lep) or key_exchanges_initiated_[lep] == ki);
     key_exchanges_initiated_.erase(lep);
@@ -439,15 +439,15 @@ void stream_peer::completed(std::shared_ptr<negotiation::key_initiator> ki, bool
     // assert(primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up);
 }
 
-void stream_peer::primary_status_changed(uia::comm::socket::status new_status)
+void stream_peer::primary_status_changed(status new_status)
 {
     assert(primary_channel_);
 
-    if (new_status == uia::comm::socket::status::up)
+    if (new_status == status::up)
     {
         stall_warnings_ = 0;
         // Now that we (again?) have a working primary channel, cancel and delete all
-        // outstanding key_initiators that are still in an early enough stage not
+        // outstanding kex_initiators that are still in an early enough stage not
         // to have possibly created receiver state.
         // (If we were to kill a non-early key_initiator, the receiver might pick one
         // of those streams as _its_ primary and be left with a dangling channel!)
@@ -472,7 +472,7 @@ void stream_peer::primary_status_changed(uia::comm::socket::status new_status)
         return on_link_status_changed(new_status);
     }
 
-    if (new_status == uia::comm::socket::status::stalled)
+    if (new_status == status::stalled)
     {
         if (++stall_warnings_ < stall_warnings_max)
         {

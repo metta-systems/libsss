@@ -7,54 +7,31 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "arsenal/logging.h"
+#include "arsenal/base32x.h"
 #include "comm/socket_channel.h"
 
 namespace uia {
 namespace comm {
 
-channel_number
-socket_channel::bind(socket* link, endpoint const& remote_ep)
-{
-    assert(link);
-    assert(!is_active()); // can't bind while channel is active
-    assert(!is_bound());  // can't bind again if already bound
-
-    // Find a free channel number for this remote endpoint.
-    // Never assign channel zero - that's reserved for control packets.
-    channel_number chan = 1;
-    while (link->channel_for(remote_ep, chan) != nullptr)
-    {
-        if (++chan == 0) {
-            return 0;   // wraparound - no channels available
-        }
-    }
-
-    // Bind to this channel
-    if (!bind(link, remote_ep, chan)) {
-        return 0;
-    }
-
-    return chan;
-}
-
 bool
-socket_channel::bind(socket* link, endpoint const& remote_ep, channel_number chan)
+socket_channel::bind(socket* link, endpoint const& remote_ep, std::string channel_key)
 {
     assert(link);
     assert(!is_active()); // can't bind while channel is active
     assert(!is_bound());  // can't bind again if already bound
+    assert(channel_key.size() == 32);
 
-    if (link->channel_for(remote_ep, chan) != nullptr) {
+    if (link->channel_for(channel_key) != nullptr) {
         return false;
     }
 
     remote_ep_ = remote_ep;
-    local_channel_number_ = chan;
-    if (!link->bind_channel(remote_ep_, local_channel_number_, this)) {
+    local_channel_key_ = channel_key;
+    if (!link->bind_channel(local_channel_key_, shared_from_this())) {
         return false;
     }
 
-    logger::debug() << "Bound local channel " << int(chan) << " for " << remote_ep << " to " << link;
+    logger::debug() << "Bound local channel " << encode::to_base32x(channel_key) << " for " << remote_ep << " to " << link;
 
     socket_ = link;
     return true;
@@ -67,9 +44,9 @@ socket_channel::unbind()
     assert(!is_active());
     if (socket_)
     {
-        socket_->unbind_channel(remote_ep_, local_channel_number_);
+        socket_->unbind_channel(remote_ep_, local_channel_key_);
         socket_ = nullptr;
-        local_channel_number_ = 0;
+        local_channel_key_.clear();
     }
 }
 

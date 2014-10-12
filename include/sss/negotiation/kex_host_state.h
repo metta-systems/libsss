@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include "arsenal/byte_array.h"
 #include "comm/socket_endpoint.h"
-#include "sss/negotiation/key_initiator.h"
+#include "sss/negotiation/kex_initiator.h"
 
 namespace sss {
 

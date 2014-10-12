@@ -38,11 +38,10 @@ class kex_responder : public uia::comm::socket_receiver
 
 public:
     /**
-     * Create a key exchange responder and set it listening on a particular link
-     * for control messages with the specified magic protocol identifier.
+     * Create a key exchange responder and set it listening on a particular link.
      * @fixme The new key_responder becomes a child of the link.
      */
-    kex_responder(std::shared_ptr<host> host, uia::comm::magic_t magic);
+    kex_responder(std::shared_ptr<host> host);
 
     virtual std::shared_ptr<host> get_host() { return host_; }
 

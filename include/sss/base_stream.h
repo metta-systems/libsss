@@ -120,7 +120,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     {
         base_stream* owner{nullptr};            ///< Packet owner.
         uint64_t tx_byte_seq{0};                ///< Logical byte position.
-        byte_array buf;                         ///< Packet buffer including headers.
+        byte_array payload;                     ///< Packet buffer including headers.
         int header_len{0};                      ///< Size of channel and stream headers.
         packet_type type{packet_type::invalid}; ///< Type of this packet.
         bool late{false};                       ///< Possibly lost packet.
@@ -134,23 +134,23 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
             return owner == nullptr;
         }
         inline int payload_size() const {
-            return buf.size() - header_len;
+            return payload.size() - header_len;
         }
 
         template <typename T>
         inline T* header()
         {
             header_len = channel::header_len + sizeof(T);
-            if (buf.size() < size_t(header_len)) {
-                buf.resize(header_len);
+            if (payload.size() < size_t(header_len)) {
+                payload.resize(header_len);
             }
-            return reinterpret_cast<T*>(buf.data() + channel::header_len);
+            return reinterpret_cast<T*>(payload.data() + channel::header_len);
         }
 
         template <typename T>
         inline T const* header() const
         {
-            return reinterpret_cast<T const*>(buf.const_data() + channel::header_len);
+            return reinterpret_cast<T const*>(payload.const_data() + channel::header_len);
         }
     };
     friend std::ostream& operator << (std::ostream& os, packet const& pkt);
@@ -204,7 +204,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
      */
     std::shared_ptr<base_stream> self_;
     state state_{state::created};
-    bool init_{true};
+    bool init_{true};       ///< Starting a new stream and its attach hasn't been acknowledged yet.
     bool top_level_{false}; ///< This is a top-level stream.
     bool end_read_{false};  ///< Seen or forced EOF for reading.
     bool end_write_{false}; ///< We've written EOF marker.

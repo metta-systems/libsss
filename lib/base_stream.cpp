@@ -966,11 +966,11 @@ void base_stream::tx_attach()
         else
             write.archive() << nullptr;
     }
-    p.buf.append(body);
+    p.payload.append(body);
 
     // Transmit it on the current channel.
     packet_seq_t pktseq;
-    chan->channel_transmit(p.buf, pktseq);
+    chan->channel_transmit(p.payload, pktseq);
 
     // Save the attach packet in the channel's waiting_ack_ hash,
     // so that we'll be notified when the attach packet gets acked.
@@ -1007,9 +1007,9 @@ void base_stream::tx_data(packet& p)
 
     // Transmit the packet on our current channel.
     packet_seq_t pktseq;
-    channel->channel_transmit(p.buf, pktseq);
+    channel->channel_transmit(p.payload, pktseq);
 
-    logger::debug() << "tx_data " << pktseq << " pos " << p.tx_byte_seq << " size " << p.buf.size();
+    logger::debug() << "tx_data " << pktseq << " pos " << p.tx_byte_seq << " size " << p.payload.size();
 
     // Save the data packet in the channel's ackwait hash.
     p.late = false;
@@ -1053,7 +1053,7 @@ void base_stream::tx_datagram()
 
         // Transmit this datagram packet, but don't save it anywhere - just fire & forget.
         packet_seq_t pktseq;
-        tx_current_attachment_->channel_->channel_transmit(p.buf, pktseq);
+        tx_current_attachment_->channel_->channel_transmit(p.payload, pktseq);
 
         if (at_end)
             break;
@@ -1077,7 +1077,7 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
     // Transmit it on the current channel.
     packet_seq_t pktseq;
-    channel->channel_transmit(p.buf, pktseq);
+    channel->channel_transmit(p.payload, pktseq);
 
     // Save the attach packet in the channel's waiting_ack_ hash,
     // so that we'll be notified when the attach packet gets acked.
@@ -1113,7 +1113,7 @@ void base_stream::tx_reset(stream_channel* channel, stream_id_t sid, uint8_t fla
 
 void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq)
 {
-    logger::debug() << "Base stream ACKed packet of size " << dec << pkt.buf.size();
+    logger::debug() << "Base stream ACKed packet of size " << dec << pkt.payload.size();
 
     switch (pkt.type)
     {
@@ -1390,8 +1390,9 @@ bool base_stream::rx_reply_packet(packet_seq_t pktseq,
     {
         logger::debug() << "rx_reply_packet: stream exists, dispatch data only";
         stream_attachment* attach = channel->receive_sids_[header->stream_id];
-        if (pktseq < attach->sid_seq_) // earlier reply packet; that's OK.
+        if (pktseq < attach->sid_seq_) { // earlier reply packet; that's OK.
             attach->sid_seq_ = pktseq;
+        }
 
         channel->ack_sid_ = header->stream_id;
         attach->stream_->recalculate_transmit_window(header->window);
@@ -1996,7 +1997,7 @@ void base_stream::got_service_reply()
     byte_array_iwrap<flurry::iarchive> read(rec);
     uint32_t code, status;
     string message;
-    read.archive() >> code >> status >> message;
+    read.archive() >> code >> status >> message;// @todo Read code separately!
     if (code != service_code::connect_reply or status != 0)
     {
         ostringstream oss;

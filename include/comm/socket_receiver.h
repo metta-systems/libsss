@@ -26,16 +26,19 @@ class socket_endpoint;
  * A control protocol is identified by a 32-bit magic value,
  * whose topmost byte must be zero to distinguish it from channels.
  */
-class socket_receiver
+class socket_receiver : std::enable_shared_from_this<socket_receiver>
 {
     comm_host_interface* host_interface_{nullptr};
-    magic_t magic_{0};
+    std::string          magic_;
 
 protected:
-    inline socket_receiver(comm_host_interface* hi) : host_interface_(hi)
+    inline socket_receiver(comm_host_interface* hi)
+        : host_interface_(hi)
     {}
 
-    inline socket_receiver(comm_host_interface* hi, magic_t magic) : host_interface_(hi) {
+    inline socket_receiver(comm_host_interface* hi, std::string magic)
+        : host_interface_(hi)
+    {
         bind(magic);
     }
 
@@ -43,15 +46,15 @@ protected:
         unbind();
     }
 
-    void bind(magic_t magic);
+    void bind(std::string magic);
     void unbind();
 
-    inline magic_t magic() const {
+    inline std::string magic() const {
         return magic_;
     }
 
     inline bool is_bound() const {
-        return magic_ != 0;
+        return !magic_.empty();
     }
 
     // @fixme Possibly set_magic() might set a magic on default socket_receiver and bind() it.

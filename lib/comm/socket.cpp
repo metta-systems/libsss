@@ -1,5 +1,6 @@
 #include "arsenal/logging.h"
 #include "arsenal/algorithm.h"
+#include "arsenal/subrange.h"
 #include "comm/socket.h"
 #include "comm/socket_channel.h"
 #include "comm/socket_receiver.h"
@@ -25,19 +26,15 @@ string socket::status_string(socket::status s)
 
 socket::~socket()
 {
-    // Unbind all channels - @todo this should be automatic, use shared_ptr<socket_channel>s?
-    for (auto v : channels_) {
-        v.second->unbind();
-    }
 }
 
-socket_channel*
-socket::channel_for(endpoint const& src, channel_number cn)
+socket_channel::weak_ptr
+socket::channel_for(string channel_key)
 {
-    auto key = make_pair(src, cn);
-    if (!contains(channels_, key))
-        return nullptr;
-    return channels_[key];
+    if (!contains(channels_, channel_key)) {
+        return socket_channel::ptr();
+    }
+    return channels_[channel_key];
 }
 
 void
@@ -53,86 +50,57 @@ socket::set_active(bool active)
 }
 
 /**
- * Two packet types we could receive are stream packet (multiple types), starting with channel header
- * with non-zero channel number. It is handled by specific socket_channel.
- * Another type is negotiation packet which usually attempts to start a session negotiation, it should
- * have zero channel number. It is handled by registered socket_receiver.
- *
- *  Channel header (8 bytes)
- *   31          24 23                                0
- *  +--------------+-----------------------------------+
- *  |   Channel    |     Transmit Seq Number (TSN)     | 4 bytes
- *  +------+-------+-----------------------------------+
- *  | Rsvd | AckCt | Acknowledgement Seq Number (ASN)  | 4 bytes
- *  +------+-------+-----------------------------------+
- *        ... more channel-specific data here ...        variable length
- *
- *  Negotiation header (8+ bytes)
- *   31          24 23                                0
- *  +--------------+-----------------------------------+
- *  |  Channel=0   |     Negotiation Magic Bytes       | 4 bytes
- *  +--------------+-----------------------------------+
- *  |               Flurry array of chunks             | variable length
- *  +--------------------------------------------------+
+ * Now the curvecp packets are impassable blobs of encrypted data.
+ * The only magic we can use to differentiate is 8 byte header,
+ * saying if this is Hello, Cookie, Initiate or Message packet.
+ * Message packets also contain sender short-term public key and this
+ * is what we use to demultiplex packets to channels.
+ * Hello, Cookie and Initiate packets go to key exchange handler.
+ * Adding new packet headers may allow additional handling via
+ * host_interface.bind_receiver() function.
  */
 void
 socket::receive(byte_array const& msg, socket_endpoint const& src)
 {
-    if (msg.size() < 4)
-    {
-        logger::debug() << "Ignoring too small UDP datagram";
-        return;
+    if (msg.size() < 64) {
+        return; // Ignore unrecognized packets.
     }
 
     logger::file_dump(msg, "received raw socket packet");
 
-    // First byte should be a channel number.
-    // Try to find an endpoint-specific channel.
-    channel_number cn = msg.at(0);
-    socket_channel* chan = channel_for(src, cn);
-    if (chan) {
-        return chan->receive(msg, src);
-    }
+    string magic = msg.as_string().substr(0, 8); // @todo Optimize (use byte_array subrange)
 
-    if (cn) {
-        logger::warning() << "No handler for channel number " << cn;
-        return;
-    }
-
-    // Channel number zero must be a global control packet:
-    // if so, pass it to the appropriate socket_receiver.
-    try {
-        magic_t magic = msg.as<big_uint32_t>()[0];
-
-        socket_receiver* receiver = host_interface_->receiver_for(magic);
-        if (receiver) {
-            return receiver->receive(msg, src);
-        }
-        else
-        {
-            logger::debug() << "Received an invalid message, ignoring unknown receiver "
-                            << hex(magic, 8, true) << " buffer contents " << msg;
+    if (host_interface_->has_receiver_for(magic)) {
+        // Forward this packet to key exchange handler.
+        auto rcvr = host_interface_->receiver_for(magic).lock();
+        if (rcvr) {
+            return rcvr->receive(msg, src);
         }
     }
-    catch (exception& e)
+
+    if (magic == magic::message)
     {
-        logger::debug() << "Error deserializing received message: '" << e.what()
-                        << "' buffer contents " << msg;
+        auto chan = channel_for(msg.as_string().substr(8, 32)); // @todo Optimize (use byte_array subrange)
+        if (auto channel = chan.lock()) {
+            return channel->receive(msg, src);
+        }
     }
+
+    // Ignore unrecognized packets.
 }
 
 bool
-socket::bind_channel(endpoint const& ep, channel_number chan, socket_channel* lc)
+socket::bind_channel(string channel_key, socket_channel::weak_ptr lc)
 {
-    assert(channel_for(ep, chan) == nullptr);
-    channels_.insert(make_pair(make_pair(ep, chan), lc));
+    assert(channel_for(channel_key).lock() == nullptr);
+    channels_[channel_key] = lc;
     return true;
 }
 
 void
-socket::unbind_channel(endpoint const& ep, channel_number chan)
+socket::unbind_channel(string channel_key)
 {
-    channels_.erase(make_pair(ep, chan));
+    channels_.erase(channel_key);
 }
 
 bool
@@ -141,11 +109,11 @@ socket::is_congestion_controlled(endpoint const&)
     return false;
 }
 
-int
+size_t
 socket::may_transmit(endpoint const&)
 {
     logger::fatal() << "may_transmit() called on a non-congestion-controlled socket";
-    return -1;
+    return 0;
 }
 
 } // comm namespace
