@@ -475,15 +475,15 @@ INIT,USID,FIN
 
 Figure N: Stream frame layout ([source](http://www.asciidraw.com/#717654329840973968/875838298))
 ```
-          0
-     +----------+
-     | fiuoood0 |
-     +----------+
+          0         1       2       3       4
+     +----------+-------+-------+-------+-------+
+     | fiuoood0 |           Stream ID           |
+     +----------+-------+-------+-------+-------+
       When INIT bit is set:
-         0       1       2       3       4       5       6       7
-     +-------+-------+-------+-------+-------+-------+-------+-------+
-  +1 |         Parent SID            |           New SID             |
-     +-------+-------+-------+-------+-------+-------+-------+-------+
+         0       1       2       3
+     +-------+-------+-------+-------+
+  +5 |        Parent Stream ID       |
+     +-------+-------+-------+-------+
       When USID bit is set:
          0       1       2       3       4       5       6       7
      +-------+-------+-------+-------+-------+-------+-------+-------+
@@ -495,14 +495,14 @@ Figure N: Stream frame layout ([source](http://www.asciidraw.com/#71765432984097
      +-------+-------+-------+-------+
       Depending on OFFSET bits between 0 and 64 bits offset:
          0       1       2       3       4       5       6       7
-  +1 +-------+-------+-------+-------+-------+-------+-------+-------+
-  +9 |                                                               |
+  +5 +-------+-------+-------+-------+-------+-------+-------+-------+
+  +9 | Offset in stream                                              |
  +29 +-------+-------+-------+-------+-------+-------+-------+-------+
       When DATA LENGTH bit is set:
-         0       1
-     +-------+-------+
-     |  Data length  |
-     +-------+-------+
+                 0       1
+  +5+OFFSET  +-------+-------+
+  +9+OFFSET  |  Data length  |
+ +29+OFFSET  +-------+-------+
 ```
 
 Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
