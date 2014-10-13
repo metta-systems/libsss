@@ -6,12 +6,12 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/datagram_stream.h"
 #include "arsenal/logging.h"
+#include "sss/datagram_stream.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // datagram_stream
@@ -100,4 +100,4 @@ void datagram_stream::dump()
     logger::debug() << this << " datagram_stream - size " << size() << ", pos " << pos_;
 }
 
-} // ssu namespace
+} // sss namespace

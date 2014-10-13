@@ -11,8 +11,8 @@
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
-#include "ssu/stream_protocol.h"
-#include "ssu/negotiation/key_message.h"
+#include "sss/stream_protocol.h"
+#include "sss/negotiation/key_message.h"
 
 /**
  * Generate a binary blob for testing key_message.h I/O functions.
@@ -23,14 +23,14 @@ generate_dh1_chunk()
 {
     byte_array data;
     {
-        ssu::negotiation::key_message m;
-        ssu::negotiation::key_chunk chu, chu2;
-        ssu::negotiation::dh_init1_chunk dh;
-        ssu::negotiation::packet_chunk pkt;
+        sss::negotiation::key_message m;
+        sss::negotiation::key_chunk chu, chu2;
+        sss::negotiation::dh_init1_chunk dh;
+        sss::negotiation::packet_chunk pkt;
 
-        m.magic = ssu::stream_protocol::magic_id;
-        chu.type = ssu::negotiation::key_chunk_type::dh_init1;
-        dh.group = ssu::negotiation::dh_group_type::dh_group_1024;
+        m.magic = sss::stream_protocol::magic_id;
+        chu.type = sss::negotiation::key_chunk_type::dh_init1;
+        dh.group = sss::negotiation::dh_group_type::dh_group_1024;
         dh.key_min_length = 0x10;
 
         dh.initiator_hashed_nonce.resize(32);
@@ -44,7 +44,7 @@ generate_dh1_chunk()
 
         m.chunks.push_back(chu);
 
-        chu2.type = ssu::negotiation::key_chunk_type::packet;
+        chu2.type = sss::negotiation::key_chunk_type::packet;
         pkt.data = {'H','e','l','l','o',' ','w','o','r','l','d','!'};
         chu2.packet = pkt;
 

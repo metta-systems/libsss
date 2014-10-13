@@ -10,32 +10,32 @@
 
 #include <iostream>
 #include "arsenal/logging.h"
-#include "ssu/stream.h"
-#include "ssu/server.h"
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_host.h"
-#include "ssu/simulation/sim_link.h"
-#include "ssu/simulation/sim_connection.h"
+#include "sss/stream.h"
+#include "sss/server.h"
+#include "sss/simulation/simulator.h"
+#include "sss/simulation/sim_host.h"
+#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_connection.h"
 
 struct simulator_fixture
 {
-    std::shared_ptr<ssu::simulation::simulator> simulator;
-    std::shared_ptr<ssu::simulation::sim_connection> server_client_connection;
+    std::shared_ptr<sss::simulation::simulator> simulator;
+    std::shared_ptr<sss::simulation::sim_connection> server_client_connection;
 
-    std::shared_ptr<ssu::simulation::sim_host> server_host;
-    ssu::peer_identity server_host_eid;
+    std::shared_ptr<sss::simulation::sim_host> server_host;
+    sss::peer_identity server_host_eid;
     uia::comm::endpoint server_host_address;
     std::shared_ptr<uia::comm::socket> server_link;
-    std::shared_ptr<ssu::server> server;
+    std::shared_ptr<sss::server> server;
 
-    std::shared_ptr<ssu::simulation::sim_host> client_host;
-    ssu::peer_identity client_host_eid;
+    std::shared_ptr<sss::simulation::sim_host> client_host;
+    sss::peer_identity client_host_eid;
     uia::comm::endpoint client_host_address;
     std::shared_ptr<uia::comm::socket> client_link;
-    std::shared_ptr<ssu::stream> client;
+    std::shared_ptr<sss::stream> client;
 
     simulator_fixture() {
-        simulator = std::make_shared<ssu::simulation::simulator>();
+        simulator = std::make_shared<sss::simulation::simulator>();
         BOOST_CHECK(simulator != nullptr);
 
         setup_test_server();
@@ -58,19 +58,19 @@ struct simulator_fixture
 
     void setup_test_server()
     {
-        server_host = ssu::simulation::sim_host::create(simulator);
+        server_host = sss::simulation::sim_host::create(simulator);
         BOOST_CHECK(server_host != nullptr);
         server_host_eid = server_host->host_identity().id();
         server_host_address = uia::comm::endpoint(
             boost::asio::ip::address_v4::from_string("10.0.0.2"),
-            ssu::stream_protocol::default_port);
+            sss::stream_protocol::default_port);
 
         server_link = server_host->create_socket();
         BOOST_CHECK(server_link != nullptr);
         server_link->bind(server_host_address);
         BOOST_CHECK(server_link->is_active());
 
-        server = std::make_shared<ssu::server>(server_host);
+        server = std::make_shared<sss::server>(server_host);
         BOOST_CHECK(server != nullptr);
         bool listening = server->listen("simulator", "Simulating", "test", "Test protocol");
         BOOST_CHECK(listening == true);
@@ -78,25 +78,25 @@ struct simulator_fixture
 
     void setup_test_client()
     {
-        client_host = ssu::simulation::sim_host::create(simulator);
+        client_host = sss::simulation::sim_host::create(simulator);
         BOOST_CHECK(client_host != nullptr);
         client_host_eid = client_host->host_identity().id();
         client_host_address = uia::comm::endpoint(
             boost::asio::ip::address_v4::from_string("10.0.0.1"),
-            ssu::stream_protocol::default_port);
+            sss::stream_protocol::default_port);
 
         client_link = client_host->create_socket();
         BOOST_CHECK(client_link != nullptr);
         client_link->bind(client_host_address);
         BOOST_CHECK(client_link->is_active());
 
-        client = std::make_shared<ssu::stream>(client_host);
+        client = std::make_shared<sss::stream>(client_host);
         BOOST_CHECK(client != nullptr);
     }
 
     void setup_test_connection()
     {
-        server_client_connection = std::make_shared<ssu::simulation::sim_connection>();
+        server_client_connection = std::make_shared<sss::simulation::sim_connection>();
         BOOST_CHECK(server_client_connection != nullptr);
         server_client_connection->connect(server_host, server_host_address,
                                           client_host, client_host_address);

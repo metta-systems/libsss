@@ -8,14 +8,14 @@
 //
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real.hpp>
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_packet.h"
-#include "ssu/simulation/sim_host.h"
-#include "ssu/simulation/sim_link.h"
-#include "ssu/simulation/sim_connection.h"
+#include "sss/simulation/simulator.h"
+#include "sss/simulation/sim_packet.h"
+#include "sss/simulation/sim_host.h"
+#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_connection.h"
 #include "arsenal/logging.h"
 
-namespace ssu {
+namespace sss {
 namespace simulation {
 
 static const int packet_overhead = 32; // Bytes of link/inet overhead per packet
@@ -124,4 +124,4 @@ void sim_packet::arrive()
 }
 
 } // simulation namespace
-} // ssu namespace
+} // sss namespace

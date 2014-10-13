@@ -10,7 +10,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
-// #include "ssu/protocol.h"
+// #include "sss/protocol.h"
 #include "comm/socket_endpoint.h"
 #include "comm/socket.h"
 

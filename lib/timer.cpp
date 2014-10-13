@@ -7,13 +7,13 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/asio.hpp>
-#include "ssu/timer.h"
-#include "ssu/timer_engine.h"
+#include "sss/timer.h"
+#include "sss/timer_engine.h"
 #include "arsenal/make_unique.h"
 
 namespace bp = boost::posix_time;
 
-namespace ssu {
+namespace sss {
 namespace async {
 
 /**
@@ -42,7 +42,7 @@ backoff(timer::duration_type interval, timer::duration_type max_interval = timer
 	return std::min(interval * 3 / 2, max_interval);
 }
 
-timer::timer(ssu::timer_host_state* host)
+timer::timer(timer_host_state* host)
 {
 	engine_ = host->create_timer_engine_for(this);
 }
@@ -156,4 +156,4 @@ std::unique_ptr<async::timer_engine> timer_host_state::create_timer_engine_for(a
 	return stdext::make_unique<async::default_timer_engine>(t, io_service);
 }
 
-} // namespace ssu
+} // sss namespace

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(libssu)
+project(libsss)
 
 if (NOT BUILD_IN_METTANODE)
     include(cmake/setup.cmake)

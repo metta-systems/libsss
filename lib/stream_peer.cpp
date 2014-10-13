@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/internal/stream_peer.h"
-#include "ssu/stream_channel.h"
+#include "sss/internal/stream_peer.h"
+#include "sss/stream_channel.h"
 #include "arsenal/algorithm.h"
 #include "routing/routing_client.h"
 #include "routing/client_profile.h"
@@ -15,7 +15,7 @@
 using namespace std;
 namespace ur = uia::routing;
 
-namespace ssu {
+namespace sss {
 namespace internal {
 
 constexpr int stream_peer::stall_warnings_max;
@@ -122,7 +122,7 @@ void stream_peer::connect_routing_client(ur::client *rc)
     connected_routing_clients_.insert(rc);
 
     // Listen for the lookup response
-    rc->on_lookup_done.connect([this, rc](ssu::peer_identity const& target_peer,
+    rc->on_lookup_done.connect([this, rc](peer_identity const& target_peer,
                                       uia::comm::endpoint const& peer_endpoint,
                                       ur::client_profile const& peer_profile)
     {
@@ -162,7 +162,7 @@ affinity(address const& a, address const& b)
 #endif
 
 void
-stream_peer::lookup_done(ur::client *rc, ssu::peer_identity const& target_peer,
+stream_peer::lookup_done(ur::client *rc, peer_identity const& target_peer,
     uia::comm::endpoint const& peer_endpoint,
     ur::client_profile const& peer_profile)
 {
@@ -227,7 +227,7 @@ stream_peer::lookup_done(ur::client *rc, ssu::peer_identity const& target_peer,
     peer_endpoints.push_back(peer_endpoint);
 
     // Final sorted list of endpoints to connect to.
-    std::vector<ssu::endpoint> output_endpoints;
+    std::vector<endpoint> output_endpoints;
 
     // Filter and sort endpoints array.
     for (auto& ep : peer_endpoints)
@@ -491,4 +491,4 @@ void stream_peer::primary_status_changed(uia::comm::socket::status new_status)
 }
 
 } // internal namespace
-} // ssu namespace
+} // sss namespace

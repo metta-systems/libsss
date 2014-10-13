@@ -12,8 +12,8 @@
 #include "simulator_fixture.h"
 
 using namespace std;
-using namespace ssu;
-using namespace ssu::simulation;
+using namespace sss;
+using namespace sss::simulation;
 
 BOOST_AUTO_TEST_CASE(created_simulator)
 {

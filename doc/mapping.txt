@@ -1,34 +1,34 @@
-SST term           | SSU term              | SST header     | SSU header
+SST term           | SSS term              | SST header     | SSS header
 -------------------+-----------------------+----------------+----------------
-StreamProtocol     | stream_protocol       | proto.h        | ssu/protocol.h
-UniqueStreamId     | unique_stream_id_t    | proto.h        | ssu/stream.h
-AbstractStream     | abstract_stream       | abs.h          | ssu/abstract_stream.h
-Stream             | stream                | stream.h       | ssu/stream.h
-Flow               | channel               | flow.h         | ssu/channel.h
-FlowArmor          | channel_armor         | flow.h         | ssu/channel_armor.h
+StreamProtocol     | stream_protocol       | proto.h        | sss/protocol.h
+UniqueStreamId     | unique_stream_id_t    | proto.h        | sss/stream.h
+AbstractStream     | abstract_stream       | abs.h          | sss/abstract_stream.h
+Stream             | stream                | stream.h       | sss/stream.h
+Flow               | channel               | flow.h         | sss/channel.h
+FlowArmor          | channel_armor         | flow.h         | sss/channel_armor.h
 FlowResponder      |                       | seg.h          | Unused
 Socket             | socket                | sock.h         | comm/socket.h
 SocketEndpoint     | socket_endpoint       | sock.h         | comm/socket_endpoint.h
-UdpSocket          | udp_socket            | sock.h         | ssu/udp_socket.h
-SocketFlow         | socket_channel        | sock.h         | ssu/socket_channel.h
-SocketReceiver     | socket_receiver       | sock.h         | ssu/socket_receiver.h
-SocketHostState    | socket_host_state     | sock.h         | ssu/socket_host_state.h
-StreamProtocol     | stream_protocol       | proto.h        | ssu/protocol.h
-StreamAttachment   | stream_attachment     | base.h         | ssu/base_stream.h
-StreamTxAttachment | stream_tx_attachment  | base.h         | ssu/base_stream.h
-StreamRxAttachment | stream_rx_attachment  | base.h         | ssu/base_stream.h
-BaseStream         | base_stream           | base.h         | ssu/base_stream.h
-StreamFlow         | stream_channel        | sflow.h        | ssu/stream_channel.h
-StreamPeer         | stream_peer           | peer.h         | ssu/internal/stream_peer.h
-StreamServer       | server                | stream.h       | ssu/server.h
-StreamResponder    | stream_responder      | stream.h       | ssu/stream_responder.cpp
-KeyResponder       | key_responder         | key.h          | ssu/negotiation/key_responder.h
-KeyInitiator       | key_initiator         | key.h          | ssu/negotiation/key_responder.h
-KeyHostState       | key_host_state        | key.h          | ssu/negotiation/key_responder.h
+UdpSocket          | udp_socket            | sock.h         | sss/udp_socket.h
+SocketFlow         | socket_channel        | sock.h         | sss/socket_channel.h
+SocketReceiver     | socket_receiver       | sock.h         | sss/socket_receiver.h
+SocketHostState    | socket_host_state     | sock.h         | sss/socket_host_state.h
+StreamProtocol     | stream_protocol       | proto.h        | sss/protocol.h
+StreamAttachment   | stream_attachment     | base.h         | sss/base_stream.h
+StreamTxAttachment | stream_tx_attachment  | base.h         | sss/base_stream.h
+StreamRxAttachment | stream_rx_attachment  | base.h         | sss/base_stream.h
+BaseStream         | base_stream           | base.h         | sss/base_stream.h
+StreamFlow         | stream_channel        | sflow.h        | sss/stream_channel.h
+StreamPeer         | stream_peer           | peer.h         | sss/internal/stream_peer.h
+StreamServer       | server                | stream.h       | sss/server.h
+StreamResponder    | stream_responder      | stream.h       | sss/stream_responder.cpp
+KeyResponder       | kex_responder         | key.h          | sss/negotiation/kex_responder.h
+KeyInitiator       | kex_initiator         | key.h          | sss/negotiation/kex_initiator.h
+KeyHostState       | kex_host_state        | key.h          | sss/negotiation/kex_host_state.h
 
 
 SocketReceiver         socket_receiver
-+--KeyResponder        +--key_responder
++--KeyResponder        +--kex_responder
 |  +--StreamResponder     +--stream_responder
 |  +--FlowResponder
 +--TcpServer

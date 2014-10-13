@@ -6,15 +6,15 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/cryptobox_armor.h"
 #include "sodiumpp/sodiumpp.h"
 #include "arsenal/opaque_endian.h"
 #include "arsenal/logging.h"
-#include "ssu/channel.h"
+#include "sss/channel.h"
+#include "sss/cryptobox_armor.h"
 
 using namespace sodiumpp;
 
-namespace ssu {
+namespace sss {
 
 // If we have a proper peer_identity, we could extract remote public key from it.
 // So, two peers knowing public key of each other may start communicating with cryptobox_armor
@@ -41,4 +41,4 @@ bool cryptobox_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     return true;
 }
 
-} // ssu namespace
+} // sss namespace

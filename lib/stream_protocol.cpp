@@ -6,9 +6,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/stream_protocol.h"
+#include "sss/stream_protocol.h"
 
-namespace ssu {
+namespace sss {
 constexpr size_t stream_protocol::mtu;
 constexpr size_t stream_protocol::min_receive_buffer_size;
 constexpr uia::comm::magic_t stream_protocol::magic_id;

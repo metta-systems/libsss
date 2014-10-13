@@ -6,16 +6,16 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/aes_armor.h"
 #include "krypto/krypto.h"
 #include "arsenal/opaque_endian.h"
 #include "arsenal/logging.h"
-#include "ssu/channel.h"
+#include "sss/channel.h"
+#include "sss/aes_armor.h"
 
 // Info http://stackoverflow.com/questions/3141860/aes-ctr-256-encryption-mode-of-operation
 // @todo use EVP_aes_128_ctr instead of manual
 
-namespace ssu {
+namespace sss {
 
 channel_armor::~channel_armor()
 {}
@@ -69,7 +69,7 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
         boost::array<uint8_t, AES_BLOCK_SIZE> bytes;
     } ivec;
 
-    if (pkt.size() - crypto::HMACLEN < ssu::channel::header_len) {
+    if (pkt.size() - crypto::HMACLEN < sss::channel::header_len) {
         logger::warning() << "Received packet too small.";
         return false;
     }
@@ -110,4 +110,4 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     return true;
 }
 
-} // ssu namespace
+} // sss namespace

@@ -39,7 +39,7 @@ class socket
     bool active_{false};
 
 public:
-    // ssu expresses current socket status as one of three states:
+    // sss expresses current socket status as one of three states:
     enum class status {
         down,    ///< definitely appears to be down.
         stalled, ///< briefly lost connectivity, but may be temporary.

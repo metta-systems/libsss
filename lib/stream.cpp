@@ -10,16 +10,16 @@
 #include <boost/range/algorithm/copy.hpp>
 #include "arsenal/logging.h"
 #include "arsenal/algorithm.h"
-#include "ssu/stream.h"
-#include "ssu/stream_channel.h"
-#include "ssu/internal/stream_peer.h"
-#include "ssu/base_stream.h"
-#include "ssu/identity.h"
-#include "ssu/host.h"
+#include "sss/stream.h"
+#include "sss/stream_channel.h"
+#include "sss/internal/stream_peer.h"
+#include "sss/base_stream.h"
+#include "sss/identity.h"
+#include "sss/host.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // stream
@@ -438,7 +438,7 @@ bool stream::is_listening() const
 std::vector<std::shared_ptr<internal::stream_peer>>
 stream_host_state::all_peers() const
 {
-    std::vector<std::shared_ptr<ssu::internal::stream_peer>> values;
+    std::vector<std::shared_ptr<sss::internal::stream_peer>> values;
     boost::copy(peers_ | boost::adaptors::map_values, std::back_inserter(values));
     return values;
 }
@@ -461,4 +461,4 @@ internal::stream_peer* stream_host_state::stream_peer_if_exists(peer_identity co
     return peers_[id].get();
 }
 
-} // ssu namespace
+} // sss namespace

@@ -7,15 +7,15 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "arsenal/logging.h"
-#include "ssu/identity.h"
-#include "ssu/host.h"
-#include "ssu/negotiation/kex_responder.h"
+#include "sss/identity.h"
+#include "sss/host.h"
+#include "sss/negotiation/kex_responder.h"
 #include "routing/routing_client.h"
 
 using namespace std;
 namespace ur = uia::routing;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // stream_responder
@@ -35,7 +35,7 @@ class stream_responder : public negotiation::kex_responder, public stream_protoc
     // Handlers:
     void created_client(ur::client *rc);
     void client_ready();
-    void lookup_notify(ssu::peer_identity const& target_peer,
+    void lookup_notify(peer_identity const& target_peer,
         uia::comm::endpoint const& peer_ep,
         uia::routing::client_profile const& peer_profile);
     /**@}*/
@@ -89,7 +89,7 @@ void stream_responder::connect_routing_client(ur::client *c)
 
     connected_clients_.insert(c);
     c->on_ready.connect([this] { client_ready(); });
-    c->on_lookup_notify.connect([this](ssu::peer_identity const& target_peer,
+    c->on_lookup_notify.connect([this](peer_identity const& target_peer,
                                        uia::comm::endpoint const& peer_ep,
                                        uia::routing::client_profile const& peer_profile)
     {
@@ -113,7 +113,7 @@ void stream_responder::client_ready()
     }
 }
 
-void stream_responder::lookup_notify(ssu::peer_identity const& target_peer,
+void stream_responder::lookup_notify(peer_identity const& target_peer,
     uia::comm::endpoint const& peer_ep,
     uia::routing::client_profile const& peer_profile)
 {
@@ -137,4 +137,4 @@ void stream_host_state::instantiate_stream_responder()
     assert(responder_);
 }
 
-} // ssu namespace
+} // sss namespace

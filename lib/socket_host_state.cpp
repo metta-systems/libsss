@@ -16,12 +16,12 @@
 #include "comm/socket_channel.h"
 #include "comm/socket_receiver.h"
 #include "comm/udp_socket.h"
-#include "ssu/socket_host_state.h"
+#include "sss/socket_host_state.h"
 
 using namespace std;
 using namespace boost::asio;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // socket_host_state
@@ -128,4 +128,4 @@ socket_host_state::active_local_endpoints()
     return result;
 }
 
-} // ssu namespace
+} // sss namespace

@@ -9,15 +9,15 @@
 #define BOOST_TEST_MODULE Test_sim_connection
 #include <boost/test/unit_test.hpp>
 
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_host.h"
-#include "ssu/simulation/sim_link.h"
-#include "ssu/simulation/sim_connection.h"
+#include "sss/simulation/simulator.h"
+#include "sss/simulation/sim_host.h"
+#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_connection.h"
 
 using namespace std;
 using namespace uia;
-using namespace ssu;
-using namespace ssu::simulation;
+using namespace sss;
+using namespace sss::simulation;
 
 BOOST_AUTO_TEST_CASE(created_connection)
 {

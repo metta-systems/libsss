@@ -6,18 +6,18 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#define BOOST_TEST_MODULE Test_ssu_link
+#define BOOST_TEST_MODULE Test_sss_socket
 #include <boost/test/unit_test.hpp>
 
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
 #include "comm/udp_socket.h"
-#include "ssu/host.h"//@todo
-#include "ssu/negotiation/key_message.h"
-#include "ssu/negotiation/key_responder.h"
+#include "sss/host.h"//@todo
+#include "sss/negotiation/kex_message.h"
+#include "sss/negotiation/kex_responder.h"
 
 using namespace std;
-using namespace ssu;
+using namespace sss;
 using namespace uia;
 
 BOOST_AUTO_TEST_CASE(receive_too_small_packet)

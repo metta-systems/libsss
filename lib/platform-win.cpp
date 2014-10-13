@@ -7,11 +7,11 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <lmcons.h>
-#include "ssu/platform.h"
+#include "sss/platform.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 namespace platform {
 
 std::string user_name()
@@ -30,4 +30,4 @@ std::string user_name()
 }
 
 } // platform namespace
-} // ssu namespace
+} // sss namespace

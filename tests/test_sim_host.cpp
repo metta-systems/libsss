@@ -9,12 +9,12 @@
 #define BOOST_TEST_MODULE Test_sim_host
 #include <boost/test/unit_test.hpp>
 
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_host.h"
+#include "sss/simulation/simulator.h"
+#include "sss/simulation/sim_host.h"
 
 using namespace std;
-using namespace ssu;
-using namespace ssu::simulation;
+using namespace sss;
+using namespace sss::simulation;
 
 BOOST_AUTO_TEST_CASE(created_host)
 {

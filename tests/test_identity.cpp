@@ -9,10 +9,10 @@
 #define BOOST_TEST_MODULE Test_identity
 #include <boost/test/unit_test.hpp>
 
-#include "ssu/identity.h"
+#include "sss/identity.h"
 
 using namespace std;
-using namespace ssu;
+using namespace sss;
 
 BOOST_AUTO_TEST_CASE(null_identity)
 {

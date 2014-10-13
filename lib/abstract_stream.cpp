@@ -6,10 +6,10 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/abstract_stream.h"
-#include "ssu/host.h"
+#include "sss/abstract_stream.h"
+#include "sss/host.h"
 
-namespace ssu {
+namespace sss {
 
 abstract_stream::abstract_stream(std::shared_ptr<host> h)
     : host_(h)
@@ -30,4 +30,4 @@ peer_identity abstract_stream::remote_host_id() const
     return peerid_;
 }
 
-} // ssu namespace
+} // sss namespace

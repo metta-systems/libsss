@@ -20,7 +20,7 @@ class socket_receiver;
 class socket_channel;
 
 // Interface used by socket layer to work with the host state.
-// Must be implemented by real host implementation, for example the one in ssu.
+// Must be implemented by real host implementation, for example the one in sss.
 class comm_host_interface
 {
 public:

@@ -1,12 +1,12 @@
 #include "arsenal/logging.h"
 #include "comm/platform.h"
 #include "comm/udp_socket.h"
-#include "ssu/host.h"//for get_io_service() on host
+#include "sss/host.h"//for get_io_service() on host
 
 using namespace std;
 using namespace boost::asio;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // helper function
@@ -136,4 +136,4 @@ udp_socket::udp_ready_read(boost::system::error_code const& error, size_t bytes_
     }
 }
 
-} // ssu namespace
+} // sss namespace

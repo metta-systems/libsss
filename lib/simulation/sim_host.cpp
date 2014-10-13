@@ -6,18 +6,18 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/simulation/sim_host.h"
-#include "ssu/simulation/sim_timer_engine.h"
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_link.h"
-#include "ssu/simulation/sim_packet.h"
-#include "ssu/simulation/sim_connection.h"
+#include "sss/simulation/sim_host.h"
+#include "sss/simulation/sim_timer_engine.h"
+#include "sss/simulation/simulator.h"
+#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_packet.h"
+#include "sss/simulation/sim_connection.h"
 #include "arsenal/make_unique.h"
 #include "arsenal/algorithm.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 namespace simulation {
 
 shared_ptr<sim_host>
@@ -172,4 +172,4 @@ sim_host::local_endpoints()
 }
 
 } // simulation namespace
-} // ssu namespace
+} // sss namespace

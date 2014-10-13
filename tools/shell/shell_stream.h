@@ -10,7 +10,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include "shell_protocol.h"
-#include "ssu/stream.h"
+#include "sss/stream.h"
 
 // Common base class for managing both client- and server-side shell streams.
 // Handles encoding and decoding control messages embedded within the stream.
@@ -31,7 +31,7 @@ public:
 private:
     static constexpr int maxControlMessage = 1<<24;
 
-    std::shared_ptr<ssu::stream> stream_{nullptr};
+    std::shared_ptr<sss::stream> stream_{nullptr};
 
     // Receive state:
     //  0: normal character transmission
@@ -51,10 +51,10 @@ private:
     int ctl_len_, ctl_got_;
 
 public:
-    shell_stream(std::shared_ptr<ssu::stream> strm);
+    shell_stream(std::shared_ptr<sss::stream> strm);
 
-    inline ssu::stream *stream() { return stream_.get(); }
-    void set_stream(std::shared_ptr<ssu::stream> stream);
+    inline sss::stream *stream() { return stream_.get(); }
+    void set_stream(std::shared_ptr<sss::stream> stream);
 
     packet receive();
     bool at_end() const;

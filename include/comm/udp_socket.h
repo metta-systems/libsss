@@ -14,14 +14,14 @@
 
 class settings_provider;
 
-namespace ssu {
+namespace sss {
 
 class host;
 
 /**
  * Class for UDP connection between two endpoints.
- * Multiplexes between channel-setup/key exchange traffic (which goes to ssu::key_responder)
- * and per-channel data traffic (which goes to ssu::channel).
+ * Multiplexes between channel-setup/key exchange traffic (which goes to sss::kex_responder)
+ * and per-channel data traffic (which goes to sss::channel).
  */
 class udp_socket : public uia::comm::socket
 {
@@ -95,5 +95,5 @@ private:
 bool bind_socket(boost::asio::ip::udp::socket& sock,
     uia::comm::endpoint const& ep, std::string& error_string);
 
-} // ssu namespace
+} // sss namespace
 

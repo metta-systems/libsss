@@ -19,11 +19,11 @@
 #include <unistd.h>
 #include "shell_session.h"
 #include "arsenal/logging.h"
-#include "ssu/host.h"
+#include "sss/host.h"
 
 using namespace std;
 
-shell_session::shell_session(std::shared_ptr<ssu::stream> stream)
+shell_session::shell_session(std::shared_ptr<sss::stream> stream)
     : shs(stream)
     , ptyfd(-1)
     , ttyfd(-1)

@@ -16,11 +16,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include "ssu/host.h"
+#include "sss/host.h"
 #include "shell_client.h"
 #include "arsenal/settings_provider.h"
 
-using namespace ssu;
+using namespace sss;
 using namespace std;
 namespace po = boost::program_options;
 

@@ -20,8 +20,8 @@
 #include "simulator_fixture.h"
 
 using namespace std;
-using namespace ssu;
-using namespace ssu::simulation;
+using namespace sss;
+using namespace sss::simulation;
 
 static constexpr int DATAGRAMS_TO_SEND = 100;
 static constexpr int max_datagram_size_log2 = 20;   // Max dgram size: 2^20 = 1MB
@@ -30,7 +30,7 @@ static constexpr int max_datagram_size = 1 << max_datagram_size_log2;
 BOOST_FIXTURE_TEST_CASE(transmit_datagrams, simulator_fixture)
 {
     int n_datagrams_arrived{0};
-    shared_ptr<ssu::stream> server_stream{nullptr};
+    shared_ptr<sss::stream> server_stream{nullptr};
 
     auto got_datagram = [&] {
         byte_array dg = server_stream->read_datagram();

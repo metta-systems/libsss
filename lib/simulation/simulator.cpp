@@ -7,11 +7,11 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "ssu/simulation/simulator.h"
-#include "ssu/simulation/sim_timer_engine.h"
+#include "sss/simulation/simulator.h"
+#include "sss/simulation/sim_timer_engine.h"
 #include "arsenal/logging.h"
 
-namespace ssu {
+namespace sss {
 namespace simulation {
 
 simulator::simulator()
@@ -90,4 +90,4 @@ void simulator::dequeue_timer(sim_timer_engine* timer)
 }
 
 } // simulation namespace
-} // ssu namespace
+} // sss namespace

@@ -6,11 +6,11 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/host.h"
+#include "sss/host.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 shared_ptr<host>
 host::create()
@@ -30,4 +30,4 @@ host::create(settings_provider* settings, uint16_t default_port)
     return host;
 }
 
-} // ssu namespace
+} // sss namespace

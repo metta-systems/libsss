@@ -9,19 +9,19 @@
 #include "shell_protocol.h"
 #include "shell_stream.h"
 #include "async_file.h"
-#include "ssu/host.h"
+#include "sss/host.h"
 
 class shell_client : public shell_protocol
 {
 private:
-    std::shared_ptr<ssu::stream> stream_;
+    std::shared_ptr<sss::stream> stream_;
     shell_stream shs;
     async_file afin, afout;
 
 public:
-    shell_client(std::shared_ptr<ssu::host> host);
+    shell_client(std::shared_ptr<sss::host> host);
 
-    inline void connect_to(ssu::peer_identity const& dst_eid,
+    inline void connect_to(sss::peer_identity const& dst_eid,
         uia::comm::endpoint const& location_hint)
     {
         assert(!stream_->is_connected());

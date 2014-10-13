@@ -8,16 +8,16 @@
 //
 #pragma once
 
-#include "ssu/server.h"
+#include "sss/server.h"
 #include "shell_protocol.h"
 
 class shell_server : public shell_protocol
 {
 private:
-    ssu::server srv;
+    sss::server srv;
 
     void got_connection();
 
 public:
-    shell_server(std::shared_ptr<ssu::host> host);
+    shell_server(std::shared_ptr<sss::host> host);
 };

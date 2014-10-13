@@ -10,16 +10,16 @@
 #include "arsenal/flurry.h"
 #include "arsenal/algorithm.h"
 #include "arsenal/byte_array_wrap.h"
-#include "ssu/base_stream.h"
-#include "ssu/datagram_stream.h"
-#include "ssu/host.h"
-#include "ssu/stream_channel.h"
-#include "ssu/server.h"
-#include "ssu/internal/stream_peer.h"
+#include "sss/base_stream.h"
+#include "sss/datagram_stream.h"
+#include "sss/host.h"
+#include "sss/stream_channel.h"
+#include "sss/server.h"
+#include "sss/internal/stream_peer.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // base_stream
@@ -2153,4 +2153,4 @@ void stream_rx_attachment::clear()
     }
 }
 
-} // ssu namespace
+} // sss namespace

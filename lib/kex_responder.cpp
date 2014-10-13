@@ -6,20 +6,19 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/negotiation/key_responder.h"
-#include "ssu/negotiation/key_message.h"
-#include "krypto/sha256_hash.h"
-#include "krypto/aes_256_cbc.h"
-#include "ssu/aes_armor.h"
-#include "ssu/host.h"
+#include "sss/negotiation/kex_responder.h"
+#include "sss/negotiation/kex_message.h"
 #include "arsenal/byte_array_wrap.h"
-#include "arsenal/flurry.h"
-#include "ssu/channel.h"
 #include "arsenal/make_unique.h"
 #include "arsenal/algorithm.h"
+#include "arsenal/flurry.h"
+#include "krypto/sha256_hash.h"
+#include "krypto/aes_256_cbc.h"
+#include "sss/aes_armor.h"
+#include "sss/host.h"
+#include "sss/channel.h"
 
 using namespace std;
-using namespace ssu;
 using namespace crypto;
 
 //=================================================================================================
@@ -115,7 +114,7 @@ hmac_append(byte_array const& hmac_key, byte_array& data)
  * Calculate SHA-256 hash of the key response message.
  */
 byte_array
-calc_signature_hash(ssu::negotiation::dh_group_type group,
+calc_signature_hash(sss::negotiation::dh_group_type group,
     int keylen,
     byte_array const& initiator_hashed_nonce,
     byte_array const& responder_nonce,
@@ -168,7 +167,7 @@ void warning(string message)
 
 } // anonymous namespace
 
-namespace ssu {
+namespace sss {
 namespace negotiation {
 
 //=================================================================================================
@@ -181,7 +180,7 @@ namespace {
  * Send complete prepared key_message.
  */
 byte_array
-send(key_message& m, uia::comm::socket_endpoint const& target)
+send(kex_message& m, uia::comm::socket_endpoint const& target)
 {
     byte_array msg;
     {
@@ -206,8 +205,8 @@ send_r0(uia::comm::magic_t magic, uia::comm::socket_endpoint const& to)
 void
 send(uia::comm::magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
 {
-    key_message m;
-    key_chunk chunk;
+    kex_message m;
+    kex_chunk chunk;
 
     chunk.type = key_chunk_type::dh_init1;
     chunk.dh_init1 = r;
@@ -221,8 +220,8 @@ send(uia::comm::magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint con
 void
 send(uia::comm::magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
 {
-    key_message m;
-    key_chunk chunk;
+    kex_message m;
+    kex_chunk chunk;
 
     chunk.type = key_chunk_type::dh_init2;
     chunk.dh_init2 = r;
@@ -236,8 +235,8 @@ send(uia::comm::magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint con
 void
 send(uia::comm::magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
 {
-    key_message m;
-    key_chunk chunk;
+    kex_message m;
+    kex_chunk chunk;
 
     chunk.type = key_chunk_type::dh_response1;
     chunk.dh_response1 = r;
@@ -251,8 +250,8 @@ send(uia::comm::magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint
 byte_array
 send(uia::comm::magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
 {
-    key_message m;
-    key_chunk chunk;
+    kex_message m;
+    kex_chunk chunk;
 
     chunk.type = key_chunk_type::dh_response2;
     chunk.dh_response2 = r;
@@ -266,16 +265,16 @@ send(uia::comm::magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint
 } // anonymous namespace
 
 //=================================================================================================
-// key_responder
+// kex_responder
 //=================================================================================================
 
-key_responder::key_responder(shared_ptr<host> host, uia::comm::magic_t magic)
+kex_responder::kex_responder(shared_ptr<host> host, uia::comm::magic_t magic)
     : socket_receiver(host.get(), magic)
     , host_(host)
 {}
 
 bool
-key_responder::is_initiator_acceptable(uia::comm::socket_endpoint const& initiator_ep,
+kex_responder::is_initiator_acceptable(uia::comm::socket_endpoint const& initiator_ep,
             byte_array/*peer_id?*/ const& initiator_eid, byte_array const& user_data)
 {
     return true;
@@ -285,7 +284,7 @@ key_responder::is_initiator_acceptable(uia::comm::socket_endpoint const& initiat
  * Compute HMAC challenge cookie for DH.
  */
 byte_array
-key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey,
+kex_responder::calc_dh_cookie(shared_ptr<sss::negotiation::dh_hostkey_t> hostkey,
     byte_array const& responder_nonce,
     byte_array const& initiator_hashed_nonce,
     uia::comm::socket_endpoint const& src)
@@ -305,9 +304,9 @@ key_responder::calc_dh_cookie(shared_ptr<ssu::negotiation::dh_hostkey_t> hostkey
 }
 
 void
-key_responder::receive(const byte_array& msg, const uia::comm::socket_endpoint& src)
+kex_responder::receive(const byte_array& msg, const uia::comm::socket_endpoint& src)
 {
-    logger::debug() << "key_responder::receive " << dec << msg.size() << " bytes from " << src;
+    logger::debug() << "kex_responder::receive " << dec << msg.size() << " bytes from " << src;
 
     byte_array_iwrap<flurry::iarchive> read(msg);
     key_message m;
@@ -341,7 +340,7 @@ key_responder::receive(const byte_array& msg, const uia::comm::socket_endpoint& 
 }
 
 void
-key_responder::got_probe0(uia::comm::socket_endpoint const& src)
+kex_responder::got_probe0(uia::comm::socket_endpoint const& src)
 {
     // Trigger a retransmission of the dh_init1 packet
     // for each outstanding initiation attempt to the given target.
@@ -369,7 +368,7 @@ key_responder::got_probe0(uia::comm::socket_endpoint const& src)
 }
 
 void
-key_responder::got_dh_init1(const dh_init1_chunk& data, const uia::comm::socket_endpoint& src)
+kex_responder::got_dh_init1(const dh_init1_chunk& data, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "Got dh_init1 from " << src;
 
@@ -411,7 +410,7 @@ key_responder::got_dh_init1(const dh_init1_chunk& data, const uia::comm::socket_
  * We got a response, this means we might've sent a request first, find the corresponding initiator.
  */
 void
-key_responder::got_dh_response1(const dh_response1_chunk& data, const uia::comm::socket_endpoint& src)
+kex_responder::got_dh_response1(const dh_response1_chunk& data, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "Got dh_response1 from " << src;
 
@@ -509,7 +508,7 @@ key_responder::got_dh_response1(const dh_response1_chunk& data, const uia::comm:
  * We got init2, this means the init1/response1 phase might have been done.
  */
 void
-key_responder::got_dh_init2(const dh_init2_chunk& data, const uia::comm::socket_endpoint& src)
+kex_responder::got_dh_init2(const dh_init2_chunk& data, const uia::comm::socket_endpoint& src)
 {
     logger::debug() << "Got dh_init2 from " << src;
 
@@ -709,7 +708,7 @@ key_responder::got_dh_init2(const dh_init2_chunk& data, const uia::comm::socket_
 }
 
 void
-key_responder::got_dh_response2(const dh_response2_chunk& data, const uia::comm::socket_endpoint& src)
+kex_responder::got_dh_response2(const dh_response2_chunk& data, const uia::comm::socket_endpoint& src)
 {
     shared_ptr<key_initiator> initiator = get_host()->get_initiator(data.initiator_hashed_nonce);
     if (!initiator or initiator->state_ != key_initiator::state::init2)
@@ -826,7 +825,7 @@ key_responder::got_dh_response2(const dh_response2_chunk& data, const uia::comm:
 }
 
 void
-key_responder::send_probe0(uia::comm::endpoint const& dest)
+kex_responder::send_probe0(uia::comm::endpoint const& dest)
 {
     logger::debug() << "Send probe0 to " << dest;
     for (auto s : get_host()->active_sockets())
@@ -839,11 +838,11 @@ key_responder::send_probe0(uia::comm::endpoint const& dest)
 } // negotiation namespace
 
 //=================================================================================================
-// key_host_state
+// kex_host_state
 //=================================================================================================
 
-shared_ptr<ssu::negotiation::key_initiator>
-key_host_state::get_initiator(byte_array nonce)
+shared_ptr<sss::negotiation::key_initiator>
+kex_host_state::get_initiator(byte_array nonce)
 {
     auto it = dh_initiators_.find(nonce);
     if (it == dh_initiators_.end()) {
@@ -852,26 +851,26 @@ key_host_state::get_initiator(byte_array nonce)
     return it->second;
 }
 
-pair<key_host_state::ep_iterator, key_host_state::ep_iterator>
-key_host_state::get_initiators(uia::comm::endpoint const& ep)
+pair<kex_host_state::ep_iterator, kex_host_state::ep_iterator>
+kex_host_state::get_initiators(uia::comm::endpoint const& ep)
 {
     return ep_initiators_.equal_range(ep);
 }
 
 void
-key_host_state::register_dh_initiator(byte_array const& nonce,
+kex_host_state::register_dh_initiator(byte_array const& nonce,
                                    uia::comm::endpoint const& ep,
-                                   shared_ptr<ssu::negotiation::key_initiator> ki)
+                                   shared_ptr<sss::negotiation::key_initiator> ki)
 {
     dh_initiators_.insert(make_pair(nonce, ki));
     ep_initiators_.insert(make_pair(ep, ki));
 }
 
 void
-key_host_state::unregister_dh_initiator(byte_array const& nonce, uia::comm::endpoint const& ep)
+kex_host_state::unregister_dh_initiator(byte_array const& nonce, uia::comm::endpoint const& ep)
 {
     dh_initiators_.erase(nonce);
     ep_initiators_.erase(ep);
 }
 
-} // ssu namespace
+} // sss namespace

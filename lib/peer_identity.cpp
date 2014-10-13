@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/identity.h"
+#include "sss/identity.h"
 #include "krypto/sha256_hash.h"
 #include "krypto/dsa160_key.h"
 #include "krypto/rsa160_key.h"
@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // identity
@@ -306,4 +306,4 @@ void identity_host_state::init_identity(settings_provider* settings)
     settings->sync();
 }
 
-} // ssu namespace
+} // sss namespace

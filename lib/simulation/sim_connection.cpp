@@ -7,11 +7,11 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/format.hpp>
-#include "ssu/simulation/sim_connection.h"
-#include "ssu/simulation/sim_host.h"
+#include "sss/simulation/sim_connection.h"
+#include "sss/simulation/sim_host.h"
 #include "arsenal/logging.h"
 
-namespace ssu {
+namespace sss {
 namespace simulation {
 
 //=================================================================================================
@@ -247,4 +247,4 @@ sim_connection::arrival_time_for(std::shared_ptr<sim_host> host)
 }
 
 } // simulation namespace
-} // ssu namespace
+} // sss namespace

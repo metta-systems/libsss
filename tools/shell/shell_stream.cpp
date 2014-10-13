@@ -9,14 +9,14 @@
 #include "shell_stream.h"
 #include "arsenal/logging.h"
 
-shell_stream::shell_stream(std::shared_ptr<ssu::stream> stream)
+shell_stream::shell_stream(std::shared_ptr<sss::stream> stream)
     : rstate(RecvNormal)
 {
     if (stream)
         set_stream(stream);
 }
 
-void shell_stream::set_stream(std::shared_ptr<ssu::stream> stream)
+void shell_stream::set_stream(std::shared_ptr<sss::stream> stream)
 {
     assert(stream_ == nullptr);
     stream_ = stream;
@@ -104,7 +104,7 @@ shell_stream::packet shell_stream::receive()
         case RecvLength: {
             if (ctl_len_ >= maxControlMessage) {
                 on_error("Control message too large");
-                stream_->shutdown(ssu::stream::shutdown_mode::reset);
+                stream_->shutdown(sss::stream::shutdown_mode::reset);
                 return packet();
             }
             char ch = rx_data_[0];

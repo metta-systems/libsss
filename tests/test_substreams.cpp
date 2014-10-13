@@ -6,23 +6,23 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#define BOOST_TEST_MODULE Test_ssu_substreams
+#define BOOST_TEST_MODULE Test_sss_substreams
 #include <boost/test/unit_test.hpp>
 
 #include "simulator_fixture.h"
 
 using namespace std;
-using namespace ssu;
+using namespace sss;
 
 struct substreams_fixture : public simulator_fixture
 {
-    std::vector<std::shared_ptr<ssu::stream>> streams; // to keep streams alive
+    std::vector<std::shared_ptr<stream>> streams; // to keep streams alive
     std::vector<byte_array> received;
 
-    void stream_setup_listening(std::shared_ptr<ssu::stream> new_stream)
+    void stream_setup_listening(std::shared_ptr<stream> new_stream)
     {
         new_stream->set_child_receive_buffer_size(16384);
-        new_stream->listen(ssu::stream::buffer_limit);
+        new_stream->listen(stream::buffer_limit);
         new_stream->on_new_substream.connect([this, new_stream] {
             while (auto new_substream = new_stream->accept_substream()) {
                 new_substream->on_ready_read_record.connect([this, new_substream] {

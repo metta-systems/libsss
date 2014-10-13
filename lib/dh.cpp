@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "ssu/dh.h"
-#include "ssu/host.h"
+#include "sss/dh.h"
+#include "sss/host.h"
 #include "krypto/utils.h"
 
 using namespace std;
@@ -160,10 +160,10 @@ DH *get_dh3072()
 // dh_hostkey_t
 //=================================================================================================
 
-namespace ssu {
+namespace sss {
 namespace negotiation {
 
-dh_hostkey_t::dh_hostkey_t(shared_ptr<ssu::host> host, negotiation::dh_group_type group, DH *dh)
+dh_hostkey_t::dh_hostkey_t(shared_ptr<sss::host> host, negotiation::dh_group_type group, DH *dh)
     : host_(host)
     , expiration_timer_(host.get())
     , group_(group)
@@ -278,4 +278,4 @@ void dh_host_state::clear_dh_key(negotiation::dh_group_type group)
     dh_keys_[int(group)].reset();
 }
 
-} // ssu namespace
+} // sss namespace

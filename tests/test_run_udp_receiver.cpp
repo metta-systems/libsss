@@ -7,10 +7,10 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "comm/udp_socket.h"
-#include "ssu/host.h"
+#include "sss/host.h"
 
 using namespace std;
-using namespace ssu;
+using namespace sss;
 using namespace uia;
 
 int main()

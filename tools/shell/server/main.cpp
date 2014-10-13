@@ -8,14 +8,14 @@
 //
 #include "arsenal/settings_provider.h"
 #include "shell_server.h"
-#include "ssu/host.h"
+#include "sss/host.h"
 
 int main(int argc, char **argv)
 {
     auto settings = settings_provider::instance();
 
     // Initialize SST and read or create our host identity
-    auto host(ssu::host::create(settings.get()));
+    auto host(sss::host::create(settings.get()));
 
     // Create and register the shell service
     shell_server svc(host);

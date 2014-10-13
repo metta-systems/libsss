@@ -7,14 +7,14 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/format.hpp>
-#include "ssu/server.h"
-#include "ssu/stream.h"
 #include "arsenal/logging.h"
-#include "ssu/base_stream.h"
+#include "sss/server.h"
+#include "sss/stream.h"
+#include "sss/base_stream.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 server::server(shared_ptr<host> h)
     : host_(h)
@@ -66,4 +66,4 @@ shared_ptr<stream> server::accept()
     return stream::create(bs);
 }
 
-} // ssu namespace
+} // sss namespace

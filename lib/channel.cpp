@@ -8,16 +8,16 @@
 //
 #include <deque>
 #include <boost/format.hpp>
-#include "ssu/channel.h"
-#include "arsenal/logging.h"
-#include "ssu/host.h"
-#include "ssu/timer.h"
 #include "arsenal/make_unique.h"
+#include "arsenal/logging.h"
+#include "sss/channel.h"
+#include "sss/host.h"
+#include "sss/timer.h"
 
 using namespace std;
 namespace bp = boost::posix_time;
 
-namespace ssu {
+namespace sss {
 
 //=================================================================================================
 // channel private_data implementation
@@ -1394,4 +1394,4 @@ channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
     }
 }
 
-} // ssu namespace
+} // sss namespace

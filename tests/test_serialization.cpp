@@ -9,11 +9,11 @@
 #define BOOST_TEST_MODULE Test_key_message_serialization
 #include <boost/test/unit_test.hpp>
 #include <fstream>
-#include "ssu/stream_protocol.h"
+#include "sss/stream_protocol.h"
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
-#include "ssu/negotiation/key_message.h"
+#include "sss/negotiation/key_message.h"
 #include "test_data_helper.h"
 #include "arsenal/logging.h"
 
@@ -36,18 +36,18 @@ BOOST_AUTO_TEST_CASE(serialize_and_deserialize)
     logger::file_dump(data, "deserialization test");
 
     {
-        ssu::negotiation::key_message m;
+        sss::negotiation::key_message m;
         byte_array_iwrap<flurry::iarchive> read(data);
 
         BOOST_CHECK(data.size() == 0xbc);
 
         read.archive() >> m;
 
-        BOOST_CHECK(m.magic == ssu::stream_protocol::magic_id);
+        BOOST_CHECK(m.magic == sss::stream_protocol::magic_id);
         BOOST_CHECK(m.chunks.size() == 2);
-        BOOST_CHECK(m.chunks[0].type == ssu::negotiation::key_chunk_type::dh_init1);
+        BOOST_CHECK(m.chunks[0].type == sss::negotiation::key_chunk_type::dh_init1);
         BOOST_CHECK(m.chunks[0].dh_init1.is_initialized());
-        BOOST_CHECK(m.chunks[0].dh_init1->group == ssu::negotiation::dh_group_type::dh_group_1024);
+        BOOST_CHECK(m.chunks[0].dh_init1->group == sss::negotiation::dh_group_type::dh_group_1024);
         BOOST_CHECK(m.chunks[0].dh_init1->key_min_length = 0x10);
 
         BOOST_CHECK(m.chunks[0].dh_init1->initiator_hashed_nonce.size() == 32);

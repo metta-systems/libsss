@@ -24,7 +24,7 @@ private:
     pid_watcher pidw;    // To watch for the child process's death
 
 public:
-    shell_session(std::shared_ptr<ssu::stream> stream);
+    shell_session(std::shared_ptr<sss::stream> stream);
     ~shell_session();
 
 private:

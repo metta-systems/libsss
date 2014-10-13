@@ -7,13 +7,13 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "arsenal/algorithm.h"
-#include "ssu/stream_channel.h"
-#include "ssu/internal/stream_peer.h"
+#include "sss/stream_channel.h"
+#include "sss/internal/stream_peer.h"
 #include "arsenal/logging.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 
 /**
  * Maximum number of in-use SIDs to skip while trying to allocate one,
@@ -315,4 +315,4 @@ bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
     return base_stream::receive(pktseq, pkt, this);
 }
 
-} // ssu namespace
+} // sss namespace

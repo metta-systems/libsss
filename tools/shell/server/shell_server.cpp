@@ -9,7 +9,7 @@
 #include "shell_server.h"
 #include "shell_session.h"
 
-shell_server::shell_server(std::shared_ptr<ssu::host> host)
+shell_server::shell_server(std::shared_ptr<sss::host> host)
     : srv(host)
 {
     srv.on_new_connection.connect([this]{got_connection();});

@@ -18,7 +18,7 @@ if (WIN32)
         comm/platform-win.cpp)
 endif()
 
-add_library(ssu STATIC
+add_library(sss STATIC
     abstract_stream.cpp
     base_stream.cpp
     datagram_stream.cpp

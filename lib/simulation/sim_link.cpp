@@ -6,13 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/simulation/sim_link.h"
-#include "ssu/simulation/sim_host.h"
-#include "ssu/simulation/sim_packet.h"
+#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_host.h"
+#include "sss/simulation/sim_packet.h"
 
 using namespace std;
 
-namespace ssu {
+namespace sss {
 namespace simulation {
 
 sim_link::sim_link(shared_ptr<sim_host> host)
@@ -95,4 +95,4 @@ sim_link::local_endpoints()
 }
 
 } // simulation namespace
-} // ssu namespace
+} // sss namespace

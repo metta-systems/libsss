@@ -15,7 +15,7 @@
 #include "arsenal/logging.h"
 #include "arsenal/byte_array_wrap.h"
 
-using namespace ssu;
+using namespace sss;
 using namespace std;
 
 #define STDIN_FILENO 0
@@ -34,8 +34,8 @@ static void termiosRestore()
     termiosChanged = false;
 }
 
-shell_client::shell_client(shared_ptr<ssu::host> host)
-    : stream_(make_shared<ssu::stream>(host))
+shell_client::shell_client(shared_ptr<sss::host> host)
+    : stream_(make_shared<sss::stream>(host))
     , shs(stream_)
     , afin(host->get_io_service())
     , afout(host->get_io_service())

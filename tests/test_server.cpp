@@ -6,13 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#define BOOST_TEST_MODULE Test_ssu_server
+#define BOOST_TEST_MODULE Test_sss_server
 #include <boost/test/unit_test.hpp>
 
-#include "ssu/server.h"
+#include "sss/server.h"
 
 using namespace std;
-using namespace ssu;
+using namespace sss;
 
 BOOST_AUTO_TEST_CASE(created_server)
 {

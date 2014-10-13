@@ -6,13 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/armor_secretbox.h"
 #include "krypto/krypto.h"
 #include "arsenal/opaque_endian.h"
 #include "arsenal/logging.h"
-#include "ssu/channel.h"
+#include "sss/channel.h"
+#include "sss/armor_secretbox.h"
 
-namespace ssu {
+namespace sss {
 
 secretbox_armor::secretbox_armor(std::string tx_key, std::string rx_key)
     : tx_key_(tx_key)
@@ -61,7 +61,7 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
         boost::array<uint8_t, AES_BLOCK_SIZE> bytes;
     } ivec;
 
-    // if (pkt.size() - crypto::HMACLEN < ssu::channel::header_len) {
+    // if (pkt.size() - crypto::HMACLEN < sss::channel::header_len) {
     //     logger::warning() << "Received packet too small.";
     //     return false;
     // }
@@ -94,4 +94,4 @@ bool aes_armor::receive_decode(uint64_t pktseq, byte_array& pkt)
     return true;
 }
 
-} // ssu namespace
+} // sss namespace

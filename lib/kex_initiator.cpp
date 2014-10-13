@@ -6,29 +6,28 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "ssu/negotiation/key_initiator.h"
-#include "ssu/negotiation/key_message.h"
-#include "krypto/sha256_hash.h"
-#include "krypto/aes_256_cbc.h"
-#include "ssu/aes_armor.h"
-#include "ssu/host.h"
+#include "sss/negotiation/kex_initiator.h"
+#include "sss/negotiation/kex_message.h"
 #include "arsenal/byte_array_wrap.h"
-#include "arsenal/flurry.h"
-#include "ssu/channel.h"
 #include "arsenal/make_unique.h"
 #include "arsenal/algorithm.h"
+#include "arsenal/flurry.h"
+#include "krypto/sha256_hash.h"
+#include "krypto/aes_256_cbc.h"
+#include "sss/aes_armor.h"
+#include "sss/host.h"
+#include "sss/channel.h"
 
 using namespace std;
-using namespace ssu;
 
-namespace ssu {
+namespace sss {
 namespace negotiation {
 
 //=================================================================================================
-// key_initiator
+// kex_initiator
 //=================================================================================================
 
-key_initiator::key_initiator(uia::comm::endpoint target,
+kex_initiator::kex_initiator(uia::comm::endpoint target,
                              peer_identity const& target_peer)
     : host_(channel->get_host())
     , target_(target)
@@ -36,21 +35,21 @@ key_initiator::key_initiator(uia::comm::endpoint target,
     , magic_(magic)
     , retransmit_timer_(channel->get_host().get())
 {
-    logger::debug() << "Creating key_initiator " << this;
+    logger::debug() << "Creating kex_initiator " << this;
 
     assert(target_ != uia::comm::endpoint());
     assert(channel->is_bound());
     assert(!channel->is_active());
 }
 
-key_initiator::~key_initiator()
+kex_initiator::~kex_initiator()
 {
-    logger::debug() << "Destroying key_initiator " << this;
+    logger::debug() << "Destroying kex_initiator " << this;
     cancel();
 }
 
 void
-key_initiator::exchange_keys()
+kex_initiator::exchange_keys()
 {
     logger::debug() << "Initiating key exchange connection to " << target_ << " peer id " << remote_id_;
 
@@ -66,7 +65,7 @@ key_initiator::exchange_keys()
 }
 
 void
-key_initiator::retransmit(bool fail)
+kex_initiator::retransmit(bool fail)
 {
     if (fail)
     {
@@ -92,7 +91,7 @@ key_initiator::retransmit(bool fail)
 }
 
 void
-key_initiator::done()
+kex_initiator::done()
 {
     bool send_signal = (state_ != state::done);
     logger::debug() << "Key exchange completed with " << target_ << (send_signal ? " (signaling upper layer)" : "");
@@ -104,7 +103,7 @@ key_initiator::done()
 }
 
 void
-key_initiator::cancel()
+kex_initiator::cancel()
 {
     logger::debug() << "Stop initiating to " << target_;
     retransmit_timer_.stop();
@@ -112,7 +111,7 @@ key_initiator::cancel()
 }
 
 void
-key_initiator::send_hello()
+kex_initiator::send_hello()
 {
     logger::debug() << "Send hello to " << target_;
     state_ = state::hello;
@@ -135,7 +134,7 @@ key_initiator::send_hello()
 }
 
 void
-key_initiator::send_cookie()
+kex_initiator::send_cookie()
 {
     logger::debug() << "Send dh_init2 to " << target_;
     state_ = state::init2;
@@ -155,3 +154,4 @@ key_initiator::send_cookie()
 }
 
 } // negotiation namespace
+} // sss namespace
