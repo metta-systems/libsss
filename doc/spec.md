@@ -456,6 +456,8 @@ Flags: FIN, INIT, USID, OFFSET, DATA LENGTH
  * `OFFSET` bits encode length of the stream offset field. A 0, 16, 24, 32, 40, 48, 56, or 64 bit unsigned number specifying the byte offset in the stream for this block of data. 000 corresponds to 0 bits and 111 corresponds to 64 bits. (@todo Should offset be always present?)
  * When `DATA LENGTH` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
 
+If `FIN` bit is set, stream data length may be zero. Otherwise, data length must be non-zero.
+
 Both `INIT` and `FIN` bits may be set.
 
 Possible combinations of bits:
@@ -869,6 +871,9 @@ When one side of the stream sends a frame with FIN set to true, the stream is co
 When both sides have indicated their desire to stop sending on the stream, stream becomes closed.
 
 **@todo**
+
+###### Listening on a stream
+###### dg_stream, audio_stream, video_stream subtypes
 
 ## 6. References
 
