@@ -48,7 +48,7 @@ namespace internal {
 class stream_host_state
 {
     std::shared_ptr<stream_responder> responder_{nullptr};
-    std::unordered_map<peer_identity, std::shared_ptr<internal::stream_peer>> peers_;
+    std::unordered_map<uia::peer_identity, std::shared_ptr<internal::stream_peer>> peers_;
     std::unordered_map<std::pair<std::string, std::string>, server*> listeners_;
 
 public:
@@ -69,11 +69,11 @@ public:
     /**
      * Create if necessary and return the stream peer's information (from the other side).
      */
-    internal::stream_peer* stream_peer(peer_identity const& id);
+    internal::stream_peer* stream_peer(uia::peer_identity const& id);
     /**
      * Return the stream peer's information (from the other side) or nullptr.
      */
-    internal::stream_peer* stream_peer_if_exists(peer_identity const& id);
+    internal::stream_peer* stream_peer_if_exists(uia::peer_identity const& id);
 
     inline bool is_listening(std::pair<std::string, std::string> svc_pair) const {
         return contains(listeners_, svc_pair);

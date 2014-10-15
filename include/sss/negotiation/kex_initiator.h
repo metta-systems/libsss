@@ -64,7 +64,7 @@ public:
 
     /// Start key negotiation for a channel that has been bound to a link but not yet activated.
     /// If 'target_peer' is non-empty, only connect to specified host ID.
-    kex_initiator(peer_identity const& target_peer);
+    kex_initiator(uia::peer_identity const& target_peer);
     ~kex_initiator();
 
     /**

@@ -45,7 +45,7 @@ protected:
     std::shared_ptr<host> host_;    ///< Per-host state.
     std::weak_ptr<stream> owner_;   ///< Back-pointer to stream object,
                                     ///< or nullptr if stream has been deleted.
-    peer_identity peerid_;                ///< EID of peer we're connected to.
+    uia::peer_identity peerid_;     ///< EID of peer we're connected to.
 
 private:
     int                 priority_{0};    ///< Current priority level
@@ -62,13 +62,13 @@ public:
      * as used in connecting the current stream.
      * Only valid if the stream is connected.
      */
-    peer_identity local_host_id() const;
+    uia::peer_identity local_host_id() const;
 
     /**
      * Returns the endpoint identifier of the remote host
      * to which this stream is connected.
      */
-    peer_identity remote_host_id() const;
+    uia::peer_identity remote_host_id() const;
 
     /**
      * Returns true if the underlying link is currently connected
