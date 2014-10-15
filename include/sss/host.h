@@ -9,7 +9,6 @@
 #pragma once
 
 #include "arsenal/logging.h"
-#include "sss/dh.h"
 #include "sss/timer.h"
 #include "sss/peer_identity.h"
 #include "sss/negotiation/kex_host_state.h"
