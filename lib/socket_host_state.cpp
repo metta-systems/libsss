@@ -28,7 +28,7 @@ namespace sss {
 //=================================================================================================
 
 uia::comm::socket_receiver*
-socket_host_state::receiver_for(uia::comm::magic_t magic)
+socket_host_state::receiver_for(std::string magic)
 {
     auto it = receivers_.find(magic);
     if (it == receivers_.end())

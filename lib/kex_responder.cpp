@@ -195,7 +195,7 @@ send(kex_message& m, uia::comm::socket_endpoint const& target)
  * Send a dummy "probing" packet to punch a hole in the NAT.
  */
 void
-send_r0(uia::comm::magic_t magic, uia::comm::socket_endpoint const& to)
+send_r0(std::string magic, uia::comm::socket_endpoint const& to)
 {
     key_message m;
     m.magic = magic;
@@ -203,7 +203,7 @@ send_r0(uia::comm::magic_t magic, uia::comm::socket_endpoint const& to)
 }
 
 void
-send(uia::comm::magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
+send(std::string magic, dh_init1_chunk& r, uia::comm::socket_endpoint const& to)
 {
     kex_message m;
     kex_chunk chunk;
@@ -218,7 +218,7 @@ send(uia::comm::magic_t magic, dh_init1_chunk& r, uia::comm::socket_endpoint con
 }
 
 void
-send(uia::comm::magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
+send(std::string magic, dh_init2_chunk& r, uia::comm::socket_endpoint const& to)
 {
     kex_message m;
     kex_chunk chunk;
@@ -233,7 +233,7 @@ send(uia::comm::magic_t magic, dh_init2_chunk& r, uia::comm::socket_endpoint con
 }
 
 void
-send(uia::comm::magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
+send(std::string magic, dh_response1_chunk& r, uia::comm::socket_endpoint const& to)
 {
     kex_message m;
     kex_chunk chunk;
@@ -248,7 +248,7 @@ send(uia::comm::magic_t magic, dh_response1_chunk& r, uia::comm::socket_endpoint
 }
 
 byte_array
-send(uia::comm::magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
+send(std::string magic, dh_response2_chunk& r, uia::comm::socket_endpoint const& to)
 {
     kex_message m;
     kex_chunk chunk;
@@ -268,7 +268,7 @@ send(uia::comm::magic_t magic, dh_response2_chunk& r, uia::comm::socket_endpoint
 // kex_responder
 //=================================================================================================
 
-kex_responder::kex_responder(shared_ptr<host> host, uia::comm::magic_t magic)
+kex_responder::kex_responder(shared_ptr<host> host, std::string magic)
     : socket_receiver(host.get(), magic)
     , host_(host)
 {}

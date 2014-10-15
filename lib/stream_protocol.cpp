@@ -11,6 +11,5 @@
 namespace sss {
 constexpr size_t stream_protocol::mtu;
 constexpr size_t stream_protocol::min_receive_buffer_size;
-constexpr uia::comm::magic_t stream_protocol::magic_id;
 constexpr int stream_protocol::max_service_record_size;
 }

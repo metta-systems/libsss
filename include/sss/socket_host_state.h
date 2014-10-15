@@ -78,17 +78,17 @@ public:
      */
     void bind_receiver(uia::comm::magic_t magic, uia::comm::socket_receiver* receiver)
     {
-        if (magic & 0xff000000) {
-            throw "Invalid magic value for binding a receiver.";
-        }
+        // if (magic & 0xff000000) {
+        //     throw "Invalid magic value for binding a receiver.";
+        // }
         receivers_.insert(std::make_pair(magic, receiver)); // @todo: Will NOT replace existing element.
     }
 
-    void unbind_receiver(uia::comm::magic_t magic) {
+    void unbind_receiver(std::string magic) {
         receivers_.erase(magic);
     }
 
-    bool has_receiver_for(uia::comm::magic_t magic) {
+    bool has_receiver_for(std::string magic) {
         return contains(receivers_, magic);
     }
 
