@@ -94,5 +94,7 @@ public:
     completion_signal on_completed;
 };
 
+using kex_initator_ptr_t = std::shared_ptr<kex_initiator>;
+
 } // negotiation namespace
 } // sss namespace
