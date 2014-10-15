@@ -11,7 +11,7 @@ namespace sss {
 /**
  * Mixin for host state that manages the key exchange state.
  */
-class key_host_state
+class kex_host_state
 {
     /**
      * Initiators by nonce.
