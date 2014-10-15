@@ -8,3 +8,8 @@
 //
 #pragma once
 
+#include <array>
+#include "arsenal/fusionary.hpp"
+#include "arsenal/opaque_endian.h"
+
+using usid_t = std::array<uint8_t, 20>;
