@@ -14,26 +14,26 @@ namespace uia {
 namespace comm {
 
 bool
-socket_channel::bind(socket* link, endpoint const& remote_ep, std::string channel_key)
+socket_channel::bind(socket::weak_ptr socket, endpoint const& remote_ep, std::string channel_key)
 {
-    assert(link);
+    assert(socket);
     assert(!is_active()); // can't bind while channel is active
     assert(!is_bound());  // can't bind again if already bound
     assert(channel_key.size() == 32);
 
-    if (link->channel_for(channel_key) != nullptr) {
+    if (socket->channel_for(channel_key) != nullptr) {
         return false;
     }
 
     remote_ep_ = remote_ep;
     local_channel_key_ = channel_key;
-    if (!link->bind_channel(local_channel_key_, shared_from_this())) {
+    if (!socket->bind_channel(local_channel_key_, shared_from_this())) {
         return false;
     }
 
-    logger::debug() << "Bound local channel " << encode::to_base32x(channel_key) << " for " << remote_ep << " to " << link;
+    logger::debug() << "Bound local channel " << encode::to_base32x(channel_key) << " for " << remote_ep << " to " << socket;
 
-    socket_ = link;
+    socket_ = socket;
     return true;
 }
 

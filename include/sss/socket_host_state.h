@@ -31,11 +31,13 @@ class host;
 class socket_host_state : virtual public asio_host_state /* jeez, damn asio! */
     , public uia::comm::comm_host_interface
 {
+    using socket_receiver = uia::comm::socket_receiver;
+
     /**
      * Lookup table of all registered socket_receiver for this host,
      * keyed on their 24-bit magic control packet type.
      */
-    std::unordered_map<uia::comm::magic_t, uia::comm::socket_receiver*> receivers_;
+    std::unordered_map<std::string, std::weak_ptr<socket_receiver>> receivers_;
     /**
      * List of all currently-active links.
      */
@@ -76,7 +78,7 @@ public:
     /**
      * Create a receiver and bind it to control channel magic.
      */
-    void bind_receiver(uia::comm::magic_t magic, uia::comm::socket_receiver* receiver)
+    void bind_receiver(std::string magic, std::weak_ptr<socket_receiver> receiver)
     {
         // if (magic & 0xff000000) {
         //     throw "Invalid magic value for binding a receiver.";
@@ -95,7 +97,7 @@ public:
     /**
      * Find and return a receiver for given control channel magic value.
      */
-    uia::comm::socket_receiver* receiver_for(uia::comm::magic_t magic) override;
+    std::weak_ptr<socket_receiver> receiver_for(std::string magic) override;
 
     inline void activate_socket(uia::comm::socket* l) override
     {
