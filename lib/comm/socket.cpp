@@ -68,6 +68,7 @@ socket::receive(byte_array const& msg, socket_endpoint const& src)
 
     logger::file_dump(msg, "received raw socket packet");
 
+    //Proposed API: string_ref magic = msg.string_view(0, 8);
     string magic = msg.as_string().substr(0, 8); // @todo Optimize (use byte_array subrange)
 
     if (host_interface_->has_receiver_for(magic)) {
