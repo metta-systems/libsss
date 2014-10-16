@@ -510,6 +510,8 @@ Figure N: Stream frame layout ([source](http://www.asciidraw.com/#71765432984097
 Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
 We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching. Parent must be already attached to initiate a sub-stream, so LSID is enough to distinguish parent stream in wire protocol, even thought USID might have been used internally.
 
+Stream immediately starts sending data, so receiver must be able to start reception. Some sort of window should be used to keep flow control. First message in the stream may be borrowing the window from its parent stream until it establishes own window.
+
 #### 4.2.3 ACK frame
 
 The ACK frame is sent to inform the peer which packets have been received, as well as which packets are still considered missing by the receiver (the contents of missing packets may need to be re-sent).
@@ -701,6 +703,15 @@ Currently supported options:
 
 RT_STREAM - ignores retransmissions and acks, may use FEC to reduce packet loss. Useful for audio/video/datagrams.
 
+Figure 14: RT Stream frame layout
+```
+      0         1         2         3                 3+L-1
+ +----------+---------+---------+---------+  .....  +---------+
+ | Type(12) |  Length of data   |            Data             |
+ +----------+---------+---------+---------+  .....  +---------+
+```
+@todo Needs datagram ID and first/last flags?
+
 ## 5 Stream Protocol
 
 Streams are independent sequences of uni- or bi­directional data flows cut into stream frames. Streams group logically communications between two parties. Streams can be created by either peer; can concurrently send data interleaved with other streams; and can be cancelled.
@@ -717,7 +728,7 @@ Each channel has two half-channel identifiers, one for each direction of informa
 
 ### Stream IDs - LSID
 
-LSID is similar to QUIC stream numbers - it's a 32-bit number, started from different start values by initiator and responder.
+LSID is similar to QUIC stream numbers - it's a 31-bit number, started from different start values by initiator and responder.
 
 At a given point in time a stream may have between zero and four attachments, two for each direction of information flow. Each attachment binds the stream to a particular channel and associates a 32-bit Local Stream Identifier (LSID) to the stream for the purpose of transmitting stream data over that channel. The scope of an LSID is local to a particular channel and flow direction: each endpoint host on a channel has its own LSID space, within which it may assign LSIDs independently of the other endpoint and of other channels.
 SSS allows a stream to have up to two attachments in each direction so that a host can transmit data on a stream continuously using one attachment while setting up a second attachment to a different channel, in order to migrate streams from one channel to another smoothly and transparently to the application. Hosts may detach active streams not only to migrate them but also to free up LSID space; long-lived but inactive streams may remain unattached in one or both flow directions for arbitrary periods of time.
@@ -731,7 +742,7 @@ Applications are not generally aware of the existence of channel root streams at
 
 ### Service request streams
 
-When the application makes a connect request to open a new top-level stream to a given target host and service, the stream protocol on the initiating host creates a service request stream as a substream of a suitable channel’s root stream. The initiating stream protocol then sends a service request message on this new stream.
+When the application makes a connect request to open a new top-level stream to a given target host and service, the stream protocol on the initiating host creates a service request stream as a substream of a suitable channel’s root stream. The initiating stream protocol then sends a service request message on this new stream. Initiator starts this stream with LSID 1, responder uses LSID 2 for the same stream. Responder is always on the even side with regards to LSIDs, while initiator is on the odd side.
 
 Service request streams also allow to query the application about supported service endpoints.
 
@@ -835,6 +846,7 @@ Error reply:
 ### 5.2 Starting new stream.
 
 New stream is started by posting STREAM frame with INIT flag set.
+This is essentially all that's needed for starting a stream. When starting a new stream `INIT` bit must be set. When this bit is set, parent stream LSID is transferred in STREAM frame, providing hereditary structure to streams. Since LSID 0 is always open on a channel, first created streams would specify it as the parent.
 
 **@todo**
 
