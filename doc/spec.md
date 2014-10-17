@@ -121,7 +121,7 @@ A session represents a context in which SSS runs over some underlying network pr
 
  * If SSS is run directly atop IP as a "native" transport alongside TCP and UDP, then an endpoint consists only of an IP address, and thus an SSS session is uniquely defined by the pair of IP addresses of the hosts involved: (local IP, remote IP). By definition there can be only one such "native" SSS session at a time between any pair of hosts.
 
- * If SSS is run atop some other network- or link-layer protocol, then SSS uses as its "endpoints"whatever the underlying protocols uses as an "address" or "host identifier." If SSS were to be run directly atop Ethernet, for example, then SSS’s endpoints would be IEEE MAC addresses, and a session would be uniquely defined by a pair of MAC addresses.
+ * If SSS is run atop some other network- or link-layer protocol, then SSS uses as its "endpoints" whatever the underlying protocols uses as an "address" or "host identifier." If SSS were to be run directly atop Ethernet, for example, then SSS’s endpoints would be IEEE MAC addresses, and a session would be uniquely defined by a pair of MAC addresses.
 
 #### 2.1.2 Channels
 
@@ -131,12 +131,9 @@ In SSS both parties may be trying to establish connection to each other. This ma
 
 Since channels rotate rather frequently (once in about 30 minutes), streams may be grouped differently onto each new set of channels, for example if a channel is set up and another channel expires, its streams may be reattached onto already existing channel.
 
-The initial flow in a zero-RTT setup is potentially less forward secure than possible so we should assume that the connection will upgrade to a truly ephemeral key for subsequent flows on the same connection.
-^^ it is not if client already supplies its ephemeral public key with the first packet?
-
 We should provide support to pad packets to reduce vulnerability to traffic analysis. Both size and frequency of the encrypted packets should be adjustable.
 
-Datagrams are specified to always fit in the smallest IPv6 datagram, 1280 bytes. (plus a typical 20 byte IPv4 or 40 byte IPv6 and 8 byte UDP header)
+Datagrams are specified to always fit in the [smallest required IPv6 datagram size](http://tcpipguide.com/free/t_IPv6DatagramSizeMaximumTransmissionUnitMTUFragment.htm), 1280 bytes (including a typical 20 byte IPv4 or 40 byte IPv6 and 8 byte UDP header, leaving 1232 to 1252 bytes for payload).
 
 #### 2.1.3 Streams
 
@@ -144,7 +141,7 @@ We expect that different streams will have distinct transport characteristics wh
  * Adjustable redundancy levels (trade bandwidth for latency savings)
  * Adjustable prioritization levels.
 
-We expect that some control channel, which may be viewed as an out-of-band stream, will always be available and may be used to signal state changes for the rest of the streams. The control channel will likely consist of special purpose frames (control frames).
+A control channel (with logical ID 0), which may be viewed as an out-of-band stream, is always available and may be used to signal state changes for the rest of the streams. The control channel will likely consist of special purpose frames (control frames).
 
 Streams are partitioned into frames for placement into channel packets. Whenever possible, any particular packet's payload should come from only one stream. Such dedication will reduce the probability that a single packet loss will impede progress of more than one stream. When there is not sufficient data in a stream to fill a packet, then frames from more than one stream may be packed into a single packet. Such packing should reduce the packet-count-overhead, and diminish serialization latency.
 
@@ -152,7 +149,7 @@ Streams are partitioned into frames for placement into channel packets. Whenever
 
 To better support an efficient and tight binding with an application, the following current statistics are plausibly expected to be made visible to the application:
   1. RTT (current smoothed estimate)
-  2. Packet size (including all overhead;; also excluding overhead, only including payload)
+  2. Packet size (including all overhead; also excluding overhead, only including payload)
   3. Bandwidth (current smoothed estimate across of entire connection)
   4. Peak Sustained Bandwidth (across entire connection)
   5. Congestion window size (expressed in packets)
@@ -167,6 +164,8 @@ Notification should also be provided, or access for the following events (granul
 
 ### 2.2 Packet types
 
+Each packet is distinguished by its magic value. Of the below types, all negotiation packets have own magic values to make negotiation level's work simpler. The rest of the packets use the single `message` packet magic and further discrimination is performed after opening the packet's crypto box.
+
 ```
 packet
 +--negotiation
@@ -176,7 +175,7 @@ packet
 +--message
    +--data
    |  +--frame sequence
-   +--FEC
+   +--forward error correction
       +--redundant data for single-packet recovery
 ```
 
@@ -188,7 +187,7 @@ SSS’s negotiation protocol is responsible for setting up new channels for use 
 
 The negotiation protocol is asymmetric in that the two participants have clearly delineated "initiator" and "responder" roles. The protocol supports peer-to-peer as well as client/server styles of communication, however, and the channels resulting from negotiation are symmetric and can be used by either endpoint to initiate new logical streams to the other endpoint.
 
-The INITIATE packet from the initiator must contain proper responder cookie or be discarded. The more general technique of "remote storage" eliminates storage on a responder in favor of storage inside the network: the responder sends data as an encrypted authenticated message to itself via the initiator inside an opaque cookie.
+The INITIATE packet from the initiator must contain proper responder cookie or be silently discarded. The more general technique of "remote storage" eliminates storage on a responder in favor of storage inside the network: the responder sends data as an encrypted authenticated message to itself via the initiator inside an opaque cookie.
 
 #### 3.1.1 Anti-amplification Measures
 
@@ -204,15 +203,15 @@ If the attacker makes copies of a legitimate initiator's HELLO packets then the 
 
 Protocol provides forward secrecy for the initiator's long-term public key. Two minutes after a connection is closed, the responder is unable to extract the initiator's _long-term public key_ from the network packets that were sent to that responder, and is unable to verify the initiator's long-term public key from the network packets -- that is because initiator is always using short-term public key to encrypt -- the only place where initiator's long-term public key is revealed is in Vouch subpacket, which is inside a crypto box.
 
-Here's how the forward secrecy works. At the beginning of a connection, the responder generates a short-term public key S' and short-term secret key s', supplementing its long-term public key S and long-term secret key s. Similarly, the initiator generates its own short-term public key C' and short-term secret key c', supplementing its long-term public key C and long-term secret key c. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys s' and c'. The only exceptions are as follows:
+Here's how the forward secrecy works. At the beginning of a connection, the responder generates a short-term public key R' and short-term secret key r', supplementing its long-term public key R and long-term secret key r. Similarly, the initiator generates its own short-term public key I' and short-term secret key i', supplementing its long-term public key I and long-term secret key i. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys r' and i'. The only exceptions are as follows:
 
- * Packets from the initiator contain, unencrypted, the short-term public key C'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
- * The first packet from the initiator contains a cryptographic box that can be opened by __c' and by s__ (not s'; the initiator does not know S' at this point). This box contains initiator's long-term public key C for validation against black-list by the responder.
- * The first packet from the responder contains a cryptographic box that can be opened by __c' and by s__. However, this box contains nothing other than the responder's short-term public key S', which is generated randomly for this connection, and a cookie, discussed below.
+ * Packets from the initiator contain, unencrypted, the short-term public key I'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
+ * The first packet from the initiator contains a cryptographic box that can be opened by __i' and by r__ (not r'; the initiator does not know R' at this point). This box contains initiator's long-term public key I for validation against black-list by the responder.
+ * The first packet from the responder contains a cryptographic box that can be opened by __i' and by r__. However, this box contains nothing other than the responder's short-term public key R', which is generated randomly for this connection, and a cookie, discussed below.
  * The second packet from the initiator contains a cookie from the responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the responder. Two minutes later the responder has discarded this key and is unable to extract any information from the cookie.
- * At the end of the connection, both sides throw away the short-term secret keys s' and c'.
+ * At the end of the connection, both sides throw away the short-term secret keys r' and i'.
 
-Channel holds short-term keys for encryption session. Closing a channel destroys those keys, providing forward secrecy. Channels are closed after arbitrary amount of time to destroy keys. The default channel timeout is 30 minutes plus minus a few minutes.
+Channels hold short-term keys for encrypted session. Closing a channel destroys those keys, providing forward secrecy. Channels are closed after arbitrary amount of time to destroy keys. The default channel timeout is 30 minutes plus minus a few minutes.
 
 #### 3.1.4 Security requirements for nonces
 
@@ -220,7 +219,7 @@ Attached to the box is a public 24-byte nonce chosen by the sender. Nonce means 
 
 ### 3.2 Negotiation Protocol Packet Format
 
-Negotiation protocol uses 3-way message exchange to verify peer's identity and start secure channel. Actual data transfer may start already with the third packet. A faster Zero-RTT connection establishment is not used to provide better forward secrecy guarantees.
+Negotiation protocol uses 3-way message exchange to verify peer's identity and start secure channel. Actual data transfer may start already with the third packet. A faster zero-RTT connection establishment is not used to provide better forward secrecy guarantees.
 
 #### 3.2.1 Responder Cookie format
 
@@ -229,8 +228,8 @@ ofs : sz  : description
 0   : 16  : compressed nonce, prefix with "minute-k"
 16  : 80  : secretbox under minute-key, containing:
     : ofs : sz  :
-    : 0   : 32  : initiator short-term public key
-    : 32  : 32  : responder short-term secret key
+    : 0   : 32  : initiator short-term public key I'
+    : 32  : 32  : responder short-term secret key r'
 TOTAL: 96 bytes
 ```
 
@@ -243,29 +242,29 @@ First packet sent by the initiator willing to establish a connection. This packe
 ```
 ofs : sz  : description
 0   : 8   : magic
-8   : 32  : initiator short-term public key
+8   : 32  : initiator short-term public key I'
 40  : 64  : zero
 104 : 8   : compressed nonce
-112 : 80  : box C'->S containing:
+112 : 80  : box I'->R containing:
     : ofs : sz  :
-    : 0   : 32  : initiator long-term public key (for pre-auth)
+    : 0   : 32  : initiator long-term public key I (for pre-auth)
     : 32  : 32  : zero
 TOTAL: 192 bytes
 ```
 
 #### 3.2.3 COOKIE packet format
 
-In response to HELLO packet, the Responder does not allocate any state. Instead, it encodes information about the Initiator into the returned Cookie. If the Initiator is willing to continue session it responds with an Initiate packet, which may contain initial message data along with identifying Cookie.
+In response to HELLO packet, the responder does not allocate any state. Instead, it encodes information about the initiator into the returned Cookie. If the initiator is willing to continue session it responds with an Initiate packet, which may contain initial message data along with identifying Cookie.
 
-In response, Responder encodes initiator's short-term public key and own short-term secret key using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
+In response, responder encodes initiator's short-term public key I' and own short-term secret key r' using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
 
 ```
 ofs : sz  : description
 0   : 8   : magic
 8   : 16  : compressed nonce
-24  : 144 : box S->C' containing:
+24  : 144 : box R->I' containing:
     : ofs : sz  :
-    : 0   : 32  : responder short-term public key
+    : 0   : 32  : responder short-term public key R'
     : 32  : 96  : Responder Cookie (@sa 3.2.1)
 TOTAL: 168 bytes
 ```
@@ -279,16 +278,16 @@ When Initiate packet is accepted, starting a session, cookie must be placed into
 ```
 ofs : sz    : description
 0   : 8     : magic
-8   : 32    : initiator short-term public key
+8   : 32    : initiator short-term public key I'
 40  : 96    : Responder Cookie (@sa 3.2.1)
 136 : 8     : compressed nonce
-144 : 112+M : box C'->S' containing:
+144 : 112+M : box I'->R' containing:
 ofs :   ofs : sz  :
-144 :   0   : 32  : initiator long-term public key
+144 :   0   : 32  : initiator long-term public key I
 176 :   32  : 16  : compressed nonce
-192 :   48  : 48  : box C->S containing Vouch subpacket:
+192 :   48  : 48  : box I->R containing Vouch subpacket:
             : ofs : sz  :
-            : 0   : 32  : initiator short-term public key
+            : 0   : 32  : initiator short-term public key I'
 240 :   96  : M   : message
 TOTAL: 240+M+16 bytes
 ```
@@ -302,9 +301,9 @@ Responder and initiator message packets differ only in the kind of short term ke
 ```
 ofs : sz   : description
 0   : 8    : magic
-8   : 32   : initiator short-term public key C'
+8   : 32   : initiator short-term public key I'
 40  : 8    : compressed nonce
-48  : 16+M : box C'->S' containing:
+48  : 16+M : box I'->R' containing:
     : ofs  : sz  :
     : 0    : M   : message
 TOTAL: 64+M bytes
@@ -317,9 +316,9 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 ```
 ofs : sz   : description
 0   : 8    : magic
-8   : 32   : responder short-term public key S'
+8   : 32   : responder short-term public key R'
 40  : 8    : compressed nonce
-48  : 16+M : box S'->C' containing:
+48  : 16+M : box R'->I' containing:
     : ofs  : sz  :
     : 0    : M   : message
 TOTAL: 64+M bytes
@@ -370,7 +369,7 @@ A non-FEC packet is a data packet and consists of one or more frames. Each frame
 Non-FEC packet payload consists of:
  * A packet header (see 4.1.1)
  * One or more tagged frames (see 4.2)
- * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most 1168 bytes. This accounts for 40 bytes of IPv6 header, 8 bytes of UDP header and 64 bytes of packet header and cryptobox overhead. The total size of the datagram is thus limited to 1280 bytes - the 1280-byte datagrams are allowed by IPv6 on all networks.
+ * Zero-padding. This padding produces a total message length that is a multiple of 16 bytes, at least 16 bytes and at most **1168 bytes**. This accounts for 40 bytes of IPv6 header, 8 bytes of UDP header and 64 bytes of packet header and cryptobox overhead. The total size of the datagram is thus limited to 1280 bytes - the 1280-byte datagrams are allowed by IPv6 on all networks.
 
 Note: When describing data fields the C-like type notation is used, where
  * `uint8_t` specifies unsigned 8-bit quantity (an octet)
