@@ -328,7 +328,7 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 
 ## 4 Channel Protocol
 
-Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, controls congestion and provides
+Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, congestion control and provides
 out-of-band signaling for streams management.
 
 Figure 2: Channel protocol packet layout ([source](http://www.asciidraw.com/#9003699700112372205/342236295))
@@ -364,7 +364,7 @@ As a final step in session negotiation channel layer sets up a decongestion stra
 
 After decrypting, message box becomes a plaintext payload block.
 
-A non-FEC packet is a data packet and consists of one or more frames. Each frame has its type as first byte. Each frame type is described below. A FEC packet consists of a XOR of all zero-padded packets in this FEC group and can be used to recover one lost packet in this FEC group.
+A *non-FEC* packet is a data packet and consists of one or more frames. Each frame has its type as first byte. Each frame type is described below. A *FEC* packet consists of a XOR of all zero-padded packets in this FEC group and can be used to recover one lost packet in this FEC group.
 
 Non-FEC packet payload consists of:
  * A packet header (see 4.1.1)
@@ -379,6 +379,10 @@ Note: When describing data fields the C-like type notation is used, where
  * `big_uint64_t` specifies unsigned 64-bit quantity in network (big-endian) order
 
 #### 4.1.1 Packet header format
+
+Every packet (FEC or non-FEC) starts with a packet header, describing the packet type and sequence number. 
+
+Packets may carry optional version field. Parties use this field to negotiate supported functionality of each end. Once endpoints have learned their peers' capabilities, the version field need not be transmitted. If a packet with version field included has been ACKed by the other side, endpoint can safely assume version field has been seen and stop transmitting it.
 
 Figure 3: Packet header
 ```
@@ -406,15 +410,13 @@ Figure 3: Packet header
 * FEC group number (optional, `uint8_t` when present)
 * Packet sequence number (variable size, either `big_uint16_t`, `big_uint32_t`, `big_uint48_t` or `big_uint64_t`)
 
-Version field is often only used in the first few packets of the protocol, after some ACKs are received and parties know the agreed version number, it does no longer need to be transmitted.
-
 If FEC is not used, the FEC group byte is not needed. The g bit serves as FEC enable flag.
 
-Shortest packet header is thus only 3 bytes long: flags and 2-byte packet sequence number.
+Shortest packet header is thus only 3 bytes long: zero flags and 2-byte packet sequence number.
 
 ### 4.2 Framing
 
-@todo might need to move framing until after section 5, after stream IDs are explained.
+**@todo might need to move framing until after section 5, after stream IDs are explained.**
 
 Frames are stream containers within a channel packet. Streams contents are sliced into frames, which may contain stream data from one or more streams and other control information. Frames use tagged chunks, where each chunk follows a certain format with a header and content part.
 ```
@@ -426,19 +428,19 @@ Frames are inside the channel message cryptobox, not visible to any eavesdropper
 
 #### 4.2.1 Frame types
 ```
-+----------------------+------------------------+
-|     Type value       |     Frame type         |
-+----------------------+------------------------+
-|      fiuoood0        |  STREAM                |
-|      xxxxxx01        |  ACK                   |
-|      xxxxx011        |  PADDING               |
-|      xxxx0101        |  DECONGESTION          |
-|      xxxx0111        |  DETACH                |
-|      xxx01001        |  RESET                 |
-|      xxx01011        |  CLOSE                 |
-|      xxx01101        |  NEGOTIATION           |
-|      xxx01111        |  RT_STREAM             |
-+----------------------+------------------------+
++------------+-------------------+
+| Type value |     Frame type    |
++------------+-------------------+
+|  fiuoood0  |  STREAM           |
+|  xxxxxx01  |  ACK              |
+|  xxxxx011  |  PADDING          |
+|  xxxx0101  |  DECONGESTION     |
+|  xxxx0111  |  DETACH           |
+|  xxx01001  |  RESET            |
+|  xxx01011  |  CLOSE            |
+|  xxx01101  |  NEGOTIATION      |
+|  xxx01111  |  RT_STREAM        |
++------------+-------------------+
 ```
 
 #### 4.2.2 STREAM frame
@@ -446,14 +448,14 @@ Frames are inside the channel message cryptobox, not visible to any eavesdropper
 Stream frame is used to transfer data on each individual stream. It also serves as an ATTACH packet
 to initiate a new stream.
 ```
-Frame type: 0
+Frame type: 0 + flags
 Flags: FIN, INIT, USID, OFFSET, DATA LENGTH
 ```
- * When `INIT` bit is set, this frame initiates the stream by providing stream and parent unique IDs.
- * When `USID` bit is set, this `INIT` frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. `USID` bit can only be set when `INIT` bit is set.
- * When `FIN` bit is set, this frame marks last transmission on this stream in this direction.
- * `OFFSET` bits encode length of the stream offset field. A 0, 16, 24, 32, 40, 48, 56, or 64 bit unsigned number specifying the byte offset in the stream for this block of data. 000 corresponds to 0 bits and 111 corresponds to 64 bits. (@todo Should offset be always present?)
- * When `DATA LENGTH` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
+ * When `i = INIT` bit is set, this frame initiates the stream by providing stream and parent unique IDs.
+ * When `u = USID` bit is set, this `INIT` frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. `USID` bit can only be set when `INIT` bit is set.
+ * When `f = FIN` bit is set, this frame marks last transmission on this stream in this direction.
+ * `ooo = OFFSET` bits encode length of the stream offset field. A 0, 16, 24, 32, 40, 48, 56, or 64 bit unsigned number specifying the byte offset in the stream for this block of data. 000 corresponds to 0 bits and 111 corresponds to 64 bits. (@todo Should offset be always present?)
+ * When `d = DATA LENGTH` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
 
 If `FIN` bit is set, stream data length may be zero. Otherwise, data length must be non-zero.
 
@@ -468,7 +470,7 @@ INIT,FIN
 INIT,USID,FIN
 ```
 
- * `FIN` bit does not add any fields to the frame header.
+ * `FIN` bit does not add any fields to the *frame header*.
  * `INIT` bit adds two LSIDs in sender space - parent LSID and NSID (New Stream ID).
  * `USID` bit adds full half-stream ID of the USID.
  * `OFFSET` bits add between 0 and 8 bytes offset.
@@ -480,11 +482,13 @@ Figure N: Stream frame layout ([source](http://www.asciidraw.com/#71765432984097
      +----------+-------+-------+-------+-------+
      | fiuoood0 |           Stream ID           |
      +----------+-------+-------+-------+-------+
+
       When INIT bit is set:
          0       1       2       3
      +-------+-------+-------+-------+
   +5 |        Parent Stream ID       |
      +-------+-------+-------+-------+
+
       When USID bit is set:
          0       1       2       3       4       5       6       7
      +-------+-------+-------+-------+-------+-------+-------+-------+
@@ -494,11 +498,13 @@ Figure N: Stream frame layout ([source](http://www.asciidraw.com/#71765432984097
      +-------+-------+-------+-------+-------+-------+-------+-------+
  +25 |                               |
      +-------+-------+-------+-------+
+
       Depending on OFFSET bits between 0 and 64 bits offset:
          0       1       2       3       4       5       6       7
   +5 +-------+-------+-------+-------+-------+-------+-------+-------+
   +9 | Offset in stream                                              |
  +29 +-------+-------+-------+-------+-------+-------+-------+-------+
+
       When DATA LENGTH bit is set:
                  0       1
   +5+OFFSET  +-------+-------+
@@ -510,6 +516,8 @@ Given our initiator state from negotiation and next free stream id (32 bits) we 
 We need unique USID for this stream and USID for its parent stream to inititate a new stream regardless of channel switching. Parent must be already attached to initiate a sub-stream, so LSID is enough to distinguish parent stream in wire protocol, even thought USID might have been used internally.
 
 Stream immediately starts sending data, so receiver must be able to start reception. Some sort of window should be used to keep flow control. First message in the stream may be borrowing the window from its parent stream until it establishes own window.
+
+**@todo What happens when OFFSET is not specified? Should it always be specified?**
 
 #### 4.2.3 ACK frame
 
@@ -532,13 +540,13 @@ Figure 4: ACK frame layout
       | (variable length: may be empty)                                       |
       +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
- * Frame type `uint8_t`: 1
+ * Type `uint8_t`: 1 for ACK frame
 
 Data in an ACK frame is divided logically into two sections:
 
 ##### Sent Packet Data
 
- * Sent Entropy `uint8_t`: Cumulative hash of entropy in all sent packets up to the packet with sequence number one less than the least unacked packet.
+ * Sent Entropy `uint8_t`: Cumulative hash of entropy in all sent packets up to the packet with sequence number one less than the *least unacked packet*.
  * Least Unacked `big_uint64_t`: The smallest sequence number of any packet for which the sender is still awaiting an ack. If the receiver is missing any packets smaller than this value, the receiver should consider those packets to be irrecoverably lost.
 
 ##### Received Packet Data
@@ -549,7 +557,7 @@ Data in an ACK frame is divided logically into two sections:
    * If there are packets known to be missing which are not present in Missing Packets (due to size limitations), then this value shall be the largest sequence number smaller than the first missing packet which this ack does not include.
    * If multiple consecutive packets are lost, the value of Largest Observed may also appear in Missing Packets.
  * Largest Observed Delta Time `big_uint32_t`: Time elapsed in microseconds from when largest observed was received until this Ack frame was sent.
- * Num Missing `uint8_t`: Number of missing packets between largest observed and least unacked.
+ * Num Missing `uint8_t`: Number of missing packets between largest observed and least unacked. **@todo Should it be number of entries in missing packets array or actual number of missing packets? Array count seems safer and you can infer total missing by summing up all entries.**
  * Missing Packets `(big_uint48_t+big_uint16_t)[]`: A series of the lower 48 bits of the sequence numbers of packets which have not yet been received (NACK).
    * RLE encoded with higher 48 bits containing the lower 48 bits of the sequence number and lower 16 bits containing the length of the run starting with this sequence number.
 ```
@@ -566,6 +574,7 @@ It is expected that with regular loss rate and packet rate, ACK frames will ofte
 
 Padding frame indicates padding data within a packet, used to counter traffic analysis attacks. Ideally all packets should be padded to have same final length of 1280 bytes. However, in case of slow connection it may be preferential to not pad the data packets or pad them to a shorter common length.
 Padding frame contents may be anything and are simply ignored. It is recommended to explicitly initialize this padding data area with either random or zero bytes and not leave any old data that might leak information.
+The receiver is *advised to* simply skip over this data without trying to interpret or save it in any way. After processing the packet, packet memory *should* be zeroed.
 
 Figure 5: Padding frame layout
 ```
@@ -574,9 +583,11 @@ Figure 5: Padding frame layout
  | Type(3) | Length of padding |        Padding data         |
  +---------+---------+---------+---------+  .....  +---------+
 ```
+ * Type `uint8_t`: 3 for PADDING frame
+
 Padding packet may be as small as 3 bytes - type byte and length field, which is zero in this case.
 
-Take note of the rounding requirements - all padding together must pad message size to an integer multiple of 16 bytes.
+Take note of the rounding requirements - all padding together *must* pad message size to an integer multiple of 16 bytes.
 
 #### 4.2.5 DECONGESTION frame
 
@@ -589,7 +600,7 @@ Figure 6: Decongestion frame layout
  | Type(5) | Subtype | Method specific contents    |
  +---------+---------+---------+  .....  +---------+
 ```
- * Type `uint8_t`: Frame type byte (5 for decongestion frame)
+ * Type `uint8_t`: 5 for decongestion frame
 
 The following diagrams show method specific contents section starting from subtype byte, type is the same for all these packets and is omitted for brevity.
 
@@ -610,7 +621,24 @@ Figure 7: TCP decongestion frame layout
 
 ##### 4.2.5.2 Congestion control feedback for CurveCP Chicago
 
-**@todo**
+Chicago updates with RTT times as seen by the far end.
+
+Figure 8: Chicago decongestion frame layout
+```
+      0         1         2         3         4         5         6         7
+ +---------+---------+---------+---------+---------+---------+---------+---------+
+ | Subt(2) | RTT High                              | RTT Low                     |
+ +---------+---------+---------+---------+---------+---------+---------+---------+
+ |         | RTT Average                           | RTT Mean deviation          |
+ +---------+---------+---------+---------+---------+---------+---------+---------+
+ |         |
+ +---------+
+```
+ * Subt `uint8_t`: The congestion control subtype (2 for Chicago)
+ * Highest RTT `big_uint32_t`: **@todo**
+ * Lowest RTT `big_uint32_t`: **@todo**
+ * Average RTT `big_uint32_t`: **@todo**
+ * RTT mean deviation `big_uint32_t`: **@todo**
 
 ##### 4.2.5.3 Congestion control feedback for UDP LEDBAT
 
@@ -639,19 +667,27 @@ Figure 10: Inter-arrival decongestion frame layout
 
 #### 4.2.6 DETACH frame
 
-Detach frame allows stream to detach from current channel without shutting down the stream. Detaching informs the other side that this stream should not be torn down, but it will not send more data on this channel.
+Detach frame allows stream to detach from current channel without shutting down the stream. Detaching informs the other side that this stream should not be torn down, but it will not send more data on this channel. Stream may be subsequently reattached, if needed, to this or some other channel.
 
-```
 Detach frame only contains LSID of stream that will be detached.
+
+Figure 11: Detach frame layout
 ```
+      0         1         2         3         4
+ +---------+---------+---------+---------+---------+
+ | Type(7) | Stream Local ID                       |
+ +---------+---------+---------+---------+---------+
+```
+ * Type `uint8_t`: 7 for detach frame
+ * Stream Local ID `big_uint32_t`: LSID of the stream to detach (in sender's ID space)
 
 #### 4.2.7 RESET frame
 
-Abort stream. (Might combine detach and reset frames into STOP frame!)
+Abort stream. (**@todo Might combine detach and reset frames into STOP frame!**)
 
 The RESET frame allows for abnormal termination of a stream. When sent by the creator of a stream, it indicates the creator wishes to cancel the stream. When sent by the receiver of a stream, it indicates an error or that the receiver did not want to accept the stream, so the stream should be closed.
 
-Figure 11: Reset frame layout
+Figure 12: Reset frame layout
 ```
          0        1       2         3        4       5        6        7
     +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -661,19 +697,19 @@ Figure 11: Reset frame layout
     |  code  | length (16 bits)|                                            |
     +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
- * Frame type `uint8_t`: Value specifying that this is a stream reset frame (9)
- * Stream Id `big_uint32_t`: LSID of the stream.
- * Error code `big_uint32_t`: Error code which indicates why the stream is being closed.
+ * Frame type `uint8_t`: 9 for stream reset frame
+ * Stream Id `big_uint32_t`: LSID of the stream (in sender's ID space).
+ * Error code `big_uint32_t`: Error code which indicates why the stream is being closed. (**@todo Add a table of error codes!**)
  * Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
  * Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is **not** zero-terminated.
 
 #### 4.2.8 CLOSE frame
 
-Close connection.
+Close channel.
 
-**@todo** Immediate close and non-immediate (goaway) close?
+**@todo Immediate close and non-immediate (goaway) close?**
 
-Figure 12: Close frame layout
+Figure 13: Close frame layout
 ```
         0        1        2         3       4         5       6         7
     +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -684,11 +720,11 @@ Figure 12: Close frame layout
     |(variable length)         |                                            |
     +--------+--------+--------+--------+--------+--------+--------+--------+
 ```
- * Frame type `uint8_t`: Connection close frame type (11)
+ * Frame type `uint8_t`: 11 for connection close frame
  * Error code `big_uint32_t`: Error code which indicates why the connection is being closed.
  * Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
  * Reason phrase: An optional human-readable explanation for why the connection was closed.
- * AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed.
+ * AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed. A complete ACK frame is contained within this field and can be parsed with normal frame parser.
 
 ### 4.2.9 NEGOTIATION frame
 
@@ -698,18 +734,21 @@ Currently supported options:
   * FEC
   * Congestion control algorithm
 
+**@todo Define frame layout**
+ * Type `uint8_t`: 13 for negotiation frame
+
 ### 4.2.10 RT_STREAM frame
 
-RT_STREAM - ignores retransmissions and acks, may use FEC to reduce packet loss. Useful for audio/video/datagrams.
+RT_STREAM ignores retransmissions and ACKs, may use FEC to reduce packet loss. Will deliver data in best-effort fashion, without guaranteeing delivery. Useful for audio/video/datagrams.
 
 Figure 14: RT Stream frame layout
 ```
       0         1         2         3                 3+L-1
  +----------+---------+---------+---------+  .....  +---------+
- | Type(12) |  Length of data   |            Data             |
+ | Type(15) |  Length of data   |            Data             |
  +----------+---------+---------+---------+  .....  +---------+
 ```
-@todo Needs datagram ID and first/last flags?
+**@todo Needs datagram ID or LSID, and first/last flags?**
 
 ## 5 Stream Protocol
 
