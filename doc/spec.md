@@ -750,15 +750,22 @@ Negotiations are in a list of integer tags and associated values. Types of value
 
 List of negotiation tags:
 ```
-+-----+------------+-------+
-| Tag | Meaning    | Type  |
-+-----+------------+-------+
-|   1 | FEC        | Int8  |
-|   2 | Congestion | Int16 |
-|     | control    |       |
-|     | algorithm  |       |
-+-----+------------+-------+
++-----+------------+--------------+
+| Tag | Meaning    | Type         |
++-----+------------+--------------+
+|   1 | FEC        | uint8_t      |
+|   2 | Congestion | big_uint16_t |
+|     | control    |              |
+|     | algorithm  |              |
++-----+------------+--------------+
 ```
+ * For FEC the `uint8_t` value is treated as a boolean flag, with 0 indicating NO and 1 indicating YES for FEC use in this session.
+ * For CC the `big_uint16_t` value is treated as an enum of used CC algorithms with following values:
+   * 0 - no CC
+   * 1 - TCP CUBIC
+   * 2 - Chicago
+   * 3 - LEDBAT
+   * 4 - Inter-arrival
 
 ### 4.2.10 RT_STREAM frame
 
@@ -792,6 +799,7 @@ Each channel has two half-channel identifiers, one for each direction of informa
 LSID is similar to QUIC stream numbers - it's a 31-bit number, started from different start values by initiator and responder.
 
 At a given point in time a stream may have between zero and four attachments, two for each direction of information flow. Each attachment binds the stream to a particular channel and associates a 32-bit Local Stream Identifier (LSID) to the stream for the purpose of transmitting stream data over that channel. The scope of an LSID is local to a particular channel and flow direction: each endpoint host on a channel has its own LSID space, within which it may assign LSIDs independently of the other endpoint and of other channels.
+
 SSS allows a stream to have up to two attachments in each direction so that a host can transmit data on a stream continuously using one attachment while setting up a second attachment to a different channel, in order to migrate streams from one channel to another smoothly and transparently to the application. Hosts may detach active streams not only to migrate them but also to free up LSID space; long-lived but inactive streams may remain unattached in one or both flow directions for arbitrary periods of time.
 
 ### 5.1 Channel root stream (LSID 0)
