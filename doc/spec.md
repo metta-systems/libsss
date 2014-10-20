@@ -411,19 +411,17 @@ Frames are inside the channel message cryptobox, not visible to any eavesdropper
 
 #### 4.2.1 Frame types
 ```
-+------------+-------------------+
-| Type value |     Frame type    |
-+------------+-------------------+
-|  fiuoood0  |  STREAM           |
-|  xxxxxx01  |  ACK              |
-|  xxxxx011  |  PADDING          |
-|  xxxx0101  |  DECONGESTION     |
-|  xxxx0111  |  DETACH           |
-|  xxx01001  |  RESET            |
-|  xxx01011  |  CLOSE            |
-|  xxx01101  |  NEGOTIATION      |
-|  xxx01111  |  RT_STREAM        |
-+------------+-------------------+
+ Type value | Frame type
+------------+------------------
+  fiuoood0  |  STREAM
+  xxxxxx01  |  ACK
+  xxxxx011  |  PADDING
+  xxxx0101  |  DECONGESTION
+  xxxx0111  |  DETACH
+  xxx01001  |  RESET
+  xxx01011  |  CLOSE
+  xxx01101  |  NEGOTIATION
+  xxx01111  |  RT_STREAM
 ```
 
 #### 4.2.2 STREAM frame
