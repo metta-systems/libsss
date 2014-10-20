@@ -895,7 +895,7 @@ Error reply:
 ### 5.2 Starting new stream.
 
 New stream is started by posting STREAM frame with INIT flag set.
-This is essentially all that's needed for starting a stream. When starting a new stream `INIT` bit must be set. When this bit is set, parent stream LSID is transferred in STREAM frame, providing hereditary structure to streams. Since LSID 0 is always open on a channel, first created streams would specify it as the parent.
+This is essentially all that's needed for starting a stream. When starting a new stream `INIT` bit must be set. When this bit is set, parent stream LSID is transferred in STREAM frame, providing hereditary structure to streams. Since LSID 0 is always open on a channel, first created streams specify it as the parent.
 
 **@todo**
 
