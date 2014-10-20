@@ -331,31 +331,18 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, congestion control and provides
 out-of-band signaling for streams management.
 
-Figure 2: Channel protocol packet layout ([source](http://www.asciidraw.com/#9003699700112372205/342236295))
+Figure 2: Channel protocol packet layout
 ```
-                  0      1      2         3      4   5     6    7
-      UDP +-   +------------+------------------+--------+----------+
-   Header |    |Source Port | Destination Port | Length | Checksum |
-  8 bytes +-   +------------+------------------+--------+----------+
-
-          +-   +---------------------------------------------------+
-          |    |              Packet magic (8 bytes)               |
-          |    +---------------------------------------------------+
-  Channel |    |                                                   |
-   Header |    +                                                   +
- 48 bytes |    |               Short-term public key               |
-          |    +                                                   +
-          |    |                     (32 bytes)                    |
-          |    +                                                   +
-          |    |                                                   |
-          |    +---------------------------------------------------+
-          |    |             Compressed nonce (8 bytes)            |
-          +-   +---------------------------------------------------+
-               |                                                   |
-               |                Message in crypto box              |
-                                       ......
-               |                                                   |
-               +---------------------------------------------------+
+ofs : sz : descriptions
+  0 :  2 : Source Port            --+
+  2 :  2 : Destination Port         | UDP Header
+  4 :  2 : Length                   | 8 bytes
+  6 :  2 : Checksum               --+
+  8 :  8 : Packet magic           --+ Channel
+ 16 : 32 : Short-term public key    | Header
+ 48 :  8 : Compressed nonce       --+ 48 bytes
+ 56 :  X : Message in crypto box
+TOTAL: 56 + X bytes
 ```
 
 As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet contains a NEGOTIATION frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer? Could be included in RESET or CLOSE frame.)
@@ -386,15 +373,11 @@ Packets may carry optional version field. Parties use this field to negotiate su
 
 Figure 3: Packet header
 ```
-          0         1         2         3
-      +--------+---------+---------+---------+
-  +0  |Flags   | Version           | FEC     |
-      |000fssgv|                   | group   |
-      +--------+---------+---------+---------+
-  +4  | Packet sequence number (2 to 8 bytes)|
-      +--------+---------+---------+---------+
-  +8  | Packet sequence number (contd.)      |
-      +--------+---------+---------+---------+
+ofs :   sz : description
+  0 :    1 : Flags (000fssgv)
+  1 :    2 : Version (optional)
+  3 :    1 : FEC group (optional)
+  4 :  2-8 : Packet sequence number
 ```
 
 * Flags `uint8_t`:
@@ -828,55 +811,54 @@ All requests and responses start with a service code. Service codes are 2 bytes 
 #### Request connection to given service and protocol
 
 ```
-           0           1         2        3       ....  X
-      +---------+------------+--------+----------------------+
-   +0 | Type(1) | Reqtype(1) | Szserv | Service name string  |
-      +---------+------------+--------+----------------------+
- +X+1 | Szprot  | Protocol name string                       |
-      +---------+------------+--------+----------------------+
+ofs : sz : description
+  0 :  1 : Type (1)
+  1 :  1 : Request type (1)
+  2 :  2 : Size of service name
+  4 :  S : Service name
+4+S :  2 : Size of protocol name
+6+S :  P : Protocol name
 ```
 
 #### Respond with connection results
 
 ```
 Success & error replies:
-         0           1         2        3       4      5       6       7
-    +---------+------------+-------+-------+-------+-------+-------+-------+
- +0 | Type(2) | Reptype(1) |          Status code          | Reply length  |
-    +---------+------------+-------+-------+-------+-------+-------+-------+
- +7 |    Reply string                                               .....  |
-    +---------+------------+-------+-------+-------+-------+-------+-------+
+ofs : sz : description
+  0 :  1 : Type (2)
+  1 :  1 : Reply type (1)
+  2 :  4 : Status code
+  6 :  2 : Size of reply
+  8 :  R : Reply string
 ```
 
 #### Query list of services
 
 ```
-         0           1
-    +---------+------------+
- +0 | Type(1) | Reqtype(2) |
-    +---------+------------+
+ofs : sz : description
+  0 :  1 : Type (1)
+  1 :  1 : Request type (2)
 ```
 
 #### Respond with a list of services
 
 ```
 Success reply:
-         0           1         2        3       4      5       6       7
-    +---------+------------+-------+-------+-------+-------+-------+-------+
- +0 | Type(2) | Reptype(2) |          Status code          | Reply count   |
-    +---------+------------+-------+-------+-------+-------+-------+-------+
- +7 |    Reply count       | Length| Reply N service name   .....          |
-    +---------+------------+-------+-------+-------+-------+-------+-------+
-                           ^                                               ^
-                           +-----------------------------------------------+
-                                           Reply count times
+ofs : sz : description
+  0 :  1 : Type (2)
+  1 :  1 : Reply type (2)
+  2 :  4 : Status code
+  6 :  4 : Reply count
+ 10 :  2 : Reply N size of service name --+ Reply count
+ 12 :  S : Reply N service name         --+ times
+
 Error reply:
-         0           1         2        3       4      5       6       7
-    +---------+------------+-------+-------+-------+-------+-------+-------+
- +0 | Type(2) | Reptype(2) |          Status code          | Reply length  |
-    +---------+------------+-------+-------+-------+-------+-------+-------+
- +7 |    Reply string                                               .....  |
-    +---------+------------+-------+-------+-------+-------+-------+-------+
+ofs : sz : description
+  0 :  1 : Type (2)
+  1 :  1 : Reply type (2)
+  2 :  4 : Status code
+  6 :  2 : Size of reply
+  8 :  R : Reply string
 ```
 
 #### Query protocols of a given service
