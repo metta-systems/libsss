@@ -734,8 +734,31 @@ Currently supported options:
   * FEC
   * Congestion control algorithm
 
-**@todo Define frame layout**
+Negotiations are in a list of integer tags and associated values. Types of values are predefined.
+
+```
+        0        1        2         3       4         5       6         7
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+ +0 |Type(13)| Num negotiations|Negotiation 1 tag| Neg 1 value (variable)   |
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+ +X |Negotiation 2 tag| Neg 2 value (variable) ...                          |
+    +--------+--------+--------+--------+--------+--------+--------+--------+
+```
  * Type `uint8_t`: 13 for negotiation frame
+ * Num negotiations `big_uint16_t`: Number of negotiation pairs in this frame
+ * Each negotiation consists of `big_uint16_t` tag and associated value.
+
+List of negotiation tags:
+```
++-----+------------+-------+
+| Tag | Meaning    | Type  |
++-----+------------+-------+
+|   1 | FEC        | Int8  |
+|   2 | Congestion | Int16 |
+|     | control    |       |
+|     | algorithm  |       |
++-----+------------+-------+
+```
 
 ### 4.2.10 RT_STREAM frame
 
