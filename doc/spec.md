@@ -883,7 +883,7 @@ Streams are attached by posting STREAM frame with INIT and USID flags set. USID 
 
 ### 5.5 Detaching a stream from channel
 
-Stream is detached from channel by sending a DETACH frame.
+Stream is detached from channel by sending a DETACH frame. Stream remains open and can be reattached on same or different channel to continue transmission.
 
 **@todo**
 
@@ -903,10 +903,23 @@ When both sides have indicated their desire to stop sending on the stream, strea
 
 **@todo**
 
-###### Listening on a stream
+### Listening on a stream
+
+When client starts listening on a stream, system puts it into the list of streams awaiting connection with client provided service and protocol names. Streams awaiting are expecting a connection request record with service and protocol name matching their own.
+
+**@todo**
+
 ###### dg_stream, audio_stream, video_stream subtypes
 
-## 6. References
+These substreams only exist in the application layer and provide specific methods of assembling the data frames.
+
+**@todo** More details...
+
+## 6. Testing
+
+**@todo**
+
+## 7. References
 
  * [SST Structured Streams Transport](http://pdos.csail.mit.edu/uia/sst/)
  * [SPDY protocol](http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1)
