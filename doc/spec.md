@@ -930,4 +930,4 @@ These substreams only exist in the application layer and provide specific method
  * [TCP extensions for highperf](https://tools.ietf.org/html/rfc1323)
  * [SCTP](http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol)
  * [DTLS](http://en.wikipedia.org/wiki/Datagram_Transport_Layer_Security)
- * SSU (Secure Semireliable UDP, an i2p protocol)
+ * [SSU (Secure Semireliable UDP, an i2p protocol)](https://geti2p.net/en/docs/transport/ssu)
