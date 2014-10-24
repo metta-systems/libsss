@@ -821,7 +821,9 @@ ofs : sz : description
   6 :  4 : Reply count C, N = 0..<C
  10 :  2 : Reply N size of service name S --+ Reply count C
  12 :  S : Reply N service name           --+ times
+```
 
+```
 Error reply:
 ofs : sz : description
   0 :  1 : Type (2)
@@ -854,7 +856,9 @@ Success reply:
  8+S :  4 : Protocol name count C, N = 0..<C
 12+S :  2 : Reply N size of protocol name P --+ Reply count C
 14+S :  P : Reply N protocol name           --+ times
+```
 
+```
 Error reply:
 ofs : sz : description
   0 :  1 : Type (2)
