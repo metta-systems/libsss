@@ -431,15 +431,15 @@ to initiate a new stream.
 
 Figure N: Stream frame layout
 ```
-        ofs :                  sz : description
-          0 :                   1 : Frame type (1 - STREAM)
-          1 :                   1 : Flags (niuooodf)
-          2 :                   4 : Stream ID
-          6 :                   4 : Parent Stream ID (optional, when INIT (i) bit is set)
-         10 :                  20 : Stream USID (optional, when USID (u) bit is set)
-    6,10,30 : 0,2,3,4,5,6,7,8 (O) : Offset in stream (depending on OFFSET (ooo) bits)
-(6,10,30)+O :                   2 : Data length (optional, when DATA LENGTH (d) bit is set) D
-(8,12,32)+O :                   D : Data
+         ofs :                  sz : description
+           0 :                   1 : Frame type (1 - STREAM)
+           1 :                   1 : Flags (niuooodf)
+           2 :                   4 : Stream ID
+           6 :                   4 : Parent Stream ID (optional, when INIT (i) bit is set)
+          10 :                  24 : Stream USID (optional, when USID (u) bit is set)
+    10,14,34 : 0,2,3,4,5,6,7,8 (O) : Offset in stream (depending on OFFSET (ooo) bits)
+(10,14,34)+O :                   2 : Data length (optional, when DATA LENGTH (d) bit is set) D
+(12,16,36)+O :                   D : Data
 ```
 
 Flags: FIN, INIT, USID, OFFSET, DATA LENGTH, NOACK
@@ -734,12 +734,22 @@ Streams have a unique ID, used to distinguish this stream after switching to a n
 ### Stream IDs - USID
 
 SSS assigns each logical stream a permanent Unique Stream Identifier (USID) when the stream is first created, and uses this identifier to refer to the stream if it becomes necessary to detach the stream from its original channel or migrate it to another channel. A USID consists of two components, a 16-byte cryptographic half-channel identifier and a 64-bit stream counter.
-Each channel has two half-channel identifiers, one for each direction of information flow, both of which the negotiation protocol computes for the channel during key exchange. Which of a channel’s half-channel identifiers is assigned to a given stream depends on which participant host originated the stream. The stream counter value, in turn, distinguishes among streams created by that host during the channel’s lifetime.
-**@fixme** Although in theory every stream has a USID, in practice for most short-lived streams that remain attached to their original channel throughout their lifetimes, the stream’s USID is never actually transmitted or used by the wire protocol. Within the context of a particular chan- nel, SSS normally identifies streams using shorter 16-bit Local Stream Identifiers or LSIDs, described in the next section.
+
+Figure X: USID structure
+```
+ ofs : sz : description
+   0 : 16 : cryptographic half-channel identifier
+  16 :  8 : big_uint64_t stream counter
+TOTAL: 24 bytes
+```
+
+Each channel has two half-channel identifiers, one for each direction of information flow, both of which the negotiation protocol computes for the channel during key exchange. Must be a reproducible algorithm able to generate the half-channel ID both predictable and cryptographically strong. Using short-term keys of both parties is recommended.
+Which of a channel’s half-channel identifiers is assigned to a given stream depends on which participant host originated the stream. **@todo** What about having the same half-channel ID in both directions? **endtodo** The stream counter value, in turn, distinguishes among streams created by that host during the channel’s lifetime.
+Although in theory every stream has an USID, in practice for most short-lived streams that remain attached to their original channel throughout their lifetimes, the stream’s USID is never actually transmitted or used by the wire protocol. Within the context of a particular channel, SSS normally identifies streams using shorter 32-bit Local Stream Identifiers or LSIDs, described in the next section.
 
 ### Stream IDs - LSID
 
-LSID is similar to QUIC stream numbers - it's a 31-bit number, started from different start values by initiator and responder.
+LSID is similar to QUIC stream numbers - it's a 32-bit number, started from different start values by initiator and responder.
 
 At a given point in time a stream may have between zero and four attachments, two for each direction of information flow. Each attachment binds the stream to a particular channel and associates a 32-bit Local Stream Identifier (LSID) to the stream for the purpose of transmitting stream data over that channel. The scope of an LSID is local to a particular channel and flow direction: each endpoint host on a channel has its own LSID space, within which it may assign LSIDs independently of the other endpoint and of other channels.
 
@@ -752,7 +762,7 @@ Root stream does not have a unique ID and therefore is always implicitly started
 Whenever a pair of SSS hosts set up a new channel via the negotiation protocol, the hosts implicitly create a special stream for the channel called the channel root. A channel’s root stream is always attached to the channel with an LSID of 0 in each direction, and never detaches or migrates to other channels. The channel itself terminates once its root stream is closed in both directions.
 Applications are not generally aware of the existence of channel root streams at all: channel roots merely provide an outermost context in each channel that the stream layer uses to exchange control messages and initiate (or migrate in) other streams on behalf of applications.
 
-### Service request streams
+### Service request streams (**@fixme** LSIDs 1 and 2)
 
 When the application makes a connect request to open a new top-level stream to a given target host and service, the stream protocol on the initiating host creates a service request stream as a substream of a suitable channel’s root stream. The initiating stream protocol then sends a service request message on this new stream. Initiator starts this stream with LSID 1, responder uses LSID 2 for the same stream. Responder is always on the even side with regards to LSIDs, while initiator is on the odd side.
 
@@ -859,11 +869,11 @@ ofs : sz : description
 New stream is started by posting STREAM frame with INIT flag set.
 This is essentially all that's needed for starting a stream. When starting a new stream `INIT` bit must be set. When this bit is set, parent stream LSID is transferred in STREAM frame, providing hereditary structure to streams. Since LSID 0 is always open on a channel, first created streams specify it as the parent.
 
-Given our initiator state from negotiation and next free stream id (32 bits) we can know what LSID from the other side will be - if we're initiator, then other end LSID is our LSID+1, otherwise other end LSID is our LSID-1.
+Given our initiator/responder state from negotiation and next free stream ID (32 bits) we can know what the LSID from the far side will be - if we're initiator, then far end LSID is our LSID+1, otherwise far end LSID is our LSID-1.
 
 **@todo**
 
-All streams are identified by an unsigned 31-bit integer. Streams initiated by a client use odd numbered stream identifiers; those initiated by the server use even numbered stream identifiers.  A stream identifier of zero MUST NOT be used to establish a new stream.
+All streams are identified by an unsigned 32-bit integer. Streams initiated by an initiator use odd numbered stream identifiers; those initiated by the responder use even numbered stream identifiers. A stream identifier of zero MUST NOT be used to establish a new stream.
 
 The identifier of a newly established stream MUST be numerically greater than all previously established streams from that endpoint within the session. An endpoint that receives an unexpected stream identifier MUST respond with a connection error of type PROTOCOL_ERROR.
 
@@ -871,7 +881,7 @@ Stream identifiers cannot be reused within a connection.  Long-lived connections
 
 ### 5.3 Initiating sub-streams
 
-Sub streams are started by posting STREAM frame with INIT flag set. Parent LSID field indicates the parent stream to spawn from.
+Sub streams are started by posting STREAM frame with INIT flag set. Parent LSID field indicates the parent stream to spawn from. Technically spawning a sub-stream does not differ from spawning initial streams, only that parent LSID field is not zero.
 
 **@todo**
 
