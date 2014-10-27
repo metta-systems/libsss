@@ -933,6 +933,10 @@ These substreams only exist in the application layer and provide specific method
 
 **@todo**
 
+ * Speed of establishing connection
+ * Resilience to packet loss
+ * Behavior in edge cases (too much packet loss, competing LEDBAT or TCP streams)
+
 ## 7. References
 
  * [SST Structured Streams Transport](http://pdos.csail.mit.edu/uia/sst/)
