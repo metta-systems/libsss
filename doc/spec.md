@@ -693,12 +693,10 @@ ofs : sz : description
 
 List of negotiation tags:
 ```
- Tag | Meaning    | Value Type
------+------------+--------------
-   1 | FEC        | uint8_t
-   2 | Congestion | big_uint16_t
-     | control    |
-     | algorithm  |
+ Tag | Meaning                      | Value Type
+-----+------------------------------+--------------
+   1 | FEC                          | uint8_t
+   2 | Congestion control algorithm | big_uint16_t
 ```
  * For FEC the `uint8_t` value is treated as a boolean flag, with 0 indicating NO and 1 indicating YES for FEC use in this session.
  * For CC the `big_uint16_t` value is treated as an enum of used CC algorithms with following values:
