@@ -706,7 +706,7 @@ List of negotiation tags:
    * 3 - LEDBAT
    * 4 - Inter-arrival
 
-Tags must be sorted in the order of increasing tag values. No duplicate tags are presently allowed.
+Tags must be sorted in the order of increasing tag number. No duplicate tags are presently allowed.
 
 ### 4.2.10 PRIORITY frame
 
@@ -719,7 +719,7 @@ ofs : sz : description
   1 :  4 : Stream Local ID (LSID) in sender ID space
   5 :  4 : Priority value
 ```
- * Priority value is a `big_uint32_t` with 0 for maximum stream priority and maximum uint value for minimum stream priority.
+ * Priority value is a `big_uint32_t` with 0 for maximum stream priority and maximum uint32_t value for minimum stream priority.
 
 ## 5 Stream Protocol
 
