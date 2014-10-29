@@ -742,6 +742,24 @@ TOTAL: 24 bytes
 ```
 
 Each channel has two half-channel identifiers, one for each direction of information flow, both of which the negotiation protocol computes for the channel during key exchange. Must be a reproducible algorithm able to generate the half-channel ID both predictable and cryptographically strong. Using short-term keys of both parties is recommended.
+
+Original half-channel identifier calculation from SST
+```
+calc_key(master, initiator_hashed_nonce, responder_nonce, byte which, int keylen)
+{
+    master_hash = crypto::sha256::hash(master); // Use master_hash as hmac key
+    crypto::hash hmac(master_hash).update(initiator_hashed_nonce+responder_nonce+{which});
+    crypto::hash::value key;
+    hmac.finalize(key);
+    key.resize(keylen);
+    return key;
+}
+
+// Set up the new channel IDs
+tx_chan_id = calc_key(master_secret, responder_nonce, initiator_hashed_nonce, 'I', 128/8);
+rx_chan_id = calc_key(master_secret, initiator_hashed_nonce, responder_nonce, 'I', 128/8);
+```
+
 Which of a channel’s half-channel identifiers is assigned to a given stream depends on which participant host originated the stream. **@todo** What about having the same half-channel ID in both directions? **endtodo** The stream counter value, in turn, distinguishes among streams created by that host during the channel’s lifetime.
 Although in theory every stream has an USID, in practice for most short-lived streams that remain attached to their original channel throughout their lifetimes, the stream’s USID is never actually transmitted or used by the wire protocol. Within the context of a particular channel, SSS normally identifies streams using shorter 32-bit Local Stream Identifiers or LSIDs, described in the next section.
 
