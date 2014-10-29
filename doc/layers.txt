@@ -1,0 +1,12 @@
+   ---- application ----
+     +                +
+     |                |
+     v                |
+  streams             |
+  framing             v
+  channels        negotiation
+decongestion          +
+     +                |
+     |                |
+     v                v
+   ------- comm --------
