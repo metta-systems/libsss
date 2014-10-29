@@ -332,6 +332,17 @@ This packet type may be useful for zero-RTT session establishment. Several messa
 
 **@todo** This part needs more work to define how these messages could be mixed with normal 1-RTT session establishment, how packet loss could be dealt with if INITIATE_ACK is lost, etc.
 
+## 3.3 Describe possible values of magic field
+
+**@todo** These values are initially based on CurveCP, with letter case swapped.
+
+For packet types:
+ * HELLO - "qVNq5xLh"
+ * COOKIE - "rl3Anmxk"
+ * INITIATE - "qVNq5xLi"
+ * MESSAGE - "rl3q5xLm"
+ * INITIATE_MESSAGE - "qVNq5xLo"
+
 ## 4 Channel Protocol
 
 Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, congestion control and provides
