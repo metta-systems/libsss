@@ -871,59 +871,58 @@ ofs : sz : description
 New stream is started by posting STREAM frame with INIT flag set.
 This is essentially all that's needed for starting a stream. When starting a new stream `INIT` bit must be set. When this bit is set, parent stream LSID is transferred in STREAM frame, providing hereditary structure to streams. Since LSID 0 is always open on a channel, first created streams specify it as the parent.
 
-Given our initiator/responder state from negotiation and next free stream ID (32 bits) we can know what the LSID from the far side will be - if we're initiator, then far end LSID is our LSID+1, otherwise far end LSID is our LSID-1.
-
-**@todo**
-
 All streams are identified by an unsigned 32-bit integer. Streams initiated by an initiator use odd numbered stream identifiers; those initiated by the responder use even numbered stream identifiers. A stream identifier of zero MUST NOT be used to establish a new stream.
 
-The identifier of a newly established stream MUST be numerically greater than all previously established streams from that endpoint within the session. An endpoint that receives an unexpected stream identifier MUST respond with a connection error of type PROTOCOL_ERROR.
+Given our initiator/responder state from negotiation and next free stream ID (32 bits) we can know what the LSID from the far side will be - if we're initiator, then far end LSID is near end LSID+1, otherwise far end LSID is near end LSID-1.
 
-Stream identifiers cannot be reused within a connection.  Long-lived connections can cause an endpoint to exhaust the available range of stream identifiers.  A client that is unable to establish a new stream identifier can establish a new connection for new streams.
+The identifier of a newly established stream MUST be numerically greater than for all previously established streams on that channel. An endpoint that receives an unexpected stream identifier MUST respond with a channel error of type PROTOCOL_ERROR.
 
-### 5.3 Initiating sub-streams
+Stream identifiers cannot be reused within a connection.  Long-lived connections can cause an endpoint to exhaust the available range of stream identifiers.  A client that is unable to establish a new stream identifier can establish a new channel for new streams.
 
-Sub streams are started by posting STREAM frame with INIT flag set. Parent LSID field indicates the parent stream to spawn from. Technically spawning a sub-stream does not differ from spawning initial streams, only that parent LSID field is not zero.
+### 5.3 Initiating substreams
 
-**@todo**
+Technically, spawning a substream does not differ from spawning initial streams. Substreams are started by posting STREAM frame with INIT flag set. Parent LSID field indicates the parent stream to spawn from. For non-initial streams parent LSID field is non-zero.
+
+Initiating substream borrows on parent stream's window buffer space. **@todo**
 
 ### 5.4 Attaching a stream to channel
 
 Streams are attached by posting STREAM frame with INIT and USID flags set. USID specifies a unique identifier already known to peer to indicate that this stream is resuming on a new channel.
+New channel may have a different direction of initiator/responder so LSID allocation is handled by channel layer.
 
 **@todo**
 
 ### 5.5 Detaching a stream from channel
 
-Stream is detached from channel by sending a DETACH frame. Stream remains open and can be reattached on same or different channel to continue transmission.
+Stream is detached from channel by sending a DETACH frame. Stream remains open and can be reattached on same or different channel to continue transmission. Unacked and untransmitted packets from the stream are returned to stream buffer.
 
 **@todo**
 
 ### 5.6 Stream data exchange
 
-Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the FIN bit is sent. Once the FIN has been sent, the stream is considered to be half­-closed.
+Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of frames will be sent on the stream until a frame containing the FIN bit is sent. Once the FIN has been sent, the stream is considered to be half­-closed in this direction.
 
 **@todo**
 
 ### 5.7 Stream half­-close
 
-When one side of the stream sends a frame with FIN set to true, the stream is considered to be half-­closed from that side. The sender of the FIN is indicating that no further data will be sent from the sender on this stream. When both sides have half­-closed, the stream is considered to be closed.
+When one side of the stream sends a frame with FIN bit set, the stream is considered to be half-­closed from that side. The sender of the FIN is indicating that no further data will be sent by the sender on this stream. When both sides have half­-closed, the stream is considered to be closed.
 
 ### 5.8 Stream close
 
-When both sides have indicated their desire to stop sending on the stream, stream becomes closed.
+When both sides have indicated their desire to stop sending on the stream, stream becomes closed. Closed stream cannot be reopened. Stream LSIDs will not be reused in this sesssion.
 
 **@todo**
 
 ### Listening on a stream
 
-When client starts listening on a stream, system puts it into the list of streams awaiting connection with client provided service and protocol names. Streams awaiting are expecting a connection request record with service and protocol name matching their own.
+When client starts listening on a stream, system puts it into the list of streams awaiting connection with client provided service and protocol names. Awaiting streams are expecting a connection request record with service and protocol name matching their own.
 
 **@todo**
 
 ###### dg_stream, audio_stream, video_stream subtypes
 
-These substreams only exist in the application layer and provide specific methods of assembling the data frames.
+These substreams only exist in the application layer and provide specific methods of assembling the data frames. They are oriented at real-time best-effort delivery communications.
 
 **@todo** More details...
 
