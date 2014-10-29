@@ -711,7 +711,7 @@ Tags must be sorted in the order of increasing tag number. No duplicate tags are
 ### 4.2.10 PRIORITY frame
 
 PRIORITY frame indicates to the receiver a priority of processing frame data for a given stream.
-It is only a hint.
+It is only a hint. The receiver should make best effort to process given stream's data in accordance with relative priority given (streams with priority 0 should always be processed first, then streams with priority 1 and so on).
 
 ```
 ofs : sz : description
