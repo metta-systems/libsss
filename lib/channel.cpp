@@ -117,11 +117,12 @@ public:
 
     /**@}*/
 
+    static_assert(sizeof(tx_ack_mask_)*8 == mask_bits, "Invalid TX ack mask size");
+
     shared_state(shared_ptr<host> const& host)
         : host_(host)
         , mark_time_(host->current_time())
     {
-        static_assert(sizeof(tx_ack_mask_)*8 == mask_bits, "Invalid TX ack mask size");
     }
 
     /// Compute the time elapsed since the mark.
