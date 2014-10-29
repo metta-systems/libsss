@@ -628,7 +628,7 @@ Figure 11: Detach frame layout
 ```
 ofs : sz : description
   0 :  1 : Frame type (5 - DETACH)
-  1 :  4 : Stream Local ID (LSID)
+  1 :  4 : Stream Local ID (LSID) in sender ID space
 ```
  * Stream Local ID `big_uint32_t`: LSID of the stream to detach (in sender's ID space)
 
@@ -642,7 +642,7 @@ Figure 12: Reset frame layout
 ```
 ofs : sz : description
   0 :  1 : Frame type (6 - RESET)
-  1 :  4 : Stream Local ID (LSID)
+  1 :  4 : Stream Local ID (LSID) in sender ID space
   5 :  4 : Error code
   9 :  2 : Reason phrase length R
  11 :  R : Reason phrase (variable length, may be 0)
@@ -718,7 +718,7 @@ It is only a hint.
 ```
 ofs : sz : description
   0 :  1 : Frame type (9 - PRIORITY)
-  1 :  4 : Stream Local ID (LSID)
+  1 :  4 : Stream Local ID (LSID) in sender ID space
   5 :  4 : Priority value
 ```
  * Priority value is a `big_uint32_t` with 0 for maximum stream priority and maximum uint value for minimum stream priority.
