@@ -326,6 +326,12 @@ TOTAL: 64+M bytes
 
 M size is in multiples of 16 between 48 and 1088 bytes.
 
+#### 3.2.7 INITIATE_MESSAGE packet
+
+This packet type may be useful for zero-RTT session establishment. Several messages in this scenario may be not forwardly-secret, because initiator uses responder's long-term public key to box them. Only after we've received an INITIATE_ACK message with responder's short-term public key we could switch to proper forward-secret channel.
+
+**@todo** This part needs more work to define how these messages could be mixed with normal 1-RTT session establishment, how packet loss could be dealt with if INITIATE_ACK is lost, etc.
+
 ## 4 Channel Protocol
 
 Channel protocol provides independently encrypted packetization for streams of data. Channel protocol multiplexes streams, provides packet acknowledgement, congestion control and provides
