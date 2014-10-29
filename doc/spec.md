@@ -948,6 +948,7 @@ These substreams only exist in the application layer and provide specific method
 
 **@todo**
 
+Tests to run:
  * Speed of establishing connection
  * Resilience to packet loss
  * Behavior in edge cases (too much packet loss, competing LEDBAT or TCP streams)
