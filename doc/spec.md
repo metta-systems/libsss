@@ -160,7 +160,7 @@ To better support an efficient and tight binding with an application, the follow
 Notification should also be provided, or access for the following events (granularity of notification is TBD, and there should be no requirement on timeliness of the notifications, but any notification or status should include a best estimate of when the actual event took place):
   1. Queue size has dropped to zero
   2. All required ACKs have been received (connection may be closed with no transmission state loss.)
-    a. ACK of specific packet (section of stream?) has been received (not all streams support this. Should this be queryable, rather than a notification?)
+      a. ACK of specific packet (section of stream?) has been received (not all streams support this. Should this be queryable, rather than a notification?)
 
 ### 2.2 Packet types
 
@@ -172,7 +172,7 @@ packet
    +--HELLO
    +--COOKIE
    +--INITIATE
-+--message
++--MESSAGE
    +--data
    |  +--frame sequence
    +--forward error correction
@@ -203,13 +203,13 @@ If the attacker makes copies of a legitimate initiator's HELLO packets then the 
 
 Protocol provides forward secrecy for the initiator's long-term public key. Two minutes after a connection is closed, the responder is unable to extract the initiator's _long-term public key_ from the network packets that were sent to that responder, and is unable to verify the initiator's long-term public key from the network packets -- that is because initiator is always using short-term public key to encrypt -- the only place where initiator's long-term public key is revealed is in Vouch subpacket, which is inside a crypto box.
 
-Here's how the forward secrecy works. At the beginning of a connection, the responder generates a short-term public key R' and short-term secret key r', supplementing its long-term public key R and long-term secret key r. Similarly, the initiator generates its own short-term public key I' and short-term secret key i', supplementing its long-term public key I and long-term secret key i. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys r' and i'. The only exceptions are as follows:
+Here's how the forward secrecy works. At the beginning of a connection, the responder generates a short-term public key `R'` and short-term secret key `r'`, supplementing its long-term public key `R` and long-term secret key `r`. Similarly, the initiator generates its own short-term public key `I'` and short-term secret key `i'`, supplementing its long-term public key `I` and long-term secret key `i`. Almost all components of packets are in cryptographic boxes that can be opened only by the short-term secret keys `r'` and `i'`. The only exceptions are as follows:
 
- * Packets from the initiator contain, unencrypted, the short-term public key I'. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
- * The first packet from the initiator contains a cryptographic box that can be opened by __i' and by r__ (not r'; the initiator does not know R' at this point). This box contains initiator's long-term public key I for validation against black-list by the responder.
- * The first packet from the responder contains a cryptographic box that can be opened by __i' and by r__. However, this box contains nothing other than the responder's short-term public key R', which is generated randomly for this connection, and a cookie, discussed below.
+ * Packets from the initiator contain, unencrypted, the short-term public key `I'`. This public key is generated randomly for this connection; it is tied to the connection but does not leak any other information.
+ * The first packet from the initiator contains a cryptographic box that can be opened by __`i'` and by `r`__ (not `r'`; the initiator does not know `R'` at this point). This box contains initiator's long-term public key `I` for validation against black-list by the responder.
+ * The first packet from the responder contains a cryptographic box that can be opened by __`i'` and by `r`__. However, this box contains nothing other than the responder's short-term public key `R'`, which is generated randomly for this connection, and a cookie, discussed below.
  * The second packet from the initiator contains a cookie from the responder. This cookie is actually a cryptographic box that can be understood only by a "minute key" in the responder. Two minutes later the responder has discarded this key and is unable to extract any information from the cookie.
- * At the end of the connection, both sides throw away the short-term secret keys r' and i'.
+ * At the end of the connection, both sides throw away the short-term secret keys `r'` and `i'`.
 
 Channels hold short-term keys for encrypted session. Closing a channel destroys those keys, providing forward secrecy. Channels are closed after arbitrary amount of time to destroy keys. The default channel timeout is 30 minutes plus minus a few minutes.
 
@@ -256,7 +256,7 @@ TOTAL: 192 bytes
 
 In response to HELLO packet, the responder does not allocate any state. Instead, it encodes information about the initiator into the returned Cookie. If the initiator is willing to continue session it responds with an Initiate packet, which may contain initial message data along with identifying Cookie.
 
-In response, responder encodes initiator's short-term public key I' and own short-term secret key r' using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
+In response, responder encodes initiator's short-term public key `I'` and own short-term secret key `r'` using a special minute key, which is rotated every minute. If session isn't started within this interval, the responder will not be able to open this box and will discard the Initiate packet, thus failing session negotiation.
 
 ```
 ofs : sz  : description
@@ -330,7 +330,7 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 
 This packet type may be useful for zero-RTT session establishment. Several messages in this scenario may be not forwardly-secret, because initiator uses responder's long-term public key to box them. Only after we've received an INITIATE_ACK message with responder's short-term public key we could switch to proper forward-secret channel.
 
-**@todo** This part needs more work to define how these messages could be mixed with normal 1-RTT session establishment, how packet loss could be dealt with if INITIATE_ACK is lost, etc.
+**@todo** This part needs more work to define how these messages could be mixed with normal 1-RTT session establishment, how packet loss could be dealt with if INITIATE_ACK is lost, etc. It is not crucial at this stage of development however.
 
 ## 3.3 Describe possible values of magic field
 
