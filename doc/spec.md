@@ -24,21 +24,21 @@ CurveCP adds opaque cryptoboxes for all crucial contents and a session initiatio
 ### 1.1 Goals
 
 We’d like to develop a transport that supports the following goals:
-  1. Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
-  2. Reduced head-of-line blocking due to packet loss (losing one packet will not generally impair other multiplexed streams)
-  3. Low latency (minimal round-trip costs, both during setup/resumption, and in response to packet loss)
-    a. Significantly reduced connection startup latency
-    b. Attempt to use Forward Error Correcting (FEC) codes to reduce retransmission latency after packet loss.
-  4. Improved support for mobile, in terms of latency and efficiency (as opposed to TCP connections which are torn down during radio shutdowns)
-  5. Congestion avoidance support comparable to, and friendly to, TCP (unified across multiplexed streams)
-    a. Individual stream flow control, to prevent a stream with a fast source and slow sink from flooding memory at receiver end, and allow back-pressure to appear at the send end.
-  6. Privacy assurances comparable to TLS (without requiring in-order transport or in-order decryption)
-  7. Reliable and safe resource requirements scaling, both server-side and client-side (including reasonable buffer management and aids to avoid facilitating DoS amplification attacks)
-  8. Reduced bandwidth consumption and increased channel status responsiveness (via unified signaling of channel status across all multiplexed streams)
-  9. Reduced packet-count, if not in conflict with other goals.
-  10. Support reliable transport for multiplexed streams (can simulate TCP on the multiplexed streams)
-  11. Efficient demux-mux properties for proxies, if not in conflict with other goals.
-  12. Reuse, or evolve, existing protocols at any point where it is plausible to do so, without sacrificing our stated goals (e.g., consider LEDBAT, DCCP, TCP minion)
+ * Widespread deployability in today’s internet (i.e., makes it through middle-boxes; runs on common user client machines without kernel changes, or elevated privileges)
+ * Reduced head-of-line blocking due to packet loss (losing one packet will not generally impair other multiplexed streams)
+ * Low latency (minimal round-trip costs, both during setup/resumption, and in response to packet loss)
+   * Significantly reduced connection startup latency
+   * Attempt to use Forward Error Correcting (FEC) codes to reduce retransmission latency after packet loss.
+ * Improved support for mobile, in terms of latency and efficiency (as opposed to TCP connections which are torn down during radio shutdowns)
+ * Congestion avoidance support comparable to, and friendly to, TCP (unified across multiplexed streams)
+   * Individual stream flow control, to prevent a stream with a fast source and slow sink from flooding memory at receiver end, and allow back-pressure to appear at the send end.
+ * Privacy assurances comparable to TLS (without requiring in-order transport or in-order decryption)
+ * Reliable and safe resource requirements scaling, both server-side and client-side (including reasonable buffer management and aids to avoid facilitating DoS amplification attacks)
+ * Reduced bandwidth consumption and increased channel status responsiveness (via unified signaling of channel status across all multiplexed streams)
+ * Reduced packet-count, if not in conflict with other goals.
+ * Support reliable transport for multiplexed streams (can simulate TCP on the multiplexed streams)
+ * Efficient demux-mux properties for proxies, if not in conflict with other goals.
+ * Reuse, or evolve, existing protocols at any point where it is plausible to do so, without sacrificing our stated goals (e.g., consider LEDBAT, DCCP, TCP minion)
 
 ### 1.2 Why not use SCTP over DTLS?
 
@@ -148,19 +148,19 @@ Streams are partitioned into frames for placement into channel packets. Whenever
 #### 2.1.4 Application interface
 
 To better support an efficient and tight binding with an application, the following current statistics are plausibly expected to be made visible to the application:
-  1. RTT (current smoothed estimate)
-  2. Packet size (including all overhead; also excluding overhead, only including payload)
-  3. Bandwidth (current smoothed estimate across of entire connection)
-  4. Peak Sustained Bandwidth (across entire connection)
-  5. Congestion window size (expressed in packets)
-  6. Queue size (packets that have been formed, but not yet emitted over a wire)
-  7. Bytes in queue
-  8. Per-stream queue size (either bytes per stream, or unsent packets, both??)
+ * RTT (current smoothed estimate)
+ * Packet size (including all overhead; also excluding overhead, only including payload)
+ * Bandwidth (current smoothed estimate across of entire connection)
+ * Peak Sustained Bandwidth (across entire connection)
+ * Congestion window size (expressed in packets)
+ * Queue size (packets that have been formed, but not yet emitted over a wire)
+ * Bytes in queue
+ * Per-stream queue size (either bytes per stream, or unsent packets, both??)
 
 Notification should also be provided, or access for the following events (granularity of notification is TBD, and there should be no requirement on timeliness of the notifications, but any notification or status should include a best estimate of when the actual event took place):
-  1. Queue size has dropped to zero
-  2. All required ACKs have been received (connection may be closed with no transmission state loss.)
-      a. ACK of specific packet (section of stream?) has been received (not all streams support this. Should this be queryable, rather than a notification?)
+ * Queue size has dropped to zero
+ * All required ACKs have been received (connection may be closed with no transmission state loss.)
+   * ACK of specific packet (section of stream?) has been received (not all streams support this. Should this be queryable, rather than a notification?)
 
 ### 2.2 Packet types
 
