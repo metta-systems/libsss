@@ -54,7 +54,7 @@ public:
 
     virtual void os_event_processing() {}
 
-    typedef boost::signals2::signal<void (void)> step_event_signal;
+    using step_event_signal = boost::signals2::signal<void (void)>;
     step_event_signal on_step_event;
 };
 

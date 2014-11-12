@@ -32,8 +32,8 @@ class kex_host_state
     std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initator_ptr_t> ep_initiators_;
 
 public:
-    typedef std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initator_ptr_t>::iterator
-        ep_iterator;
+    using ep_iterator =
+        std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initator_ptr_t>::iterator;
 
     negotiation::kex_initator_ptr_t get_initiator(byte_array nonce);
     std::pair<ep_iterator, ep_iterator> get_initiators(uia::comm::endpoint const& ep);

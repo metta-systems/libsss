@@ -32,8 +32,8 @@ class socket_channel : std::enable_shared_from_this<socket_channel>
                                                 ///< (Near end short-term public key).
 
 public:
-    typedef std::weak_ptr<socket_channel> weak_ptr;
-    typedef std::shared_ptr<socket_channel> ptr;
+    using weak_ptr = std::weak_ptr<socket_channel>;
+    using ptr = std::shared_ptr<socket_channel>;
 
     inline virtual ~socket_channel() {
         unbind();
@@ -133,9 +133,9 @@ public:
     /** @name Signals. */
     /**@{*/
     // Provide access to signal types for clients
-    typedef boost::signals2::signal<void (byte_array const&, socket_endpoint const&)>
-        received_signal;
-    typedef boost::signals2::signal<void ()> ready_transmit_signal;
+    using received_signal
+        = boost::signals2::signal<void (byte_array const&, socket_endpoint const&)>;
+    using ready_transmit_signal = boost::signals2::signal<void ()>;
 
     /**
      * Signalled when channel receives a packet.

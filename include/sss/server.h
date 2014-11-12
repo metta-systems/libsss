@@ -122,7 +122,7 @@ public:
 
     /** @name Signals. */
     /**@{*/
-    typedef boost::signals2::signal<void(void)> connection_notify_signal;
+    using connection_notify_signal = boost::signals2::signal<void(void)>;
     /**
      * Emitted when a new connection arrives. To prevent races accept
      * all incoming streams in the handler function as described in accept() documentation.

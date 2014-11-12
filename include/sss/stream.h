@@ -495,14 +495,14 @@ public:
     /** @name Signals. */
     /**@{*///------------------------------------
 
-    typedef boost::signals2::signal<void (ssize_t)> bytes_written_signal;
+    using bytes_written_signal = boost::signals2::signal<void (ssize_t)>;
     /**
      * Emitted when some locally buffered data gets flushed
      * after being delivered to the receiver and acknowledged.
      */
     bytes_written_signal on_bytes_written;
 
-    typedef boost::signals2::signal<void (void)> ready_signal;
+    using ready_signal = boost::signals2::signal<void (void)>;
     ready_signal on_ready_read;
 
     /**
@@ -540,7 +540,7 @@ public:
      */
     ready_signal on_receive_blocked;
 
-    typedef boost::signals2::signal<void (void)> link_status_signal;
+    using link_status_signal = boost::signals2::signal<void (void)>;
     /**
      * Emitted when the stream establishes live connectivity
      * upon first connecting, or after being down or stalled.
@@ -565,13 +565,13 @@ public:
      */
     link_status_signal on_link_down;
 
-    typedef boost::signals2::signal<void (uia::comm::socket::status)> link_status_changed_signal;
+    using link_status_changed_signal = boost::signals2::signal<void (uia::comm::socket::status)>;
     /**
      * Emitted when this stream observes a change in link status.
      */
     link_status_changed_signal on_link_status_changed;
 
-    typedef boost::signals2::signal<void (void)> substream_notify_signal;
+    using substream_notify_signal = boost::signals2::signal<void (void)>;
     /**
      * Emitted when we receive an incoming substream while listening.
      * In response the client should call accept_substream() in a loop
@@ -580,8 +580,8 @@ public:
      */
     substream_notify_signal on_new_substream;
 
-    typedef boost::signals2::signal<void (const std::string&)> error_signal;
-    typedef boost::signals2::signal<void (void)> reset_signal;
+    using error_signal = boost::signals2::signal<void (const std::string&)>;
+    using reset_signal = boost::signals2::signal<void (void)>;
     /**
      * Emitted when an error condition is detected on the stream.
      * Link stalls or failures are not considered error conditions.

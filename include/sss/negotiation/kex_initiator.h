@@ -68,7 +68,7 @@ protected:
     virtual std::shared_ptr<channel> create_channel() = 0;
 
 public:
-    typedef std::shared_ptr<kex_initiator> ptr;
+    using ptr = std::shared_ptr<kex_initiator>;
 
     /// Start key negotiation for a channel that has been bound to a link but not yet activated.
     /// If 'target_peer' is non-empty, only connect to specified host ID.
@@ -98,11 +98,9 @@ public:
     /**
      * Send completion signal, indicating success when true or failure when false.
      */
-    typedef boost::signals2::signal<void (kex_initiator::ptr, bool)> completion_signal;
+    using completion_signal = boost::signals2::signal<void (kex_initiator::ptr, bool)>;
     completion_signal on_completed;
 };
-
-using kex_initator_ptr_t = std::shared_ptr<kex_initiator>;
 
 } // negotiation namespace
 } // sss namespace

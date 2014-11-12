@@ -15,7 +15,7 @@ namespace sss {
 
 class cryptobox_armor : public sss::channel_armor
 {
-    typedef sodiumpp::nonce<crypto_box_NONCEBYTES-8, 8> nonce64;
+    using nonce64 = sodiumpp::nonce<crypto_box_NONCEBYTES-8, 8>;
     sodiumpp::boxer<nonce64> boxer_;
     sodiumpp::unboxer<nonce64> unboxer_;
 

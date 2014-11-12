@@ -137,8 +137,8 @@ public:
      */
     void add_location_hint(uia::comm::endpoint const& hint);
 
-    typedef boost::signals2::signal<void (void)> channel_state_signal;
-    typedef boost::signals2::signal<void (uia::comm::socket::status)> link_status_changed_signal;
+    using channel_state_signal = boost::signals2::signal<void (void)>;
+    using link_status_changed_signal = boost::signals2::signal<void (uia::comm::socket::status)>;
 
     /**
      * Primary channel connection attempt succeeded.

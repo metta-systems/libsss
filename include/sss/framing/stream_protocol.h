@@ -35,8 +35,8 @@ public:
     // Datagram reassembly not yet supported, when done it could be around 2x-4x MTU size?
     static constexpr size_t max_stateless_datagram_size = mtu;
 
-    typedef uint64_t counter_t;    ///< Counter for SID assignment.
-    typedef uint16_t stream_id_t;  ///< Stream ID within channel.
+    using counter_t = uint64_t;    ///< Counter for SID assignment.
+    using stream_id_t = uint16_t;  ///< Stream ID within channel.
 
     struct stream_header
     {
@@ -50,17 +50,17 @@ public:
     	big_uint16_t new_stream_id;
     	big_uint16_t tx_seq_no;
     } __attribute__((packed));
-    typedef init_header reply_header;
+    using reply_header = init_header;
     // init/reply_header and data_header must be the same size to allow optimized init_packets
     struct data_header : public stream_header
     {
     	big_uint32_t tx_seq_no;
     } __attribute__((packed));
-    typedef stream_header datagram_header;
-    typedef stream_header ack_header;
-    typedef stream_header reset_header;
-    typedef stream_header attach_header;
-    typedef stream_header detach_header;
+    using datagram_header = stream_header;
+    using ack_header = stream_header;
+    using reset_header = stream_header;
+    using attach_header = stream_header;
+    using detach_header = stream_header;
 
     /**
      * Major packet type codes (4 bits).

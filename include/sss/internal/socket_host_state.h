@@ -129,7 +129,7 @@ public:
      */
     std::unordered_set<uia::comm::endpoint> active_local_endpoints();
 
-    typedef boost::signals2::signal<void(void)> active_sockets_changed_signal;
+    using active_sockets_changed_signal = boost::signals2::signal<void(void)>;
     /**
      * This signal is sent whenever the host's set of active sockets changes.
      */

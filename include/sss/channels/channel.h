@@ -25,7 +25,7 @@ class channel : public uia::comm::socket_channel
 {
     friend class base_stream; // @fixme *sigh*
 
-    typedef uia::comm::socket_channel super;
+    using super = uia::comm::socket_channel;
 
     class private_data;
     std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
@@ -120,7 +120,7 @@ public:
         return link_status_;
     }
 
-    typedef boost::signals2::signal<void (uia::comm::socket::status)> link_status_changed_signal;
+    using link_status_changed_signal = boost::signals2::signal<void (uia::comm::socket::status)>;
 
     /// Indicates when this channel observes a change in link status.
     link_status_changed_signal on_link_status_changed;

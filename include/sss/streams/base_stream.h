@@ -94,7 +94,7 @@ public:
  */
 class base_stream : public abstract_stream, public std::enable_shared_from_this<base_stream>
 {
-    typedef abstract_stream super;
+    using super = abstract_stream;
 
     friend class stream; // access to self_...
     friend class stream_channel;

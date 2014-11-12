@@ -29,7 +29,7 @@ namespace async {
 class timer
 {
 public:
-    typedef boost::asio::deadline_timer::duration_type duration_type;
+    using duration_type = boost::asio::deadline_timer::duration_type;
 
     static const duration_type retry_min;
     static const duration_type retry_max;
@@ -95,7 +95,7 @@ public:
      */
     void timeout_calculations();
 
-    typedef boost::signals2::signal<void (bool)> timeout_signal;
+    using timeout_signal = boost::signals2::signal<void (bool)>;
     /**
      * Signaled when the timer expires.
      *

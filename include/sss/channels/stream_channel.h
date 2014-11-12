@@ -28,7 +28,7 @@ class stream_channel : public channel, public stream_protocol
     friend class stream_rx_attachment; /// @fixme
     friend class stream_tx_attachment; /// @fixme
 
-    typedef channel super;
+    using super = channel;
 
     /**
      * Stream peer this channel is associated with.

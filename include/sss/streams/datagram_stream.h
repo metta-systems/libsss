@@ -20,7 +20,7 @@ namespace sss {
  */
 class datagram_stream : public abstract_stream
 {
-    typedef abstract_stream super;
+    using super = abstract_stream;
 
     byte_array const payload_; //!< Application payload of the datagram
     ssize_t pos_;              //!< Current read position in the datagram

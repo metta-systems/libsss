@@ -22,32 +22,32 @@ class timer;
  */
 class timer_engine
 {
-	timer* origin_{0};
+    timer* origin_{0};
 public:
-	typedef boost::posix_time::time_duration duration_type;
+    using duration_type = boost::posix_time::time_duration;
 
-	/**
-	 * Create a new timer engine.
-	 */
-	timer_engine(timer* t) : origin_(t) {}
+    /**
+     * Create a new timer engine.
+     */
+    timer_engine(timer* t) : origin_(t) {}
 
-	/**
-	 * Start the timer.
-	 * The implementation subclass provides this method.
-	 * @param interval the timer interval.
-	 */
-	virtual void start(duration_type interval) = 0;
-	/**
-	 * Stop the timer.
-	 * The implementation subclass provides this method.
-	 */
-	virtual void stop() = 0;
+    /**
+     * Start the timer.
+     * The implementation subclass provides this method.
+     * @param interval the timer interval.
+     */
+    virtual void start(duration_type interval) = 0;
+    /**
+     * Stop the timer.
+     * The implementation subclass provides this method.
+     */
+    virtual void stop() = 0;
 
-	/**
-	 * Signal timeout on the origin timer.
-	 * Subclasses of timer_engine call this method when requested time interval expires.
-	 */
-	void timeout();
+    /**
+     * Signal timeout on the origin timer.
+     * Subclasses of timer_engine call this method when requested time interval expires.
+     */
+    void timeout();
 };
 
 }

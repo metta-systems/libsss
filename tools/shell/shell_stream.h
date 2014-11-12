@@ -68,13 +68,13 @@ public:
     void send_eof();
 
     // signals:
-    typedef boost::signals2::signal<void (void)> ready_signal;
+    using ready_signal = boost::signals2::signal<void (void)>;
     ready_signal on_ready_read;
 
-    typedef boost::signals2::signal<void (ssize_t)> bytes_written_signal;
+    using bytes_written_signal = boost::signals2::signal<void (ssize_t)>;
     bytes_written_signal on_bytes_written;
 
-    typedef boost::signals2::signal<void (std::string const&)> error_signal;
+    using error_signal = boost::signals2::signal<void (std::string const&)>;
     /**
      * Emitted when a protocol error is detected.
      */

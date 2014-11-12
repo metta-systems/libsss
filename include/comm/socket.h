@@ -46,7 +46,7 @@ class socket
     bool active_{false};
 
 public:
-    typedef std::weak_ptr<socket> weak_ptr;
+    using weak_ptr = std::weak_ptr<socket>;
 
     // sss expresses current socket status as one of three states:
     enum class status {

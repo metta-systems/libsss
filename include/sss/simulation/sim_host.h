@@ -29,7 +29,7 @@ class sim_host : public host
     std::unordered_map<uia::comm::endpoint, std::shared_ptr<sim_connection>> connections_;
 
     /// Links bound on this host by port.
-    typedef uint16_t port_t;
+    using port_t = uint16_t;
     std::unordered_map<port_t, std::shared_ptr<sim_link>> links_;
 
     /**
