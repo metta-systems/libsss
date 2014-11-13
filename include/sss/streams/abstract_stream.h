@@ -224,7 +224,7 @@ public:
      * and the client application can use the new substream immediately
      * to send data to the remote host via the new substream.
      * If the remote host is not yet ready to accept the new substream,
-     * SSU queues the new substream and any data written to it locally
+     * SSS queues the new substream and any data written to it locally
      * until the remote host is ready to accept the new substream.
      *
      * @return A stream object representing the new substream.

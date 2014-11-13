@@ -23,7 +23,7 @@ namespace uia {
  * Represents a cryptographically self-certifying endpoint identifier.
  * It is a curve25519 public key (256 bits).
  *
- * SSU uses EIDs in place of IP addresses to identify hosts or virtual endpoint identities
+ * SSS uses EIDs in place of IP addresses to identify hosts or virtual endpoint identities
  * on a particular host (e.g., identites for specific user accounts on multiuser hosts).
  * Although EIDs are not usually intended to be seen by the user, they have a standard
  * filename/URL-compatible base32 text encoding. A 16-word proquint encoding is also possible.

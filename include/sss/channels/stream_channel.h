@@ -20,7 +20,7 @@ namespace internal {
 }
 
 /**
- * Channel implementation for SSU streams.
+ * Channel implementation for SSS streams.
  */
 class stream_channel : public channel, public stream_protocol
 {
@@ -32,10 +32,8 @@ class stream_channel : public channel, public stream_protocol
 
     /**
      * Stream peer this channel is associated with.
-     * A stream_channel is always either a direct child of its stream_peer,
-     * or a child of a key_initiator which is a child of its stream_peer, @fixme
+     * A stream_channel is always a direct child of its stream_peer
      * so there should be no chance of this pointer ever dangling.
-     * @fixme In SSU the relationships are simpler, but peer_ pointer is still never dangling.
      */
     internal::stream_peer* peer_{nullptr};
 

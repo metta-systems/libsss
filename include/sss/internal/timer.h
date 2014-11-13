@@ -112,7 +112,7 @@ public:
 /**
  * Base class providing hooks for time virtualization.
  * @todo The application may create a timer_host_state object and activate it using
- * time::set_timer_host_state(). The SSU protocol will then call the time factory's methods
+ * time::set_timer_host_state(). The SSS protocol will then call the time factory's methods
  * whenever it needs to obtain the current system time or create timers.
  */
 class timer_host_state : virtual public asio_host_state

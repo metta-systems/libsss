@@ -21,7 +21,7 @@ int main()
 		comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
 		udp_socket l(host);
 		l.bind(local_ep);
-		l.send(local_ep, "\0SSUohai!", 10);
+		l.send(local_ep, "\0SSSohai!", 10);
 		host->run_io_service();
 	}
 	catch (exception& e)

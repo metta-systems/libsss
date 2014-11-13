@@ -34,10 +34,10 @@ namespace internal {
  * User-space interface to the stream.
  *
  * This is the primary high-level class that client applications use to communicate over
- * the network via SSU. The class provides standard stream-oriented read/write functionality
- * and adds SSU-specific methods for controlling SSU streams and substreams.
+ * the network via SSS. The class provides standard stream-oriented read/write functionality
+ * and adds SSS-specific methods for controlling SSS streams and substreams.
  *
- * To initiate an outgoing "top-level" SSU stream to a remote host, the client application
+ * To initiate an outgoing "top-level" SSS stream to a remote host, the client application
  * creates a stream instance and then calls connect_to().
  *
  * To initiate a sub-stream from an existing stream, the application calls
@@ -52,7 +52,7 @@ namespace internal {
  * the application calls accept_substream() to obtain a stream object for the
  * new incoming substream.
  *
- * SSU uses service and protocol names in place of the port numbers used
+ * SSS uses service and protocol names in place of the port numbers used
  * by TCP and UDP to differentiate and select among different application
  * protocols.
  *
@@ -75,7 +75,7 @@ namespace internal {
  */
 class stream : public std::enable_shared_from_this<stream>
 {
-    std::shared_ptr<host> host_;              ///< Per-host SSU state
+    std::shared_ptr<host> host_;              ///< Per-host SSS state
     std::shared_ptr<abstract_stream> stream_; ///< Internal stream control object
     bool status_signal_connected_{false};     ///< on_link_status_changed signal connected
     std::string error_string_;
@@ -143,15 +143,15 @@ public:
      * The stream logically goes into the "connected" state immediately (i.e., is_connected()
      * returns true), and the application may start writing to the stream immediately, but actual
      * network connectivity may not be established until later or not at all.
-     * Either during or some time after the connect_to() call, SSU emits the on_link_up() signal
+     * Either during or some time after the connect_to() call, SSS emits the on_link_up() signal
      * to indicate active connectivity, or on_link_down() to indicate connectivity could not be
      * established. An on_link_down() signal is not necessarily fatal, however: unless
-     * the application disconnects or deletes the stream object, SSU will continue attempting
+     * the application disconnects or deletes the stream object, SSS will continue attempting
      * to establish connectivity and emit on_link_up() if and when it eventually succeeds.
      *
-     * If the stream is already connected when connect_to() is called, SSU immediately re-binds
+     * If the stream is already connected when connect_to() is called, SSS immediately re-binds
      * the stream object to the new target but closes the old stream gracefully in the background.
-     * Similarly, SSU closes the stream gracefully in the background if the application just
+     * Similarly, SSS closes the stream gracefully in the background if the application just
      * deletes a connected Stream object. To close a stream forcefully without retaining internal
      * state, the application may explicitly call shutdown(reset) before re-connecting or
      * deleting the stream object.
@@ -163,9 +163,9 @@ public:
      *      hint via the destination_endpoint_hint argument.
      * @param  service The service name to connect to on the remote host.
      * @param  protocol The application protocol name to connect to.
-     * @param  destination_endpoint_hint An optional location hint for SSU to use in attempting
+     * @param  destination_endpoint_hint An optional location hint for SSS to use in attempting
      *      to contact the host. If the @a destination parameter is a cryptographic EID, which
-     *      is inherently location-independent, SSU may need a location hint to find the remote
+     *      is inherently location-independent, SSS may need a location hint to find the remote
      *      host if this host and the remote host are unable to locate each other using routing
      *      service. This parameter is not needed if the destination is a non-cryptographic
      *      legacy address.
@@ -182,7 +182,7 @@ public:
      * This method immediately returns the stream to the unconnected state:
      * is_connected() subsequently returns false.
      *
-     * If the stream has not already been shutdown, however, SSU gracefully closes the stream
+     * If the stream has not already been shutdown, however, SSS gracefully closes the stream
      * in the background as if with shutdown(close).
      *
      * @see shutdown()
@@ -375,7 +375,7 @@ public:
      * Initiate a new substream as a child of this stream.
      * This method completes without synchronizing with the remote host, and the client application
      * can use the new substream immediately to send data to the remote host via the new substream.
-     * If the remote host is not yet ready to accept the new substream, SSU queues the new
+     * If the remote host is not yet ready to accept the new substream, SSS queues the new
      * substream and any data written to it locally until the remote host is ready to accept
      * the new substream.
      *
@@ -417,15 +417,15 @@ public:
 
     /**
      * Returns true if the stream is logically connected and network connectivity is currently
-     * available. SSU emits on_link_up() and on_link_down() signals when the underlying link
+     * available. SSS emits on_link_up() and on_link_down() signals when the underlying link
      * connectivity state changes.
      */
     bool is_link_up() const;
 
     /**
      * Set the stream's transmit priority level. When the application has multiple streams with
-     * data ready to transmit to the same remote host, SSU uses the respective streams' priority
-     * levels to determine which data to transmit first. SSU gives strict preference to streams
+     * data ready to transmit to the same remote host, SSS uses the respective streams' priority
+     * levels to determine which data to transmit first. SSS gives strict preference to streams
      * with higher priority over streams with lower priority, but it divides available transmit
      * bandwidth evenly among streams with the same priority level. All streams have a default
      * priority of zero on creation.
@@ -533,8 +533,8 @@ public:
     /**
      * Emitted when incoming data has filled our receive window. When this situation occurs,
      * the client must read some queued data or else increase the maximum receive window before
-     * SSU will accept further incoming data from the peer. Every single byte of the receive window
-     * might not be utilized when the receive process becomes blocked in this way, because SSU
+     * SSS will accept further incoming data from the peer. Every single byte of the receive window
+     * might not be utilized when the receive process becomes blocked in this way, because SSS
      * does not fragment packets just to "top up" a nearly empty receive window: the effective
      * limit may be as low as half the specified maximum window size.
      */
@@ -547,16 +547,16 @@ public:
      */
     link_status_signal on_link_up;
     /**
-     * Emitted when connectivity on the stream has temporarily stalled. SSU emits the
+     * Emitted when connectivity on the stream has temporarily stalled. SSS emits the
      * on_link_stalled() signal at the first sign of trouble: this provides an early warning
      * that the link may have failed, but it may also just represent an ephemeral network glitch.
      * The application may wish to use this signal to indicate the network status to the user.
      */
     link_status_signal on_link_stalled;
     /**
-     * Emitted when link connectivity for the stream has been lost. SSU may emit this signal either
+     * Emitted when link connectivity for the stream has been lost. SSS may emit this signal either
      * due to a timeout or due to detection of a link- or network-level "hard" failure.
-     * The link may come back up sometime later, however, in which case SSU emits on_link_up()
+     * The link may come back up sometime later, however, in which case SSS emits on_link_up()
      * and stream connectivity resumes.
      *
      * If the application desires TCP-like behavior where a connection timeout causes permanent

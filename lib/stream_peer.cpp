@@ -451,7 +451,7 @@ void stream_peer::primary_status_changed(status new_status)
         // to have possibly created receiver state.
         // (If we were to kill a non-early key_initiator, the receiver might pick one
         // of those streams as _its_ primary and be left with a dangling channel!)
-        // For Multipath-SSU to work we rather should not destroy them here and set up
+        // For Multipath-SSS to work we rather should not destroy them here and set up
         // multiple channels at once.
         auto ki_copy = key_exchanges_initiated_;
         for (auto ki : ki_copy)

@@ -19,8 +19,8 @@
 namespace sss {
 
 /**
- * SSU stream protocol definitions.
- * This class simply provides SSU protcol definition constants for use in other stream classes.
+ * SSS stream protocol definitions.
+ * This class simply provides SSS protcol definition constants for use in other stream classes.
  */
 class stream_protocol
 {

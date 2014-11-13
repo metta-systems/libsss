@@ -20,7 +20,7 @@ namespace sss {
 class base_stream;
 
 /**
- * This class represents a server that can accept incoming SSU connections.
+ * This class represents a server that can accept incoming SSS connections.
  *
  * To use this class, the application creates a server instance, calls listen() to begin
  * listening for connections, and upon arrival of a on_new_connection() signal uses accept()
@@ -42,7 +42,7 @@ public:
      * Create a server instance.
      * The application must call listen() before the server will actually
      * accept incoming connections.
-     * @param host the host object containing hostwide SSU state.
+     * @param host the host object containing hostwide SSS state.
      */
     server(std::shared_ptr<host> host);
 

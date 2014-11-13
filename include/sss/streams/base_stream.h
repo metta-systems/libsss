@@ -84,7 +84,7 @@ public:
  *
  * Basic internal implementation of the abstract stream.
  * The separation between the internal stream control object and the
- * application-visible stream object is primarily needed so that SSU can
+ * application-visible stream object is primarily needed so that SSS can
  * hold onto a stream's state and gracefully shut it down after the
  * application deletes its stream object representing it.
  * This separation also keeps the internal stream control variables out of the
@@ -114,7 +114,12 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
 
     /**
      * @internal
-     * Unit of data transmission on SSU stream.
+     * Unit of data transmission on SSS stream.
+     * @todo
+     * The packets should be under hard limit of 1280 bytes per packet including IP headers.
+     * Packet sequences do not use logical byte positions because each packet may incorporate
+     * multiple streams.
+     * Packets data is assembled via framing layer.
      */
     struct packet
     {

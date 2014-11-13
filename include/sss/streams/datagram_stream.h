@@ -15,7 +15,7 @@ namespace sss {
 
 /**
  * Internal pseudo-stream object representing a received datagram.
- * This class makes ephemeral substreams received via SSU's optimized datagram-oriented
+ * This class makes ephemeral substreams received via SSS's optimized datagram-oriented
  * delivery mechanism appear to work like a normal stream that was written and closed immediately.
  */
 class datagram_stream : public abstract_stream
