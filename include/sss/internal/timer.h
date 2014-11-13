@@ -11,8 +11,8 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/signals2/signal.hpp>
-#include "sss/asio_host_state.h"
-#include "sss/timer_engine.h"
+#include "sss/internal/asio_host_state.h"
+#include "sss/internal/timer_engine.h"
 
 namespace sss {
 

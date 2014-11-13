@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "sss/timer_engine.h"
+#include "sss/internal/timer_engine.h"
 
 namespace sss {
 namespace simulation {

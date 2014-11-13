@@ -10,7 +10,7 @@
 
 #include <memory>
 #include "comm/socket_endpoint.h"
-#include "sss/peer_identity.h"
+#include "sss/channels/peer_identity.h"
 // #include "krypto/krypto.h"
 
 namespace sss {

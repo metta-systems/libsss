@@ -9,7 +9,7 @@
 #pragma once
 
 #include <boost/signals2/signal.hpp>
-#include "sss/abstract_stream.h"
+#include "sss/streams/abstract_stream.h"
 
 namespace sss {
 

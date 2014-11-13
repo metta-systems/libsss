@@ -9,8 +9,8 @@
 #pragma once
 
 #include "arsenal/logging.h"
-#include "sss/timer.h"
-#include "sss/peer_identity.h"
+#include "sss/internal/timer.h"
+#include "sss/channels/peer_identity.h"
 #include "sss/negotiation/kex_host_state.h"
 #include "sss/internal/stream_host_state.h"
 #include "sss/routing_host_state.h"

@@ -16,7 +16,7 @@
 #include "comm/socket_channel.h"
 #include "comm/socket_receiver.h"
 #include "comm/udp_socket.h"
-#include "sss/socket_host_state.h"
+#include "sss/internal/socket_host_state.h"
 
 using namespace std;
 using namespace boost::asio;
