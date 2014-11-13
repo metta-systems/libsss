@@ -30,6 +30,7 @@ class timer
 {
 public:
     using duration_type = boost::asio::deadline_timer::duration_type;
+    using abstime_type = boost::posix_time::ptime;
 
     static const duration_type retry_min;
     static const duration_type retry_max;
@@ -122,7 +123,7 @@ public:
      * Get current time. Can be virtualized to provide simulated time in testing environments.
      * @return Current time in a boost.asio-defined time type.
      */
-    virtual boost::posix_time::ptime current_time();
+    virtual async::timer::abstime_type current_time();
     /**
      * Create a timer engine to perform various delays. Can be virtualized to simulate delays.
      * @param  t Timer to attach the engine to.
