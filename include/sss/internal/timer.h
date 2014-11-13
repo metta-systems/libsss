@@ -101,7 +101,7 @@ public:
      * Signaled when the timer expires.
      *
      * timeout signal handler signature is
-     * void timeout(bool failed)
+     *     void timeout(bool failed)
      *
      * Argument 'failed' is true if the hard failure deadline has been reached.
      */
