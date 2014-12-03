@@ -244,7 +244,7 @@ ofs : sz  : description
 0   : 8   : magic
 8   : 32  : initiator short-term public key I'
 40  : 64  : zero
-104 : 8   : compressed nonce
+104 : 8   : compressed nonce, prefix with "cURVEcp-CLIENT-h"
 112 : 80  : box I'->R containing:
     : ofs : sz  :
     : 0   : 32  : initiator long-term public key I (for pre-auth)
@@ -261,7 +261,7 @@ In response, responder encodes initiator's short-term public key `I'` and own sh
 ```
 ofs : sz  : description
 0   : 8   : magic
-8   : 16  : compressed nonce
+8   : 16  : compressed nonce, prefix with "cURVEcpk"
 24  : 144 : box R->I' containing:
     : ofs : sz  :
     : 0   : 32  : responder short-term public key R'
@@ -280,11 +280,11 @@ ofs : sz    : description
 0   : 8     : magic
 8   : 32    : initiator short-term public key I'
 40  : 96    : Responder Cookie (@sa 3.2.1)
-136 : 8     : compressed nonce
+136 : 8     : compressed nonce, prefix with "cURVEcp-CLIENT-i"
 144 : 112+M : box I'->R' containing:
 ofs :   ofs : sz  :
 144 :   0   : 32  : initiator long-term public key I
-176 :   32  : 16  : compressed nonce
+176 :   32  : 16  : compressed nonce, prefix with "cURVEcpv"
 192 :   48  : 48  : box I->R containing Vouch subpacket:
             : ofs : sz  :
             : 0   : 32  : initiator short-term public key I'
@@ -302,7 +302,7 @@ Responder and initiator message packets differ only in the kind of short term ke
 ofs : sz   : description
 0   : 8    : magic
 8   : 32   : initiator short-term public key I'
-40  : 8    : compressed nonce
+40  : 8    : compressed nonce, prefix with "cURVEcp-CLIENT-m"
 48  : 16+M : box I'->R' containing:
     : ofs  : sz  :
     : 0    : M   : message
@@ -317,7 +317,7 @@ M size is in multiples of 16 between 48 and 1088 bytes.
 ofs : sz   : description
 0   : 8    : magic
 8   : 32   : responder short-term public key R'
-40  : 8    : compressed nonce
+40  : 8    : compressed nonce, prefix with "cURVEcp-SERVER-m"
 48  : 16+M : box R'->I' containing:
     : ofs  : sz  :
     : 0    : M   : message
