@@ -6,7 +6,40 @@
   framing             v
   channels        negotiation
 decongestion          +
+    FEC               |
      +                |
      |                |
      v                v
    ------- comm --------
+
+
+Layering:
+
+Input packets ->> Channel : decode, deframe or FEC ->> Framing
+
+FEC packet used to reconstruct at most 1 lost packet
+- no packets lost - drop FEC packet
+- 1 packet lost - restore it using FEC and all previous received packets in this FEC run
+- >1 packets lost - drop FEC packet and consider other packets lost for real (non-recoverable)
+
+FEC packet handled at Channel layer before going to Framing.
+
+FEC-enabled packet reorder buffer needs to keep at most 256 packets.
+
+(This is Channel layer delay - FEC-able queue)
+
+Then inside Framing each frame is dispatched to either Channel or Stream layer depending on
+frame type.
+
+STREAM/ATTACH - to Stream
+ACK           - to Channel
+PADDING       - skipped
+DECONGESTION  - to Channel
+DETACH        - to Stream
+RESET         - to Stream
+CLOSE         - to Channel
+SETTINGS      - to Channel
+PRIORITY      - to Stream (stream mux?)
+
+
+
