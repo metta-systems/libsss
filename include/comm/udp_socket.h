@@ -17,6 +17,7 @@ class settings_provider;
 namespace sss {
 
 class host;
+struct udp_request;
 
 /**
  * Class for UDP connection between two endpoints.
@@ -29,11 +30,6 @@ class udp_socket : public uia::comm::socket
      * Underlying socket.
      */
     boost::asio::ip::udp::socket udp_socket_;
-    boost::asio::streambuf received_buffer_;
-    /**
-     * Endpoint we've received the packet from.
-     */
-    uia::comm::socket_endpoint received_from_;
     /**
      * Network activity execution queue.
      */
@@ -42,6 +38,8 @@ class udp_socket : public uia::comm::socket
      * Socket error status.
      */
     std::string error_string_;
+
+    friend struct udp_request; // Access to receive() only.
 
 public:
     udp_socket(std::shared_ptr<host> host);
@@ -71,6 +69,12 @@ public:
      */
     inline std::string error_string() override { return error_string_; }
 
+    inline void set_error(std::string error)
+    {
+        error_string_ = error;
+        on_socket_error(error);
+    }
+
     /**
      * Return all known local endpoints referring to this socket.
      */
@@ -80,7 +84,10 @@ public:
 
 private:
     void prepare_async_receive();
-    void udp_ready_read(const boost::system::error_code& error, std::size_t bytes_transferred);
+    void udp_ready_read(std::shared_ptr<udp_request> request,
+        boost::system::error_code const& error, size_t bytes_transferred);
+    void handle_sent(uia::comm::endpoint const& ep,
+        boost::system::error_code const& error, size_t bytes_transferred);
 };
 
 /**

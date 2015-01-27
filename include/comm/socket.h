@@ -11,8 +11,10 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 #include "comm/socket_endpoint.h"
 #include "comm/host_interface.h"
+#include <boost/signals2/signal.hpp>
 
 namespace uia {
 namespace comm {
@@ -26,12 +28,12 @@ class socket_channel;
  * For connected sockets there may be a number of channels established.
  * Socket orchestrates initiation of key exchanges (@fixme should it?).
  */
-class socket
+class socket : std::enable_shared_from_this<socket>
 {
     /**
      * Host state instance this socket is attached to.
      */
-    comm_host_interface* host_interface_{nullptr};
+    socket_host_interface* host_interface_{nullptr};
 
     /**
      * True if this socket is fair game for use by upper level protocols.
@@ -39,18 +41,19 @@ class socket
     bool active_{false};
 
 public:
+    using ptr = std::shared_ptr<socket>;
     using weak_ptr = std::weak_ptr<socket>;
 
-    // sss expresses current socket status as one of three states:
+    /// sss expresses current socket status as one of three states:
     enum class status {
-        down,    ///< definitely appears to be down.
-        stalled, ///< briefly lost connectivity, but may be temporary.
-        up       ///< apparently alive, all is well as far as we know.
+        down,    ///< Definitely appears to be down.
+        stalled, ///< Briefly lost connectivity, but may be temporary.
+        up       ///< Apparently alive, all is well as far as we know.
     };
 
     static std::string status_string(status s);
 
-    socket(comm_host_interface* hi) : host_interface_(hi) {}
+    socket(socket_host_interface* hi) : host_interface_(hi) {}
     virtual ~socket();
 
     /**
@@ -110,11 +113,12 @@ public:
     /**
      * Return local port number at which this socket is bound on the host.
      * @return local open port number.
+     * @fixme this is protocol-dependent and should be encapsulated in endpoint?
      */
     virtual uint16_t local_port() = 0;
 
     /**
-     * Return a description of any error detected on bind() or send().
+     * Return a description of any error detected on socket operation or an empty string.
      */
     virtual std::string error_string() = 0;
 
@@ -130,13 +134,19 @@ public:
      */
     virtual size_t may_transmit(endpoint const& ep);
 
+    using socket_error_signal = boost::signals2::signal<void (std::string)>;
+    /**
+     * Socket emits this signal when socket operations raise an error.
+     */
+    socket_error_signal on_socket_error;
+
 protected:
     /**
      * Implementation subclass calls this method with received packets.
      * @param msg the packet received.
      * @param src the source from which the packet arrived.
      */
-    void receive(byte_array const& msg, socket_endpoint const& src);
+    void receive(boost::asio::const_buffer msg, socket_endpoint const& src);
 };
 
 } // comm namespace
