@@ -1,0 +1,43 @@
+host
+⤷  socket_host_state
+    ⤷  active sockets
+    ⤷  local endpoints
+    ⤷  bound receivers (hello, cookie, initiate and message)
+        ⤷ hello, initiate receivers forward to kex_responder
+        ⤷ cookie receiver forwards to kex_initiator
+        ⤷ message receiver forwards to message_receiver which references all host channels
+⤷  kex_host_state
+    ⤷  key exchange initiators by endpoint/nonce
+⤷  identity_host_state
+    ⤷  create/load/maintain host EID(s)
+⤷  stream_host_state
+    ⤷  responder to listen for incoming stream server connections
+        ⤷ responder should not maintain any state, only answer HELLO packets and create channels
+           in reponse to proper INITIATE packets.
+    ⤷  list of peers by their EID(s): stream_peer
+        ⤷ channels are direct children of stream peer (primary_channel link from stream_peer)
+        ⤷  each peer has list of all streams established or establishing with this peer
+⤷  asio_host_state
+    ⤷  io_service access
+⤷  timer_host_state
+    ⤷  virtualization of time and timers
+⤷  routing_host_state
+    ⤷  peer network maintenance
+    ⤷  peer discovery
+
+
+When first `sss::server` is created, it instantiates `kex_responder` and binds `hello`, `initiate` magics to it.
+When outgoing connection is made `kex_initiator` is created and bound to `cookie` magic.
+Handler for `message` magic is always present but operates only when valid channel id is found in packet.
+
+Each channel within it contains per-channel decongesion state. Multiple channels may be created with different decongestion schemes and compete for bandwidth.
+
+Since key exchange does NOT create local state until the final approval phase, we spawn peer and
+corresponding channel from key exchange upon success.
+
+Initial setup only creates host and packet receivers responsible for key exchange handling. These
+handlers will spawn new peers and channels as necessary.
+
+Routing coordinator protocol is a level above, it uses combination of techniques to discover
+potential peer nodes.
+
