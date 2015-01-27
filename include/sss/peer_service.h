@@ -87,7 +87,7 @@ public:
     inline bool is_out_connected(peer_identity eid)
     {
         stream *s = out.value(eid);
-        return s && s->is_connected();
+        return s and s->is_connected();
     }
 
     /**

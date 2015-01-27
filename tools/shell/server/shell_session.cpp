@@ -56,7 +56,7 @@ void shell_session::in_ready()
 {
     bool ttyopen = aftty.is_open();
     while (true) {
-        if (ttyopen && aftty.bytes_to_write() >= shellBufferSize)
+        if (ttyopen and aftty.bytes_to_write() >= shellBufferSize)
             return; // wait until the write buffer empties a bit
 
         shell_stream::packet pkt = shs.receive();

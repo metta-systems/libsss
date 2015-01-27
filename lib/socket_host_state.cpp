@@ -59,8 +59,8 @@ socket_host_state::init_socket(settings_provider* settings, uint16_t default_por
     if (settings) {
         auto s_port = settings->get("port");
         if (!s_port.empty()) {
-            int port = any_int_cast<int16_t>(s_port);
-            if (port > 0 && port <= 65535) {
+            int port = any_int_cast<int16_t>(s_port); // @todo conflicts with next check
+            if (port > 0 and port <= 65535) {
                 default_port = port;
             }
         }

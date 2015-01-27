@@ -55,7 +55,7 @@ public:
      * this happens when we get an Ack to our Init, Reply, or Attach.
      */
     inline void set_active(packet_seq_t rxseq) {
-        assert(is_in_use() && !is_acknowledged());
+        assert(is_in_use() and !is_acknowledged());
         sid_seq_ = rxseq;
         active_ = true;
     }
