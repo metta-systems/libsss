@@ -12,7 +12,7 @@
 
 using namespace std;
 
-namespace sss {
+namespace uia {
 
 //=================================================================================================
 // identity
@@ -174,4 +174,4 @@ void identity_host_state::init_identity(settings_provider* settings)
     settings->sync();
 }
 
-} // sss namespace
+} // uia namespace

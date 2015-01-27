@@ -106,7 +106,7 @@ bool stream::is_link_up() const
     return stream_->is_link_up();
 }
 
-bool stream::connect_to(peer_identity const& destination,
+bool stream::connect_to(uia::peer_identity const& destination,
     string service, string protocol,
     uia::comm::endpoint const& destination_endpoint_hint)
 {
@@ -170,9 +170,9 @@ void stream::connect_at(uia::comm::endpoint const& ep)
     host_->stream_peer(stream_->peerid_)->add_location_hint(ep);
 }
 
-bool stream::add_location_hint(peer_identity const& eid, uia::comm::endpoint const& hint)
+bool stream::add_location_hint(uia::peer_identity const& eid, uia::comm::endpoint const& hint)
 {
-    if (eid.is_empty())
+    if (eid.is_null())
     {
         set_error("No target EID for location hint");
         return false;
@@ -331,18 +331,18 @@ ssize_t stream::write_datagram(const char* data, ssize_t size, datagram_type is_
     return stream_->write_datagram(data, size, is_reliable);
 }
 
-peer_identity stream::local_host_id() const
+uia::peer_identity stream::local_host_id() const
 {
     if (!stream_) {
-        return peer_identity();
+        return uia::peer_identity();
     }
     return stream_->local_host_id();
 }
 
-peer_identity stream::remote_host_id() const
+uia::peer_identity stream::remote_host_id() const
 {
     if (!stream_) {
-        return peer_identity();
+        return uia::peer_identity();
     }
     return stream_->remote_host_id();
 }
@@ -443,7 +443,7 @@ stream_host_state::all_peers() const
     return values;
 }
 
-internal::stream_peer* stream_host_state::stream_peer(peer_identity const& id)
+internal::stream_peer* stream_host_state::stream_peer(uia::peer_identity const& id)
 {
     if (!contains(peers_, id))
     {
@@ -453,7 +453,7 @@ internal::stream_peer* stream_host_state::stream_peer(peer_identity const& id)
     return peers_[id].get();
 }
 
-internal::stream_peer* stream_host_state::stream_peer_if_exists(peer_identity const& id)
+internal::stream_peer* stream_host_state::stream_peer_if_exists(uia::peer_identity const& id)
 {
     if (!contains(peers_, id)) {
         return nullptr;

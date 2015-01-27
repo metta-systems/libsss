@@ -55,7 +55,7 @@ class stream_peer : public stream_protocol
     static constexpr int stall_warnings_max = 3;
 
     std::shared_ptr<host> host_;               ///< Per-host state.
-    const peer_identity   remote_id_;          ///< Host ID of target.
+    const uia::peer_identity   remote_id_;          ///< Host ID of target.
     stream_channel*       primary_channel_{0}; ///< Current primary channel.
     int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
     /// @internal
@@ -77,7 +77,7 @@ class stream_peer : public stream_protocol
     std::unordered_map<unique_stream_id_t, base_stream*> usid_streams_;
 
 private:
-    inline peer_identity remote_host_id() const { return remote_id_; }
+    inline uia::peer_identity remote_host_id() const { return remote_id_; }
 
     inline bool no_lookups_possible() {
         return lookups_.empty() and key_exchanges_initiated_.empty();
@@ -122,7 +122,7 @@ private:
     struct private_tag {};
 
 public:
-    stream_peer(std::shared_ptr<host> const& host, peer_identity const& remote_id, private_tag);
+    stream_peer(std::shared_ptr<host> const& host, uia::peer_identity const& remote_id, private_tag);
     ~stream_peer();
 
     /**

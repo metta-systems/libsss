@@ -28,12 +28,12 @@ namespace sss {
 constexpr int base_stream::max_attachments;
 
 base_stream::base_stream(shared_ptr<host> host,
-                         peer_identity const& peer_id,
+                         uia::peer_identity const& peer_id,
                          shared_ptr<base_stream> parent)
     : abstract_stream(host)
     , parent_(parent)
 {
-    assert(!peer_id.is_empty());
+    assert(!peer_id.is_null());
 
     logger::debug() << "Constructing base stream " << this << " for peer " << peer_id;
 
@@ -348,7 +348,7 @@ void base_stream::connect_to(string const& service, string const& protocol)
 
 void base_stream::attach_for_transmit()
 {
-    assert(!peerid_.is_empty());
+    assert(!peerid_.is_null());
 
     // If we already have a transmit-attachment, nothing to do.
     if (tx_current_attachment_ != nullptr) {

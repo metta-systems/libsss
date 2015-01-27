@@ -19,7 +19,6 @@
 
 namespace sss {
 
-class identity;
 class host;
 class abstract_stream;
 class channel;

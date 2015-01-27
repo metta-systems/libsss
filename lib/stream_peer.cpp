@@ -25,17 +25,19 @@ constexpr int stream_peer::stall_warnings_max;
 const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
 stream_peer::stream_peer(shared_ptr<host> const& host,
-                         peer_identity const& remote_id,
+                         uia::peer_identity const& remote_id,
                          stream_peer::private_tag)
     : host_(host)
     , remote_id_(remote_id)
     , reconnect_timer_(host.get())
 {
-    assert(!remote_id.is_empty());
+    assert(!remote_id.is_null());
 
     // If the remote_id is just an encapsulated IP endpoint,
     // then also use it as a destination address hint.
-    identity ident(remote_id_.id());
+    // @fixme Not possible anymore...
+#if 0
+    uia::peer_identity ident(remote_id_.id());
     if (ident.is_ip_key_scheme()) {
         uia::comm::endpoint ep(ident.get_endpoint());
         if (ep.port() == 0) {
@@ -43,6 +45,7 @@ stream_peer::stream_peer(shared_ptr<host> const& host,
         }
         locations_.insert(ep);
     }
+#endif
 
     reconnect_timer_.on_timeout.connect([this](bool failed){ retry_timeout(); });
 }
@@ -62,7 +65,7 @@ stream_peer::~stream_peer()
 
 void stream_peer::connect_channel()
 {
-    assert(!remote_id_.is_empty());
+    assert(!remote_id_.is_null());
 
     if (primary_channel_ and primary_channel_->link_status() == status::up)
         return; // Already have a working channel; don't need another yet.

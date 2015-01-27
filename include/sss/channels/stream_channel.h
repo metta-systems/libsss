@@ -90,7 +90,7 @@ class stream_channel : public channel, public stream_protocol
 public:
     stream_channel(std::shared_ptr<host> host,
         internal::stream_peer* peer,
-        peer_identity const& id);
+        uia::peer_identity const& id);
     ~stream_channel();
 
     void start(bool initiate) override;
