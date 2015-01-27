@@ -1,6 +1,11 @@
 Structured Secure Streams
 =========================
 
+```
+/!\ SSS is currently being rewritten with new crypto infrastructure. /!\
+        Code may not build, documentation may be not up-to-date.
+```
+
 SSS provides secure encrypted and authenticated data connection between endpoints. In the future SSS will also provide routing services for the so-called [Unmanaged Internet Architecture (UIA)](http://pdos.csail.mit.edu/uia/).
 
 Builds as part of [mettanode](https://github.com/berkus/mettanode), or standalone with [libarsenal](https://github.com/berkus/libarsenal) dependency.
