@@ -28,15 +28,6 @@ socket::~socket()
 {
 }
 
-socket_channel::weak_ptr
-socket::channel_for(string channel_key)
-{
-    if (!contains(channels_, channel_key)) {
-        return socket_channel::ptr();
-    }
-    return channels_[channel_key];
-}
-
 void
 socket::set_active(bool active)
 {
@@ -88,20 +79,6 @@ socket::receive(byte_array const& msg, socket_endpoint const& src)
     }
 
     // Ignore unrecognized packets.
-}
-
-bool
-socket::bind_channel(string channel_key, socket_channel::weak_ptr lc)
-{
-    assert(channel_for(channel_key).lock() == nullptr);
-    channels_[channel_key] = lc;
-    return true;
-}
-
-void
-socket::unbind_channel(string channel_key)
-{
-    channels_.erase(channel_key);
 }
 
 bool
