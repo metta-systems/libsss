@@ -45,6 +45,7 @@ add_library(sss STATIC
     server.cpp
     timer.cpp
     host.cpp
+    asio_host_state.cpp
     socket_host_state.cpp
     ${simulator_SOURCES}
     ${platform_SOURCES})
