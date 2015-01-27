@@ -8,7 +8,7 @@
 //
 #include <stdlib.h>
 #include <unistd.h>
-#include "sss/platform.h"
+#include "sss/internal/platform.h"
 
 using namespace std;
 

@@ -12,7 +12,7 @@
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
 #include "sss/host.h"
-#include "sss/peer_identity.h"
+#include "sss/channels/peer_identity.h"
 #include "sss/stream.h"
 
 namespace sss {

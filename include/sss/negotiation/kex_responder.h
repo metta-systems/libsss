@@ -11,8 +11,8 @@
 #include <memory>
 #include <boost/signals2/signal.hpp>
 #include "comm/socket_endpoint.h"
-#include "sss/timer.h"
 #include "comm/packet_receiver.h"
+#include "sss/internal/timer.h"
 #include "sss/negotiation/kex_message.h"
 
 namespace sss {

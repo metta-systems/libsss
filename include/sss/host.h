@@ -13,8 +13,8 @@
 #include "sss/channels/peer_identity.h"
 #include "sss/negotiation/kex_host_state.h"
 #include "sss/internal/stream_host_state.h"
-#include "sss/routing_host_state.h"
-#include "sss/socket_host_state.h"
+#include "sss/channels/routing_host_state.h"
+#include "sss/internal/socket_host_state.h"
 
 class settings_provider;
 

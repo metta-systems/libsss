@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "sss/stream_protocol.h"
+#include "sss/framing/stream_protocol.h"
 
 namespace sss {
 constexpr size_t stream_protocol::mtu;

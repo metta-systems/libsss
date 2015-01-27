@@ -10,13 +10,13 @@
 
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <boost/signals2/signal.hpp>
 #include "arsenal/algorithm.h"
 #include "comm/socket.h"
-#include "sss/asio_host_state.h"
-#include "sss/stream_protocol.h" // only for default port?
 #include "comm/packet_receiver.h"
+#include "sss/internal/asio_host_state.h"
+#include "sss/framing/stream_protocol.h" // only for default port?
 
 class settings_provider;
 
@@ -28,20 +28,21 @@ class host;
  * This mixin class encapsulates socket-related part of host state.
  * @see host
  */
-class socket_host_state : virtual public asio_host_state /* jeez, damn asio! */
-    , public uia::comm::comm_host_interface
+class socket_host_state : virtual public asio_host_state
+    , public uia::comm::socket_host_interface
 {
-    using socket_receiver = uia::comm::socket_receiver;
+    using packet_receiver = uia::comm::packet_receiver;
+    using socket_set = std::set<uia::comm::socket::weak_ptr,
+        std::owner_less<uia::comm::socket::weak_ptr>>;
 
     /**
-     * Lookup table of all registered socket_receiver for this host,
-     * keyed on their 24-bit magic control packet type.
+     * Lookup table of all registered packet_receivers for this host, keyed on their magic.
      */
-    std::unordered_map<std::string, std::weak_ptr<socket_receiver>> receivers_;
+    std::unordered_map<std::string, packet_receiver::weak_ptr> receivers_;
     /**
-     * List of all currently-active links.
+     * List of all currently-active sockets.
      */
-    std::unordered_set<uia::comm::socket*> active_sockets_;
+    socket_set active_sockets_;
     /**
      * ipv4 socket created by init_socket(), if any.
      */
@@ -74,40 +75,40 @@ protected:
 
 public:
     /*@{*/
-    /*@name comm_host_interface implementation */
+    /*@name receiver_host_interface implementation */
     /**
      * Create a receiver and bind it to control channel magic.
      */
-    void bind_receiver(std::string magic, std::weak_ptr<socket_receiver> receiver)
-    {
-        // if (magic & 0xff000000) {
-        //     throw "Invalid magic value for binding a receiver.";
-        // }
+    void bind_receiver(std::string magic, packet_receiver::weak_ptr receiver) override {
         receivers_.insert(std::make_pair(magic, receiver)); // @todo: Will NOT replace existing element.
     }
 
-    void unbind_receiver(std::string magic) {
+    void unbind_receiver(std::string magic) override {
         receivers_.erase(magic);
     }
 
-    bool has_receiver_for(std::string magic) {
+    bool has_receiver_for(std::string magic) override {
         return contains(receivers_, magic);
     }
 
     /**
      * Find and return a receiver for given control channel magic value.
      */
-    std::weak_ptr<socket_receiver> receiver_for(std::string magic) override;
+    packet_receiver::weak_ptr receiver_for(std::string magic) override;
+    /*@}*/
 
-    inline void activate_socket(uia::comm::socket* l) override
+    /*@{*/
+    /*@name comm_host_interface implementation */
+
+    inline void activate_socket(uia::comm::socket::weak_ptr swp) override
     {
-        active_sockets_.insert(l);
+        active_sockets_.insert(swp);
         on_active_sockets_changed();
     }
 
-    inline void deactivate_socket(uia::comm::socket* l) override
+    inline void deactivate_socket(uia::comm::socket::weak_ptr swp) override
     {
-        active_sockets_.erase(l);
+        active_sockets_.erase(swp);
         on_active_sockets_changed();
     }
     /*@}*/
@@ -120,7 +121,7 @@ public:
      * the specific socket a discovery response was seen on.
      * @return a set of pointers to each currently active socket.
      */
-    inline std::unordered_set<uia::comm::socket*> active_sockets() const {
+    inline socket_set active_sockets() const {
         return active_sockets_;
     }
 

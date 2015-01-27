@@ -13,9 +13,9 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "sss/stream_protocol.h"
+#include "sss/framing/stream_protocol.h"
 #include "sss/host.h"
-#include "sss/peer_identity.h"
+#include "sss/channels/peer_identity.h"
 
 namespace uia {
 namespace routing {

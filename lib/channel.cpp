@@ -10,9 +10,9 @@
 #include <boost/format.hpp>
 #include "arsenal/make_unique.h"
 #include "arsenal/logging.h"
-#include "sss/channel.h"
+#include "sss/channels/channel.h"
 #include "sss/host.h"
-#include "sss/timer.h"
+#include "sss/internal/timer.h"
 
 using namespace std;
 namespace bp = boost::posix_time;

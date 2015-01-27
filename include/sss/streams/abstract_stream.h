@@ -10,8 +10,8 @@
 
 #include "arsenal/byte_array.h"
 #include "arsenal/underlying.h"
-#include "sss/stream_protocol.h"
-#include "sss/peer_identity.h"
+#include "sss/framing/stream_protocol.h"
+#include "sss/channels/peer_identity.h"
 #include "sss/stream.h"
 
 namespace sss {

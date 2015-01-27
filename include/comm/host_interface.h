@@ -14,14 +14,16 @@ namespace comm {
 class socket;
 class packet_receiver;
 
-// Interface used by socket layer to work with the host state.
-// Must be implemented by real host implementation, for example the one in sss.
-class comm_host_interface
+/**
+ * Interface used by socket layer to work with the host state.
+ * Must be implemented by real host implementation, for example the one in sss.
+ */
+class socket_host_interface
 {
 public:
     // Interface used by socket to register itself on the host.
-    virtual void activate_socket(socket*) = 0;
-    virtual void deactivate_socket(socket*) = 0;
+    virtual void activate_socket(std::weak_ptr<socket>) = 0;
+    virtual void deactivate_socket(std::weak_ptr<socket>) = 0;
 
     // Interface to bind and lookup receivers based on packet magic value.
     // bind_receiver(magic::hello, kex_responder)

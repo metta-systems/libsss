@@ -11,10 +11,10 @@
 #include "arsenal/logging.h"
 #include "arsenal/algorithm.h"
 #include "sss/stream.h"
-#include "sss/stream_channel.h"
+#include "sss/channels/stream_channel.h"
 #include "sss/internal/stream_peer.h"
-#include "sss/base_stream.h"
-#include "sss/identity.h"
+#include "sss/streams/base_stream.h"
+#include "sss/channels/peer_identity.h"
 #include "sss/host.h"
 
 using namespace std;

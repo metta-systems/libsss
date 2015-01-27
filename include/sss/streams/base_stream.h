@@ -10,8 +10,8 @@
 
 #include <deque>
 #include <boost/signals2/signal.hpp>
-#include "sss/abstract_stream.h"
-#include "sss/channel.h"
+#include "sss/streams/abstract_stream.h"
+#include "sss/channels/channel.h"
 
 namespace sss {
 

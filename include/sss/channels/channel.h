@@ -11,8 +11,8 @@
 #include "arsenal/byte_array.h"
 #include "comm/socket.h"
 #include "comm/socket_channel.h"
-#include "sss/stream_protocol.h"
-#include "sss/channel_armor.h"
+#include "sss/framing/stream_protocol.h"
+#include "sss/channels/channel_armor.h"
 
 namespace sss {
 
