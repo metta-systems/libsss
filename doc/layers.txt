@@ -1,3 +1,4 @@
+```
    ---- application ----
      +                +
      |                |
@@ -11,7 +12,8 @@ decongestion          +
      |                |
      v                v
    ------- comm --------
-
+          socket
+```
 
 Layering:
 
@@ -41,5 +43,22 @@ CLOSE         - to Channel
 SETTINGS      - to Channel
 PRIORITY      - to Stream (stream mux?)
 
+              v---------------------CHANNEL-----------------------------v
+asio recv --> packet buffer --> channel_recv --> armor_decode --> framing_dispatch
+                                    ^                                    |
+                                    +----------------ack-----------------+
+                                    +------------decongestion------------+
+                                    +---------------close----------------+
+                                    +-------------settings---------------+
+
+upon receiving a packet check for existing session
++- if not found, silently discard the packet (++invalid_packets)
 
 
+vector<shared_ptr<byte_array>> fecAndReorderBuffer;
+basePacketSeq = fecAndReorderBuffer[0].packetSeq;
+asio_receive(recvbuf)
+{
+  // todo use packet seq number - if too far ahead, 
+  fecAndReorderBuffer.push_back(make_shared(recvbuf));
+}
