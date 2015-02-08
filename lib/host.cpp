@@ -12,19 +12,18 @@ using namespace std;
 
 namespace sss {
 
-shared_ptr<host>
-host::create()
+host::ptr host::create()
 {
-    shared_ptr<host> host(make_shared<host>());
-    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
+    shared_ptr<host> host(make_shared<host>(private_tag()));
+    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme ptr LOOP
     return host;
 }
 
-shared_ptr<host>
-host::create(settings_provider* settings, uint16_t default_port)
+host::ptr host::create(settings_provider* settings, uint16_t default_port)
 {
-    shared_ptr<host> host(make_shared<host>());
-    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
+    shared_ptr<host> host(make_shared<host>(private_tag()));
+    host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme ptr LOOP
+    // coordinator should have a weak_ptr to host here...
     host->init_socket(settings, default_port);
     host->init_identity(settings);
     return host;

@@ -37,16 +37,23 @@ class host
     , public socket_host_state
     , public kex_host_state
     , public uia::identity_host_state
-    , public stream_host_state
-    , public virtual asio_host_state
+    , protected stream_host_state
+    , protected virtual asio_host_state
     , public timer_host_state
-    , public routing_host_state
+    , protected routing_host_state
 {
+    struct private_tag {};
 public:
-    // @todo Hide the constructor.
-    explicit host() {}
+    using ptr = std::shared_ptr<host>;
+    using weak_ptr = std::weak_ptr<host>;
+
+    using stream_host_state::stream_peer;
+
+    // Hide the constructor.
+    explicit host(private_tag) {}
+
     ~host() { logger::debug() << this << " ~host"; }
-    inline std::shared_ptr<host> get_host() override { return shared_from_this(); }
+    inline host::ptr get_host() override { return shared_from_this(); }
 
     /**
      * @name Factory functions.
@@ -54,28 +61,29 @@ public:
      */
     /**@{*/
     /**
-     * Create a "bare-bones" host state object with no links or identity.
+     * Create a "bare-bones" host state object with no sockets or identity.
      * Client must establish a host identity via set_host_identity()
-     * and activate one or more network links before using sss.
+     * and activate one or more network sockets before using sss.
      */
-    static std::shared_ptr<host> create();
+    static host::ptr create();
     /**
      * Create an easy-to-use default Host object. Uses the provided setting_provider
      * registry to locate, or create if necessary, a persistent host identity,
      * as described for identity_host_state::init_identity().
-     * Also creates and binds to at least one UDP link, using a UDP port number specified
-     * in the settings_provider, or defaulting to @a default_port if none.
-     * If the desired UDP port cannot be bound, just picks an arbitrary UDP port instead.
+     * Also creates and binds to at least one UDP socket, using a UDP port number specified
+     * in the settings_provider, or defaulting to @a default_port if not.
+     * If the desired UDP port cannot be bound, just picks an arbitrary UDP port instead
+     * and updates settings with this new value.
      */
-    static std::shared_ptr<host> create(settings_provider* settings,
+    static host::ptr create(settings_provider* settings,
         uint16_t default_port = stream_protocol::default_port);
     // Overload to make calls simpler.
-    static inline std::shared_ptr<host> create(std::shared_ptr<settings_provider> settings,
+    static inline host::ptr create(std::shared_ptr<settings_provider> settings,
         uint16_t default_port = stream_protocol::default_port)
     {
         return create(settings.get(), default_port);
     }
-    /**@{*/
+    /**@}*/
 };
 
 } // sss namespace

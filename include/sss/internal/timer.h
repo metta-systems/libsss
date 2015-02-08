@@ -116,7 +116,7 @@ public:
  * time::set_timer_host_state(). The SSS protocol will then call the time factory's methods
  * whenever it needs to obtain the current system time or create timers.
  */
-class timer_host_state : virtual public asio_host_state
+class timer_host_state : protected virtual asio_host_state
 {
 public:
     /**
