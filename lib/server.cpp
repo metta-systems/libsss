@@ -10,7 +10,7 @@
 #include "arsenal/logging.h"
 #include "sss/server.h"
 #include "sss/stream.h"
-#include "sss/base_stream.h"
+#include "sss/streams/base_stream.h"
 
 using namespace std;
 

@@ -7,8 +7,9 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "arsenal/logging.h"
-#include "sss/channels/peer_identity.h"
 #include "sss/host.h"
+#include "sss/channels/peer_identity.h"
+#include "sss/channels/stream_channel.h"
 #include "sss/negotiation/kex_responder.h"
 #include "routing/routing_client.h"
 

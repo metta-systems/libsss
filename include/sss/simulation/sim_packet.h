@@ -10,7 +10,7 @@
 
 #include "sss/host.h"//@todo Remove because of sss::host dependency in comm/socket
 #include "comm/socket.h"
-#include "sss/timer.h"
+#include "sss/internal/timer.h"
 
 namespace sss {
 namespace simulation {

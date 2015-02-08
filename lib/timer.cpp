@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/asio.hpp>
-#include "sss/timer.h"
-#include "sss/timer_engine.h"
+#include "sss/internal/timer.h"
+#include "sss/internal/timer_engine.h"
 #include "arsenal/make_unique.h"
 
 namespace bp = boost::posix_time;

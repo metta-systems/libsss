@@ -14,9 +14,9 @@
 #include "arsenal/flurry.h"
 #include "krypto/sha256_hash.h"
 #include "krypto/aes_256_cbc.h"
-#include "sss/aes_armor.h"
+// #include "sss/aes_armor.h"
 #include "sss/host.h"
-#include "sss/channel.h"
+#include "sss/channels/channel.h"
 
 using namespace std;
 using namespace crypto;

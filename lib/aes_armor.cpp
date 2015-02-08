@@ -10,7 +10,7 @@
 #include "arsenal/opaque_endian.h"
 #include "arsenal/logging.h"
 #include "sss/channel.h"
-#include "sss/aes_armor.h"
+#include "sss/channels/aes_armor.h"
 
 // Info http://stackoverflow.com/questions/3141860/aes-ctr-256-encryption-mode-of-operation
 // @todo use EVP_aes_128_ctr instead of manual

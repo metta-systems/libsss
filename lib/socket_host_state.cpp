@@ -14,7 +14,7 @@
 #include "comm/platform.h"
 #include "comm/socket.h"
 #include "comm/socket_channel.h"
-#include "comm/socket_receiver.h"
+#include "comm/packet_receiver.h"
 #include "comm/udp_socket.h"
 #include "sss/internal/socket_host_state.h"
 

@@ -8,6 +8,7 @@
 //
 #pragma once
 
+#include <memory>
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
 #include "comm/socket_endpoint.h"
