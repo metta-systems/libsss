@@ -71,10 +71,10 @@ class stream_peer : public stream_protocol
     std::map<uia::comm::socket_endpoint, std::shared_ptr<negotiation::key_initiator>> key_exchanges_initiated_;
 
     // All existing streams involving this peer.
-    std::unordered_set<base_stream*> all_streams_;
+    std::unordered_set<base_stream::ptr> all_streams_;
     // All streams that have USIDs, registered by their USIDs
     // @todo change into weak_ptrs<base_stream>
-    std::unordered_map<unique_stream_id_t, base_stream*> usid_streams_;
+    std::unordered_map<unique_stream_id_t, base_stream::weak_ptr> usid_streams_;
 
 private:
     inline uia::peer_identity remote_host_id() const { return remote_id_; }
@@ -106,14 +106,14 @@ private:
     void clear_primary_channel();
 
     // Handlers.
-    void completed(std::shared_ptr<negotiation::key_initiator> ki, bool success);
+    void completed(std::shared_ptr<negotiation::kex_initiator> ki, bool success); // KEX inited
     void primary_status_changed(uia::comm::socket::status new_status);
 
     void routing_client_ready(uia::routing::client *rc);
     void connect_routing_client(uia::routing::client *rc);
 
     // Routing client handlers
-    void lookup_done(uia::routing::client *rc, sss::peer_identity const& target_peer,
+    void lookup_done(uia::routing::client *rc, uia::peer_identity const& target_peer,
         uia::comm::endpoint const& peer_endpoint,
         uia::routing::client_profile const& peer_profile);
     void regclient_destroyed(uia::routing::client *rc);

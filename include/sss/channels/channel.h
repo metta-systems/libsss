@@ -74,9 +74,9 @@ public:
     virtual std::shared_ptr<host> get_host();
 
     /// Start the channel.
-	void start(bool initiate) override;
+    void start(bool initiate) override;
     /// Stop the channel.
-	void stop() override;
+    void stop() override;
 
     /// Check congestion control state and return the number of new packets,
     /// if any, that flow control says we may transmit now.
