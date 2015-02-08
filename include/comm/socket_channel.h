@@ -85,18 +85,27 @@ public:
      * Set up for communication with specified remote endpoint,
      * binding to a particular local channel key.
      * @returns false if the channel is already in use and cannot be bound to.
+     *
+     * @fixme Channel key here is the peer's public key, and this binding should not be to the
+     * socket but to the message_receiver.
+     * It also should skip remote EP entirely and bind based only on channel key.
+     * Sending should be directed to EP from which _the latest_ packet was received from this
+     * peer. And as such a lower-level must maintain this channelkey<->ep mapping somewhere.
+     * (Current implementation is largely invalid because it uses remote_ep_ as peer address).
      */
-    bool bind(socket::weak_ptr socket, endpoint const& remote_ep, std::string channel_key);
+    // bool bind(socket::weak_ptr socket, endpoint const& remote_ep, std::string channel_key);
 
-    inline bool bind(socket_endpoint const& remote_ep, std::string channel_key) {
-        return bind(remote_ep.socket(), remote_ep, channel_key);
-    }
+    // inline bool bind(socket_endpoint const& remote_ep, std::string channel_key) {
+    //     return bind(remote_ep.socket(), remote_ep, channel_key);
+    // }
 
     /**
      * Stop channel and unbind from any currently bound remote endpoint.
      * This removes cached local and remote short-term public keys, making channel
      * unable to decode and further received packets with these keys. This provides
      * forward secrecy.
+     * After unbind() is called no communication may happen over the channel and a new one
+     * must be established to continue communication.
      */
     void unbind();
 
