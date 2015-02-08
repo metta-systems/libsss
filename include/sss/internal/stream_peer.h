@@ -21,6 +21,16 @@ namespace uia {
 namespace routing {
 class client;
 class client_profile;
+
+struct routing_coordination
+{
+    // Routing state:
+    std::unordered_set<uia::routing::client*> lookups_; ///< Outstanding lookups in progress
+    sss::async::timer reconnect_timer_;                 ///< For persistent lookup requests
+    // Set of RegClients we've connected to so far: @todo move to routing
+    std::unordered_set<uia::routing::client*> connected_routing_clients_;
+};
+
 } // routing namespace
 } // uia namespace
 
@@ -76,11 +86,13 @@ class stream_peer : public stream_protocol
     // @todo change into weak_ptrs<base_stream>
     std::unordered_map<unique_stream_id_t, base_stream::weak_ptr> usid_streams_;
 
+    uia::routing::routing_coordination coord_;
+
 private:
     inline uia::peer_identity remote_host_id() const { return remote_id_; }
 
     inline bool no_lookups_possible() {
-        return lookups_.empty() and key_exchanges_initiated_.empty();
+        return coord_.lookups_.empty() and key_exchanges_initiated_.empty();
     }
 
     /**
