@@ -598,7 +598,7 @@ ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t en
 
         // Prepare the header
         // Accomodate buffer space for payload
-        p.buf.resize(channel::header_len + sizeof(data_header) + size);
+        p.payload.resize(channel::header_len + sizeof(data_header) + size);
         auto header = p.header<data_header>();
 
         // header->stream_id - later
@@ -718,7 +718,7 @@ ssize_t base_stream::write_datagram(const char* data,
         p.tx_byte_seq = tx_byte_seq_;
 
         // Build the datagram header.
-        p.buf.resize(channel::header_len + sizeof(datagram_header) + size);
+        p.payload.resize(channel::header_len + sizeof(datagram_header) + size);
         auto header = p.header<datagram_header>();
 
         // header->stream_id - later

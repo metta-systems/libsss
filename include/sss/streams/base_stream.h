@@ -556,7 +556,7 @@ inline std::ostream& operator << (std::ostream& os, sss::base_stream::packet con
 
     os << "[packet txseq " << pkt.tx_byte_seq << ", type " << packet_type
        << ", owner " << pkt.owner << ", header " << pkt.header_len
-       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.buf << "]";
+       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.payload << "]";
     return os;
 }
 

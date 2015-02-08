@@ -256,7 +256,7 @@ void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t
         waiting_ack_.erase(txseq);
 
         logger::debug() << "Stream channel - acknowledged packet " << txseq
-            << " of size " << p.buf.size();
+            << " of size " << p.payload.size();
         p.owner->acknowledged(this, p, rxackseq);
     }
 }
@@ -276,7 +276,7 @@ void stream_channel::missed(packet_seq_t txseq, int npackets)
         base_stream::packet p = waiting_ack_[txseq];
 
         logger::debug() << "Stream channel - missed packet " << txseq
-            << " of size " << p.buf.size();
+            << " of size " << p.payload.size();
 
         if (!p.late)
         {
