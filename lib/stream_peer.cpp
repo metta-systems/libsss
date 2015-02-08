@@ -315,13 +315,15 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     // key exchange control packets.
     host_->instantiate_stream_responder();
 
+    // @todo: Key exchange should spawn channel once we finalize key exchange.
+
     // Create and bind a new channel.
     channel* chan = new stream_channel(host_, this, remote_id_);
     if (!chan->bind(l, ep)) {
         logger::warning() << "Could not bind new channel to target " << ep;
         delete chan;
         return on_channel_failed();
-    }
+    } // @sa stream_responder::create_channel
 
     // Start the key exchange process for the channel.
     kex_initiator_ptr init = make_shared<negotiation::kex_initiator>(chan, magic_id, remote_id_);
@@ -342,6 +344,9 @@ void stream_peer::channel_started(stream_channel* channel)
     assert(channel->target_peer() == this);
     assert(channel->link_status() == socket::status::up);
 
+    // @todo Change this logic completely, as currently we can have many parallel channels
+    // between two peers at once. Each may have its own decongestion and encryption settings.
+    // Keep a list of channels instead of single primary channel in stream_peer.
     if (primary_channel_)
     {
         // If we already have a working primary channel, we don't need a new one.
@@ -458,12 +463,13 @@ void stream_peer::primary_status_changed(socket::status new_status)
         // of those streams as _its_ primary and be left with a dangling channel!)
         // For Multipath-SSS to work we rather should not destroy them here and set up
         // multiple channels at once.
+        // @todo Even trickier, kill only initiators to already established endpoints!
         auto ki_copy = key_exchanges_initiated_;
         for (auto ki : ki_copy)
         {
             auto initiator = ki.second;
             if (!initiator->is_early()) {
-                continue;   // too late - let it finish
+                continue; // too late - let it finish
             }
             logger::debug() << "Deleting " << initiator << " for " << remote_id_
                 << " to " << initiator->remote_endpoint();

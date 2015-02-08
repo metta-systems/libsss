@@ -29,6 +29,8 @@ namespace sss {
 class base_stream;
 class stream_channel;
 
+using channel_key = std::array<uint8_t, 32>;
+
 namespace internal {
 
 /**
@@ -47,6 +49,9 @@ class stream_peer : public stream_protocol
      * Retry connection attempts for persistent streams once every minute.
      */
     static const async::timer::duration_type connect_retry_period;
+    host::ptr                        host_;         ///< Per-host state.
+    const uia::peer_identity         remote_id_;    ///< Host ID of target.
+    std::map<channel_key, stream_channel::ptr> channels_;     ///< Currently established channels.
 
     /**
      * Number of stall warnings we get from our primary stream
@@ -54,21 +59,16 @@ class stream_peer : public stream_protocol
      */
     static constexpr int stall_warnings_max = 3;
 
-    std::shared_ptr<host> host_;               ///< Per-host state.
-    const uia::peer_identity   remote_id_;          ///< Host ID of target.
-    stream_channel*       primary_channel_{0}; ///< Current primary channel.
     int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
     /// @internal
     boost::signals2::connection primary_channel_link_status_connection_;
 
-    // Routing state:
-    std::unordered_set<uia::routing::client*> lookups_; ///< Outstanding lookups in progress
-    async::timer reconnect_timer_;                      ///< For persistent lookup requests
-    std::unordered_set<uia::routing::client*> connected_routing_clients_; // Set of RegClients we've connected to so far
-
     // For channels under construction:
-    std::unordered_set<uia::comm::endpoint> locations_; ///< Potential locations known
-    std::map<uia::comm::socket_endpoint, std::shared_ptr<negotiation::key_initiator>> key_exchanges_initiated_;
+    std::unordered_set<uia::comm::endpoint> locations_; ///< Potential peer locations known
+
+    // @fixme key on sockets or permanent IDs? hmm
+    std::map<uia::comm::socket_endpoint, negotiation::kex_initiator::ptr>
+        key_exchanges_initiated_;
 
     // All existing streams involving this peer.
     std::unordered_set<base_stream::ptr> all_streams_;
@@ -93,6 +93,8 @@ private:
      * if such an attempt isn't already in progress.
      */
     void initiate_key_exchange(uia::comm::socket* s, uia::comm::endpoint const& ep);
+    // ^^ @todo Do we care about EPs now at all? new key exchange would initiate a new channel
+    // each time this is called.
 
     /**
      * Called by stream_channel::start() whenever a new channel
@@ -103,12 +105,13 @@ private:
     /**
      * Clear the peer's current primary channel.
      */
-    void clear_primary_channel();
+    // void clear_primary_channel();
 
     // Handlers.
     void completed(std::shared_ptr<negotiation::kex_initiator> ki, bool success); // KEX inited
     void primary_status_changed(uia::comm::socket::status new_status);
 
+    // Routing client handlers
     void routing_client_ready(uia::routing::client *rc);
     void connect_routing_client(uia::routing::client *rc);
 
@@ -130,7 +133,7 @@ public:
      * hopefully at some point resulting in an active primary channel.
      * Eventually emits a on_channel_connected or on_channel_failed signal.
      */
-    void connect_channel();
+    // void connect_channel();
 
     /**
      * Supply an endpoint hint that may be useful for finding this peer.
