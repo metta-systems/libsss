@@ -11,8 +11,8 @@
 #include <memory>
 #include <boost/signals2/signal.hpp>
 #include "comm/socket_endpoint.h"
-#include "comm/socket_receiver.h"
 #include "sss/timer.h"
+#include "comm/packet_receiver.h"
 #include "sss/negotiation/kex_message.h"
 
 namespace sss {
@@ -24,7 +24,7 @@ namespace negotiation {
 
 /**
  * This abstract base class manages the responder side of the key exchange.
- * It uses socket_receiver interface as base to receive negotiation protocol
+ * It uses packet_receiver interface as base to receive negotiation protocol
  * control messages and respond to incoming key exchange requests.
  *
  * It forwards received requests to a corresponding key initiator in the host state
@@ -32,7 +32,7 @@ namespace negotiation {
  *
  * The implemented subclass of this abstract base is stream_responder.
  */
-class kex_responder : public uia::comm::socket_receiver
+class kex_responder : public uia::comm::packet_receiver
 {
     std::shared_ptr<host> host_;
 

@@ -14,9 +14,9 @@
 #include <boost/signals2/signal.hpp>
 #include "arsenal/algorithm.h"
 #include "comm/socket.h"
-#include "comm/socket_receiver.h"
 #include "sss/asio_host_state.h"
 #include "sss/stream_protocol.h" // only for default port?
+#include "comm/packet_receiver.h"
 
 class settings_provider;
 

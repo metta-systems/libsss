@@ -17,7 +17,7 @@
 namespace uia {
 namespace comm {
 
-class socket_receiver;
+class packet_receiver;
 class socket_channel;
 
 /**

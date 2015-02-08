@@ -23,7 +23,8 @@ set(comm_SOURCES
     comm/udp_socket.cpp
     comm/socket_endpoint.cpp
     comm/socket_channel.cpp
-    comm/socket_receiver.cpp)
+    comm/packet_receiver.cpp
+    )
 
 set(stream_SOURCES
     abstract_stream.cpp
