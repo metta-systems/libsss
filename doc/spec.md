@@ -368,7 +368,7 @@ ofs : sz : descriptions
 TOTAL: 56 + X bytes
 ```
 
-As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet contains a SETTINGS frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer? Could be included in RESET or CLOSE frame.)
+As a final step in session negotiation channel layer sets up a decongestion strategy. For this the INITIATE packet *must* contain a SETTINGS frame before all other frames of data, laying out options as requested by the initiator. A responder not willing to accept these options may RESET and CLOSE the stream. (**@todo** Make possible to progress forward by returning other options in counter-offer? Could be included in RESET or CLOSE frame.)
 
 ### 4.1 MESSAGE box format
 
