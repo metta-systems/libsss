@@ -12,49 +12,54 @@
 
 namespace uia {
 namespace comm {
-
+/*
 bool
 socket_channel::bind(socket::weak_ptr socket, endpoint const& remote_ep, std::string channel_key)
 {
-    assert(socket);
+    auto sock = socket.lock();
+    assert(sock);
     assert(!is_active()); // can't bind while channel is active
     assert(!is_bound());  // can't bind again if already bound
     assert(channel_key.size() == 32);
 
-    if (socket->channel_for(channel_key) != nullptr) {
+    if (sock->channel_for(channel_key) != nullptr) {
         return false;
     }
 
     remote_ep_ = remote_ep;
     local_channel_key_ = channel_key;
-    if (!socket->bind_channel(local_channel_key_, shared_from_this())) {
+    // @todo bind to message_receiver not socket...
+    // this probably means we do not need socket_channel class and channel can do that, since
+    // socket comms are abstracted via message_receiver
+    if (!sock->bind_channel(local_channel_key_, shared_from_this())) {
         return false;
     }
 
-    logger::debug() << "Bound local channel " << encode::to_base32x(channel_key) << " for " << remote_ep << " to " << socket;
+    logger::debug() << "Bound local channel " << encode::to_base32x(channel_key) << " for " << remote_ep << " to " << sock;
 
     socket_ = socket;
     return true;
 }
-
+*/
 void
 socket_channel::unbind()
 {
     stop();
     assert(!is_active());
-    if (socket_)
+    if (auto socket = socket_.lock())
     {
-        socket_->unbind_channel(remote_ep_, local_channel_key_);
-        socket_ = nullptr;
+        // socket->unbind_channel(remote_ep_, local_channel_key_);
+        socket.reset();//@fixme: resets only this instance, parent shared_ptr remains...
         local_channel_key_.clear();
     }
 }
 
-int
-socket_channel::may_transmit()
+size_t socket_channel::may_transmit()
 {
-    assert(socket_);
-    return socket_->may_transmit(remote_ep_);
+    if (auto socket = socket_.lock()) {
+        return socket->may_transmit(remote_ep_);
+    }
+    return false;
 }
 
 } // comm namespace

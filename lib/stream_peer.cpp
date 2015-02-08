@@ -99,7 +99,9 @@ void stream_peer::connect_channel()
     {
         for (auto endpoint : locations_)
         {
-            initiate_key_exchange(s, endpoint);
+            if (auto sock = s.lock()) {
+                initiate_key_exchange(sock.get(), endpoint);
+            }
         }
     }
 

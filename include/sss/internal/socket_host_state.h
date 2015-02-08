@@ -46,11 +46,11 @@ class socket_host_state : virtual public asio_host_state
     /**
      * ipv4 socket created by init_socket(), if any.
      */
-    std::shared_ptr<uia::comm::socket> primary_socket_;
+    uia::comm::socket::ptr primary_socket_;
     /**
      * ipv6 socket created by init_socket(), if any.
      */
-    std::shared_ptr<uia::comm::socket> primary_socket6_;
+    uia::comm::socket::ptr primary_socket6_;
 
 protected:
     /**
@@ -58,7 +58,7 @@ protected:
      * The default implementation creates a udp_socket,
      * but this may be overridden to virtualize the network.
      */
-    virtual std::shared_ptr<uia::comm::socket> create_socket();
+    virtual uia::comm::socket::ptr create_socket();
 
     /**
      * Initialize the socket this host instance uses to communicate.

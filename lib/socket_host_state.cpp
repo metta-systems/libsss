@@ -19,6 +19,7 @@
 #include "sss/internal/socket_host_state.h"
 
 using namespace std;
+using namespace uia::comm;
 using namespace boost::asio;
 
 namespace sss {
@@ -27,19 +28,19 @@ namespace sss {
 // socket_host_state
 //=================================================================================================
 
-uia::comm::socket_receiver*
+packet_receiver::weak_ptr
 socket_host_state::receiver_for(std::string magic)
 {
     auto it = receivers_.find(magic);
     if (it == receivers_.end())
     {
-        logger::debug() << "Receiver not found looking for magic " << hex(magic, 8, true);
-        return 0;
+        logger::debug() << "Receiver not found looking for magic " << magic; // @todo magic is binary
+        return packet_receiver::weak_ptr();
     }
     return it->second;
 }
 
-shared_ptr<uia::comm::socket>
+uia::comm::socket::ptr
 socket_host_state::create_socket()
 {
     return make_shared<udp_socket>(get_host());
@@ -120,9 +121,11 @@ socket_host_state::active_local_endpoints()
     unordered_set<uia::comm::endpoint> result;
     for (auto s : active_sockets())
     {
-        assert(s->is_active());
-        for (auto ep : s->local_endpoints()) {
-            result.insert(ep);
+        if (auto sock = s.lock()) {
+            assert(sock->is_active());
+            for (auto ep : sock->local_endpoints()) {
+                result.insert(ep);
+            }
         }
     }
     return result;

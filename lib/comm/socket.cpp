@@ -33,10 +33,10 @@ socket::set_active(bool active)
 {
     active_ = active;
     if (active_) {
-        host_interface_->activate_socket(this);
+        host_interface_->activate_socket(shared_from_this());
     }
     else {
-        host_interface_->deactivate_socket(this);
+        host_interface_->deactivate_socket(shared_from_this());
     }
 }
 
