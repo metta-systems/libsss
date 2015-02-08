@@ -127,7 +127,7 @@ void stream_peer::connect_routing_client(ur::client *rc)
     connected_routing_clients_.insert(rc);
 
     // Listen for the lookup response
-    rc->on_lookup_done.connect([this, rc](peer_identity const& target_peer,
+    rc->on_lookup_done.connect([this, rc](uia::peer_identity const& target_peer,
                                       uia::comm::endpoint const& peer_endpoint,
                                       ur::client_profile const& peer_profile)
     {
@@ -167,7 +167,7 @@ affinity(address const& a, address const& b)
 #endif
 
 void
-stream_peer::lookup_done(ur::client *rc, peer_identity const& target_peer,
+stream_peer::lookup_done(ur::client *rc, uia::peer_identity const& target_peer,
     uia::comm::endpoint const& peer_endpoint,
     ur::client_profile const& peer_profile)
 {
@@ -277,8 +277,8 @@ void stream_peer::regclient_destroyed(ur::client *rc)
 
 void stream_peer::retry_timeout()
 {
-    // If we actually have an active flow now, do nothing.
-    if (primary_channel_ and primary_channel_->link_status() == status::up)
+    // If we actually have an active channel now, do nothing.
+    if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
         return;
 
     // Notify any waiting streams of failure
@@ -295,7 +295,7 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     assert(ep != uia::comm::endpoint());
 
     // No need to initiate new channels if we already have a working one.
-    if (primary_channel_ and primary_channel_->link_status() == status::up)
+    if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
         return;
 
     // Don't simultaneously initiate multiple channels to the same endpoint.
@@ -338,12 +338,12 @@ void stream_peer::channel_started(stream_channel* channel)
 
     assert(channel->is_active());
     assert(channel->target_peer() == this);
-    assert(channel->link_status() == status::up);
+    assert(channel->link_status() == socket::status::up);
 
     if (primary_channel_)
     {
         // If we already have a working primary channel, we don't need a new one.
-        if (primary_channel_->link_status() == status::up)
+        if (primary_channel_->link_status() == socket::status::up)
             return; // Shutdown the channel?
 
         // But if the current primary is on the blink, replace it.
@@ -358,14 +358,14 @@ void stream_peer::channel_started(stream_channel* channel)
 
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
     primary_channel_link_status_connection_ =
-        primary_channel_->on_link_status_changed.connect([this](status new_status)
+        primary_channel_->on_link_status_changed.connect([this](socket::status new_status)
         {
             primary_status_changed(new_status);
         });
 
     // Notify all waiting streams
     on_channel_connected();
-    on_link_status_changed(status::up);
+    on_link_status_changed(socket::status::up);
 }
 
 void stream_peer::clear_primary_channel()
@@ -442,11 +442,11 @@ void stream_peer::completed(key_initiator_ptr ki, bool success)
     // assert(primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up);
 }
 
-void stream_peer::primary_status_changed(status new_status)
+void stream_peer::primary_status_changed(socket::status new_status)
 {
     assert(primary_channel_);
 
-    if (new_status == status::up)
+    if (new_status == socket::status::up)
     {
         stall_warnings_ = 0;
         // Now that we (again?) have a working primary channel, cancel and delete all
@@ -475,7 +475,7 @@ void stream_peer::primary_status_changed(status new_status)
         return on_link_status_changed(new_status);
     }
 
-    if (new_status == status::stalled)
+    if (new_status == socket::status::stalled)
     {
         if (++stall_warnings_ < stall_warnings_max)
         {

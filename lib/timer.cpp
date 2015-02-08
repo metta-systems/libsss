@@ -39,38 +39,38 @@ const timer::duration_type timer::fail_max  = bp::seconds(20);
 static timer::duration_type
 backoff(timer::duration_type interval, timer::duration_type max_interval = timer::fail_max)
 {
-	return std::min(interval * 3 / 2, max_interval);
+    return std::min(interval * 3 / 2, max_interval);
 }
 
 timer::timer(timer_host_state* host)
 {
-	engine_ = host->create_timer_engine_for(this);
+    engine_ = host->create_timer_engine_for(this);
 }
 
 void timer::start(duration_type interval, duration_type fail_interval)
 {
-	interval_ = interval;
-	fail_interval_ = fail_interval;
-	active_ = true;
-	engine_->start(interval_);
+    interval_ = interval;
+    fail_interval_ = fail_interval;
+    active_ = true;
+    engine_->start(interval_);
 }
 
 void timer::stop()
 {
-	engine_->stop();
-	active_ = false;
+    engine_->stop();
+    active_ = false;
 }
 
 void timer::restart()
 {
-	interval_ = backoff(interval_);
-	start(interval_);
+    interval_ = backoff(interval_);
+    start(interval_);
 }
 
 void timer::timeout_calculations()
 {
-	fail_interval_ -= interval_;
-	failed_ = (fail_interval_ <= bp::milliseconds(0));
+    fail_interval_ -= interval_;
+    failed_ = (fail_interval_ <= bp::milliseconds(0));
 }
 
 //=================================================================================================
@@ -82,39 +82,39 @@ void timer::timeout_calculations()
  */
 class default_timer_engine : public timer_engine
 {
-	boost::asio::deadline_timer interval_timer;
+    boost::asio::deadline_timer interval_timer;
 
-	void asio_timeout(boost::system::error_code const& error);
+    void asio_timeout(boost::system::error_code const& error);
 
 public:
-	default_timer_engine(timer* t, boost::asio::io_service& io_service);
-	~default_timer_engine();
+    default_timer_engine(timer* t, boost::asio::io_service& io_service);
+    ~default_timer_engine();
 
-	void start(duration_type interval) override;
-	void stop() override;
+    void start(duration_type interval) override;
+    void stop() override;
 };
 
 default_timer_engine::default_timer_engine(timer* t, boost::asio::io_service& io_service)
-	: timer_engine(t)
-	, interval_timer(io_service)
+    : timer_engine(t)
+    , interval_timer(io_service)
 {
 }
 
 default_timer_engine::~default_timer_engine()
 {
-	stop();
+    stop();
 }
 
 void default_timer_engine::start(duration_type interval)
 {
-	interval_timer.expires_from_now(interval);
-	interval_timer.async_wait(
-		boost::bind(&default_timer_engine::asio_timeout, this, boost::asio::placeholders::error));
+    interval_timer.expires_from_now(interval);
+    interval_timer.async_wait(
+        boost::bind(&default_timer_engine::asio_timeout, this, boost::asio::placeholders::error));
 }
 
 void default_timer_engine::stop()
 {
-	interval_timer.cancel();
+    interval_timer.cancel();
 }
 
 /**
@@ -124,10 +124,10 @@ void default_timer_engine::stop()
  */
 void default_timer_engine::asio_timeout(boost::system::error_code const& error)
 {
-	if (error == boost::asio::error::operation_aborted)
-		return;
+    if (error == boost::asio::error::operation_aborted)
+        return;
 
-	timeout();
+    timeout();
 }
 
 //=================================================================================================
@@ -136,8 +136,8 @@ void default_timer_engine::asio_timeout(boost::system::error_code const& error)
 
 void timer_engine::timeout()
 {
-	origin_->timeout_calculations();
-	origin_->on_timeout(origin_->has_failed());
+    origin_->timeout_calculations();
+    origin_->on_timeout(origin_->has_failed());
 }
 
 } // namespace async
@@ -148,12 +148,12 @@ void timer_engine::timeout()
 
 boost::posix_time::ptime timer_host_state::current_time()
 {
-	return boost::posix_time::microsec_clock::local_time();
+    return boost::posix_time::microsec_clock::local_time();
 }
 
 std::unique_ptr<async::timer_engine> timer_host_state::create_timer_engine_for(async::timer* t)
 {
-	return stdext::make_unique<async::default_timer_engine>(t, io_service);
+    return stdext::make_unique<async::default_timer_engine>(t, io_service_);
 }
 
 } // sss namespace

@@ -339,14 +339,22 @@ private:
 
     // Returns true if received packet needs to be acked, false otherwise.
     static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
-    static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
+    static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt,
+        stream_channel* channel);
     void rx_data(byte_array const& pkt, uint32_t byte_seq);
 
     std::shared_ptr<base_stream> rx_substream(packet_seq_t pktseq, stream_channel* channel,
@@ -478,7 +486,8 @@ public:
     std::shared_ptr<abstract_stream> get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
-    ssize_t write_datagram(const char* data, ssize_t size, stream::datagram_type is_reliable) override;
+    ssize_t write_datagram(const char* data, ssize_t size,
+        stream::datagram_type is_reliable) override;
 
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
