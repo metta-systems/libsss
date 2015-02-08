@@ -50,7 +50,7 @@ public:
      * @param msg [description]
      * @param src [description]
      */
-    void receive(byte_array const& msg, uia::comm::socket_endpoint const& src) override;
+    void receive(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src) override;
 
     /**
      * Send an R0 chunk to some network address,
