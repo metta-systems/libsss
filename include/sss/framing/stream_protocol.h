@@ -19,6 +19,11 @@
 namespace sss {
 
 /**
+ * Packet sequence number for packets within a channel.
+ */
+using packet_seq_t = uint64_t;
+
+/**
  * SSS stream protocol definitions.
  * This class simply provides SSS protcol definition constants for use in other stream classes.
  */
