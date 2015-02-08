@@ -83,6 +83,10 @@ protected:
             byte_array const& user_data_in, byte_array& user_data_out) = 0;
 
 private:
+    struct kex_hello_chunk;
+    struct kex_cookie_chunk;
+    struct kex_initiate_chunk;
+
     // Handlers for incoming kex packets
     void got_probe0(uia::comm::socket_endpoint const& src);
     void got_hello(kex_hello_chunk const& data, uia::comm::socket_endpoint const& src);
