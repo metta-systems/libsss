@@ -800,7 +800,7 @@ void channel::start(bool initiate)
 
     super::start(initiate);
 
-    pimpl_->nocc_ = is_socket_congestion_controlled();
+    pimpl_->nocc_ = is_congestion_controlled();
 
     // We're ready to go!
     set_link_status(uia::comm::socket::status::up);
