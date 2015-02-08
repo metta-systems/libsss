@@ -115,10 +115,10 @@ bool stream::connect_to(uia::peer_identity const& destination,
     // then use the location hint as a surrogate peer identity.
     byte_array eid = destination.id();
     // this won't work anymore @fixme
-    if (eid.is_empty()) {
-        eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
+    // if (eid.is_empty()) {
+    //     eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
         assert(!eid.is_empty());
-    }
+    // }
 
     disconnect();
 

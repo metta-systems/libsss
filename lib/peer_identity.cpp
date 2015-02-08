@@ -19,12 +19,12 @@ namespace uia {
 //=================================================================================================
 
 peer_identity::peer_identity(byte_array const& id)
-    : id_(id)
+    : id_(id.as_string())
 {
 }
 
 peer_identity::peer_identity(byte_array const& id, byte_array const& key)
-    : id_(id)
+    : id_(id.as_string())
 {
     if (!set_key(key)) {
         throw bad_key();
@@ -33,72 +33,54 @@ peer_identity::peer_identity(byte_array const& id, byte_array const& key)
 
 void peer_identity::clear_key()
 {
-    key_.reset();
+    private_key_.clear();
 }
 
 bool peer_identity::set_key(byte_array const& key)
 {
     clear_key();
 
-    scheme ksch = key_scheme();
-    switch (ksch) {
-        case dsa160:
-            key_ = make_shared<crypto::dsa160_key>(key);
-            break;
-        case rsa160:
-            key_ = make_shared<crypto::rsa160_key>(key);
-            break;
-        default:
-            logger::warning() << "Unknown identity key scheme " << ksch;
-            return false;
-    }
-
-    // Check if decode succeeded.
-    if (key_->type() == crypto::sign_key::key_type::invalid)
-    {
-        clear_key();
-        return false;
-    }
+    private_key_ = key.as_string();
 
     // Verify that the supplied key actually matches the ID we have.
     // *** This is a crucial step for security! ***
-    byte_array key_id = key_->id();
-    key_id[0] = (key_id[0] & 7) | (ksch << 3); // replace top 5 bits of ID with scheme used
+    // byte_array key_id = key_->id();
+    // key_id[0] = (key_id[0] & 7) | (ksch << 3); // replace top 5 bits of ID with scheme used
 
-    if (key_id != id_)
-    {
-        clear_key();
-        logger::warning() << "Attempt to set mismatching identity key!";
+    // if (key_id != id_)
+    // {
+    //     clear_key();
+    //     logger::warning() << "Attempt to set mismatching identity key!";
         return false;
-    }
+    // }
 
-    return true;
+    // return true;
 }
 
-identity peer_identity::generate(scheme sch, int bits)
+peer_identity peer_identity::generate(scheme sch, int bits)
 {
-    shared_ptr<crypto::sign_key> key{nullptr};
-    switch (sch) {
-        case dsa160:
-            logger::debug() << "Generating new DSA160 sign key";
-            key = make_shared<crypto::dsa160_key>(bits);
-            break;
-        case rsa160:
-            logger::debug() << "Generating new RSA160 sign key";
-            key = make_shared<crypto::rsa160_key>(bits);
-            break;
-        default:
-            logger::fatal() << "Unsupported signing scheme " << sch;
-    }
+    // shared_ptr<crypto::sign_key> key{nullptr};
+    // switch (sch) {
+    //     case dsa160:
+    //         logger::debug() << "Generating new DSA160 sign key";
+    //         key = make_shared<crypto::dsa160_key>(bits);
+    //         break;
+    //     case rsa160:
+    //         logger::debug() << "Generating new RSA160 sign key";
+    //         key = make_shared<crypto::rsa160_key>(bits);
+    //         break;
+    //     default:
+    //         logger::fatal() << "Unsupported signing scheme " << sch;
+    // }
 
-    byte_array id = key->id();
-    id[0] = (id[0] & 7) | (sch << 3); // replace top 5 bits of ID with scheme used
-    logger::debug() << "Generated key id " << id;
+    // byte_array id = key->id();
+    // id[0] = (id[0] & 7) | (sch << 3); // replace top 5 bits of ID with scheme used
+    // logger::debug() << "Generated key id " << id;
 
     identity ident(id);
     ident.key_ = key;
 
-    return std::move(ident);
+    return ident;
 }
 
 byte_array peer_identity::public_key() const
