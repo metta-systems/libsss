@@ -75,7 +75,7 @@ void stream_channel::got_ready_transmit()
         // It will add itself back onto sending_streams_ if it has more.
         stream->transmit_on(this);
 
-    } while (!sending_streams_.empty() and may_transmit());
+    } while (not sending_streams_.empty() and may_transmit());
 }
 
 void stream_channel::got_link_status_changed(uia::comm::socket::status new_status)

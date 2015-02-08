@@ -141,7 +141,7 @@ void identity_host_state::init_identity(settings_provider* settings)
     if (!id.is_empty() and !key.is_empty())
     {
         host_identity_.set_id(id);
-        if (host_identity_.set_key(key) && host_identity_.has_private_key())
+        if (host_identity_.set_key(key) and host_identity_.has_private_key())
             return;     // Success
     }
 

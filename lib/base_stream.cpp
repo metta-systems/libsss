@@ -40,7 +40,7 @@ base_stream::base_stream(shared_ptr<host> host,
     // Initialize inherited parameters
     if (parent)
     {
-        if (parent->listen_mode() & stream::listen_mode::inherit)
+        if (parent->listen_mode() bitand stream::listen_mode::inherit)
             listen(parent->listen_mode());
         set_receive_buffer_size(parent->child_receive_buf_size_);
         set_child_receive_buffer_size(parent->child_receive_buf_size_);
