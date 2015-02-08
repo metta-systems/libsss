@@ -31,6 +31,19 @@ class stream_channel : public channel, public stream_protocol
     using super = channel;
 
     /**
+     * Retry connection attempts for persistent streams once every minute.
+     */
+    static const async::timer::duration_type connect_retry_period;
+
+    /**
+     * Number of stall warnings we get from our primary stream
+     * before we start a new lookup/key exchange phase to try replacing it.
+     */
+    static constexpr int stall_warnings_max = 3;
+
+    int stall_warnings_{0};  ///< Stall warnings before new lookup.
+
+    /**
      * Stream peer this channel is associated with.
      * A stream_channel is always a direct child of its stream_peer
      * so there should be no chance of this pointer ever dangling.

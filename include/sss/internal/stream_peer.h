@@ -55,21 +55,10 @@ class stream_peer : public stream_protocol
     friend class sss::stream_host_state; // @fixme used only to construct.
     friend class sss::stream_channel; // @fixme Used to call channel_started() only.
 
-    /**
-     * Retry connection attempts for persistent streams once every minute.
-     */
-    static const async::timer::duration_type connect_retry_period;
     host::ptr                        host_;         ///< Per-host state.
     const uia::peer_identity         remote_id_;    ///< Host ID of target.
     std::map<channel_key, stream_channel::ptr> channels_;     ///< Currently established channels.
 
-    /**
-     * Number of stall warnings we get from our primary stream
-     * before we start a new lookup/key exchange phase to try replacing it.
-     */
-    static constexpr int stall_warnings_max = 3;
-
-    int                   stall_warnings_{0};  ///< Stall warnings before new lookup.
     /// @internal
     boost::signals2::connection primary_channel_link_status_connection_;
 
