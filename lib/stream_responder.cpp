@@ -53,7 +53,7 @@ public:
 };
 
 stream_responder::stream_responder(shared_ptr<host> host)
-    : kex_responder(host, stream_protocol::magic_id)
+    : kex_responder(host/*, stream_protocol::magic_id*/)
 {
     // Get us connected to all currently extant routing clients
     for (ur::client *c : host->coordinator->routing_clients()) {
