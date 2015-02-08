@@ -47,6 +47,7 @@ protected:
                                      ///< or nullptr if stream has been deleted.
     uia::peer_identity    peer_id_;  ///< EID of peer we're connected to.
 
+public:
     /**
      * When the application has multiple streams with data ready to transmit to the same
      * remote host, SSS uses the respective streams' priority levels to determine which data
@@ -59,6 +60,8 @@ protected:
      */
     using priority_t = uint32_t;
 
+    using ptr = std::shared_ptr<abstract_stream>;
+    using weak_ptr = std::weak_ptr<abstract_stream>;
 
 private:
     priority_t priority_{0}; ///< Current priority level
@@ -245,7 +248,7 @@ public:
      *
      * @return A stream object representing the new substream.
      */
-    virtual std::shared_ptr<abstract_stream> open_substream() = 0;
+    virtual ptr open_substream(/*priority_t prio = 1*/) = 0;
 
     /**
      * Listen for incoming substreams on this stream.
@@ -268,9 +271,9 @@ public:
     /**
      * Accept a waiting incoming substream.
      *
-     * @return Null shared_ptr if no incoming substreams are waiting.
+     * @return nullptr if no incoming substreams are waiting.
      */
-    virtual std::shared_ptr<abstract_stream> accept_substream() = 0;
+    virtual ptr accept_substream() = 0;
 
     //=============================================================================================
     // Stream control.

@@ -646,7 +646,7 @@ ssize_t base_stream::write_data(char const* data, ssize_t total_size, uint8_t en
 // Unreliable datagrams
 //-------------------------------------------------------------------------------------------------
 
-shared_ptr<abstract_stream> base_stream::get_datagram()
+abstract_stream::ptr base_stream::get_datagram()
 {
     // Scan through the list of queued datagrams
     // for one with a complete record waiting to be read.

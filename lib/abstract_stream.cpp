@@ -11,7 +11,7 @@
 
 namespace sss {
 
-abstract_stream::abstract_stream(std::shared_ptr<host> h)
+abstract_stream::abstract_stream(host::ptr h)
     : host_(h)
 {}
 

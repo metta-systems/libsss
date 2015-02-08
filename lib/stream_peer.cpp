@@ -14,8 +14,8 @@
 
 using namespace std;
 namespace ur = uia::routing;
-using kex_initiator_ptr = std::shared_ptr<negotiation::kex_initiator>;
 using uia::comm::socket;
+using namespace sss::negotiation;
 
 namespace sss {
 namespace internal {
@@ -326,9 +326,9 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     } // @sa stream_responder::create_channel
 
     // Start the key exchange process for the channel.
-    kex_initiator_ptr init = make_shared<negotiation::kex_initiator>(chan, magic_id, remote_id_);
+    kex_initiator::ptr init = make_shared<kex_initiator>(chan, magic_id, remote_id_);
 
-    init->on_completed.connect([this](kex_initiator_ptr ki, bool success) {
+    init->on_completed.connect([this](kex_initiator::ptr ki, bool success) {
         completed(ki, success);
     });
 
@@ -411,7 +411,7 @@ void stream_peer::add_location_hint(uia::comm::endpoint const& hint)
     }
 }
 
-void stream_peer::completed(key_initiator_ptr ki, bool success)
+void stream_peer::completed(kex_initiator::ptr ki, bool success)
 {
     assert(ki and ki->is_done());
 

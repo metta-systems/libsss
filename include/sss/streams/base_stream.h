@@ -202,13 +202,13 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //=============================================================================================
     /**@{*/
 
-    std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
+    base_stream::weak_ptr parent_; ///< Parent, if it still exists.
     /**
      * Self-reference to keep this stream around until it is done.
      * It is initialized from stream::connect_to() or stream private constructor.
      * @fixme This is nasty, think of a better implementation.
      */
-    std::shared_ptr<base_stream> self_;
+    base_stream::ptr self_;
     state state_{state::created};
     bool init_{true};       ///< Starting a new stream and its attach hasn't been acknowledged yet.
     bool top_level_{false}; ///< This is a top-level stream.
@@ -285,9 +285,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /**@{*/
 
     /// Received, waiting substreams.
-    std::deque<std::shared_ptr<abstract_stream>> received_substreams_;
+    std::deque<abstract_stream::ptr> received_substreams_;
     /// Received, waiting datagram streams.
-    std::deque<std::shared_ptr<abstract_stream>> received_datagrams_;
+    std::deque<abstract_stream::ptr> received_datagrams_;
 
     /**@}*/
 private:
@@ -411,6 +411,9 @@ private:
     // void substream_read_record();
 
 public:
+    using ptr = std::shared_ptr<base_stream>;
+    using weak_ptr = std::weak_ptr<base_stream>;
+
     /**
      * Create a base_stream instance.
      * @param host parent host
@@ -487,11 +490,11 @@ public:
     //=============================================================================================
 
     // Initiate or accept substreams
-    std::shared_ptr<abstract_stream> open_substream() override;
-    std::shared_ptr<abstract_stream> accept_substream() override;
+    abstract_stream::ptr open_substream() override;
+    abstract_stream::ptr accept_substream() override;
 
     // Send and receive unordered, unreliable datagrams on this stream.
-    std::shared_ptr<abstract_stream> get_datagram();
+    abstract_stream::ptr get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
     ssize_t write_datagram(char const* data, ssize_t size,
