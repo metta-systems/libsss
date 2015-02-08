@@ -428,7 +428,7 @@ void stream_peer::completed(key_initiator_ptr ki, bool success)
     key_exchanges_initiated_.erase(lep);
 
     ki->cancel();
-    ki = nullptr;
+    ki.reset();
 
     // If unsuccessful, notify waiting streams.
     if (!success)
@@ -477,7 +477,7 @@ void stream_peer::primary_status_changed(socket::status new_status)
             assert(ki.first == initiator->remote_endpoint());
             key_exchanges_initiated_.erase(ki.first);
             initiator->cancel();
-            initiator = nullptr;
+            initiator.reset();
         }
 
         return on_link_status_changed(new_status);
