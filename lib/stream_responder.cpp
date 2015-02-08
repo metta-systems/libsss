@@ -36,7 +36,7 @@ class stream_responder : public negotiation::kex_responder, public stream_protoc
     // Handlers:
     void created_client(ur::client *rc);
     void client_ready();
-    void lookup_notify(peer_identity const& target_peer,
+    void lookup_notify(uia::peer_identity const& target_peer,
         uia::comm::endpoint const& peer_ep,
         uia::routing::client_profile const& peer_profile);
     /**@}*/
@@ -90,7 +90,7 @@ void stream_responder::connect_routing_client(ur::client *c)
 
     connected_clients_.insert(c);
     c->on_ready.connect([this] { client_ready(); });
-    c->on_lookup_notify.connect([this](peer_identity const& target_peer,
+    c->on_lookup_notify.connect([this](uia::peer_identity const& target_peer,
                                        uia::comm::endpoint const& peer_ep,
                                        uia::routing::client_profile const& peer_profile)
     {
@@ -114,7 +114,7 @@ void stream_responder::client_ready()
     }
 }
 
-void stream_responder::lookup_notify(peer_identity const& target_peer,
+void stream_responder::lookup_notify(uia::peer_identity const& target_peer,
     uia::comm::endpoint const& peer_ep,
     uia::routing::client_profile const& peer_profile)
 {

@@ -67,7 +67,7 @@ void stream_peer::connect_channel()
 {
     assert(!remote_id_.is_null());
 
-    if (primary_channel_ and primary_channel_->link_status() == status::up)
+    if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
         return; // Already have a working channel; don't need another yet.
 
     // @todo Need a way to determine if streams need to send. If no streams waiting to send
