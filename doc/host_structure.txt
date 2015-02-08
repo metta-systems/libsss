@@ -11,12 +11,17 @@ host
 ⤷  identity_host_state
     ⤷  create/load/maintain host EID(s)
 ⤷  stream_host_state
-    ⤷  responder to listen for incoming stream server connections
-        ⤷ responder should not maintain any state, only answer HELLO packets and create channels
-           in reponse to proper INITIATE packets.
-    ⤷  list of peers by their EID(s): stream_peer
-        ⤷ channels are direct children of stream peer (primary_channel link from stream_peer)
-        ⤷  each peer has list of all streams established or establishing with this peer
+    ⤷  [owns] responder to listen for incoming stream server connections
+        ⤷ responder should not maintain any state,
+           * only _answer HELLO packets_
+           * and _create channels_ in reponse to proper INITIATE packets
+           * created channel is bound to message_receiver.
+    ⤷  [owns] list of peers by their EID(s): stream_peer
+        ⤷ channels are direct children of stream peer: [owns] channels_
+        ⤷ a list of streams established or establishing with this peer: [owns] all_streams_
+        ⤷ [owns] initiator(s) to create outgoing client connections
+            * initiator _maintains negotiation state_
+            * and _creates channels_ when negotiation completes successfully.
 ⤷  asio_host_state
     ⤷  io_service access
 ⤷  timer_host_state
@@ -41,3 +46,36 @@ handlers will spawn new peers and channels as necessary.
 Routing coordinator protocol is a level above, it uses combination of techniques to discover
 potential peer nodes.
 
+```
+struct host
+{
+    struct socket_host_state
+    {
+        list<socket> sockets_;
+    }
+    struct kex_host_state 
+    {
+        list<kex_initiator> initiators_;
+    }
+    struct stream_host_state 
+    {
+        list<responder> responders_ = { hello, cookie, initiate, message };
+        list<stream_peer> peers_;
+    }
+}
+
+// our peer has multiple permanent IDs, but for channels we use temporary IDs
+// need to map a multitude of temporary IDs to a single peer
+// in here, stream_peer only represents a SINGLE permanent ID, with multiple temporary IDs
+// initiated towards this permanent ID
+// temporary IDs are existing only as long as corresponding channel exists
+// once channel is closed the temp key vanishes. channels_.keys() lists all existing temp IDs.
+
+struct stream_peer
+{
+    peer_identity remote_id_;
+    map<key_string, channel> channels_; // map from peer temp public keys to channels
+    list<stream> streams_;
+    routing::coordinator& peer_database_; // [unowned] locator for peer EIDs
+}
+```
