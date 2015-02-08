@@ -820,7 +820,7 @@ void channel::stop()
     set_link_status(uia::comm::socket::status::down);
 }
 
-int channel::may_transmit()
+size_t channel::may_transmit()
 {
     logger::debug(200) << "Channel - may_transmit";
     if (pimpl_->nocc_) {

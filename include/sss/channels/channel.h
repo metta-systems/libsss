@@ -80,7 +80,7 @@ public:
 
     /// Check congestion control state and return the number of new packets,
     /// if any, that flow control says we may transmit now.
-    int may_transmit() override;
+    size_t may_transmit() override;
 
     inline byte_array tx_channel_id() {
         return tx_channel_id_;
