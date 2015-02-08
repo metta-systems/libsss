@@ -45,29 +45,8 @@ class channel : public uia::comm::socket_channel
     static constexpr packet_seq_t max_packet_sequence = ~0ULL;
 
 public:
-    /**
-     * Amount of space client must leave at the beginning of a packet
-     * to be transmitted with channel_transmit() or received via channel_receive().
-     * @fixme won't always be static const.
-     *
-     * Channel header consists of
-     * +--------------------------------+-------------------------+
-     * | 24-31: Channel number          | 0-23: Transmit sequence | 4 bytes first header word
-     * +-------------+------------------+-------------------------+
-     * | 28-31: RSVD | 24-27: ACK count | 0-23: ACK sequence      | 4 bytes second header word
-     * +-------------+------------------+-------------------------+
-     */
-    static constexpr int header_len = 8;
+    static constexpr size_t header_len = 0; // @fixme Get rid of this
 
-    // Layout of the first header word: channel number, tx sequence
-    // Transmitted in cleartext.
-    static uint32_t make_first_header_word(uia::comm::channel_number channel, uint32_t tx_sequence);
-
-    // Layout of the second header word: ACK count, ACK sequence number
-    // Encrypted for transmission.
-    static uint32_t make_second_header_word(uint8_t ack_count, uint32_t ack_sequence);
-
-public:
     channel(std::shared_ptr<host> host);
     virtual ~channel();
 

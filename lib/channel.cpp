@@ -34,7 +34,7 @@ static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RT
 static const async::timer::duration_type RTT_INIT = bp::milliseconds(500);
 static const async::timer::duration_type RTT_MAX = bp::seconds(30);
 
-constexpr int channel::header_len;
+constexpr size_t channel::header_len;
 constexpr packet_seq_t channel::max_packet_sequence;
 
 struct transmit_event_t
@@ -839,45 +839,13 @@ size_t channel::may_transmit()
     return 0;
 }
 
-uint32_t channel::make_first_header_word(uia::comm::channel_number channel, uint32_t tx_sequence)
-{
-    constexpr uint32_t seq_bits = 24;
-    constexpr uint32_t seq_mask = (1 << seq_bits) - 1;
-
-    // 31-24: channel number
-    // 23-0: tx sequence number
-    return (tx_sequence & seq_mask) | ((uint32_t)channel << seq_bits);
-}
-
-uint32_t channel::make_second_header_word(uint8_t ack_count, uint32_t ack_sequence)
-{
-    constexpr uint32_t ack_cnt_bits = 4;
-    constexpr uint32_t ack_cnt_mask = (1 << ack_cnt_bits) - 1;
-    constexpr uint32_t ack_seq_bits = 24;
-    constexpr uint32_t ack_seq_mask = (1 << ack_seq_bits) - 1;
-
-    if (ack_count > ack_cnt_mask) {
-        ack_count = ack_cnt_mask;
-    }
-
-    // @todo
-    if (ack_sequence > ack_seq_mask) {
-        logger::fatal() << "ACK sequence number wrapped";
-    }
-
-    // 31-28: reserved field
-    // 27-24: ack count
-    // 23-0: ack sequence number
-    return (ack_sequence & ack_seq_mask) | ((uint32_t)ack_count & ack_cnt_mask) << ack_seq_bits;
-}
-
 bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
 {
     assert(packet.size() > header_len); // Must be non-empty data packet.
 
     // Include implicit acknowledgment of the latest packet(s) we've acked
-    uint32_t ack_seq =
-        make_second_header_word(pimpl_->state_->rx_ack_count_, pimpl_->state_->rx_ack_sequence_);
+    uint32_t ack_seq = 0;
+        // make_second_header_word(pimpl_->state_->rx_ack_count_, pimpl_->state_->rx_ack_sequence_);
 
 // @todo verify that ackct is always 0xf in case no packets were dropped
 // (that can nicely be a unit test)
