@@ -335,6 +335,8 @@ private:
 
     //-------------------------------------------
     // Receive handling for various types of packets
+    // @todo Types are now different and they are FRAMES within the packet, so framing layer
+    // should dispatch them, not stream.
     //-------------------------------------------
 
     // Returns true if received packet needs to be acked, false otherwise.

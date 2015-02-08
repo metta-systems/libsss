@@ -46,9 +46,9 @@ public:
     virtual std::shared_ptr<host> get_host() { return host_; }
 
     /**
-     * Link calls this with control messages intended for us.
-     * @param msg [description]
-     * @param src [description]
+     * Socket calls this with key exchange messages intended for us.
+     * @param msg Data packet.
+     * @param src Origin endpoint.
      */
     void receive(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src) override;
 
@@ -73,6 +73,7 @@ protected:
      * kex_responder calls this to create a channel requested by a client.
      * The returned channel must be bound to the specified source endpoint,
      * but not yet active (started).
+     * @fixme New design channels bind only to peer channel-key but not to any endpoints.
      *
      * The 'user_data_in' contains the information block passed by the client,
      * and the 'user_data_out' block will be passed back to the client.
