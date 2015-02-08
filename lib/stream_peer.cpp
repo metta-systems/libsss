@@ -14,8 +14,8 @@
 
 using namespace std;
 namespace ur = uia::routing;
-using uia::comm::socket::status;
 using kex_initiator_ptr = std::shared_ptr<negotiation::kex_initiator>;
+using uia::comm::socket;
 
 namespace sss {
 namespace internal {

@@ -21,15 +21,15 @@ namespace simulation {
 class sim_host;
 class simulator;
 
-class sim_link : public uia::comm::socket, public std::enable_shared_from_this<sim_link>
+class sim_socket : public uia::comm::socket, public std::enable_shared_from_this<sim_socket>
 {
     std::shared_ptr<simulator> simulator_;
     std::shared_ptr<sim_host> host_;
     uint16_t port_{0};
 
 public:
-    sim_link(std::shared_ptr<sim_host> host);
-    ~sim_link();
+    sim_socket(std::shared_ptr<sim_host> host);
+    ~sim_socket();
 
     bool bind(uia::comm::endpoint const& ep) override;
     void unbind() override;

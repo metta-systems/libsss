@@ -11,7 +11,7 @@
 #include "sss/simulation/simulator.h"
 #include "sss/simulation/sim_packet.h"
 #include "sss/simulation/sim_host.h"
-#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_socket.h"
 #include "sss/simulation/sim_connection.h"
 #include "arsenal/logging.h"
 
@@ -105,8 +105,8 @@ void sim_packet::arrive()
 
     timer_.stop();
 
-    std::shared_ptr<sim_link> link = target_host_->link_for(to_.port());
-    if (!link)
+    std::shared_ptr<sim_socket> socket = target_host_->link_for(to_.port());
+    if (!socket)
     {
         logger::info() << "No listener registered on port " << to_.port() << " in target host";
         return; // @todo - this packet should clean up itself somehow
@@ -117,8 +117,8 @@ void sim_packet::arrive()
 
     target_host_->dequeue_packet(self);
 
-    uia::comm::socket_endpoint src_ep(link.get(), from_);
-    link->receive(data_, src_ep);
+    uia::comm::socket_endpoint src_ep(socket.get(), from_);
+    socket->receive(data_, src_ep);
 
     self.reset(); // We are ought to be deleted now.
 }

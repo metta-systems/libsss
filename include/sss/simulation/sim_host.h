@@ -19,7 +19,7 @@ namespace simulation {
 class simulator;
 class sim_packet;
 class sim_connection;
-class sim_link;
+class sim_socket;
 
 class sim_host : public host
 {
@@ -28,9 +28,9 @@ class sim_host : public host
     /// Virtual network connections of this host.
     std::unordered_map<uia::comm::endpoint, std::shared_ptr<sim_connection>> connections_;
 
-    /// Links bound on this host by port.
+    /// Sockets bound on this host by port.
     using port_t = uint16_t;
-    std::unordered_map<port_t, std::shared_ptr<sim_link>> links_;
+    std::unordered_map<port_t, std::shared_ptr<sim_socket>> sockets_;
 
     /**
      * Queue of packets to be delivered on this host.
@@ -76,13 +76,13 @@ public:
         std::shared_ptr<sim_connection> conn);
     std::shared_ptr<sim_connection> connection_at(uia::comm::endpoint const& ep);
 
-    void register_link_at(uint16_t port, std::shared_ptr<sim_link> link);
-    void unregister_link_at(uint16_t port, std::shared_ptr<sim_link> link);
-    std::shared_ptr<sim_link> link_for(uint16_t port);
+    void register_link_at(uint16_t port, std::shared_ptr<sim_socket> socket);
+    void unregister_link_at(uint16_t port, std::shared_ptr<sim_socket> socket);
+    std::shared_ptr<sim_socket> link_for(uint16_t port);
 
     std::shared_ptr<sim_host> neighbor_at(uia::comm::endpoint const& ep, uia::comm::endpoint& src);
 
-    // Helper for sim_link local_endpoints().
+    // Helper for sim_socket local_endpoints().
     std::vector<uia::comm::endpoint> local_endpoints();
 };
 

@@ -9,7 +9,7 @@
 #include "sss/simulation/sim_host.h"
 #include "sss/simulation/sim_timer_engine.h"
 #include "sss/simulation/simulator.h"
-#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_socket.h"
 #include "sss/simulation/sim_packet.h"
 #include "sss/simulation/sim_connection.h"
 #include "arsenal/make_unique.h"
@@ -39,9 +39,9 @@ sim_host::sim_host(shared_ptr<simulator> sim)
 
 sim_host::~sim_host()
 {
-    // Close all links.
-    for (auto link : links_) {
-        link.second->unbind();
+    // Close all sockets.
+    for (auto socket : sockets_) {
+        socket.second->unbind();
     }
 
     // Disconnect from other hosts.
@@ -68,7 +68,7 @@ sim_host::create_timer_engine_for(async::timer* t)
 shared_ptr<uia::comm::socket>
 sim_host::create_socket()
 {
-    return make_shared<sim_link>(static_pointer_cast<sim_host>(shared_from_this()));
+    return make_shared<sim_socket>(static_pointer_cast<sim_host>(shared_from_this()));
 }
 
 void
@@ -142,23 +142,23 @@ sim_host::neighbor_at(uia::comm::endpoint const& dst, uia::comm::endpoint& src)
 }
 
 void
-sim_host::register_link_at(uint16_t port, std::shared_ptr<sim_link> link)
+sim_host::register_link_at(uint16_t port, std::shared_ptr<sim_socket> socket)
 {
-    assert(links_[port] == nullptr);
-    links_[port] = link;
+    assert(sockets_[port] == nullptr);
+    sockets_[port] = socket;
 }
 
 void
-sim_host::unregister_link_at(uint16_t port, std::shared_ptr<sim_link> link)
+sim_host::unregister_link_at(uint16_t port, std::shared_ptr<sim_socket> socket)
 {
-    assert(links_[port] == link);
-    links_.erase(port);
+    assert(sockets_[port] == socket);
+    sockets_.erase(port);
 }
 
-shared_ptr<sim_link>
+shared_ptr<sim_socket>
 sim_host::link_for(uint16_t port)
 {
-    return links_[port];
+    return sockets_[port];
 }
 
 vector<uia::comm::endpoint>

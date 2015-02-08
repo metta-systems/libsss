@@ -1,7 +1,7 @@
 set(simulator_SOURCES
     simulation/sim_connection.cpp
     simulation/sim_host.cpp
-    simulation/sim_link.cpp
+    simulation/sim_socket.cpp
     simulation/sim_packet.cpp
     simulation/sim_timer_engine.cpp
     simulation/simulator.cpp)
