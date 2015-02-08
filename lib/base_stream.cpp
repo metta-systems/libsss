@@ -370,7 +370,7 @@ void base_stream::attach_for_transmit()
         // Get the channel setup process for this host ID underway.
         // XXX provide an initial packet to avoid an extra RTT!
         logger::debug() << "Waiting for channel";
-        peer_->on_channel_connected.connect(boost::bind(&base_stream::channel_connected, this));
+        peer_->on_channel_connected.connect([this]() { channel_connected(); });
         return peer_->connect_channel();
     }
 
@@ -398,7 +398,7 @@ void base_stream::attach_for_transmit()
         if (parent_usid_.is_empty())
         {
             logger::debug() << "Parent of " << this << " has no USID yet - waiting";
-            parent->on_attached.connect(boost::bind(&base_stream::parent_attached, this));
+            parent->on_attached.connect([this]() { parent_attached(); });
             return parent->attach_for_transmit();
         }
     }
