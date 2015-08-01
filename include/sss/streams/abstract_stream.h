@@ -47,9 +47,21 @@ protected:
                                      ///< or nullptr if stream has been deleted.
     uia::peer_identity    peer_id_;  ///< EID of peer we're connected to.
 
+    /**
+     * When the application has multiple streams with data ready to transmit to the same
+     * remote host, SSS uses the respective streams' priority levels to determine which data
+     * to transmit first.
+     * SSS gives strict preference to streams with higher priority over streams with lower priority,
+     * but it divides available transmit bandwidth evenly among streams with the same priority
+     * level. All streams have a default priority of one on creation.
+     * Substreams priority is relative to parent stream, so that parent stream always sends before
+     * child streams. This allows parent stream to guarantee control over child streams.
+     */
+    using priority_t = uint32_t;
+
 
 private:
-    int                 priority_{0};    ///< Current priority level
+    priority_t priority_{0}; ///< Current priority level
     stream::listen_mode listen_mode_{stream::listen_mode::reject}; ///< Listen for substreams.
 
 public:
@@ -81,13 +93,13 @@ public:
      *                 preference than stream with default priority 1.
      * @fixme the priorities are inversed
      */
-    virtual void set_priority(int priority);
+    virtual void set_priority(priority_t priority);
 
     /**
      * Returns the stream's current priority level.
      * @fixme if relative to parents, should be calculated hierarchically
      */
-    inline int current_priority() const { return priority_; }
+    inline priority_t current_priority() const { return priority_; }
 
     //=============================================================================================
     // Byte-oriented data transfer.

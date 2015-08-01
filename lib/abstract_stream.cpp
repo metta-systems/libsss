@@ -15,7 +15,7 @@ abstract_stream::abstract_stream(std::shared_ptr<host> h)
     : host_(h)
 {}
 
-void abstract_stream::set_priority(int priority)
+void abstract_stream::set_priority(priority_t priority)
 {
     priority_ = priority;
 }
