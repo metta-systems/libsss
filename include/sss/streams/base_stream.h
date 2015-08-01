@@ -10,6 +10,7 @@
 
 #include <deque>
 #include <boost/signals2/signal.hpp>
+#include <boost/circular_buffer.hpp>
 #include "sss/streams/abstract_stream.h"
 #include "sss/channels/channel.h"
 #include "sss/internal/usid.h"
@@ -18,6 +19,8 @@ namespace sss {
 
 class base_stream;
 class stream_channel;
+
+using byte_seq_t = uint64_t;
 
 /**
  * Helper representing an attachment point on a stream where the stream attaches to a channel.
@@ -53,7 +56,7 @@ public:
 
     /**
      * Transition from Attaching to Active -
-     * this happens when we get an Ack to our Init, Reply, or Attach.
+     * this happens when we get an ACK frame to our STREAM_ATTACH.
      */
     inline void set_active(packet_seq_t rxseq)
     {
@@ -115,52 +118,59 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //=============================================================================================
 
     /**
+     * User-writable stream data storage.
+     * ACKed buffer segments are freed. When a contiguous chunk is ACKed, buffer is advanced to
+     * allow writing more.
+     */
+    boost::circular_buffer<uint8_t> buffer_; // bounded_buffer here instead
+
+    /**
      * @internal
      * Unit of data transmission on SSS stream.
-     * @todo
-     * The packets should be under hard limit of 1280 bytes per packet including IP headers.
-     * Packet sequences do not use logical byte positions because each packet may incorporate
-     * multiple streams.
-     * Packets data is assembled via framing layer.
+     * Frame represents a segment inside buffer that is being transmitted.
+     * Frame's logical byte position refers to position within full stream,
+     * they are used for ACKing.
+     * Frame's range covers [tx_byte_seq_ .. tx_byte_seq_ + buffer_size(payload_)]
+     * Frames are assembled via framing layer.
      */
-    struct packet
+    struct tx_frame_t
     {
-        base_stream* owner{nullptr};            ///< Packet owner.
-        uint64_t tx_byte_seq{0};                ///< Logical byte position.
-        byte_array payload;                     ///< Packet buffer including headers.
-        int header_len{0};                      ///< Size of channel and stream headers.
-        packet_type type{packet_type::invalid}; ///< Type of this packet.
-        bool late{false};                       ///< Possibly lost packet.
+        base_stream* owner{nullptr};            ///< Frame owner.
+        byte_seq_t tx_byte_seq_{0};             ///< Transmit byte position within stream.
+        boost::asio::const_buffer payload_;            ///< Frame data.
+        bool late{false};                       ///< Possibly lost frame.
 
-        inline packet() = default;
-        inline packet(base_stream* o, packet_type t)
+        inline tx_frame_t() = default;
+        inline tx_frame_t(base_stream* o, bool is_fec)
             : owner(o)
-            , type(t)
+            // , FEC(is_fec)
         {}
+        inline frame_type type() const {
+            return frame_type::EMPTY;
+        }
         inline bool is_null() const {
             return owner == nullptr;
         }
         inline int payload_size() const {
-            return payload.size() - header_len;
+            return boost::asio::buffer_size(payload_);
         }
 
-        template <typename T>
-        inline T* header()
-        {
-            header_len = channel::header_len + sizeof(T);
-            if (payload.size() < size_t(header_len)) {
-                payload.resize(header_len);
-            }
-            return reinterpret_cast<T*>(payload.data() + channel::header_len);
-        }
+        // template <typename T>
+        // inline T* header()
+        // {
+        //     header_len = channel::header_len + sizeof(T);
+        //     if (payload.size() < size_t(header_len)) {
+        //         payload.resize(header_len);
+        //     }
+        //     return boost::asio::buffer_cast<T*>(payload_);
+        // }
 
-        template <typename T>
-        inline T const* header() const
-        {
-            return reinterpret_cast<T const*>(payload.const_data() + channel::header_len);
-        }
+        // template <typename T>
+        // inline T const* header() const {
+        //     return boost::asio::buffer_cast<T const*>(payload_);
+        // }
     };
-    friend std::ostream& operator << (std::ostream& os, packet const& pkt);
+    friend std::ostream& operator << (std::ostream& os, tx_frame_t const& frame);
 
     /**
      * @internal
@@ -168,33 +178,22 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
      */
     struct rx_segment_t
     {
-        int32_t rx_byte_seq{0}; ///< Logical byte position.
+        byte_seq_t rx_byte_seq_{0}; ///< Logical byte position.
         byte_array buf;         ///< Packet buffer including headers.
-        int header_len{0};      ///< Size of channel and stream headers.
+        bool end_marker_{false};///< This segment is end of record.
 
-        inline rx_segment_t(byte_array const& arr, int32_t rx_seq, int len)
-            : rx_byte_seq(rx_seq)
-            , buf(arr)
-            , header_len(len)
+        inline rx_segment_t(byte_array const& data, byte_seq_t rx_seq, bool end)
+            : rx_byte_seq_(rx_seq)
+            , buf(data)
+            , end_marker_(end)
         {}
 
         inline int segment_size() const {
-            return buf.size() - header_len;
+            return buf.size();
         }
 
-        inline stream_header* header() {
-            return reinterpret_cast<stream_header*>(buf.data() + channel::header_len);
-        }
-
-        inline stream_header const* header() const {
-            return reinterpret_cast<stream_header const*>(buf.data() + channel::header_len);
-        }
-
-        inline uint8_t flags() const {
-            return header()->type_subtype & flags::data_all;
-        }
-        inline bool has_flags() const {
-            return flags() != 0;
+        inline bool is_record_end() const {
+            return end_marker_;
         }
     };
 
@@ -241,20 +240,13 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //=============================================================================================
     /**@{*/
 
-    /// Next transmit byte sequence number to assign.
-    int32_t tx_byte_seq_{0};
-    /// Current transmit window.
-    int32_t tx_window_{0};
-    /// Bytes currently in flight.
-    int32_t tx_inflight_{0};
-    /// We're enqueued for transmission on our channel.
-    bool tx_enqueued_channel_{false};
-    /// Segments waiting to be ACKed.
-    std::unordered_set<int32_t> tx_waiting_ack_;
-    ///< Transmit packets queue.
-    std::deque<packet> tx_queue_;
-    /// Cumulative size of all segments waiting to be ACKed.
-    size_t tx_waiting_size_{0};
+    byte_seq_t tx_byte_seq_{0}; ///< Next transmit byte sequence number to assign.
+    int32_t tx_window_{0}; ///< Current transmit window.
+    int32_t tx_inflight_{0}; ///< Bytes currently in flight.
+    bool tx_enqueued_channel_{false}; ///< We're enqueued for transmission on our channel.
+    std::unordered_set<byte_seq_t> tx_waiting_ack_; ///< Frames waiting to be ACKed.
+    std::deque<tx_frame_t> tx_queue_; ///< Transmit frames queue.
+    size_t tx_waiting_size_{0}; ///< Cumulative size of all segments waiting to be ACKed.
 
     /**@}*/
     //=============================================================================================
@@ -266,7 +258,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     static constexpr int default_rx_buffer_size = 65536;
 
     /// Next SSN expected to arrive.
-    int32_t rx_byte_seq_{0};
+    byte_seq_t rx_byte_seq_{0};
     /// Received bytes available.
     int32_t rx_available_{0};
     /// Bytes avail in current message.
@@ -313,7 +305,7 @@ private:
     // Transmit various types of packets.
     //=============================================================================================
 
-    void tx_enqueue_packet(packet& p);
+    void tx_enqueue_packet(tx_frame_t& p);
     void tx_enqueue_channel(bool tx_immediately = false);
 
     /**
@@ -321,8 +313,8 @@ private:
      */
     void tx_attach();
 
-    void tx_attach_data(packet_type type, stream_id_t ref_sid);
-    void tx_data(packet& p);
+    void tx_attach_data(frame_type type, local_stream_id_t ref_sid);
+    void tx_data(tx_frame_t& p);
     void tx_datagram();
 
     /**
@@ -347,6 +339,15 @@ private:
 
     // Returns true if received packet needs to be acked, false otherwise.
     static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+
+    bool rx_reset_frame(boost::asio::const_buffer pkt);
+    bool rx_priority_frame(boost::asio::const_buffer pkt);
+    bool rx_stream_frame(boost::asio::const_buffer pkt);
+    bool rx_detach_frame(boost::asio::const_buffer pkt);
+
+    // composite callback from channel
+    bool rx_ack_frame(byte_seq_t byteseq, size_t size);
+
     static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt,
         stream_channel* channel);
     static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt,
@@ -509,18 +510,18 @@ public:
      * This method overrides abstract_stream's default method
      * to move the stream to the correct transmit queue if necessary.
      */
-    void set_priority(int priority) override;
+    void set_priority(priority_t priority) override;
 
     // stream_channel calls these to return our transmitted packets to us
     // after being held in waiting_ack_.
     // The missed() method returns true if the channel should keep track
     // of the packet until it expires, at which point it calls expire()
     // and unconditionally removes it.
-    void acknowledged(stream_channel* channel, packet const& pkt, packet_seq_t rx_seq);
-    bool missed(stream_channel* channel, packet const& pkt);
-    void expire(stream_channel* channel, packet const& pkt);
+    void acknowledged(stream_channel* channel, tx_frame_t const& pkt, packet_seq_t rx_seq);
+    bool missed(stream_channel* channel, tx_frame_t const& pkt);
+    void expire(stream_channel* channel, tx_frame_t const& pkt);
 
-    void end_flight(packet const& pkt);
+    void end_flight(tx_frame_t const& pkt);
 
     //=============================================================================================
     /** @name Signals */
@@ -543,26 +544,27 @@ public:
 // Helper functions.
 //=================================================================================================
 
-inline std::ostream& operator << (std::ostream& os, sss::base_stream::packet const& pkt)
+inline std::ostream& operator << (std::ostream& os, sss::base_stream::tx_frame_t const& pkt)
 {
-    std::string packet_type = [](stream_protocol::packet_type type){
+    std::string frame_type = [](stream_protocol::frame_type type){
         switch (type) {
-            case stream_protocol::packet_type::invalid: return "invalid";
-            case stream_protocol::packet_type::init:    return "init";
-            case stream_protocol::packet_type::reply:   return "reply";
-            case stream_protocol::packet_type::data:    return "data";
-            case stream_protocol::packet_type::datagram:return "datagram";
-            case stream_protocol::packet_type::ack:     return "ack";
-            case stream_protocol::packet_type::reset:   return "reset";
-            case stream_protocol::packet_type::attach:  return "attach";
-            case stream_protocol::packet_type::detach:  return "detach";
-            default:                                    return "unknown";
+            case stream_protocol::frame_type::ACK:          return "ack";
+            case stream_protocol::frame_type::CLOSE:        return "close";
+            case stream_protocol::frame_type::DECONGESTION: return "decongestion";
+            case stream_protocol::frame_type::DETACH:       return "detach";
+            case stream_protocol::frame_type::EMPTY:        return "empty";
+            case stream_protocol::frame_type::RESET:        return "reset";
+            case stream_protocol::frame_type::SETTINGS:     return "settings";
+            case stream_protocol::frame_type::STREAM:       return "stream";
+            case stream_protocol::frame_type::PADDING:      return "padding";
+            case stream_protocol::frame_type::PRIORITY:     return "priority";
+            default:                                        return "unknown";
         }
-    }(pkt.type);
+    }(pkt.type());
 
-    os << "[packet txseq " << pkt.tx_byte_seq << ", type " << packet_type
-       << ", owner " << pkt.owner << ", header " << pkt.header_len
-       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.payload << "]";
+    os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type
+       << ", owner " << pkt.owner << (pkt.late ? ", late" : ", not late")
+       << ", payload " << pkt.payload_ << "]";
     return os;
 }
 

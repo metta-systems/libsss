@@ -177,6 +177,16 @@ private:
         }
     }
 
+    /**
+     * Internal statistics collection.
+     * @param src Source endpoint of bad packet.
+     */
+    void runt_packet_received(uia::comm::socket_endpoint const& src);
+    void bad_auth_received(uia::comm::socket_endpoint const& src);
+
+    size_t runt_packets_{0};
+    size_t bad_auth_packets_{0};
+
     //-------------------------------------------
     // Handlers
     //-------------------------------------------

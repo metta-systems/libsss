@@ -93,13 +93,13 @@ void stream_channel::got_link_status_changed(uia::comm::socket::status new_statu
     assert(peer);
 
     // If we were our target's primary channel, disconnect us.
-    if (peer->primary_channel_ == this)
-    {
-        logger::debug() << "Primary channel to host ID " << peer->remote_host_id()
-            << " on endpoint " << remote_endpoint()
-            << " failed";
-        peer->clear_primary_channel();
-    }
+    // if (peer->primary_channel_ == this)
+    // {
+    //     logger::debug() << "Primary channel to host ID " << peer->remote_host_id()
+    //         << " on endpoint " << remote_endpoint()
+    //         << " failed";
+    //     peer->clear_primary_channel();
+    // }
 
     // Stop and destroy this channel.
     delete this;
@@ -162,6 +162,85 @@ void stream_channel::stop()
         assert(it.second->channel_ == this);
         it.second->clear();
     }
+}
+
+//=================================================================================================
+// Framing
+//=================================================================================================
+
+/**
+ * Assemble packet preamble - fixed prefix part and framing area start.
+ */
+size_t stream_channel::assemble_preamble(asio::mutable_buffer out_packet)
+{
+    // Fill outgoing packet information - fixed part.
+    return 0;
+}
+
+size_t stream_channel::assemble_item(int type, item t, asio::mutable_buffer out_packet)
+{
+    return 0;
+}
+
+/**
+ * Assemble full outgoing packet for sending.
+ *
+ * Framing layer is used here to pack actual frames into the packet and give estimations
+ * of frame overhead.
+ */
+void stream_channel::assemble_packet(asio::mutable_buffer out_packet)
+{
+    out_packet += assemble_preamble(out_packet);
+    while (out_packet.size() > 0)
+    {
+        types_by_priority = [ SETTINGS, ACK, RESET, PRIORITY, DECONGESTION, DETACH,
+                              CLOSE, STREAM_ATTACH, PADDING, EMPTY ];
+        // Check remaining items based on their priorities.
+        // Frame type priorities are increased every time the frame is skipped.
+        for (type = 0; type < countof(types_by_priority); ++type)
+        {
+            if (not queue_by(type).empty())
+            {
+                if (type == STREAM_ATTACH)
+                {
+                    // stream/attach queue has specific treatment - we want to ensure that ALL
+                    // streams make progress.
+                    // this means we take streams with highest priority and divide packet
+                    // bandwidth between them. all other streams get their priority boosted.
+                    auto items = queue(type).takeAll(priority = queue(type).front().priority);
+                    auto remainingBandwidth = out_packet.size();
+                    // @todo Juggling in case remaining bandwidth is too small
+                    auto streamBandwidth = remainingBandwidth / items.size();
+                    // loop over items and assemble them
+                    for (auto&& item : items) {
+                        out_packet += assemble_item(out_packet, type, item, streamBandwidth);
+                    }
+                    for (auto&& item : items) { // Remove those streams from queue
+                        queue(type).pop_front();
+                        // @fixme: Only remove if they have nothing else to send
+                        // otherwise simply not increase their priority.
+                    }
+                    // Increase priority for the rest of streams
+                    for (auto&& item : queue(type)) {
+                        ++item.priority;
+                    }
+                }
+                else
+                {
+                    for (auto& item : queue(type)) {
+                        if (item.size() > out_packet.size()) { // won't fit
+                            ++item.priority; // look at it sooner in the next iteration
+                        }
+                        // item fits!
+                        out_packet += assemble_item(out_packet, type, item);
+                        // @todo take it out of queue
+                        item.used = true;
+                    }
+                }
+                queue(type).sort(); // re-sort the queue by priority
+            } // end if not empty
+        } // end for
+    } // end while
 }
 
 //=================================================================================================

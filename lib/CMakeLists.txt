@@ -39,7 +39,7 @@ set(stream_SOURCES
 add_library(sss STATIC
     ${comm_SOURCES}
     ${stream_SOURCES}
-    # channel.cpp
+    channel.cpp
     # peer_identity.cpp
     kex_responder.cpp
     kex_initiator.cpp

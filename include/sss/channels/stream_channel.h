@@ -81,13 +81,13 @@ class stream_channel : public channel, public stream_protocol
      * Packets transmitted and waiting for acknowledgment,
      * indexed by assigned transmit sequence number.
      */
-    std::unordered_map<packet_seq_t, base_stream::packet> waiting_ack_;
+    std::unordered_map<packet_seq_t, base_stream::tx_frame_t> waiting_ack_;
 
     /**
      * Packets already presumed lost ("missed")
      * but still waiting for potential acknowledgment until expiry.
      */
-    std::unordered_map<packet_seq_t, base_stream::packet> waiting_expiry_;
+    std::unordered_map<packet_seq_t, base_stream::tx_frame_t> waiting_expiry_;
 
     /**
      * RxSID of stream on which we last received a packet -

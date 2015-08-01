@@ -6,16 +6,26 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#define BOOST_OPTIONAL_NO_INPLACE_FACTORY_SUPPORT
 #include <deque>
 #include <boost/format.hpp>
 #include "arsenal/make_unique.h"
 #include "arsenal/logging.h"
+#include "arsenal/fusionary.hpp"
 #include "sss/channels/channel.h"
 #include "sss/host.h"
 #include "sss/internal/timer.h"
+#include "sss/framing/packet_format.h"
+#include "sss/framing/frame_format.h"
 
 using namespace std;
+using namespace sodiumpp;
+namespace asio = boost::asio;
 namespace time_ = boost::posix_time;
+
+std::string as_string(asio::const_buffer buf) {
+    return string(asio::buffer_cast<char const*>(buf), asio::buffer_size(buf));
+}
 
 namespace sss {
 
@@ -771,9 +781,11 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
 // channel
 //=================================================================================================
 
-channel::channel(shared_ptr<host> host)
+channel::channel(shared_ptr<host> host, secret_key local, public_key remote)
     : socket_channel()
     , pimpl_(stdext::make_unique<private_data>(host))
+    , local_key_(local)
+    , remote_key_(remote)
 {
     pimpl_->retransmit_timer_.on_timeout.connect([this](bool fail) {
         retransmit_timeout(fail);
@@ -796,8 +808,6 @@ shared_ptr<host> channel::get_host()
 void channel::start(bool initiate)
 {
     logger::debug() << "Channel - start as " << (initiate ? "initiator" : "responder");
-
-    assert(armor_);
 
     super::start(initiate);
 
@@ -881,7 +891,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     // Don't allow tx_sequence_ counter to wrap (@fixme re-key before it does!)
     packet_seq = pimpl_->state_->tx_sequence_;
     assert(packet_seq < max_packet_sequence);
-    uint32_t tx_seq = make_first_header_word(remote_channel(), packet_seq);
+    uint32_t tx_seq = packet_seq;
 
     // Fill in the transmit and ACK sequence number fields.
     assert(packet.size() >= header_len);
@@ -892,7 +902,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
     logger::file_dump(packet, "sending channel packet before encrypt");
 
     // Encrypt and compute the MAC for the packet
-    byte_array epkt = armor_->transmit_encode(pimpl_->state_->tx_sequence_, packet);
+    byte_array epkt = transmit_encode(asio::mutable_buffer(packet.data(), packet.size()));
 
     logger::file_dump(epkt, "sending channel packet after encrypt");
 
@@ -1083,10 +1093,10 @@ bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_coun
 
     assert(ack_count <= max_ack_count);
 
-    if (packet.size() < header_len)
-        packet.resize(header_len);
+    // if (packet.size() < header_len)
+        // packet.resize(header_len);
 
-    uint32_t ack_word = make_second_header_word(ack_count, ackseq);
+    uint32_t ack_word = 0;//make_second_header_word(ack_count, ackseq);
     packet_seq_t pktseq;
 
     return transmit(packet, ack_word, pktseq, false);
@@ -1108,35 +1118,180 @@ void channel::expire(uint64_t txseq, int npackets)
     logger::debug() << "Channel " << this << " - tx seq " << txseq << " expired";
 }
 
-void
-channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
+// Determine the full 64-bit packet sequence number
+packet_seq_t
+channel::derive_packet_seq(packet_seq_t tx_seq)
 {
-    logger::debug() << "Channel " << this << " - receive from " << src;
-
-    if (!is_active()) {
-        logger::warning() << "Channel receive - inactive channel";
-        return;
-    }
-    if (pkt.size() < header_len) {
-        logger::warning() << "Channel receive - runt packet";
-        //src.link()->runt_packet_received(src); // @todo Gather failure statistics
-        return;
-    }
-
-    // Determine the full 64-bit packet sequence number
-    uint32_t tx_seq = pkt.as<big_uint32_t>()[0];
-
-    uia::comm::channel_number pktchan = tx_seq >> 24;
-    assert(pktchan == local_channel());    // Enforced by link
-    (void)pktchan;
-
+    // kill high 8 bits (channel number)
     int32_t seqdiff = ((int32_t)(tx_seq << 8)
                     - ((int32_t)pimpl_->state_->rx_sequence_ << 8))
                     >> 8;
 
     packet_seq_t pktseq = pimpl_->state_->rx_sequence_ + seqdiff;
-    logger::debug() << "Channel receive - rxseq " << pktseq << ", size " << pkt.size();
 
+    // Immediately drop too-old or already-received packets
+    static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == mask_bits, "Invalid RX mask size");
+
+    if (seqdiff > 0) {
+        if (pktseq < pimpl_->state_->rx_sequence_) {
+            logger::warning() << "Channel receive - 64-bit wraparound detected!";
+            return 0;
+        }
+    }
+    return pktseq;
+}
+
+void
+channel::runt_packet_received(uia::comm::socket_endpoint const& /*src*/)
+{
+    ++runt_packets_;
+}
+
+void
+channel::bad_auth_received(uia::comm::socket_endpoint const& /*src*/)
+{
+    ++bad_auth_packets_;
+}
+
+bool
+channel::receive_decode(asio::const_buffer in, byte_array& out)
+{
+    try {
+        sss::channels::message_packet_header msg;
+        tie(msg, in) = fusionary::read(msg, in);
+
+        assert(asio::buffer_size(in) == 0);
+
+        string nonce = MESSAGE_NONCE_PREFIX + as_string(msg.nonce);
+        unboxer<recv_nonce> unseal(as_string(msg.shortterm_public_key), local_key_, nonce);
+
+        out = unseal.unbox(msg.box.data);
+    }
+    catch (char const* err)
+    {
+        logger::warning() << err;
+        return false;
+    }
+    return true;
+}
+
+void
+channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
+{
+    logger::debug() << "Channel " << this << " - receive from " << src;
+
+    if (!is_active())
+    {
+        logger::warning() << "Channel receive - inactive channel";
+        return;
+    }
+    if (asio::buffer_size(pkt) < MIN_PACKET_SIZE)
+    {
+        logger::warning() << "Channel receive - runt packet";
+        runt_packet_received(src);
+        return;
+    }
+
+    byte_array msg;
+
+    // channel receives only MESSAGE packets, therefore receive_decode
+    // is rather straightforward
+
+    // Authenticate and decrypt the packet
+    if (!receive_decode(pkt, msg))
+    {
+        logger::warning() << "Received packet auth failed";
+        bad_auth_received(src);
+        return;
+    }
+
+    // Log decoded packet.
+    logger::file_dump(msg, "decoded channel packet");
+
+    sss::framing::packet_header phdr;
+    asio::const_buffer packet_buf(asio::buffer(msg.as_string()));
+
+    tie(phdr, packet_buf) = fusionary::read(phdr, packet_buf);
+
+    // packet_seq_t pktseq = derive_packet_seq(phdr.packet_sequence.value());
+
+    // if (phdr.flags bitand flags::fec) {
+        // Insert packet to FEC queue
+    // }
+    // else
+    // Frame decode loop
+    while (asio::buffer_size(packet_buf) > 0)
+    {
+        switch (*asio::buffer_cast<stream_protocol::frame_type*>(packet_buf))
+        {
+            case stream_protocol::frame_type::EMPTY:
+                packet_buf = packet_buf + 1;
+                continue;
+            case stream_protocol::frame_type::STREAM: // stream
+            {
+                sss::framing::stream_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+
+                // find stream
+                // run rx_stream_frame(hdr)
+                continue;
+            }
+            case stream_protocol::frame_type::ACK: // channel/stream
+            {
+                sss::framing::ack_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+
+                // find all acked packets and associated streams
+                // for each stream run rx_ack_frame(pktseq)
+                continue;
+            }
+            case stream_protocol::frame_type::PADDING: // here
+            {
+                sss::framing::padding_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            case stream_protocol::frame_type::DECONGESTION: // channel
+            {
+                sss::framing::decongestion_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            case stream_protocol::frame_type::DETACH: // stream
+            {
+                sss::framing::detach_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            case stream_protocol::frame_type::RESET: // stream
+            {
+                sss::framing::reset_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            case stream_protocol::frame_type::CLOSE: // channel
+            {
+                sss::framing::close_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            case stream_protocol::frame_type::SETTINGS: // channel
+            {
+                sss::framing::settings_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            case stream_protocol::frame_type::PRIORITY: // stream
+            {
+                sss::framing::priority_frame_header hdr;
+                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                continue;
+            }
+            default:
+                break;
+        }
+    }
+/*
     // Immediately drop too-old or already-received packets
     static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == mask_bits, "Invalid RX mask size");
 
@@ -1155,17 +1310,6 @@ channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
         }
     }
 
-    byte_array msg = pkt;
-    // Authenticate and decrypt the packet
-    if (!armor_->receive_decode(pktseq, msg)) {
-        logger::warning() << "Received packet auth failed on rx " << pktseq;
-        //src.link()->bad_auth_received(src); // Gather failure statistics
-        return;
-    }
-
-    // Log decoded packet.
-    logger::file_dump(msg, "decoded channel packet");
-
     // Record this packet as received for replay protection
     if (seqdiff > 0) {
         // Roll rxseq and rxmask forward appropriately.
@@ -1181,53 +1325,7 @@ channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
         pimpl_->state_->rx_mask_ |= (1 << -seqdiff);
     }
 
-    // Decode the rest of the channel header
-    // This word is encrypted so take it from already decrypted byte array
-    uint32_t ack_seq = msg.as<big_uint32_t>()[1];
-
-    // Update our transmit state with the ack info in this packet
-    unsigned ackct = (ack_seq >> 24) & 0xf;
-
-    int32_t ack_diff = ((int32_t)(ack_seq << 8)
-                    - ((int32_t)pimpl_->state_->tx_ack_sequence_ << 8))
-                    >> 8;
-    packet_seq_t ackseq = pimpl_->state_->tx_ack_sequence_ + ack_diff;
-    logger::debug() << "Channel receive - ack seq " << ackseq;
-
-    if (ackseq >= pimpl_->state_->tx_sequence_)
-    {
-        logger::warning() << "Channel receive - got ACK for packet seq " << ackseq
-            << " not transmitted yet";
-        return;
-    }
-
-    // Account for newly acknowledged packets
-    unsigned new_packets = 0;
-
-    if (ack_diff > 0)
-    {
-        // Received acknowledgment for one or more new packets.
-        // Roll forward tx_ack_sequence_ and tx_ack_mask_.
-        pimpl_->state_->tx_ack_sequence_ = ackseq;
-        if (ack_diff < mask_bits)
-            pimpl_->state_->tx_ack_mask_ <<= ack_diff;
-        else
-            pimpl_->state_->tx_ack_mask_ = 0;
-
-        // Determine the number of newly-acknowledged packets
-        // since the highest previously acknowledged sequence number.
-        // (Out-of-order ACKs are handled separately below.)
-        new_packets = min(unsigned(ack_diff), ackct+1);
-
-        logger::debug() << "Advanced by " << ack_diff
-            << ", ack count " << ackct
-            << ", new packets " << new_packets
-            << ", tx ack seq " << pimpl_->state_->tx_ack_sequence_;
-
-        // Record the new in-sequence packets in tx_ack_mask_ as received.
-        // (But note: ackct+1 may also include out-of-sequence pkts.)
-        pimpl_->state_->tx_ack_mask_ |= (1 << new_packets) - 1;
-
+    // @todo rx_ack_frame()
         // Notify the upper layer of newly-acknowledged data packets
         for (packet_seq_t seq = pimpl_->state_->tx_ack_sequence_ - new_packets + 1;
                 seq <= pimpl_->state_->tx_ack_sequence_;
@@ -1353,13 +1451,13 @@ channel::receive(byte_array const& pkt, uia::comm::socket_endpoint const& src)
 
     // Pass the received packet to the upper layer for processing.
     // It'll return true if it wants us to ack the packet, false otherwise.
-    if (channel_receive(pktseq, msg)) {
+    if (channel_receive(pktseq, msg)) { // <-- @fixme
         acknowledge(pktseq, true);
     }
     // XX should still replay-protect even if no ack!
-
+*/
     // Signal upper layer that we can transmit more, if appropriate
-    if (new_packets > 0 and may_transmit()) {
+    if (/*new_packets > 0 and*/ may_transmit()) {
         on_ready_transmit();
     }
 }
