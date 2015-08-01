@@ -15,7 +15,7 @@
 #include "sss/internal/timer.h"
 
 using namespace std;
-namespace bp = boost::posix_time;
+namespace time_ = boost::posix_time;
 
 namespace sss {
 
@@ -31,8 +31,8 @@ static constexpr int max_ack_count = 0xf;
 static constexpr unsigned CWND_MIN = 2;     // Min congestion window (packets/RTT)
 static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RTT)
 
-static const async::timer::duration_type RTT_INIT = bp::milliseconds(500);
-static const async::timer::duration_type RTT_MAX = bp::seconds(30);
+static const async::timer::duration_type RTT_INIT = time_::milliseconds(500);
+static const async::timer::duration_type RTT_MAX = time_::seconds(30);
 
 constexpr size_t channel::header_len;
 constexpr packet_seq_t channel::max_packet_sequence;
@@ -81,7 +81,7 @@ public:
     /// Snapshot of tx_ack_sequence_ at time mark was placed.
     packet_seq_t mark_base_{0};
     /// Time at which marked packet was sent.
-    bp::ptime mark_time_;
+    time_::ptime mark_time_;
     /// Mask of packets transmitted and ACK'd (fictitious packet 0 already received)
     uint64_t tx_ack_mask_{1};
     /// Data packets currently in flight.
@@ -236,7 +236,7 @@ void congestion_control_strategy::reset()
     sstoggle = true;
     ssbase = 0;
     cwndinc = 1;
-    lastrtt = bp::milliseconds(0);
+    lastrtt = time_::milliseconds(0);
     lastpps = 0;
     basertt = 0;
     basepps = 0;
@@ -303,8 +303,8 @@ void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
     // Fold this into 'rtt' to determine avg round-trip time,
     // and restart the timer to measure the next round-trip.
     async::timer::duration_type rtt = state_->elapsed_since_mark();
-    rtt = max(bp::time_duration(bp::microseconds(1)), min(RTT_MAX, rtt));
-    cumulative_rtt_ = bp::microseconds(
+    rtt = max(time_::time_duration(time_::microseconds(1)), min(RTT_MAX, rtt));
+    cumulative_rtt_ = time_::microseconds(
         (cumulative_rtt_.total_microseconds() * 7.0 + rtt.total_microseconds()) / 8.0);
 
     rtt_out = rtt.total_microseconds();
@@ -716,7 +716,7 @@ void channel::private_data::reset_congestion_control()
     stats_timer_.on_timeout.connect([this](bool) {
         stats_timeout();
     });
-    stats_timer_.start(bp::seconds(5));
+    stats_timer_.start(time_::seconds(5));
 }
 
 // Transmit statistics
@@ -923,7 +923,7 @@ bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_se
 void channel::start_retransmit_timer()
 {
     async::timer::duration_type timeout =
-        bp::milliseconds(pimpl_->congestion_control->cumulative_rtt_.total_milliseconds() * 2);
+        time_::milliseconds(pimpl_->congestion_control->cumulative_rtt_.total_milliseconds() * 2);
     pimpl_->retransmit_timer_.start(timeout); // Wait for full round-trip time.
 }
 
@@ -1012,11 +1012,11 @@ void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
             if (pimpl_->state_->rx_unacked_ < min_ack_packets) {
                 // Data packet - start delayed ack timer.
                 if (!pimpl_->ack_timer_.is_active()) {
-                    pimpl_->ack_timer_.start(bp::milliseconds(10));
+                    pimpl_->ack_timer_.start(time_::milliseconds(10));
                 }
             } else {
                 // Start with zero timeout - immediate callback from event loop.
-                pimpl_->ack_timer_.start(bp::milliseconds(0));
+                pimpl_->ack_timer_.start(time_::milliseconds(0));
             }
         } else {
             // But make sure we send an ack every max_ack_packets (4) no matter what...
