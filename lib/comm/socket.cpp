@@ -4,6 +4,7 @@
 #include "comm/socket.h"
 #include "comm/socket_channel.h"
 #include "comm/packet_receiver.h"
+#include "sss/framing/stream_protocol.h"
 
 using namespace std;
 using namespace boost;
@@ -15,6 +16,10 @@ namespace comm {
 // socket
 //=================================================================================================
 
+socket::~socket()
+{
+}
+
 string socket::status_string(socket::status s)
 {
     switch (s)
@@ -23,10 +28,6 @@ string socket::status_string(socket::status s)
         case status::stalled: return "stalled";
         case status::up:      return "up";
     }
-}
-
-socket::~socket()
-{
 }
 
 void
@@ -40,8 +41,6 @@ socket::set_active(bool active)
         host_interface_->deactivate_socket(shared_from_this());
     }
 }
-
-constexpr size_t MIN_PACKET_SIZE = 64;
 
 // @todo Use boost::string_ref or std::experimental::string_view for MOST of the stuff
 // that handles refs into constantly allocated strings. Need to limit the scope somehow though.
@@ -61,7 +60,7 @@ string as_string(boost::asio::const_buffer value, size_t start, size_t size)
 void
 socket::receive(asio::const_buffer msg, socket_endpoint const& src)
 {
-    if (buffer_size(msg) >= MIN_PACKET_SIZE)
+    if (buffer_size(msg) >= sss::MIN_PACKET_SIZE)
     {
         logger::file_dump(msg, "received raw socket packet");
 

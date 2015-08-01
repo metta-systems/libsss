@@ -23,6 +23,8 @@ namespace sss {
  */
 using packet_seq_t = uint64_t;
 
+constexpr size_t MIN_PACKET_SIZE = 64;
+
 /**
  * SSS stream protocol definitions.
  * This class simply provides SSS protcol definition constants for use in other stream classes.
