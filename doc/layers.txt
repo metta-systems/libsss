@@ -36,6 +36,7 @@ frame type.
 STREAM/ATTACH - to Stream
 ACK           - to Channel
 PADDING       - skipped
+EMPTY         - skipped
 DECONGESTION  - to Channel
 DETACH        - to Stream
 RESET         - to Stream

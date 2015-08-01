@@ -436,6 +436,7 @@ Frames are inside the channel message cryptobox, not visible to any eavesdropper
 ```
  Type value | Frame type
 ------------+------------------
+          0 | EMPTY
           1 | STREAM/ATTACH
           2 | ACK
           3 | PADDING
@@ -447,7 +448,18 @@ Frames are inside the channel message cryptobox, not visible to any eavesdropper
           9 | PRIORITY
 ```
 
-#### 4.2.2 STREAM frame
+#### 4.2.2 EMPTY frame
+
+Figure N: Empty frame layout
+```
+         ofs :                  sz : description
+           0 :                   1 : Frame type (0 - EMPTY)
+```
+
+Empty frame can be used to complete padding where PADDING frame doesn't fit. I.e. in 1- and 2-byte
+remainders. It has lowest priority and PADDING frame is preferred.
+
+#### 4.2.3 STREAM frame
 
 Stream frame is used to transfer data on each individual stream. It also serves as an ATTACH packet
 to initiate a new stream.
@@ -497,7 +509,7 @@ When stream offset is not specified, it is considered to be zero. This is useful
 
 When data length is missing, data extends until the end of this packet and no other frames are present.
 
-#### 4.2.3 ACK frame
+#### 4.2.4 ACK frame
 
 The ACK frame is sent to inform the peer which packets have been received, as well as which packets are still considered missing by the receiver (the contents of missing packets may need to be re-sent).
 
@@ -544,7 +556,7 @@ It is expected that with regular loss rate and packet rate ACK frames will often
 
 **@todo** Add graphical explanations for ACK packet fields (least unacked/largest observed).
 
-#### 4.2.4 PADDING frame
+#### 4.2.5 PADDING frame
 
 Padding frame indicates padding data within a packet, used to counter traffic analysis attacks. Ideally all packets should be padded to have same final length of 1280 bytes. However, in case of slow connection it may be preferential to not pad the data packets or pad them to a shorter common length.
 Padding frame contents may be anything and are simply ignored. It is recommended to explicitly initialize this padding data area with either random or zero bytes and not leave any old data that might leak information.
@@ -562,7 +574,7 @@ Padding packet may be as small as 3 bytes - type byte and length field, which is
 
 Take note of the rounding requirements - all padding together *must* pad message size to an integer multiple of 16 bytes.
 
-#### 4.2.5 DECONGESTION frame
+#### 4.2.6 DECONGESTION frame
 
 Decongestion feedback frame contents are specific to chosen decongestion method in the channel. Frame format for several implemented methods will be listed here.
 
@@ -574,7 +586,7 @@ ofs : sz : description
   2 :  X : Method specific contents
 ```
 
-##### 4.2.5.1 Congestion control feedback for TCP Cubic
+##### 4.2.6.1 Congestion control feedback for TCP Cubic
 
 Similar to TCP protocol, packet loss and receive window size are provided.
 
@@ -589,7 +601,7 @@ ofs : sz : description
  * Num lost packets `big_uint16_t`: The number of packets lost over the lifetime of this connection. This may wrap for long-lived connections.
  * Receive window `big_uint16_t`: The TCP receive window.
 
-##### 4.2.5.2 Congestion control feedback for CurveCP Chicago
+##### 4.2.6.2 Congestion control feedback for CurveCP Chicago
 
 Chicago updates with RTT times as seen by the far end. This is not required for operation of Chicago protocol, which handles everything on the near side, but is included for complete information for the far end.
 
@@ -608,7 +620,7 @@ ofs : sz : description
  * Average RTT `big_uint32_t`: **@todo**
  * RTT mean deviation `big_uint32_t`: **@todo**
 
-##### 4.2.5.3 Congestion control feedback for UDP LEDBAT
+##### 4.2.6.3 Congestion control feedback for UDP LEDBAT
 
 ```
 ofs : sz : description
@@ -620,7 +632,7 @@ ofs : sz : description
 
 **@todo**
 
-##### 4.2.5.4 Congestion control feedback for WebRTC Inter-arrival
+##### 4.2.6.4 Congestion control feedback for WebRTC Inter-arrival
 
 Figure 10: Inter-arrival decongestion frame layout
 ```
@@ -641,7 +653,7 @@ ofs : sz : description
  * Packet Delta `big_uint16_t`: Sequence number delta from the Smallest Received Packet. Always followed immediately by a corresponding Packet Time Delta.
  * Packet Time Delta `big_uint32_t`: Time delta from smallest time when the preceding packet sequence number was received.
 
-#### 4.2.6 DETACH frame
+#### 4.2.7 DETACH frame
 
 Detach frame allows stream to detach from current channel without shutting down the stream. Detaching informs the other side that this stream should not be torn down, but it will not send more data on this channel. Stream may be subsequently reattached, if needed, to this or some other channel. The stream is NOT closed or half-closed after detach, however it cannot be used for data transfer until re-attached.
 
@@ -655,7 +667,7 @@ ofs : sz : description
 ```
  * Stream Local ID `big_uint32_t`: LSID of the stream to detach (in sender's ID space)
 
-#### 4.2.7 RESET frame
+#### 4.2.8 RESET frame
 
 Abort stream.
 
@@ -675,7 +687,7 @@ ofs : sz : description
  * Reason phrase length `big_uint16_t`: Length of the reason phrase. This may be zero if the sender chooses to not give details beyond the error code.
  * Reason phrase: A UTF-8 encoded optional human-readable explanation for why the connection was closed. It is **not** zero-terminated.
 
-#### 4.2.8 CLOSE frame
+#### 4.2.9 CLOSE frame
 
 Close channel.
 
@@ -695,7 +707,7 @@ ofs : sz : description
  * Reason phrase: An optional human-readable explanation for why the connection was closed.
  * AckFrame: A final ack frame, letting the peer know which packets had been received at the time the connection was closed. A complete ACK frame is contained within this field and can be parsed with normal frame parser.
 
-### 4.2.9 SETTINGS frame
+### 4.2.10 SETTINGS frame
 
 Allow to setup some connection parameters.
 
@@ -731,7 +743,7 @@ List of negotiation tags:
 
 Tags must be sorted in the order of increasing tag number. No duplicate tags are presently allowed.
 
-### 4.2.10 PRIORITY frame
+### 4.2.11 PRIORITY frame
 
 PRIORITY frame indicates to the receiver a priority of processing frame data for a given stream.
 It is only a hint. The receiver should make best effort to process given stream's data in accordance with relative priority given (streams with priority 0 should always be processed first, then streams with priority 1 and so on).
