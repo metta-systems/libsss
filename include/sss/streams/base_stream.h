@@ -12,6 +12,7 @@
 #include <boost/signals2/signal.hpp>
 #include "sss/streams/abstract_stream.h"
 #include "sss/channels/channel.h"
+#include "sss/internal/usid.h"
 
 namespace sss {
 
@@ -24,10 +25,10 @@ class stream_channel;
 class stream_attachment : public stream_protocol
 {
 public:
-    base_stream*     stream_{nullptr};  ///< Our stream.
-    stream_channel*  channel_{nullptr}; ///< Channel our stream is attached to.
-    stream_id_t      stream_id_{0};     ///< Our stream ID in this channel.
-    packet_seq_t     sid_seq_{~0ULL};   ///< Reference packet sequence for stream ID.
+    base_stream*      stream_{nullptr};  ///< Our stream.
+    stream_channel*   channel_{nullptr}; ///< Channel our stream is attached to.
+    local_stream_id_t stream_id_{0};     ///< Our stream ID in this channel.
+    packet_seq_t      sid_seq_{~0ULL};   ///< Reference packet sequence for stream ID.
 };
 
 /**
@@ -46,9 +47,9 @@ public:
 
     /**
      * Transition from Unused to Attaching -
-     * this happens when we send a first Init, Reply, or Attach packet.
+     * this happens when we send a first STREAM_ATTACH frame.
      */
-    void set_attaching(stream_channel* channel, stream_id_t sid);
+    void set_attaching(stream_channel* channel, local_stream_id_t sid);
 
     /**
      * Transition from Attaching to Active -
@@ -72,8 +73,8 @@ class stream_rx_attachment : public stream_attachment
 public:
     inline bool is_active() const { return channel_ != nullptr; }
 
-    // Transition from unused to active.
-    void set_active(stream_channel* channel, stream_id_t sid, packet_seq_t rxseq);
+    // Transition from Unused to Active.
+    void set_active(stream_channel* channel, local_stream_id_t sid, packet_seq_t rxseq);
 
     // Transition to the unused state.
     void clear();
@@ -322,7 +323,7 @@ private:
     /**
      * Send the stream reset packet to the peer.
      */
-    static void tx_reset(stream_channel* channel, stream_id_t sid, uint8_t flags);
+    static void tx_reset(stream_channel* channel, local_stream_id_t sid, uint8_t flags);
 
     /**
      * Called by stream_channel::got_ready_transmit() to transmit or retransmit
@@ -360,7 +361,7 @@ private:
     void rx_data(byte_array const& pkt, uint32_t byte_seq);
 
     std::shared_ptr<base_stream> rx_substream(packet_seq_t pktseq, stream_channel* channel,
-        stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
+        local_stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
 
     // Helper function to enqueue useful rx segment data.
     void rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed);

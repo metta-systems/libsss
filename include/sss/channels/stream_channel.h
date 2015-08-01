@@ -56,8 +56,8 @@ class stream_channel : public channel, public stream_protocol
     std::shared_ptr<base_stream> root_{nullptr};
 
     // Hash table of active streams indexed by stream ID
-    std::unordered_map<stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace
-    std::unordered_map<stream_id_t, stream_rx_attachment*> receive_sids_; // Peer's SID namespace
+    std::unordered_map<local_stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace
+    std::unordered_map<local_stream_id_t, stream_rx_attachment*> receive_sids_; // Peer's SID namespace
 
     counter_t transmit_sid_counter_{1}; // Next stream counter to assign.
     counter_t transmit_sid_acked_{0};   // Last acknowledged stream counter.
@@ -66,7 +66,7 @@ class stream_channel : public channel, public stream_protocol
     /**
      * Closed stream IDs waiting for close acknowledgment.
      */
-    std::unordered_set<stream_id_t> closed_streams_;
+    std::unordered_set<local_stream_id_t> closed_streams_;
 
     /**
      * Streams queued for transmission on this channel.
@@ -94,7 +94,7 @@ class stream_channel : public channel, public stream_protocol
      * this determines for which stream we send receive window info
      * when transmitting "bare" Ack packets.
      */
-    stream_id_t ack_sid_;
+    local_stream_id_t ack_sid_;
 
     // Handlers.
     void got_link_status_changed(uia::comm::socket::status new_status);
