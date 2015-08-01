@@ -157,7 +157,7 @@ public:
     /**
      * Return number of complete records currently available for reading.
      */
-    virtual int pending_records() const = 0;
+    virtual size_t pending_records() const = 0;
 
     /**
      * Return true if at least one complete record is currently available for reading.

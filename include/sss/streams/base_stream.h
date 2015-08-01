@@ -468,7 +468,7 @@ public:
     ssize_t bytes_available() const override;
     bool at_end() const override;
 
-    inline int pending_records() const override {
+    inline size_t pending_records() const override {
         return rx_record_sizes_.size();
     }
 
