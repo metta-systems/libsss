@@ -113,6 +113,8 @@ public:
     }
     /*@}*/
 
+    using asio_host_state::get_io_service;
+
     /**
      * Obtain a list of all currently active sockets.
      * Used by upper-level protocols (e.g., key exchange, registration)
