@@ -756,6 +756,72 @@ ofs : sz : description
 ```
  * Priority value is a `big_uint32_t` with 0 for maximum stream priority and maximum uint32_t value for minimum stream priority.
 
+### 4.3 Frame assembly
+
+Frame assembly deals with allocating available packet buffer length to various frames depending
+on the priority and urgency of sending them out.
+
+- Send higher priority streams first
+- Distribute bandwidth approximately equally between same-priority streams
+- Prioritise ACK frames to ensure progress is made
+- Establishing lower-priority streams may be postponed
+
+Frame types sorted by priority - highest to lowest:
+```
+SETTINGS
+ACK
+RESET
+PRIORITY
+DECONGESTION
+DETACH
+CLOSE
+STREAM/ATTACH
+PADDING
+EMPTY
+```
+
+Frame assembly needs to account for both channel and stream layers requests.
+
+### 4.3.1 SETTINGS
+- Layer: Channel
+
+### 4.3.2 ACK
+- Layer: Channel
+
+### 4.3.3 RESET
+- Layer: Stream
+
+### 4.3.4 PRIORITY
+- Layer: Stream
+- check https://dl.dropboxusercontent.com/s/1pdteaj3l1yp3lu/2015-02-19%20at%2021.49.jpg
+
+- Priority must be relative to parent?
+- Child streams cannot progress before their parent.
+
+### 4.3.5 DECONGESTION
+- Layer: Channel
+
+- check https://dl.dropboxusercontent.com/s/4k7s83fmeux1b87/2015-02-19%20at%2021.50.jpg
+- Send up to a lesser of stream window and channel window
+
+### 4.3.6 STREAM/ATTACH
+- Layer: Stream
+
+### 4.3.7 DETACH
+- Layer: Stream
+
+### 4.3.8 CLOSE
+- Layer: Channel
+
+### 4.3.9 PADDING
+- Layer: Framing
+
+
+
+Trying to fit: if higher-priority buffer does not fit into current packet, it is either split 
+if possible or postponed to the next packet with increased priority. Priority is increased to eventually put this frame first in the packet or signal impossibility of sending that frame.
+
+
 ## 5 Stream Protocol
 
 Streams are independent sequences of uni- or bi­directional data flows cut into stream frames. Streams group logically communications between two parties. Streams can be created by either peer; can concurrently send data interleaved with other streams; and can be cancelled.

@@ -79,3 +79,9 @@ struct stream_peer
     routing::coordinator& peer_database_; // [unowned] locator for peer EIDs
 }
 ```
+
+stream ack range is represented in framing layer as (ofs,len) pairs waiting in relation to
+packet ACK, when the packet is acked, the ofs-len range is acked to the stream.
+stream's tx_queue_ contains packets together with tx_byte_seq (ofs) and size (len) data.
+
+

@@ -63,3 +63,9 @@ asio_receive(recvbuf)
   // todo use packet seq number - if too far ahead, 
   fecAndReorderBuffer.push_back(make_shared(recvbuf));
 }
+
+
+stream ---------------------------transmit_on(chan)-------+ channel +-- framing ---------- socket
+streambuf contains not yet         sends buf view                       cuts as much
+ACKed segment of stream data                                            buf as needed
+
