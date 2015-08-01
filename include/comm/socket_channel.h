@@ -9,9 +9,11 @@
 #pragma once
 
 #include <memory>
+#include <boost/asio.hpp>
 #include <boost/signals2/signal.hpp>
 #include "arsenal/byte_array.h"
 #include "comm/socket_endpoint.h"
+#include "comm/packet_receiver.h"
 #include "comm/socket.h"
 
 namespace uia {
@@ -127,7 +129,7 @@ public:
      * @param msg A received network packet
      * @param src Sender endpoint
      */
-    inline virtual void receive(byte_array const& msg, socket_endpoint const& src) {
+    inline virtual void receive(boost::asio::const_buffer msg, socket_endpoint const& src) {
         on_received(msg, src);
     }
 
@@ -135,7 +137,7 @@ public:
     /**@{*/
     // Provide access to signal types for clients
     using received_signal
-        = boost::signals2::signal<void (byte_array const&, socket_endpoint const&)>;
+        = boost::signals2::signal<void (boost::asio::const_buffer, socket_endpoint const&)>;
     using ready_transmit_signal = boost::signals2::signal<void ()>;
 
     /**

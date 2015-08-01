@@ -186,7 +186,7 @@ private:
      * @param msg Incoming encrypted packet.
      * @param src Origin endpoint.
      */
-    void receive(const byte_array& msg, uia::comm::socket_endpoint const& src) override;
+    void receive(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src) override;
 
     /// Repeat stall indications but not other link status changes.
     /// XXX hack - maybe "stall severity" or "stall time" should be part of status?
