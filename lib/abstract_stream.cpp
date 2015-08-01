@@ -27,7 +27,7 @@ uia::peer_identity abstract_stream::local_host_id() const
 
 uia::peer_identity abstract_stream::remote_host_id() const
 {
-    return peerid_;
+    return peer_id_;
 }
 
 } // sss namespace

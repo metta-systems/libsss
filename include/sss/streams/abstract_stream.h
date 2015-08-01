@@ -42,10 +42,11 @@ class abstract_stream : public stream_protocol
     friend class stream;
 
 protected:
-    uia::peer_identity peerid_;     ///< EID of peer we're connected to.
     std::shared_ptr<host> host_;     ///< Per-host state.
     std::weak_ptr<stream> owner_;    ///< Back-pointer to stream object,
                                      ///< or nullptr if stream has been deleted.
+    uia::peer_identity    peer_id_;  ///< EID of peer we're connected to.
+
 
 private:
     int                 priority_{0};    ///< Current priority level
