@@ -468,23 +468,24 @@ Figure N: Stream frame layout
 ```
          ofs :                  sz : description
            0 :                   1 : Frame type (1 - STREAM)
-           1 :                   1 : Flags (niuooodf)
-           2 :                   4 : Stream ID
-           6 :                   4 : Parent Stream ID (optional, when INIT (i) bit is set)
-          10 :                  24 : Stream USID (optional, when USID (u) bit is set)
-    10,14,34 : 0,2,3,4,5,6,7,8 (O) : Offset in stream (depending on OFFSET (ooo) bits)
-(10,14,34)+O :                   2 : Data length (optional, when DATA LENGTH (d) bit is set) D
-(12,16,36)+O :                   D : Data
+           1 :                   2 : Flags (niuooodf0000000r)
+           3 :                   4 : Stream ID
+           7 :                   4 : Parent Stream ID (optional, when INIT (i) bit is set)
+          11 :                  24 : Stream USID (optional, when USID (u) bit is set)
+    11,15,35 : 0,2,3,4,5,6,7,8 (O) : Offset in stream (depending on OFFSET (ooo) bits)
+(11,15,35)+O :                   2 : Data length (optional, when DATA LENGTH (d) bit is set) D
+(13,17,37)+O :                   D : Data
 ```
 
 Flags: FIN, INIT, USID, OFFSET, DATA LENGTH, NOACK
 
- * When `i = INIT` bit is set, this frame initiates the stream by providing stream and parent unique IDs.
- * When `u = USID` bit is set, this `INIT` frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. `USID` bit can only be set when `INIT` bit is set.
- * When `f = FIN` bit is set, this frame marks last transmission on this stream in this direction.
+ * When `i = INIT, 0x4000` bit is set, this frame initiates the stream by providing stream and parent unique IDs.
+ * When `u = USID, 0x2000` bit is set, this `INIT` frame includes full stream Unique ID, for means of reattachment of pre-existing stream to a channel. `USID` bit can only be set when `INIT` bit is set.
+ * When `f = FIN, 0x0100` bit is set, this frame marks last transmission on this stream in this direction.
  * `ooo = OFFSET` bits encode length of the stream offset field. A 0, 16, 24, 32, 40, 48, 56, or 64 bit unsigned number specifying the byte offset in the stream for this block of data. 000 corresponds to 0 bits and 111 corresponds to 64 bits. (@todo Should offset be always present?)
- * When `d = DATA LENGTH` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
- * When `n = NOACK` bit is set, this frame does not require acknowledgement from the receiver. Essentialy this frame's data has been removed from waiting-ACK queue after sending, and so the sender does not care. If there are other frames in this packet, they still might require acknowledgement.
+ * When `d = DATA LENGTH, 0x0200` bit is set, this frame has a limited number of bytes for this stream, provided in length field, otherwise stream data occupies the rest of the packet.
+ * When `n = NOACK, 0x8000` bit is set, this frame does not require acknowledgement from the receiver. Essentialy this frame's data has been removed from waiting-for-ACK queue after sending, and so the sender does not care. If there are other frames in this packet, they still might require acknowledgement.
+ * When `r = RECORD, 0x0001` bit is set, this frame marks end of the record in the stream data. Streams support pushing marked records which can then be read as a single entity by the receiving side.
 
 If `FIN` bit is set, stream data length may be zero. Otherwise, data length must be non-zero.
 
