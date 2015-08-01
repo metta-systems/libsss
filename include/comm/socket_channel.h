@@ -133,8 +133,8 @@ public:
 
     /**
      * Receive a network packet msg from endpoint src.
-     * Implementations may override this function or simply connect to
-     * on_received() signal.
+     * Implementations may override this function or simply connect to on_received() signal.
+     * Default implementation simply emits on_received() signal.
      * @param msg A received network packet
      * @param src Sender endpoint
      */

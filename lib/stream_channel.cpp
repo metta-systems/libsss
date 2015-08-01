@@ -6,10 +6,10 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "arsenal/logging.h"
 #include "arsenal/algorithm.h"
 #include "sss/channels/stream_channel.h"
 #include "sss/internal/stream_peer.h"
-#include "arsenal/logging.h"
 
 using namespace std;
 
@@ -60,8 +60,9 @@ stream_channel::~stream_channel()
 
 void stream_channel::got_ready_transmit()
 {
-    if (sending_streams_.empty())
+    if (sending_streams_.empty()) {
         return;
+    }
 
     logger::debug() << "Stream channel - ready to transmit";
 
@@ -83,8 +84,9 @@ void stream_channel::got_link_status_changed(uia::comm::socket::status new_statu
     logger::debug() << "Stream channel - link status changed, new status "
         << uia::comm::socket::status_string(new_status);
 
-    if (new_status != uia::comm::socket::status::down)
+    if (new_status != uia::comm::socket::status::down) {
         return;
+    }
 
     // Link went down indefinitely - self-destruct.
     auto peer = target_peer();
@@ -161,6 +163,10 @@ void stream_channel::stop()
         it.second->clear();
     }
 }
+
+//=================================================================================================
+// Stream interface
+//=================================================================================================
 
 void stream_channel::enqueue_stream(base_stream* stream)
 {

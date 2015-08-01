@@ -52,7 +52,7 @@ base_stream::base_stream(shared_ptr<host> host,
     peer_ = host->stream_peer(peer_id);
 
     // Insert us into the peer's master list of streams
-    peer_->all_streams_.insert(this);
+    peer_->all_streams_.insert(this); // @fixme shared_from_this() here
 
     // Initialize the stream back-pointers in the attachment slots.
     for (int i = 0; i < max_attachments; ++i)
@@ -196,8 +196,9 @@ void base_stream::transmit_on(stream_channel* channel)
         // The parent must be attached to the same channel.
         // XXX probably should use some state invariant
         // in place of all these checks.
-        if (top_level_)
+        if (top_level_) {
             parent_ = channel->root_;
+        }
 
         shared_ptr<base_stream> parent = parent_.lock();
 
@@ -364,6 +365,8 @@ void base_stream::attach_for_transmit()
 
     logger::debug() << "Base stream attaching for transmission";
 
+    // --- connect channel ---
+
     // See if there's already an active channel for this peer.
     // If so, use it - otherwise, create new one.
     if (!peer_->primary_channel_) {
@@ -373,6 +376,8 @@ void base_stream::attach_for_transmit()
         peer_->on_channel_connected.connect([this]() { channel_connected(); });
         return peer_->connect_channel();
     }
+
+    // --- channel connected ---
 
     stream_channel* channel = peer_->primary_channel_;
     assert(channel->is_active());
@@ -385,7 +390,7 @@ void base_stream::attach_for_transmit()
         // No parent USID yet - try to get it from the parent stream.
         if (!parent)
         {
-            // Top-level streams just use any channel's root stream.
+            // Top-level streams just use channel's root stream.
             if (top_level_) {
                 parent_ = channel->root_stream();
                 parent = parent_.lock();
@@ -574,7 +579,8 @@ byte_array base_stream::read_record(ssize_t max_size)
     return buf;
 }
 
-ssize_t base_stream::write_data(const char* data, ssize_t total_size, uint8_t endflags)
+/** @todo writing data only fills the send buffer_ */
+ssize_t base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
 {
     assert(!end_write_);
     ssize_t actual_size = 0;
@@ -911,8 +917,9 @@ void base_stream::tx_enqueue_packet(packet& p)
 
 void base_stream::tx_enqueue_channel(bool tx_immediately)
 {
-    if (!is_attached())
+    if (!is_attached()) {
         return attach_for_transmit();
+    }
 
     logger::debug(200) << "Base stream enqueue on channel";
 
@@ -934,8 +941,9 @@ void base_stream::tx_enqueue_channel(bool tx_immediately)
         }
     }
 
-    if (tx_immediately and channel->may_transmit())
+    if (tx_immediately and channel->may_transmit()) {
         channel->got_ready_transmit();
+    }
 }
 
 void base_stream::tx_attach()

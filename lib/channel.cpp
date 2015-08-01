@@ -310,7 +310,7 @@ void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
     rtt_out = rtt.total_microseconds();
 
     // Compute an RTT variance measure
-    float rttvar = fabsf((rtt - cumulative_rtt_).total_microseconds());
+    float rttvar = fabs((rtt - cumulative_rtt_).total_microseconds());
     cumulative_rtt_variance_ = ((cumulative_rtt_variance_ * 7.0) + rttvar) / 8.0;
 
     // 'mark_acks_' is the number of unique packets ACKed
@@ -499,8 +499,9 @@ void cc_delay::rtt_update(float pps, float rtt)
 
 void cc_delay::update(unsigned new_packets)
 {
-    if (cwndinc < 0)    // Only slow start during up-phase
+    if (cwndinc < 0) { // Only slow start during up-phase
         return;
+    }
 
     // call into cc_aggressive::update() here?
     // hrm, what about non-overridden methods? well, missed() is different, might need override too

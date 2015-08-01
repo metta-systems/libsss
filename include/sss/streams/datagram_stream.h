@@ -48,7 +48,7 @@ public:
         return pos_ >= size();
     }
 
-    int pending_records() const override {
+    size_t pending_records() const override {
         return (size() > pos_) ? 1 : 0;
     }
     ssize_t pending_record_size() const override {

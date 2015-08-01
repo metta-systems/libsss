@@ -55,8 +55,9 @@ public:
      * Transition from Attaching to Active -
      * this happens when we get an Ack to our Init, Reply, or Attach.
      */
-    inline void set_active(packet_seq_t rxseq) {
-        assert(is_in_use() and !is_acknowledged());
+    inline void set_active(packet_seq_t rxseq)
+    {
+        assert(is_in_use() and not is_acknowledged());
         sid_seq_ = rxseq;
         active_ = true;
     }
@@ -76,7 +77,7 @@ public:
     // Transition from Unused to Active.
     void set_active(stream_channel* channel, local_stream_id_t sid, packet_seq_t rxseq);
 
-    // Transition to the unused state.
+    // Transition to the Unused state.
     void clear();
 };
 
@@ -109,9 +110,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         disconnected   ///< Connection terminated.
     };
 
-    //-------------------------------------------
+    //=============================================================================================
     // Helper types
-    //-------------------------------------------
+    //=============================================================================================
 
     /**
      * @internal
@@ -197,9 +198,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         }
     };
 
-    //-------------------------------------------
+    //=============================================================================================
     /** @name Connection state */
-    //-------------------------------------------
+    //=============================================================================================
     /**@{*/
 
     std::weak_ptr<base_stream> parent_; ///< Parent, if it still exists.
@@ -220,10 +221,14 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     internal::stream_peer* peer_;    ///< Information about the other side of this connection.
 
     /**@}*/
-    //-------------------------------------------
+    //=============================================================================================
     /** @name Channel attachment state */
-    //-------------------------------------------
+    //=============================================================================================
     /**@{*/
+
+    /// Stream is usually connected to a single channel via it's 0 index attachment point.
+    /// When migrating from old to new channel, stream may be connected to two channels at once,
+    /// the new channel being connected via attachment index 1.
 
     static constexpr int  max_attachments = 2;
     stream_tx_attachment  tx_attachments_[max_attachments];  // Our channel attachments
@@ -231,9 +236,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
 
     /**@}*/
-    //-------------------------------------------
+    //=============================================================================================
     /** @name Byte transmit state */
-    //-------------------------------------------
+    //=============================================================================================
     /**@{*/
 
     /// Next transmit byte sequence number to assign.
@@ -252,9 +257,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     size_t tx_waiting_size_{0};
 
     /**@}*/
-    //-------------------------------------------
+    //=============================================================================================
     /** @name Byte receive state */
-    //-------------------------------------------
+    //=============================================================================================
     /**@{*/
 
     /// Default receive buffer size for new top-level streams
@@ -282,9 +287,9 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     int child_receive_buf_size_{default_rx_buffer_size}; // Recv buf for child streams
 
     /**@}*/
-    //-------------------------------------------
+    //=============================================================================================
     /** @name Substream receive state */
-    //-------------------------------------------
+    //=============================================================================================
     /**@{*/
 
     /// Received, waiting substreams.
@@ -304,9 +309,9 @@ private:
 
     void set_usid(unique_stream_id_t new_usid);
 
-    //-------------------------------------------
+    //=============================================================================================
     // Transmit various types of packets.
-    //-------------------------------------------
+    //=============================================================================================
 
     void tx_enqueue_packet(packet& p);
     void tx_enqueue_channel(bool tx_immediately = false);
@@ -334,11 +339,11 @@ private:
      */
     void transmit_on(stream_channel* channel);
 
-    //-------------------------------------------
+    //=============================================================================================
     // Receive handling for various types of packets
     // @todo Types are now different and they are FRAMES within the packet, so framing layer
     // should dispatch them, not stream.
-    //-------------------------------------------
+    //=============================================================================================
 
     // Returns true if received packet needs to be acked, false otherwise.
     static bool receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
@@ -376,9 +381,9 @@ private:
     void recalculate_receive_window();
     void recalculate_transmit_window(uint8_t window_byte);
 
-    //-------------------------------------------
+    //=============================================================================================
     // Signal handlers.
-    //-------------------------------------------
+    //=============================================================================================
 
     /**
      * We connect this signal to our stream_peer's on_channel_connected()
@@ -417,9 +422,9 @@ public:
         std::shared_ptr<base_stream> parent);
     virtual ~base_stream();
 
-    //-------------------------------------------
+    //=============================================================================================
     // Stream online status.
-    //-------------------------------------------
+    //=============================================================================================
 
     /**
      * Connect to a given service on a remote host.
@@ -455,13 +460,12 @@ public:
 
     void shutdown(stream::shutdown_mode mode) override;
 
-    //-------------------------------------------
+    //=============================================================================================
     // Reading and writing application data.
-    //-------------------------------------------
+    //=============================================================================================
 
-    // ssize_t bytes_to_write() { return tx_waiting_size_; } //XXX QIODevice relic
     ssize_t bytes_available() const override;
-    bool at_end() const override; //XXX QIODevice relic
+    bool at_end() const override;
 
     inline int pending_records() const override {
         return rx_record_sizes_.size();
@@ -475,11 +479,11 @@ public:
     byte_array read_record(ssize_t max_size) override;
 
     ssize_t read_data(char* data, ssize_t max_size) override;
-    ssize_t write_data(const char* data, ssize_t size, uint8_t endflags) override;
+    ssize_t write_data(char const* data, ssize_t size, uint8_t endflags) override;
 
-    //-------------------------------------------
+    //=============================================================================================
     // Substreams.
-    //-------------------------------------------
+    //=============================================================================================
 
     // Initiate or accept substreams
     std::shared_ptr<abstract_stream> open_substream() override;
@@ -489,7 +493,7 @@ public:
     std::shared_ptr<abstract_stream> get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
-    ssize_t write_datagram(const char* data, ssize_t size,
+    ssize_t write_datagram(char const* data, ssize_t size,
         stream::datagram_type is_reliable) override;
 
     void set_receive_buffer_size(size_t size) override;
@@ -518,9 +522,10 @@ public:
 
     void end_flight(packet const& pkt);
 
-    //-------------------------------------------
+    //=============================================================================================
     /** @name Signals */
-    /**@{*///------------------------------------
+    //=============================================================================================
+    /**@{*/
 
     /**
      * An active attachment attempt succeeded and was acked by receiver.

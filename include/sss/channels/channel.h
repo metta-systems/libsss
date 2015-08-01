@@ -161,13 +161,13 @@ private:
     /**@}*/
 
     /**
-     * Called by link to dispatch a received packet to this channel.
+     * Called by socket to dispatch a received packet to this channel.
      * @param msg Incoming encrypted packet.
      * @param src Origin endpoint.
      */
     void receive(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src) override;
 
-    /// Repeat stall indications but not other link status changes.
+    /// Repeat stall indications but not other socket status changes.
     /// XXX hack - maybe "stall severity" or "stall time" should be part of status?
     /// Or perhaps status should be (up, stalltime)?
     inline void set_link_status(uia::comm::socket::status new_status) {
