@@ -6,6 +6,7 @@ if (NOT BUILD_IN_METTANODE)
     include_directories(3rdparty/endian 3rdparty/arsenal/include)
     include_directories(3rdparty/krypto/include)
     include_directories(3rdparty/routing/include)
+    include_directories(3rdparty)
 endif()
 
 include_directories(include)
