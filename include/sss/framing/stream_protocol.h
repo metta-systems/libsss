@@ -42,29 +42,29 @@ public:
     // Datagram reassembly not yet supported, when done it could be around 2x-4x MTU size?
     static constexpr size_t max_stateless_datagram_size = mtu;
 
-    // struct stream_header
-    // {
-    //     big_uint16_t stream_id;    // LSID
-    //     uint8_t      type_subtype; // Field consists of two 4 bit fields - type and flags
-    //     uint8_t      window;
-    //  } __attribute__((packed));
+    struct stream_header
+    {
+        big_uint16_t stream_id;    // LSID
+        uint8_t      type_subtype; // Field consists of two 4 bit fields - type and flags
+        uint8_t      window;
+     } __attribute__((packed));
 
-    // struct init_header : public stream_header
-    // {
-    // 	big_uint16_t new_stream_id;
-    // 	big_uint16_t tx_seq_no;
-    // } __attribute__((packed));
-    // using reply_header = init_header;
-    // // init/reply_header and data_header must be the same size to allow optimized init_packets
-    // struct data_header : public stream_header
-    // {
-    // 	big_uint32_t tx_seq_no;
-    // } __attribute__((packed));
-    // using datagram_header = stream_header;
-    // using ack_header = stream_header;
-    // using reset_header = stream_header;
-    // using attach_header = stream_header;
-    // using detach_header = stream_header;
+    struct init_header : public stream_header
+    {
+    	big_uint16_t new_stream_id;
+    	big_uint16_t tx_seq_no;
+    } __attribute__((packed));
+    using reply_header = init_header;
+    // init/reply_header and data_header must be the same size to allow optimized init_packets
+    struct data_header : public stream_header
+    {
+    	big_uint32_t tx_seq_no;
+    } __attribute__((packed));
+    using datagram_header = stream_header;
+    using ack_header = stream_header;
+    using reset_header = stream_header;
+    using attach_header = stream_header;
+    using detach_header = stream_header;
 
     enum class frame_type : uint8_t
     {
@@ -126,9 +126,9 @@ public:
         window_inherit    = 0x40, ///< Inherited window
     };
 
-    // static inline uint8_t type_and_subtype(packet_type type, uint8_t subtype) {
-    //     return uint8_t(type) << 4 | (subtype & 0xf);
-    // }
+    static inline uint8_t type_and_subtype(frame_type type, uint8_t subtype) {
+        return uint8_t(type) << 4 | (subtype & 0xf);
+    }
 
     // static inline packet_type type_from_header(stream_header const* hdr) {
     //     return packet_type(hdr->type_subtype >> 4);
