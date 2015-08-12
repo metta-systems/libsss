@@ -134,7 +134,7 @@ public:
      * hopefully at some point resulting in an active primary channel.
      * Eventually emits a on_channel_connected or on_channel_failed signal.
      */
-    // void connect_channel();
+    void connect_channel();
 
     /**
      * Supply an endpoint hint that may be useful for finding this peer.

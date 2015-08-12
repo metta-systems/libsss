@@ -329,7 +329,7 @@ public:
 
     /**
      * Write a record to a stream.
-     * @param msg a byte_array containing the record to write.
+     * @param rec a byte_array containing the record to write.
      * @overload
      */
     inline ssize_t write_record(const byte_array& rec) {

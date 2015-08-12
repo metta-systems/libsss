@@ -48,7 +48,7 @@ base_stream::base_stream(shared_ptr<host> host,
 
     recalculate_receive_window();
 
-    peerid_ = peer_id;
+    peer_id_ = peer_id;
     peer_ = host->stream_peer(peer_id);
 
     // Insert us into the peer's master list of streams
@@ -77,11 +77,11 @@ void base_stream::clear()
     if (peer_)
     {
         if (contains(peer_->usid_streams_, usid_)) {
-            if (peer_->usid_streams_[usid_] == this) {
+            if (peer_->usid_streams_[usid_].lock() == shared_from_this()) {
                 peer_->usid_streams_.erase(usid_);
             }
         }
-        peer_->all_streams_.erase(this);
+        peer_->all_streams_.erase(shared_from_this());
         peer_ = nullptr;
     }
 
@@ -120,10 +120,10 @@ void base_stream::transmit_on(stream_channel* channel)
 
     // First garbage-collect any segments that have already been ACKed;
     // this can happen if we retransmit a segment but an ACK for the original arrives late.
-    packet* head_packet = &tx_queue_.front();
+    auto head_packet = &tx_queue_.front();
 
-    while (head_packet->type == packet_type::data
-        and !contains(tx_waiting_ack_, head_packet->tx_byte_seq))
+    while (head_packet->type() == frame_type::STREAM
+        and !contains(tx_waiting_ack_, head_packet->tx_byte_seq_))
     {
         // No longer waiting for this tsn - must have been ACKed.
         tx_queue_.pop_front();
@@ -156,29 +156,31 @@ void base_stream::transmit_on(stream_channel* channel)
         }
 
         // Datagrams get special handling.
-        if (head_packet->type == packet_type::datagram)
-            return tx_datagram();
+        // @todo packet_type->frame_type
+        //if (head_packet->type() == packet_type::datagram)
+        //    return tx_datagram();
 
         // Register the segment as being in-flight.
         tx_inflight_ += seg_size;
 
-        logger::debug() << "Inflight data " << head_packet->tx_byte_seq
+        logger::debug() << "Inflight data " << head_packet->tx_byte_seq_
             << ", bytes in flight " << tx_inflight_;
 
         // Transmit the next segment in a regular Data packet.
-        packet p = tx_queue_.front();
+        auto p = tx_queue_.front();
         tx_queue_.pop_front();
 
-        assert(p.type == packet_type::data);
+        // @todo packet_type->frame_type
+        //assert(p.type() == packet_type::data);
 
         logger::debug() << p;
 
         auto header = p.header<data_header>();
         header->stream_id = tx_current_attachment_->stream_id_;
         // Preserve flags already set.
-        header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype);
+        header->type_subtype = type_and_subtype(frame_type::STREAM, header->type_subtype);
         header->window = receive_window_byte();
-        header->tx_seq_no = p.tx_byte_seq; // Note: 32-bit TSN
+        header->tx_seq_no = p.tx_byte_seq_; // Note: 32-bit TSN
 
         // Transmit
         return tx_data(p);
@@ -187,8 +189,9 @@ void base_stream::transmit_on(stream_channel* channel)
     // See if we can potentially use an optimized attach/data packet;
     // this only works for regular stream segments, not datagrams,
     // and only within the first 2^16 bytes of the stream.
-    if (head_packet->type == packet_type::data and
-        head_packet->tx_byte_seq <= 0xffff)
+        // @todo packet_type->frame_type
+    //if (head_packet->type() == packet_type::data and
+    //    head_packet->tx_byte_seq_ <= 0xffff)
     {
         // See if we can attach stream using an optimized Init packet,
         // allowing us to indicate the parent with a short 16-bit LSID
@@ -216,10 +219,10 @@ void base_stream::transmit_on(stream_channel* channel)
             // Adjust the in-flight byte count for channel control.
             // Init packets get "charged" to the parent stream.
             parent->tx_inflight_ += seg_size;
-            logger::debug() << "Inflight init " << head_packet->tx_byte_seq
+            logger::debug() << "Inflight init " << head_packet->tx_byte_seq_
                 << ", bytes in flight on parent " << parent->tx_inflight_;
 
-            return tx_attach_data(packet_type::init, parent->tx_current_attachment_->stream_id_);
+            return tx_attach_data(frame_type::STREAM, parent->tx_current_attachment_->stream_id_);
         }
 
         // See if our peer has this stream in its SID space,
@@ -234,10 +237,11 @@ void base_stream::transmit_on(stream_channel* channel)
 
                     // Adjust the in-flight byte count.
                     tx_inflight_ += seg_size;
-                    logger::debug() << "Inflight reply " << head_packet->tx_byte_seq
+                    logger::debug() << "Inflight reply " << head_packet->tx_byte_seq_
                         << ", bytes in flight " << tx_inflight_;
 
-                    return tx_attach_data(packet_type::reply, rx_attachments_[i].stream_id_);
+                    /// @todo khustup.
+                    return tx_attach_data(frame_type::EMPTY, rx_attachments_[i].stream_id_);
                 }
             }
         }
@@ -349,7 +353,9 @@ void base_stream::connect_to(string const& service, string const& protocol)
 
 void base_stream::attach_for_transmit()
 {
-    assert(!peerid_.is_null());
+    /// @fixme
+    /*
+    assert(!peer_id_.is_null());
 
     // If we already have a transmit-attachment, nothing to do.
     if (tx_current_attachment_ != nullptr) {
@@ -446,6 +452,7 @@ void base_stream::attach_for_transmit()
     if (channel->may_transmit()) {
         channel->on_ready_transmit();
     }
+    */
 }
 
 void base_stream::set_usid(unique_stream_id_t new_usid)
@@ -458,7 +465,7 @@ void base_stream::set_usid(unique_stream_id_t new_usid)
     }
 
     usid_ = new_usid;
-    peer_->usid_streams_.insert(make_pair(usid_, this));
+    peer_->usid_streams_.insert(make_pair(usid_, shared_from_this()));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -494,7 +501,8 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
 
         // Copy the data (or just drop it if data == nullptr).
         if (data != nullptr) {
-            memcpy(data, rseg.buf.data() + rseg.header_len, size);
+            /// @todo khustup
+            //memcpy(data, rseg.buf.data() + rseg.header_len, size);
             data += size;
         }
         actual_size += size;
@@ -526,9 +534,10 @@ ssize_t base_stream::read_data(char* data, ssize_t max_size)
         }
 
         // If this segment has the end-marker set, that's it...
-        if (rseg.flags() & flags::data_close) {
+        /// @todo khustup
+        //if (rseg.flags() & flags::data_close) {
             shutdown(stream::shutdown_mode::read);
-        }
+        //}
     }
 
     // Recalculate the receive window, now that we've (presumably) freed some buffer space.
@@ -599,12 +608,13 @@ ssize_t base_stream::write_data(char const* data, ssize_t total_size, uint8_t en
             << "], size " << size << " bytes";
 
         // Build the appropriate packet header.
-        packet p(this, packet_type::data);
-        p.tx_byte_seq = tx_byte_seq_;
+        tx_frame_t p(this, frame_type::STREAM);
+        p.tx_byte_seq_ = tx_byte_seq_;
 
         // Prepare the header
         // Accomodate buffer space for payload
-        p.payload.resize(channel::header_len + sizeof(data_header) + size);
+        /// @todo khustup
+        //p.payload_.resize(channel::header_len + sizeof(data_header) + size);
         auto header = p.header<data_header>();
 
         // header->stream_id - later
@@ -620,10 +630,10 @@ ssize_t base_stream::write_data(char const* data, ssize_t total_size, uint8_t en
         memcpy(payload, data, size);
 
         // Hold onto the packet data until it gets ACKed
-        tx_waiting_ack_.insert(p.tx_byte_seq);
+        tx_waiting_ack_.insert(p.tx_byte_seq_);
         tx_waiting_size_ += size;
 
-        logger::debug() << "write_data inserted [byteseq " << p.tx_byte_seq
+        logger::debug() << "write_data inserted [byteseq " << p.tx_byte_seq_
             << "] into waiting ack, size " << size << ", new count " << tx_waiting_ack_.size()
             << ", twaitsize " << tx_waiting_size_;
 
@@ -715,20 +725,24 @@ ssize_t base_stream::write_datagram(const char* data,
         }
 
         // Build the appropriate packet header.
-        packet p(this, packet_type::datagram);
+        /// @todo khustup
+        //packet p(this, packet_type::datagram);
+        tx_frame_t p(this, frame_type::EMPTY);
 
         // Assign this packet an ASN as if it were a data segment,
         // but don't actually allocate any TSN bytes to it -
         // this positions the datagram in FIFO order in tx_queue_.
         // XX is this necessarily what we actually want?
-        p.tx_byte_seq = tx_byte_seq_;
+        p.tx_byte_seq_ = tx_byte_seq_;
 
         // Build the datagram header.
-        p.payload.resize(channel::header_len + sizeof(datagram_header) + size);
+        ///@todo khustup
+        //p.payload.resize(channel::header_len + sizeof(datagram_header) + size);
         auto header = p.header<datagram_header>();
 
         // header->stream_id - later
-        header->type_subtype = type_and_subtype(packet_type::datagram, flags);
+        /// @todo khustup
+        //header->type_subtype = type_and_subtype(packet_type::datagram, flags);
         // header->window - later
 
         // Copy in the application payload
@@ -756,7 +770,7 @@ ssize_t base_stream::write_datagram(const char* data,
 
 //-------------------------------------------------------------------------------------------------
 
-void base_stream::set_priority(int priority)
+void base_stream::set_priority(priority_t priority)
 {
     if (current_priority() != priority) {
         super::set_priority(priority);
@@ -783,7 +797,7 @@ shared_ptr<abstract_stream> base_stream::open_substream()
     // Create a new sub-stream.
     // Note that the parent doesn't have to be attached yet:
     // the substream will attach and wait for the parent if necessary.
-    auto new_stream = make_shared<base_stream>(host_, peerid_, shared_from_this());
+    auto new_stream = make_shared<base_stream>(host_, peer_id_, shared_from_this());
     new_stream->state_ = state::connected;
     new_stream->self_ = new_stream; // UGH! :(
 
@@ -898,7 +912,7 @@ void base_stream::dump()
 // Packet transmission
 //-------------------------------------------------------------------------------------------------
 
-void base_stream::tx_enqueue_packet(packet& p)
+void base_stream::tx_enqueue_packet(tx_frame_t& p)
 {
     // Add the packet to our stream-local transmit queue.
     // Keep packets in order of transmit sequence number,
@@ -908,7 +922,7 @@ void base_stream::tx_enqueue_packet(packet& p)
     // just to keep them in the right order with respect to segments.
     // (The assigned TSN is not transmitted in the datagram, of course).
     auto it = tx_queue_.begin();
-    while (it != tx_queue_.end() and ((*it).tx_byte_seq - p.tx_byte_seq) <= 0)
+    while (it != tx_queue_.end() and ((*it).tx_byte_seq_ - p.tx_byte_seq_) <= 0)
         ++it;
     tx_queue_.insert(it, p);
 
@@ -955,11 +969,13 @@ void base_stream::tx_attach()
     assert(slot < max_attachments);
 
     // Build the Attach packet header
-    packet p(this, packet_type::attach);
+    tx_frame_t p(this, frame_type::STREAM);
+    /// @todo khustup
+    //packet p(this, packet_type::attach);
     auto header = p.header<attach_header>();
 
     header->stream_id = tx_current_attachment_->stream_id_;
-    header->type_subtype = type_and_subtype(packet_type::attach,
+    header->type_subtype = type_and_subtype(frame_type::STREAM,
                  (init_ ? flags::attach_init : 0) | (slot & flags::attach_slot_mask));
     header->window = receive_window_byte();
 
@@ -974,11 +990,13 @@ void base_stream::tx_attach()
         else
             write.archive() << nullptr;
     }
-    p.payload.append(body);
+    /// @todo khustup
+    //p.payload_.append(body);
 
     // Transmit it on the current channel.
     packet_seq_t pktseq;
-    chan->channel_transmit(p.payload, pktseq);
+    /// @todo khustup
+    //chan->channel_transmit(p.payload_, pktseq);
 
     // Save the attach packet in the channel's waiting_ack_ hash,
     // so that we'll be notified when the attach packet gets acked.
@@ -986,12 +1004,12 @@ void base_stream::tx_attach()
     chan->waiting_ack_.insert(make_pair(pktseq, p));
 }
 
-void base_stream::tx_attach_data(packet_type type, stream_id_t ref_sid)
+void base_stream::tx_attach_data(frame_type type, stream_id_t ref_sid)
 {
-    packet p = tx_queue_.front();
+    auto p = tx_queue_.front();
     tx_queue_.pop_front();
 
-    assert(p.type == packet_type::data);
+    assert(p.type() == frame_type::STREAM);
     assert(p.tx_byte_seq <= 0xffff);
 
     // Build the init_header.
@@ -1045,7 +1063,7 @@ void base_stream::tx_datagram()
         assert(!tx_queue_.empty());
         packet p = tx_queue_.front();
         tx_queue_.pop_front();
-        assert(p.type == packet_type::datagram);
+        assert(p.type() == packet_type::datagram);
 
         auto header = p.header<datagram_header>();
         bool at_end = (header->type_subtype & flags::datagram_end) != 0;
@@ -1123,8 +1141,10 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
 {
     logger::debug() << "Base stream ACKed packet of size " << dec << pkt.payload.size();
 
-    switch (pkt.type)
+    switch (pkt.type())
     {
+        /// @todo
+        /*
         case packet_type::data:
             // Mark the segment no longer "in flight".
             end_flight(pkt);
@@ -1185,8 +1205,9 @@ void base_stream::acknowledged(stream_channel* channel, packet const& pkt, packe
         case packet_type::detach:
         case packet_type::reset:
         default:
-            logger::warning() << "Got ACK for unknown packet type " << int(pkt.type);
+            logger::warning() << "Got ACK for unknown packet type " << int(pkt.type());
             break;
+        */
     }
 }
 
@@ -1197,7 +1218,7 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
     logger::debug() << "Base stream missed seq " << pkt.tx_byte_seq
         << " of size " << pkt.payload_size();
 
-    switch (pkt.type)
+    switch (pkt.type())
     {
         case packet_type::data: {
             logger::debug() << "Retransmit seq " << pkt.tx_byte_seq
@@ -1231,7 +1252,7 @@ bool base_stream::missed(stream_channel* channel, packet const& pkt)
         case packet_type::detach:
         case packet_type::reset:
         default:
-            logger::warning() << "Missed unknown packet type " << int(pkt.type);
+            logger::warning() << "Missed unknown packet type " << int(pkt.type());
             return false;
     }
 }
