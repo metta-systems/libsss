@@ -52,7 +52,7 @@ base_stream::base_stream(shared_ptr<host> host,
     peer_ = host->stream_peer(peer_id);
 
     // Insert us into the peer's master list of streams
-    peer_->all_streams_.insert(shared_from_this()); // @fixme shared_from_this() here
+    peer_->all_streams_.insert(this); // @fixme shared_from_this() here
 
     // Initialize the stream back-pointers in the attachment slots.
     for (int i = 0; i < max_attachments; ++i)
@@ -222,7 +222,7 @@ void base_stream::transmit_on(stream_channel* channel)
             logger::debug() << "Inflight init " << head_packet->tx_byte_seq_
                 << ", bytes in flight on parent " << parent->tx_inflight_;
 
-            return tx_attach_data(frame_type::EMPTY, parent->tx_current_attachment_->stream_id_);
+            return tx_attach_data(frame_type::STREAM, parent->tx_current_attachment_->stream_id_);
         }
 
         // See if our peer has this stream in its SID space,

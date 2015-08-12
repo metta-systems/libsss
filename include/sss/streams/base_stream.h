@@ -138,16 +138,16 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         base_stream* owner{nullptr};            ///< Frame owner.
         byte_seq_t tx_byte_seq_{0};             ///< Transmit byte position within stream.
         boost::asio::const_buffer payload_;            ///< Frame data.
-        frame_type m_type;
+        frame_type type_;
         bool late{false};                       ///< Possibly lost frame.
 
         inline tx_frame_t() = default;
         inline tx_frame_t(base_stream* o, frame_type t)
             : owner(o)
-            , m_type(t)
+            , type_(t)
         {}
         inline frame_type type() const {
-            return m_type;
+            return type_;
         }
         inline bool is_null() const {
             return owner == nullptr;
@@ -569,7 +569,7 @@ inline std::ostream& operator << (std::ostream& os, sss::base_stream::tx_frame_t
 
     os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type
        << ", owner " << pkt.owner << (pkt.late ? ", late" : ", not late")
-       << ", payload " << boost::asio::buffer_cast<unsigned char*>(pkt.payload_) << "]";
+       << ", payload " << pkt << "]";
     return os;
 }
 
