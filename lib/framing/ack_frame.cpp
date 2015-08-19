@@ -11,6 +11,6 @@ void ack_frame::write(asio::mutable_buffer output, ack_frame_header_t hdr, strin
     write_buffer(output, data);
 }
 
-void stream_frame::read(asio::const_buffer input)
+void ack_frame::read(asio::const_buffer input)
 {
 }

@@ -20,7 +20,7 @@ constexpr uint8_t usid_bit   = 0b0010'0000; //'
 constexpr uint8_t data_bit   = 0b0000'0010; //'
 constexpr uint8_t fini_bit   = 0b0000'0001; //'
 
-void stream_frame::write(asio::mutable_buffer output, stream_frame_header_t hdr, string data,
+bool stream_frame_t::write(asio::mutable_buffer output, stream_frame_header_t hdr, string data,
                          bool no_ack, bool init, bool end, bool usid)
 {
     hdr.flags &= 0b0001'1110; //'
@@ -91,6 +91,6 @@ void stream_frame::write(asio::mutable_buffer output, stream_frame_header_t hdr,
     write_buffer(output, data);
 }
 
-void stream_frame::read(asio::const_buffer input)
+bool stream_frame_t::read(asio::const_buffer input)
 {
 }
