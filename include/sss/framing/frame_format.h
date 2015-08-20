@@ -40,7 +40,7 @@ struct uint56_t {
     operator uint64_t() { return uint64_t(high) << 24 | low; }
 };
 
-}}
+} }
 
 BOOST_FUSION_ADAPT_STRUCT(
     sss::framing::uint24_t,
@@ -129,6 +129,7 @@ using reset_frame_type_t = std::integral_constant<uint8_t, 6>;
 using close_frame_type_t = std::integral_constant<uint8_t, 7>;
 using settings_frame_type_t = std::integral_constant<uint8_t, 8>;
 using priority_frame_type_t = std::integral_constant<uint8_t, 9>;
+using max_frame_count_type_t = std::integral_constant<uint8_t, 10>;
 
 using stream_flags_field_t = field_flag<uint8_t>;
 using optional_parent_sid_t = optional_field_specification<uint32_t, field_index<1>, 6_bits_shift>;
@@ -182,7 +183,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), decongestion_frame_header,
     (sss::framing::decongestion_frame_type_t, type)
     (big_uint8_t, subtype)
-    (rest_t, data) // @todo need to change this field to more clear type.
+    //(rest_t, data) // @todo need to change this field to more clear type.
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
@@ -197,7 +198,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (uint32_t, lsid)
     (big_uint32_t, error_code)
     (big_uint16_t, reason_phrase_length)
-    (sss::framing::frame_data_t, reason_phrase) // variable size data
+    //(sss::framing::frame_data_t, reason_phrase) // variable size data
 );
 
 BOOST_FUSION_DEFINE_STRUCT(

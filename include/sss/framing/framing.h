@@ -1,6 +1,10 @@
 #include "packet_frame.h"
+#include "frame_format.h"
+
 #include <memory>
 #include <boost/asio/buffers.hpp>
+
+namespace sss { namespace framing {
 
 // clangcomplete compiled with custom llvm that's why
 // /usr/local/opt/llvm/include/c++/v1/iosfwd:90:10: fatal error: 'wchar.h' file not found
@@ -40,11 +44,27 @@ class framed_packet
  * When channel is shut down these frames must be returned to owning stream.
  * (They should be stream-buffered until acked)
  */
-class framing
+class framing_t
 {
-
+public:
     void enframe(asio::mutable_buffer output);
     void deframe(asio::const_buffer input);
+
+private:
+    EMPTY_read_handler(asio::const_buffer input);
+    STREAM_read_handler(asio::const_buffer input);
+    ACK_read_handler(asio::const_buffer input);
+    PADDING_read_handler(asio::const_buffer input);
+    DECONGESTION_read_handler(asio::const_buffer input);
+    DETACH_read_handler(asio::const_buffer input);
+    RESET_read_handler(asio::const_buffer input);
+    CLOSE_read_handler(asio::const_buffer input);
+    SETTINGS_read_handler(asio::const_buffer input);
+    PRIORITY_read_handler(asio::const_buffer input);
+
+private:
+    using read_handler_type = void (framing::*) (asio::const_buffer);
+    std::array<read_handler_type, max_frame_count_type_t::value> handlers_;
 
     // References to streams and channel associated with this framing instance.
     // When parsing received frames, call into stream_[lsid]->rx_*() and channel_->rx_*() functions
@@ -52,3 +72,5 @@ class framing
     vector<base_stream*> streams_;
     channel* channel_;
 };
+
+} }

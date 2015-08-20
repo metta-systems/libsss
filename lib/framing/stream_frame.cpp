@@ -20,73 +20,72 @@ constexpr uint8_t usid_bit   = 0b0010'0000; //'
 constexpr uint8_t data_bit   = 0b0000'0010; //'
 constexpr uint8_t fini_bit   = 0b0000'0001; //'
 
-bool stream_frame_t::write(asio::mutable_buffer output, stream_frame_header_t hdr, string data,
-                         bool no_ack, bool init, bool end, bool usid)
+int stream_frame_t::write(asio::mutable_buffer output)
 {
-    hdr.flags &= 0b0001'1110; //'
-    if (no_ack) hdr.flags |= no_ack_bit;
+    header_.flags &= 0b0001'1110; //'
+    if (no_ack) header_.flags |= no_ack_bit;
     if (init) {
-        hdr.flags |= init_bit;
+        header_.flags |= init_bit;
         if (usid) {
-            hdr.flags |= usid_bit;
+            header_.flags |= usid_bit;
         }
     }
-    if (end) hdr.flags |= fini_bit;
-    hdr.data_length = data.size();
+    if (end) header_.flags |= fini_bit;
+    header_.data_length = data.size();
     // @todo Determine when could omit data_length field
     // heuristic: if data is going to be clipped by packet size by at least 2 extra bytes.
 
     uint8_t bits = 0;
-    if (hdr.stream_offset == 0) {
+    if (header_.stream_offset == 0) {
         bits = 0;
-    } else if (hdr.stream_offset < 0x10000) {
+    } else if (header_.stream_offset < 0x10000) {
         bits = 0b00100;
-    } else if (hdr.stream_offset < 0x1000000) {
+    } else if (header_.stream_offset < 0x1000000) {
         bits = 0b01000;
-    } else if (hdr.stream_offset < 0x100000000) {
+    } else if (header_.stream_offset < 0x100000000) {
         bits = 0b01100;
-    } else if (hdr.stream_offset < 0x10000000000) {
+    } else if (header_.stream_offset < 0x10000000000) {
         bits = 0b10000;
-    } else if (hdr.stream_offset < 0x1000000000000) {
+    } else if (header_.stream_offset < 0x1000000000000) {
         bits = 0b10100;
-    } else if (hdr.stream_offset < 0x100000000000000) {
+    } else if (header_.stream_offset < 0x100000000000000) {
         bits = 0b11000;
     } else {
         bits = 0b11100;
     }
-    hdr.flags = (hdr.flags & 0b11100011) | bits;
+    header_.flags = (header_.flags & 0b11100011) | bits;
 
-    write(output, hdr.type);
-    write(output, hdr.flags);
-    write(output, hdr.stream_id); // @todo BIG endian
-    if (hdr.flags & init_bit) {
-        write(output, hdr.parent_stream_id);
-        if (hdr.flags & usid_bit) {
-            write(output, hdr.usid);
+    write(output, header_.type);
+    write(output, header_.flags);
+    write(output, header_.stream_id); // @todo BIG endian
+    if (header_.flags & init_bit) {
+        write(output, header_.parent_stream_id);
+        if (header_.flags & usid_bit) {
+            write(output, header_.usid);
         }
     }
     //
-    if (hdr.stream_offset == 0) {
-    } else if (hdr.stream_offset < 0x10000) {
-        uint16_t v = hdr.stream_offset;
+    if (header_.stream_offset == 0) {
+    } else if (header_.stream_offset < 0x10000) {
+        uint16_t v = header_.stream_offset;
         write(output, v);
-    } else if (hdr.stream_offset < 0x1000000) {
+    } else if (header_.stream_offset < 0x1000000) {
         throw "3 bytes write unimplemented";
-    } else if (hdr.stream_offset < 0x100000000) {
-        uint32_t v = hdr.stream_offset;
+    } else if (header_.stream_offset < 0x100000000) {
+        uint32_t v = header_.stream_offset;
         write(output, v);
-    } else if (hdr.stream_offset < 0x10000000000) {
+    } else if (header_.stream_offset < 0x10000000000) {
         throw "5 bytes write unimplemented";
-    } else if (hdr.stream_offset < 0x1000000000000) {
+    } else if (header_.stream_offset < 0x1000000000000) {
         throw "6 bytes write unimplemented";
-    } else if (hdr.stream_offset < 0x100000000000000) {
+    } else if (header_.stream_offset < 0x100000000000000) {
         throw "7 bytes write unimplemented";
     } else {
-        write(output, hdr.stream_offset);
+        write(output, header_.stream_offset);
     }
     //
-    if (hdr.flags & data_bit) {
-        write(output, hdr.data_length);
+    if (header_.flags & data_bit) {
+        write(output, header_.data_length);
     }
     write_buffer(output, data);
 }
