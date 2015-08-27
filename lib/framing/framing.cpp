@@ -1,43 +1,106 @@
-#include "stream_frame.h"
-#include "ack_frame.h"
+#include "framing.h"
 
-void framing_t::enframe()
+#include "ack_frame.h"
+#include "close_frame.h"
+#include "decongestion_frame.h"
+#include "detach_frame.h"
+#include "empty_frame.h"
+#include "frame_format.h"
+#include "padding_frame.h"
+#include "priority_frame.h"
+#include "reset_frame.h"
+#include "settings_frame.h"
+#include "stream_frame.h"
+
+namespace sss { namespace framing {
+
+namespace {
+
+template <typename T>
+class has_dispatch {
+    template <typename U>
+    static char check(decltype(static_cast<U*>(nullptr)->
+                dispatch(static_cast<channel::ptr>(nullptr)))*);
+
+    template <typename U>
+    static int check(...);
+
+public:
+    static constexpr bool value = (sizeof(check<T>(nullptr)) == sizeof(char));
+};
+
+template<typename T, bool c>
+struct dispatch_caller__
 {
-    if (sizer::estimate_size(packets.front()) < buffer_size(output_buffer)) {
+public:
+    static void call(T& o, channel::ptr c)
+    {
+    }
+};
+
+template <typename T>
+struct dispatch_caller__<T, true>
+{
+public:
+    static void call(T& o, channel::ptr c)
+    {
+        o.dispatch(c);
+    }
+};
+
+template <typename T>
+using dispatch_caller = dispatch_caller__<T, has_dispatch<T>::value>;
+
+}
+
+template <typename T>
+void framing_t::read_handler(asio::const_buffer input)
+{
+    T frame;
+    frame.read(input);
+    dispatch_caller<T>::call(frame, channel_);
+}
+
+std::array<framing_t::read_handler_type, max_frame_count_t::value> framing_t::handlers_ = {
+    framing_t::read_handler<empty_frame_t>,
+    framing_t::read_handler<stream_frame_t>,
+    framing_t::read_handler<ack_frame_t>,
+    framing_t::read_handler<padding_frame_t>,
+    framing_t::read_handler<decongestion_frame_t>,
+    framing_t::read_handler<detach_frame_t>,
+    framing_t::read_handler<reset_frame_t>,
+    framing_t::read_handler<close_frame_t>,
+    framing_t::read_handler<settings_frame_t>,
+    framing_t::read_handler<priority_frame_t>
+};
+
+framing_t::framing_t(channel::ptr c)
+    : channel_{c}
+{
+}
+
+void framing_t::enframe(asio::mutable_buffer output)
+{
+    if (sizer::estimate_size(packets.front()) < asio::buffer_size(output_buffer)) {
         write(output_buffer, packets.front());
         packets.pop();
     }
-    if (buffer_size(output_buffer) > 0) {
+    if (asio::buffer_size(output_buffer) > 0) {
         filler(output_buffer);
     }
 }
 
 // Read packet frames and deliver decoded frames to appropriate handlers.
-void framing_t::deframe()
+void framing_t::deframe(asio::const_buffer input)
 {
-    // input buffer must be positioned at first frame
-    uint8_t type = *buffer_cast<uint8_t*>(input_buffer);
-    if (type > lastSupportedType) throw "Invalid frame type";
-    switch (type) {
-        case stream_frame_type_t::value:
-            stream_frame_header_t hdr;
-            read(input_buffer, hdr);
-            STREAM_read_handler(hdr);
-            break;
-        case ack_frame_type_t::value:
-            ack_frame_header_t hdr;
-            read(input_buffer, hdr);
-            ACK_read_handler(hdr);
-            break;
-        default:
-            throw "Unreachable";
+    while (asio::buffer_size(input) > 0) {
+        uint8_t frame_type = *buffer_cast<uint8_t*>(input);
+        if (type >= max_frame_count_t::value) throw "Invalid frame type";
+        this->(*handlers_[type])(input);
     }
 }
 
-// We've received a stream frame, dispatch it to corresponding awaiting stream or spawn a new one.
-void framing_t::STREAM_read_handler(stream_frame_header_t hdr)
-{}
+}
 
-// We've received ack frame, update missed packets information queues.
-void framing_t::ACK_read_handler(ack_frame_header_t hdr)
-{}
+}
+

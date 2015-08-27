@@ -7,6 +7,7 @@ else()
     set(SSS_LIBS routing sss)
 endif()
 
+create_test(frames_serialization LIBS sss arsenal)
 create_test(identity LIBS sss arsenal ${OPENSSL_LIBRARIES})
 
 create_test(host LIBS sss arsenal krypto ${OPENSSL_LIBRARIES})

@@ -40,7 +40,9 @@ struct uint56_t {
     operator uint64_t() { return uint64_t(high) << 24 | low; }
 };
 
-}}
+}
+
+}
 
 BOOST_FUSION_ADAPT_STRUCT(
     sss::framing::uint24_t,
@@ -119,7 +121,18 @@ struct ext_sized_field_t
 
 namespace sss { namespace framing {
 
+using empty_frame_type_t = std::integral_constant<uint8_t, 0>;
 using stream_frame_type_t = std::integral_constant<uint8_t, 1>;
+using ack_frame_type_t = std::integral_constant<uint8_t, 2>;
+using padding_frame_type_t = std::integral_constant<uint8_t, 3>;
+using decongestion_frame_type_t = std::integral_constant<uint8_t, 4>;
+using detach_frame_type_t = std::integral_constant<uint8_t, 5>;
+using reset_frame_type_t = std::integral_constant<uint8_t, 6>;
+using close_frame_type_t = std::integral_constant<uint8_t, 7>;
+using settings_frame_type_t = std::integral_constant<uint8_t, 8>;
+using priority_frame_type_t = std::integral_constant<uint8_t, 9>;
+using max_frame_count_t = std::integral_constant<uint8_t, 10>;
+
 using stream_flags_field_t = field_flag<uint8_t>;
 using optional_parent_sid_t = optional_field_specification<uint32_t, field_index<1>, 6_bits_shift>;
 using optional_usid_t = optional_field_specification<usid_t, field_index<1>, 5_bits_shift>;
@@ -130,6 +143,11 @@ using packet_stream_offset_t = varsize_field_specification<stream_offset_t, fiel
 using frame_data_t = ext_sized_field_t<field_index<6>>;
 
 }}
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (sss)(framing), empty_frame_header,
+    (sss::framing::empty_frame_type_t, type)
+);
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), stream_frame_header,
@@ -146,50 +164,65 @@ BOOST_FUSION_DEFINE_STRUCT(
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), ack_frame_header,
-    (uint8_t, type)
-    (uint8_t, sent_entropy)
-    (uint8_t, received_entropy)
-    (uint8_t, missing_packets)
-    (uint64_t, least_unacked_packet)
-    (uint64_t, largest_observed_packet)
-    (uint32_t, largest_observed_delta_time)
+    (sss::framing::ack_frame_type_t, type)
+    (big_uint8_t, sent_entropy)
+    (big_uint8_t, received_entropy)
+    (big_uint8_t, missing_packets)
+    (big_uint64_t, least_unacked_packet)
+    (big_uint64_t, largest_observed_packet)
+    (big_uint32_t, largest_observed_delta_time)
     (std::vector<uint64_t>, nacks)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), padding_frame_header,
-    (uint8_t, type)
-    (uint16_t, length)
+    (sss::framing::padding_frame_type_t, type)
+    (big_uint16_t, length)
     (rest_t, frame) // [length] padding data - @todo only until end of the frame! ext length spec...
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), decongestion_frame_header,
-    (uint8_t, type)
+    (sss::framing::decongestion_frame_type_t, type)
+    (big_uint8_t, subtype)
+    //(rest_t, data) // @todo need to change this field to more clear type.
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), detach_frame_header,
-    (uint8_t, type)
+    (sss::framing::detach_frame_type_t, type)
+    (big_uint32_t, lsid)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), reset_frame_header,
-    (uint8_t, type)
+    (sss::framing::reset_frame_type_t, type)
+    (uint32_t, lsid)
+    (big_uint32_t, error_code)
+    (big_uint16_t, reason_phrase_length)
+    //(sss::framing::frame_data_t, reason_phrase) // variable size data
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), close_frame_header,
-    (uint8_t, type)
+    (sss::framing::close_frame_type_t, type)
+    (big_uint32_t, error_code)
+    (big_uint16_t, reason_phrase_length)
+    (sss::framing::frame_data_t, reason_phrase)
+    (sss::framing::ack_frame_header_t, final_ack_frame)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), settings_frame_header,
-    (uint8_t, type)
+    (sss::framing::settings_frame_type_t, type)
+    (big_uint16_t, number_of_settings)
+    (sss::framing::frame_data_t, settings_tag)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), priority_frame_header,
-    (uint8_t, type)
+    (sss::framing::priority_frame_type_t, type)
+    (uint32_t, lsid)
+    (uint32_t, priority_value)
 );
 
