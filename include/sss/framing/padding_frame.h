@@ -1,18 +1,23 @@
 #pragma once
 
 #include "packet_frame.h"
+#include "frame_format.h"
 
 namespace sss { namespace framing {
 
 class padding_frame_t : public packet_frame_t
 {
 public:
-    padding_frame_t(sss::framing::padding_frame_header_t header) : header_{header_} {};
-    int write(asio::mutable_buffer output) const;
-    int read(asio::const_buffer input);
+    int write(boost::asio::mutable_buffer output) const;
+    int read(boost::asio::const_buffer input);
 
+    bool operator==(const padding_frame_t& o)
+    {
+        return o.header_ == header_;
+    }
+    
 private:
-    sss::framing::padding_frame_header_t header_;
+    sss::framing::padding_frame_header header_;
 };
 
 } }

@@ -1,9 +1,12 @@
+#include "sss/framing/stream_frame.h"
+
 #include "arsenal/fusionary.hpp"
 
 using namespace std;
 namespace asio = boost::asio;
 namespace mpl = boost::mpl;
 
+namespace sss { namespace framing {
 // Write STREAM frame.
 //            0 :                   1 : Frame type (1 - STREAM)
 //            1 :                   1 : Flags (niuooodf)
@@ -14,14 +17,17 @@ namespace mpl = boost::mpl;
 // (10,14,34)+O :                   2 : Data length (optional, when DATA LENGTH (d) bit is set) D
 // (12,16,36)+O :                   D : Data
 
+/*
 constexpr uint8_t no_ack_bit = 0b1000'0000; //'
 constexpr uint8_t init_bit   = 0b0100'0000; //'
 constexpr uint8_t usid_bit   = 0b0010'0000; //'
 constexpr uint8_t data_bit   = 0b0000'0010; //'
 constexpr uint8_t fini_bit   = 0b0000'0001; //'
+*/
 
-int stream_frame_t::write(asio::mutable_buffer output)
+int stream_frame_t::write(asio::mutable_buffer output) const
 {
+    /*
     header_.flags &= 0b0001'1110; //'
     if (no_ack) header_.flags |= no_ack_bit;
     if (init) {
@@ -88,6 +94,7 @@ int stream_frame_t::write(asio::mutable_buffer output)
         write(output, header_.data_length);
     }
     write_buffer(output, data);
+    */
     return 1;
 }
 
@@ -100,3 +107,4 @@ void stream_frame_t::dispatch(channel::ptr c)
 {
 }
 
+} }

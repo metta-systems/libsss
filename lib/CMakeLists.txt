@@ -36,6 +36,19 @@ set(stream_SOURCES
     stream_peer.cpp
     stream_protocol.cpp)
 
+set(framing_SOURCES
+    framing/ack_frame.cpp
+    framing/close_frame.cpp
+    framing/decongestion_frame.cpp
+    framing/detach_frame.cpp
+    framing/empty_frame.cpp
+    framing/framing.cpp
+    framing/padding_frame.cpp
+    framing/priority_frame.cpp
+    framing/reset_frame.cpp
+    framing/settings_frame.cpp
+    framing/stream_frame.cpp)
+
 add_library(sss STATIC
     ${comm_SOURCES}
     ${stream_SOURCES}
@@ -49,4 +62,5 @@ add_library(sss STATIC
     asio_host_state.cpp
     socket_host_state.cpp
     ${simulator_SOURCES}
-    ${platform_SOURCES})
+    ${platform_SOURCES}
+    ${framing_SOURCES})

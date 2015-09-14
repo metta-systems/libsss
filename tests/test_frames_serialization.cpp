@@ -7,33 +7,58 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #define BOOST_TEST_MODULE Test_frames_serialization
-#include <boost/test/unit_test.hpp>
-#include <fstream>
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
 #include "arsenal/logging.h"
 #include "sss/framing/frame_format.h"
+#include "sss/framing/ack_frame.h"
+#include "sss/framing/close_frame.h"
+#include "sss/framing/decongestion_frame.h"
+#include "sss/framing/detach_frame.h"
+#include "sss/framing/empty_frame.h"
+#include "sss/framing/packet_frame.h"
+#include "sss/framing/padding_frame.h"
+#include "sss/framing/priority_frame.h"
+#include "sss/framing/reset_frame.h"
+#include "sss/framing/settings_frame.h"
+#include "sss/framing/stream_frame.h"
+
+#include <boost/test/unit_test.hpp>
+
+#include <fstream>
 
 using namespace std;
+using namespace sss::framing;
 
 BOOST_AUTO_TEST_CASE(serialize_frames)
 {
-	std::vector<char> b(5000);
-	boost::asio::buffer buf(b);
-	empty_frame   ef;
-	stream_frame  sf;
-	ack_frame	  af;
-	padding_frame pf;
-	decongestion_frame dcf;
-	detach_frame  dtf;
-	reset_frame	  rf;
-	close_frame   cf;
-	settings_frame sef;
-	priority_frame prf;	
+	char b[5000];
+	empty_frame_t ef, ef2;
+	stream_frame_t sf, sf2;
+	ack_frame_t af, af2;
+	padding_frame_t pf, pf2;
+	decongestion_frame_t dcf, dcf2;
+	detach_frame_t dtf, dtf2;
+	reset_frame_t rf, rf2;
+	close_frame_t cf, cf2;
+	settings_frame_t sef, sef2;
+	priority_frame_t prf, prf2;
+
+	boost::asio::const_buffer rbuf(b, 5000);
+    ef2.read(rbuf);
+    sf2.read(rbuf);
+    af2.read(rbuf);
+    pf2.read(rbuf);
+    dcf2.read(rbuf);
+    dtf2.read(rbuf);
+    rf2.read(rbuf);
+    cf2.read(rbuf);
+    sef2.read(rbuf);
+    prf2.read(rbuf);
 
 
-/*
+	boost::asio::mutable_buffer buf(b, 5000);
 	ef.write(buf);
 	sf.write(buf);
 	af.write(buf);
@@ -44,29 +69,15 @@ BOOST_AUTO_TEST_CASE(serialize_frames)
 	cf.write(buf);
 	sef.write(buf);
 	prf.write(buf);
-*/
-	buf = fusionary::write(buf, ef);
-	buf = fusionary::write(buf, sef);
-	buf = fusionary::write(buf, af);
-	buf = fusionary::write(buf, pf);
-	buf = fusionary::write(buf, dcf);
-	buf = fusionary::write(buf, dtf);
-	buf = fusionary::write(buf, rf);
-	buf = fusionary::write(buf, cf);
-	buf = fusionary::write(buf, sef);
-	buf = fusionary::write(buf, prf);
 
-
-	BOOST_CHECK(empty_frame::read(buf) == ef);
-	BOOST_CHECK(stream_frame::read(buf) == sf);
-	BOOST_CHECK(ack_frame::read(buf) == af);
-	BOOST_CHECK(padding_frame::read(buf) == pf);
-	BOOST_CHECK(decongestion_frame::read(buf) == dcf);
-	BOOST_CHECK(detach_frame::read(buf) == dtf);
-	BOOST_CHECK(reset_frame::read(buf) == rf);
-	BOOST_CHECK(close_frame::read(buf) == cf);
-	BOOST_CHECK(settings_frame::read(buf) == sef);
-	BOOST_CHECK(priority_frame::read(buf) == prf);
-
-    logger::file_dump(data, "frames serialization test");
+	BOOST_CHECK(ef2 == ef);
+	BOOST_CHECK(sf2 == sf);
+	BOOST_CHECK(af2 == af);
+	BOOST_CHECK(pf2 == pf);
+	BOOST_CHECK(dcf2 == dcf);
+	BOOST_CHECK(dtf2 == dtf);
+	BOOST_CHECK(rf2 == rf);
+	BOOST_CHECK(cf2 == cf);
+	BOOST_CHECK(sef2 == sef);
+	BOOST_CHECK(prf2 == prf);
 }

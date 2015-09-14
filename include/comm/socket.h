@@ -28,7 +28,7 @@ class socket_channel;
  * For connected sockets there may be a number of channels established.
  * Socket orchestrates initiation of key exchanges (@fixme should it?).
  */
-class socket : std::enable_shared_from_this<socket>
+class socket : public std::enable_shared_from_this<socket>
 {
     /**
      * Host state instance this socket is attached to.

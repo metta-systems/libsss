@@ -10,6 +10,12 @@
 
 #include "sss/framing/framing_types.h"
 
+#include "arsenal/opaque_endian.h"
+
+#include <boost/fusion/sequence/comparison/equal_to.hpp>
+#include <boost/fusion/include/equal_to.hpp>
+
+
 //=================================================================================================
 // Framing layer
 //=================================================================================================
@@ -46,7 +52,7 @@ struct uint56_t {
 
 BOOST_FUSION_ADAPT_STRUCT(
     sss::framing::uint24_t,
-    (uint32_t, high)
+    (uint16_t, high)
     (uint8_t, low)
 );
 
@@ -116,7 +122,12 @@ BOOST_FUSION_DEFINE_STRUCT(
 template <typename SizeFieldIndex>
 struct ext_sized_field_t
 {
-    std::string data;
+    std::string data_;
+
+    bool operator==(ext_sized_field_t const& o) const
+    {
+        return data_ == o.data_;
+    }
 };
 
 namespace sss { namespace framing {
@@ -209,7 +220,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (big_uint32_t, error_code)
     (big_uint16_t, reason_phrase_length)
     (sss::framing::frame_data_t, reason_phrase)
-    (sss::framing::ack_frame_header_t, final_ack_frame)
+    (sss::framing::ack_frame_header, final_ack_frame)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
@@ -226,3 +237,56 @@ BOOST_FUSION_DEFINE_STRUCT(
     (uint32_t, priority_value)
 );
 
+namespace sss { namespace framing {
+
+inline bool operator==(empty_frame_header const& f, empty_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(stream_frame_header const& f, stream_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(ack_frame_header const& f, ack_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(padding_frame_header const& f, padding_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(decongestion_frame_header const& f, decongestion_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(detach_frame_header const& f, detach_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(reset_frame_header const& f, reset_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(close_frame_header const& f, close_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(settings_frame_header const& f, settings_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+inline bool operator==(priority_frame_header const& f, priority_frame_header const& s)
+{
+    return boost::fusion::equal_to(f, s);
+}
+
+} }

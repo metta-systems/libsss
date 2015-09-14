@@ -1,19 +1,27 @@
 #pragma once
 
 #include "packet_frame.h"
+#include "frame_format.h"
+
+#include "sss/channels/channel.h"
 
 namespace sss { namespace framing {
 
 class reset_frame_t : public packet_frame_t
 {
 public:
-    int write(asio::mutable_buffer output) const;
-    int read(asio::const_buffer input);
-    void dispatch();
+    int write(boost::asio::mutable_buffer output) const;
+    int read(boost::asio::const_buffer input);
+    void dispatch(channel::ptr);
+    
+    bool operator==(const reset_frame_t& o)
+    {
+        return o.header_ == header_ && o.data_ == data_;
+    }
     
 private:
-    sss::framing::reset_frame_header_t header_;
-    string data_;
+    sss::framing::reset_frame_header header_;
+    std::string data_;
 };
 
 } }

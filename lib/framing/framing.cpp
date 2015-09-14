@@ -1,16 +1,16 @@
-#include "framing.h"
+#include "sss/framing/framing.h"
 
-#include "ack_frame.h"
-#include "close_frame.h"
-#include "decongestion_frame.h"
-#include "detach_frame.h"
-#include "empty_frame.h"
-#include "frame_format.h"
-#include "padding_frame.h"
-#include "priority_frame.h"
-#include "reset_frame.h"
-#include "settings_frame.h"
-#include "stream_frame.h"
+#include "sss/framing/ack_frame.h"
+#include "sss/framing/close_frame.h"
+#include "sss/framing/decongestion_frame.h"
+#include "sss/framing/detach_frame.h"
+#include "sss/framing/empty_frame.h"
+#include "sss/framing/frame_format.h"
+#include "sss/framing/padding_frame.h"
+#include "sss/framing/priority_frame.h"
+#include "sss/framing/reset_frame.h"
+#include "sss/framing/settings_frame.h"
+#include "sss/framing/stream_frame.h"
 
 namespace sss { namespace framing {
 
@@ -33,7 +33,7 @@ template<typename T, bool c>
 struct dispatch_caller__
 {
 public:
-    static void call(T& o, channel::ptr c)
+    static void call(T&, channel::ptr)
     {
     }
 };
@@ -54,49 +54,51 @@ using dispatch_caller = dispatch_caller__<T, has_dispatch<T>::value>;
 }
 
 template <typename T>
-void framing_t::read_handler(asio::const_buffer input)
+void framing_t::read_handler(boost::asio::const_buffer input)
 {
     T frame;
     frame.read(input);
     dispatch_caller<T>::call(frame, channel_);
 }
 
-std::array<framing_t::read_handler_type, max_frame_count_t::value> framing_t::handlers_ = {
-    framing_t::read_handler<empty_frame_t>,
-    framing_t::read_handler<stream_frame_t>,
-    framing_t::read_handler<ack_frame_t>,
-    framing_t::read_handler<padding_frame_t>,
-    framing_t::read_handler<decongestion_frame_t>,
-    framing_t::read_handler<detach_frame_t>,
-    framing_t::read_handler<reset_frame_t>,
-    framing_t::read_handler<close_frame_t>,
-    framing_t::read_handler<settings_frame_t>,
-    framing_t::read_handler<priority_frame_t>
-};
+std::array<framing_t::read_handler_type, max_frame_count_t::value> framing_t::handlers_ = { {
+    &framing_t::read_handler<empty_frame_t>,
+    &framing_t::read_handler<stream_frame_t>,
+    &framing_t::read_handler<ack_frame_t>,
+    &framing_t::read_handler<padding_frame_t>,
+    &framing_t::read_handler<decongestion_frame_t>,
+    &framing_t::read_handler<detach_frame_t>,
+    &framing_t::read_handler<reset_frame_t>,
+    &framing_t::read_handler<close_frame_t>,
+    &framing_t::read_handler<settings_frame_t>,
+    &framing_t::read_handler<priority_frame_t>
+} };
 
 framing_t::framing_t(channel::ptr c)
     : channel_{c}
 {
 }
 
-void framing_t::enframe(asio::mutable_buffer output)
+void framing_t::enframe(boost::asio::mutable_buffer output)
 {
-    if (sizer::estimate_size(packets.front()) < asio::buffer_size(output_buffer)) {
+    /*
+    if (sizer::estimate_size(packets.front()) < boost::asio::buffer_size(output_buffer)) {
         write(output_buffer, packets.front());
         packets.pop();
     }
-    if (asio::buffer_size(output_buffer) > 0) {
+    if (boost::asio::buffer_size(output_buffer) > 0) {
         filler(output_buffer);
     }
+    */
 }
 
 // Read packet frames and deliver decoded frames to appropriate handlers.
-void framing_t::deframe(asio::const_buffer input)
+void framing_t::deframe(boost::asio::const_buffer input)
 {
-    while (asio::buffer_size(input) > 0) {
-        uint8_t frame_type = *buffer_cast<uint8_t*>(input);
-        if (type >= max_frame_count_t::value) throw "Invalid frame type";
-        this->(*handlers_[type])(input);
+    while (boost::asio::buffer_size(input) > 0) {
+        uint8_t frame_type = *boost::asio::buffer_cast<const uint8_t*>(input);
+        if (frame_type >= max_frame_count_t::value) throw "Invalid frame type";
+        (this->*handlers_[frame_type])(input);
     }
 }
 
