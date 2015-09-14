@@ -33,7 +33,7 @@ sim_host::create(shared_ptr<simulator> sim)
 }
 
 sim_host::sim_host(shared_ptr<simulator> sim)
-    : host()
+    : host(private_tag{})
     , simulator_(sim)
 {}
 

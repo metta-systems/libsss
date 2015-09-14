@@ -6,9 +6,10 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "sss/simulation/sim_socket.h"
+#include "sss/simulation/sim_connection.h"
 #include "sss/simulation/sim_host.h"
 #include "sss/simulation/sim_packet.h"
+#include "sss/simulation/sim_socket.h"
 
 using namespace std;
 
@@ -33,7 +34,7 @@ sim_socket::bind(uia::comm::endpoint const& ep)
 
     if (ep.port() == 0) {
         int port = 1;
-        for (; port < 65536 and host_->socket_for_port(port) != nullptr;)
+        for (; port < 65536 and host_->link_for(port) != nullptr;)
             ++port;
 
         assert(port < 65536);
@@ -43,7 +44,7 @@ sim_socket::bind(uia::comm::endpoint const& ep)
         port_ = ep.port();
     }
 
-    host_->register_socket_for_port(port_, shared_from_this());
+    host_->register_link_at(port_, std::enable_shared_from_this<sim_socket>::shared_from_this());
 
     logger::debug() << "Bound virtual socket on " << ep;
 
@@ -56,7 +57,7 @@ sim_socket::unbind()
 {
     if (port_ > 0)
     {
-        host_->unregister_socket_for_port(port_, shared_from_this());
+        host_->unregister_link_at(port_, std::enable_shared_from_this<sim_socket>::shared_from_this());
         port_ = 0;
     }
     set_active(false);
