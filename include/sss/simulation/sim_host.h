@@ -44,6 +44,10 @@ class sim_host : public host
     std::vector<std::shared_ptr<sim_packet>> packet_queue_;
 
 public:
+    using ptr = std::shared_ptr<sim_host>;
+    using weak_ptr = std::weak_ptr<sim_host>;
+
+public:
     std::shared_ptr<simulator> get_simulator() const { return simulator_; }
 
     /**
@@ -76,9 +80,9 @@ public:
         std::shared_ptr<sim_connection> conn);
     std::shared_ptr<sim_connection> connection_at(uia::comm::endpoint const& ep);
 
-    void register_link_at(uint16_t port, std::shared_ptr<sim_socket> socket);
-    void unregister_link_at(uint16_t port, std::shared_ptr<sim_socket> socket);
-    std::shared_ptr<sim_socket> link_for(uint16_t port);
+    void register_socket_at(uint16_t port, std::shared_ptr<sim_socket> socket);
+    void unregister_socket_at(uint16_t port, std::shared_ptr<sim_socket> socket);
+    std::shared_ptr<sim_socket> socket_for(uint16_t port);
 
     std::shared_ptr<sim_host> neighbor_at(uia::comm::endpoint const& ep, uia::comm::endpoint& src);
 

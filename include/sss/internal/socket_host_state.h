@@ -68,7 +68,6 @@ protected:
      *                     port if found. In any case, sets the 'port' key to the port
      *                     actually used.
      * @param default_port Default port number to bind to if 'port' key not found in @a settings.
-     * @return the created socket (during this or a previous call).
      */
     void init_socket(settings_provider* settings,
         uint16_t default_port = stream_protocol::default_port);

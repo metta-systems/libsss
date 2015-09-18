@@ -1,19 +1,16 @@
 #pragma once
 
 #include "packet_frame.h"
+#include "frame_format.h"
+
+#include "sss/channels/channel.h"
 
 namespace sss { namespace framing {
 
-class close_frame_t : public packet_frame_t
+class close_frame_t : public packet_frame_t<close_frame_header>
 {
 public:
-    int write(asio::mutable_buffer output) const;
-    int read(asio::const_buffer input);
     void dispatch(channel::ptr);
-    
-private:
-    sss::framing::close_frame_header_t header_;
-    string data_;
 };
 
 } }

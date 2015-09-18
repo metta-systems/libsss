@@ -1,14 +1,10 @@
 #pragma once
 
 #include "packet_frame.h"
+#include "frame_format.h"
 
 namespace sss { namespace framing {
 
-class empty_frame_t : public packet_frame_t
-{
-public:
-    int write(asio::mutable_buffer output) const;
-    int read(asio::const_buffer input);
-};
+using empty_frame_t = packet_frame_t<empty_frame_header>;
 
 } }

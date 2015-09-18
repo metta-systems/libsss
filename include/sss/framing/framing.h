@@ -1,8 +1,10 @@
 #include "packet_frame.h"
 #include "frame_format.h"
 
+#include "sss/channels/channel.h"
+
 #include <memory>
-#include <boost/asio/buffers.hpp>
+#include <boost/asio/buffer.hpp>
 
 namespace sss { namespace framing {
 
@@ -21,10 +23,10 @@ namespace sss { namespace framing {
 */
 class framed_packet
 {
-    asio::mutable_buffer packet;              // whole packet
-    asio::mutable_buffer unencrypted_header;  // packet subrange covering unencrypted header
-    asio::mutable_buffer packet_header;       // packet subrange covering packet header
-    std::vector<asio::mutable_buffer> frames; // packet subranges covering sequence of frames
+    boost::asio::mutable_buffer packet;              // whole packet
+    boost::asio::mutable_buffer unencrypted_header;  // packet subrange covering unencrypted header
+    boost::asio::mutable_buffer packet_header;       // packet subrange covering packet header
+    std::vector<boost::asio::mutable_buffer> frames; // packet subranges covering sequence of frames
 };
 
 // EMPTY frame - tag 0 byte, nothing contained - can be used to pad 1 or 2 byte gaps where PADDING
@@ -49,16 +51,16 @@ class framing_t
 public:
     framing_t(channel::ptr c);
 
-    void enframe(asio::mutable_buffer output);
-    void deframe(asio::const_buffer input);
+    void enframe(boost::asio::mutable_buffer output);
+    void deframe(boost::asio::const_buffer input);
 
 private:
     template <typename T>
-    read_handler(asio::const_buffer input);
+    void read_handler(boost::asio::const_buffer input);
 
 private:
-    using read_handler_type = void (framing::*) (asio::const_buffer);
-    std::array<read_handler_type, max_frame_count_type_t::value> handlers_;
+    using read_handler_type = void (framing_t::*) (boost::asio::const_buffer);
+    static std::array<read_handler_type, max_frame_count_t::value> handlers_;
 
     // References to streams and channel associated with this framing instance.
     // When parsing received frames, call into stream_[lsid]->rx_*() and channel_->rx_*() functions

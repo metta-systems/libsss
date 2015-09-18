@@ -42,6 +42,7 @@ class host
     , public timer_host_state
     , protected routing_host_state
 {
+protected:
     struct private_tag {};
 public:
     using ptr = std::shared_ptr<host>;

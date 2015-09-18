@@ -20,6 +20,9 @@ class sim_host;
 class sim_connection : public std::enable_shared_from_this<sim_connection>
 {
 public:
+    using ptr = std::shared_ptr<sim_connection>;
+    using weak_ptr = std::weak_ptr<sim_connection>;
+public:
     struct params {
         int rate;  ///< Bandwidth in bytes per second.
         async::timer::duration_type delay; ///< Connection delay.

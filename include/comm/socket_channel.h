@@ -25,7 +25,7 @@ namespace comm {
  * May be used as an abstract base by overriding the receive() method,
  * or used as a concrete class by connecting to the on_received signal.
  */
-class socket_channel : std::enable_shared_from_this<socket_channel>
+class socket_channel : public std::enable_shared_from_this<socket_channel>
 {
     socket::weak_ptr socket_;             ///< Socket we're currently bound to, if any.
     endpoint         remote_ep_;          ///< Endpoint of the remote side.
