@@ -34,7 +34,7 @@ sim_socket::bind(uia::comm::endpoint const& ep)
 
     if (ep.port() == 0) {
         int port = 1;
-        for (; port < 65536 and host_->link_for(port) != nullptr;)
+        for (; port < 65536 and host_->socket_for(port) != nullptr;)
             ++port;
 
         assert(port < 65536);
@@ -44,7 +44,7 @@ sim_socket::bind(uia::comm::endpoint const& ep)
         port_ = ep.port();
     }
 
-    host_->register_link_at(port_, std::enable_shared_from_this<sim_socket>::shared_from_this());
+    host_->register_socket_at(port_, std::enable_shared_from_this<sim_socket>::shared_from_this());
 
     logger::debug() << "Bound virtual socket on " << ep;
 
@@ -57,7 +57,7 @@ sim_socket::unbind()
 {
     if (port_ > 0)
     {
-        host_->unregister_link_at(port_, std::enable_shared_from_this<sim_socket>::shared_from_this());
+        host_->unregister_socket_at(port_, std::enable_shared_from_this<sim_socket>::shared_from_this());
         port_ = 0;
     }
     set_active(false);

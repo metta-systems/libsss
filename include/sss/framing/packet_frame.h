@@ -2,7 +2,7 @@
 
 #include "arsenal/fusionary.hpp"
 
-template <typename H>
+template <typename HeaderType>
 class packet_frame_t
 {
 public:
@@ -26,5 +26,5 @@ public:
     }
 
 protected:
-    H header_;
+    HeaderType header_;
 };

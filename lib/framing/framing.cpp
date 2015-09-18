@@ -12,6 +12,8 @@
 #include "sss/framing/settings_frame.h"
 #include "sss/framing/stream_frame.h"
 
+using namespace boost::asio;
+
 namespace sss { namespace framing {
 
 namespace {
@@ -54,7 +56,7 @@ using dispatch_caller = dispatch_caller__<T, has_dispatch<T>::value>;
 }
 
 template <typename T>
-void framing_t::read_handler(boost::asio::const_buffer input)
+void framing_t::read_handler(const_buffer input)
 {
     T frame;
     frame.read(input);
@@ -79,24 +81,24 @@ framing_t::framing_t(channel::ptr c)
 {
 }
 
-void framing_t::enframe(boost::asio::mutable_buffer output)
+void framing_t::enframe(mutable_buffer output)
 {
     /*
-    if (sizer::estimate_size(packets.front()) < boost::asio::buffer_size(output_buffer)) {
+    if (sizer::estimate_size(packets.front()) < buffer_size(output_buffer)) {
         write(output_buffer, packets.front());
         packets.pop();
     }
-    if (boost::asio::buffer_size(output_buffer) > 0) {
+    if (buffer_size(output_buffer) > 0) {
         filler(output_buffer);
     }
     */
 }
 
 // Read packet frames and deliver decoded frames to appropriate handlers.
-void framing_t::deframe(boost::asio::const_buffer input)
+void framing_t::deframe(const_buffer input)
 {
-    while (boost::asio::buffer_size(input) > 0) {
-        uint8_t frame_type = *boost::asio::buffer_cast<const uint8_t*>(input);
+    while (buffer_size(input) > 0) {
+        uint8_t frame_type = *buffer_cast<const uint8_t*>(input);
         if (frame_type >= max_frame_count_t::value) throw "Invalid frame type";
         (this->*handlers_[frame_type])(input);
     }

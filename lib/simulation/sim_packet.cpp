@@ -105,7 +105,7 @@ void sim_packet::arrive()
 
     timer_.stop();
 
-    std::shared_ptr<sim_socket> socket = target_host_->link_for(to_.port());
+    std::shared_ptr<sim_socket> socket = target_host_->socket_for(to_.port());
     if (!socket)
     {
         logger::info() << "No listener registered on port " << to_.port() << " in target host";
