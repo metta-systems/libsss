@@ -1159,7 +1159,7 @@ channel::receive_decode(asio::const_buffer in, byte_array& out)
 {
     try {
         sss::channels::message_packet_header msg;
-        tie(msg, in) = fusionary::read(msg, in);
+        in = fusionary::read(msg, in);
 
         assert(asio::buffer_size(in) == 0);
 

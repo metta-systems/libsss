@@ -16,7 +16,7 @@ public:
     int read(boost::asio::const_buffer& input)
     {
         auto l = boost::asio::buffer_size(input);
-        input = fusionary::read(header_, input).second;
+        input = fusionary::read(header_, input);
         return l - boost::asio::buffer_size(input);
     }
 
