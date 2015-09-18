@@ -409,6 +409,7 @@ private:
      */
     // void substream_read_record();
 
+public:
     /**
      * Create a base_stream instance.
      * @param h parent host
