@@ -9,21 +9,10 @@ namespace sss { namespace framing {
 
 class framing_t;
 
-class stream_frame_t : public packet_frame_t
+class stream_frame_t : public packet_frame_t<stream_frame_header>
 {
 public:
-    int write(boost::asio::mutable_buffer output) const;
-    int read(boost::asio::const_buffer input);
     void dispatch(channel::ptr);
-
-    bool operator==(const stream_frame_t& o)
-    {
-        return o.header_ == header_ && o.data_ == data_;
-    }
-
-private:
-    stream_frame_header header_;
-    std::string data_;
 };
 
 } }

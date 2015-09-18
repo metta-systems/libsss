@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Test_key_message_serialization
 #include <boost/test/unit_test.hpp>
 #include <fstream>
-#include "sss/stream_protocol.h"
+#include "sss/framing/stream_protocol.h"
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"

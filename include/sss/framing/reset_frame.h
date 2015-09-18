@@ -7,21 +7,10 @@
 
 namespace sss { namespace framing {
 
-class reset_frame_t : public packet_frame_t
+class reset_frame_t : public packet_frame_t<reset_frame_header>
 {
 public:
-    int write(boost::asio::mutable_buffer output) const;
-    int read(boost::asio::const_buffer input);
     void dispatch(channel::ptr);
-    
-    bool operator==(const reset_frame_t& o)
-    {
-        return o.header_ == header_ && o.data_ == data_;
-    }
-    
-private:
-    sss::framing::reset_frame_header header_;
-    std::string data_;
 };
 
 } }

@@ -33,7 +33,12 @@ using namespace sss::framing;
 
 BOOST_AUTO_TEST_CASE(serialize_frames)
 {
-	char b[5000];
+	char b[5000] = {
+        '\0',
+        '\1',
+            '\31', 
+            '\0', '\0', '\0', '\1', 
+    };
 	empty_frame_t ef, ef2;
 	stream_frame_t sf, sf2;
 	ack_frame_t af, af2;

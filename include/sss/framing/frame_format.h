@@ -119,17 +119,6 @@ BOOST_FUSION_DEFINE_STRUCT(
     (uint64_t,               size8)
 );
 
-template <typename SizeFieldIndex>
-struct ext_sized_field_t
-{
-    std::string data_;
-
-    bool operator==(ext_sized_field_t const& o) const
-    {
-        return data_ == o.data_;
-    }
-};
-
 namespace sss { namespace framing {
 
 using empty_frame_type_t = std::integral_constant<uint8_t, 0>;
@@ -147,11 +136,10 @@ using max_frame_count_t = std::integral_constant<uint8_t, 10>;
 using stream_flags_field_t = field_flag<uint8_t>;
 using optional_parent_sid_t = optional_field_specification<uint32_t, field_index<1>, 6_bits_shift>;
 using optional_usid_t = optional_field_specification<usid_t, field_index<1>, 5_bits_shift>;
-using optional_data_length_t = optional_field_specification<uint16_t, field_index<1>, 1_bits_shift>;
+using optional_data_t = optional_field_specification<std::string, field_index<1>, 1_bits_shift>;
 using stream_offset_t = varsize_field_wrapper<packet_stream_offset, uint64_t>;
 using packet_stream_offset_t = varsize_field_specification<stream_offset_t, field_index<1>,
     3_bits_mask, 2_bits_shift>;
-using frame_data_t = ext_sized_field_t<field_index<6>>;
 
 }}
 
@@ -168,8 +156,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (sss::framing::optional_parent_sid_t, parent_stream_id)
     (sss::framing::optional_usid_t, usid)
     (sss::framing::packet_stream_offset_t, stream_offset)
-    (sss::framing::optional_data_length_t, data_length)
-    (sss::framing::frame_data_t, frame) // variable size data
+    (sss::framing::optional_data_t, frame)
     // ^^ ext length spec through data_length member
 );
 
@@ -210,16 +197,14 @@ BOOST_FUSION_DEFINE_STRUCT(
     (sss::framing::reset_frame_type_t, type)
     (uint32_t, lsid)
     (big_uint32_t, error_code)
-    (big_uint16_t, reason_phrase_length)
-    //(sss::framing::frame_data_t, reason_phrase) // variable size data
+    (std::string, reason_phrase)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), close_frame_header,
     (sss::framing::close_frame_type_t, type)
     (big_uint32_t, error_code)
-    (big_uint16_t, reason_phrase_length)
-    (sss::framing::frame_data_t, reason_phrase)
+    (std::string, reason_phrase)
     (sss::framing::ack_frame_header, final_ack_frame)
 );
 
@@ -227,7 +212,8 @@ BOOST_FUSION_DEFINE_STRUCT(
     (sss)(framing), settings_frame_header,
     (sss::framing::settings_frame_type_t, type)
     (big_uint16_t, number_of_settings)
-    (sss::framing::frame_data_t, settings_tag)
+// @todo revisit
+//    (sss::framing::frame_data_t, settings_tag)
 );
 
 BOOST_FUSION_DEFINE_STRUCT(

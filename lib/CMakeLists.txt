@@ -37,13 +37,10 @@ set(stream_SOURCES
     stream_protocol.cpp)
 
 set(framing_SOURCES
+    framing/framing.cpp
     framing/ack_frame.cpp
     framing/close_frame.cpp
     framing/decongestion_frame.cpp
-    framing/detach_frame.cpp
-    framing/empty_frame.cpp
-    framing/framing.cpp
-    framing/padding_frame.cpp
     framing/priority_frame.cpp
     framing/reset_frame.cpp
     framing/settings_frame.cpp
