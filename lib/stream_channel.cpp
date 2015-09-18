@@ -22,7 +22,7 @@ namespace sss {
 constexpr int max_sid_skip = 16;
 
 // Stream ID 0 always refers to the root stream.
-constexpr local_stream_id_t root_sid = 0x0000;
+constexpr local_stream_id_t root_sid = 0;
 
 stream_channel::stream_channel(shared_ptr<host> host,
                                internal::stream_peer* peer,
@@ -348,11 +348,11 @@ stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxac
         if (!contains(waiting_ack_, txseq))
             continue;
 
-        base_stream::packet p = waiting_ack_[txseq];
+        base_stream::tx_frame_t p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
 
         logger::debug() << "Stream channel - acknowledged packet " << txseq << " of size "
-                        << p.payload.size();
+                        << p.payload_size();
         p.owner->acknowledged(this, p, rxackseq);
     }
 }
@@ -368,10 +368,10 @@ stream_channel::missed(packet_seq_t txseq, int npackets)
             continue;
         }
 
-        base_stream::packet p = waiting_ack_[txseq];
+        base_stream::tx_frame_t p = waiting_ack_[txseq];
 
         logger::debug() << "Stream channel - missed packet " << txseq << " of size "
-                        << p.payload.size();
+                        << p.payload_size();
 
         if (!p.late) {
             p.late = true;
@@ -388,7 +388,7 @@ stream_channel::expire(packet_seq_t txseq, int npackets)
     logger::debug() << "Stream channel - expire seq " << txseq;
     for (; npackets > 0; txseq++, npackets--) {
         // find and unconditionally remove packet when it expires
-        base_stream::packet p = waiting_ack_[txseq];
+        base_stream::tx_frame_t p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
 
         if (p.is_null()) {
@@ -406,8 +406,8 @@ stream_channel::expire(packet_seq_t txseq, int npackets)
 bool
 stream_channel::channel_receive(boost::asio::mutable_buffer pkt, packet_seq_t packet_seq)
 {
-    logger::debug() << "Stream channel - receive seq " << pktseq;
-    return base_stream::receive(pktseq, pkt, this);
+    logger::debug() << "Stream channel - receive seq " << packet_seq;
+    return base_stream::receive(packet_seq, pkt, this);
 }
 
 } // sss namespace

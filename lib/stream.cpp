@@ -178,7 +178,7 @@ stream::connect_at(uia::comm::endpoint const& ep)
     if (!stream_) {
         return;
     }
-    host_->stream_peer(stream_->peerid_)->add_location_hint(ep);
+    host_->stream_peer(stream_->peer_id_)->add_location_hint(ep);
 }
 
 bool
