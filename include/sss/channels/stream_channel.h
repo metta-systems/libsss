@@ -135,7 +135,7 @@ public:
     void missed(packet_seq_t txseq, int npackets) override;
     void expire(packet_seq_t txseq, int npackets) override;
 
-    bool channel_receive(packet_seq_t pktseq, byte_array const& pkt) override;
+    bool channel_receive(boost::asio::mutable_buffer pkt, packet_seq_t packet_seq) override;
 };
 
 } // sss namespace

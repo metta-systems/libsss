@@ -850,7 +850,8 @@ size_t channel::may_transmit()
     return 0;
 }
 
-bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
+bool
+channel::channel_transmit(boost::asio::const_buffer packet, packet_seq_t& packet_seq)
 {
     assert(packet.size() > header_len); // Must be non-empty data packet.
 
@@ -882,7 +883,11 @@ bool channel::channel_transmit(byte_array& packet, uint64_t& packet_seq)
     return success;
 }
 
-bool channel::transmit(byte_array& packet, uint32_t ack_seq, uint64_t& packet_seq, bool is_data)
+bool
+channel::transmit(boost::asio::const_buffer packet,
+                  uint32_t ack_seq,
+                  uint64_t& packet_seq,
+                  bool is_data)
 {
     assert(is_active());
 

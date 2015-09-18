@@ -404,7 +404,7 @@ stream_channel::expire(packet_seq_t txseq, int npackets)
 }
 
 bool
-stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
+stream_channel::channel_receive(boost::asio::mutable_buffer pkt, packet_seq_t packet_seq)
 {
     logger::debug() << "Stream channel - receive seq " << pktseq;
     return base_stream::receive(pktseq, pkt, this);

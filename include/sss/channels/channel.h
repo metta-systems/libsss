@@ -132,14 +132,14 @@ protected:
      * Returns true if the transmit was successful, or false if it failed (e.g., due
      * to lack of buffer space); a sequence number is assigned even on failure however.
      */
-    bool channel_transmit(byte_array& packet, packet_seq_t& packet_seq);
+    bool channel_transmit(boost::asio::const_buffer packet, packet_seq_t& packet_seq);
 
     /**
      * Main method for upper-layer subclass to receive a packet on a channel.
      * Should return true if the packet was processed and should be acked,
      * or false to silently pretend we never received the packet.
      */
-    virtual bool channel_receive(packet_seq_t pktseq, byte_array const& pkt) = 0;
+    virtual bool channel_receive(boost::asio::mutable_buffer pkt, packet_seq_t packet_seq) = 0;
 
     /**
      * Create and transmit a packet for acknowledgment purposes only.
@@ -166,7 +166,10 @@ private:
      * already fully set up, with a specified ACK sequence/count word.
      * Returns true on success, false on error (e.g., no output buffer space for packet)
      */
-    bool transmit(byte_array& packet, uint32_t ack_seq, packet_seq_t& packet_seq, bool is_data);
+    bool transmit(boost::asio::const_buffer packet,
+                  uint32_t ack_seq,
+                  packet_seq_t& packet_seq,
+                  bool is_data);
 
     /**
      * Transmit ack packet with no extra payload.
