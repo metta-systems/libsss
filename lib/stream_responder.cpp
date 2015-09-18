@@ -72,11 +72,11 @@ unique_ptr<channel> stream_responder::create_channel(uia::comm::socket_endpoint 
     internal::stream_peer* peer = get_host()->stream_peer(initiator_eid);
 
     unique_ptr<stream_channel> chan = make_unique<stream_channel>(get_host(), peer, initiator_eid);
-    if (!chan->bind(initiator_ep))
-    {
-        logger::warning() << "Stream responder - could not bind new channel";
-        return nullptr;
-    }
+    /*    if (!chan->bind(initiator_ep))
+        {
+            logger::warning() << "Stream responder - could not bind new channel";
+            return nullptr;
+        }*/
 
     return chan;
 }
@@ -110,7 +110,7 @@ void stream_responder::client_ready()
 
     // Retry all outstanding lookups in case they might succeed now.
     for (auto peer : get_host()->all_peers()) {
-        peer->connect_channel();
+        // peer->connect_channel();
     }
 }
 

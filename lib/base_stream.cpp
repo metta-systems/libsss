@@ -169,12 +169,12 @@ base_stream::transmit_on(stream_channel* channel)
 
         logger::debug() << p;
 
-        auto header = p.header<data_header>();
-        header->stream_id = tx_current_attachment_->stream_id_;
+        // auto header       = p.header<data_header>();
+        // header->stream_id = tx_current_attachment_->stream_id_;
         // Preserve flags already set.
-        header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype);
-        header->window = receive_window_byte();
-        header->tx_seq_no = p.tx_byte_seq_; // Note: 32-bit TSN
+        // header->type_subtype = type_and_subtype(packet_type::data, header->type_subtype);
+        // header->window       = receive_window_byte();
+        // header->tx_seq_no    = p.tx_byte_seq_; // Note: 32-bit TSN
 
         // Transmit
         return tx_data(p);
@@ -593,15 +593,15 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
     do {
         // Choose the size of this segment.
         ssize_t size = mtu;
-        uint8_t flags = 0;
+        // uint8_t flags = 0;
 
         if (total_size <= size) {
-            flags = flags::data_push | endflags;
+            // flags = flags::data_push | endflags;
             size = total_size;
         }
 
-        logger::debug() << "Transmit segment at [byteseq " << tx_byte_seq_
-            << "], size " << size << " bytes";
+        logger::debug() << "Transmit segment at [byteseq " << tx_byte_seq_ << "], size " << size
+                        << " bytes";
 
         // Build the appropriate packet header.
         tx_frame_t p(this, frame_type::STREAM);
@@ -610,11 +610,11 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
         // Prepare the header
         // Accomodate buffer space for payload
         /// @todo khustup
-        //p.payload_.resize(channel::header_len + sizeof(data_header) + size);
-        auto header = p.header<data_header>();
+        // p.payload_.resize(channel::header_len + sizeof(data_header) + size);
+        // auto header = p.header<data_header>();
 
         // header->stream_id - later
-        header->type_subtype = flags;  // Major type filled in later
+        // header->type_subtype = flags; // Major type filled in later
         // header->window - later
         // header->tx_byte_seq - later
 
@@ -622,8 +622,8 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
         tx_byte_seq_ += size;
 
         // Copy in the application payload
-        char* payload = reinterpret_cast<char*>(header + 1);
-        memcpy(payload, data, size);
+        // char* payload = reinterpret_cast<char*>(header + 1);
+        // memcpy(payload, data, size);
 
         // Hold onto the packet data until it gets ACKed
         tx_waiting_ack_.insert(p.tx_byte_seq_);
@@ -642,8 +642,8 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
         actual_size += size;
     } while (total_size > 0);
 
-    if (endflags & flags::data_close)
-        end_write_ = true;
+    // if (endflags & flags::data_close)
+    // end_write_ = true;
 
     return actual_size;
 }
@@ -699,7 +699,7 @@ base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagr
     logger::debug() << "Sending datagram, size " << total_size << ", "
                     << (is_reliable == stream::datagram_type::reliable ? "reliable" : "unreliable");
     if (is_reliable == stream::datagram_type::reliable
-        or total_size > (ssize_t)max_stateless_datagram_size) {
+        /*or total_size > (ssize_t)max_stateless_datagram_size*/) {
         // Datagram too large to send using the stateless optimization:
         // just send it as a regular substream.
         logger::debug() << "Sending large datagram, size " << total_size;
@@ -707,23 +707,23 @@ base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagr
         if (sub == nullptr)
             return -1;
 
-        return sub->write_data(data, total_size, flags::data_close);
+        return 0; // sub->write_data(data, total_size, flags::data_close);
         // sub will self-destruct when sent and acked.
     }
 
     ssize_t remain = total_size;
-    uint8_t flags = flags::datagram_begin;
+    // uint8_t flags  = 0; // flags::datagram_begin;
     do {
         // Choose the size of this fragment.
         ssize_t size = mtu;
         if (remain <= size) {
-            flags |= flags::datagram_end;
+            // flags |= flags::datagram_end;
             size = remain;
         }
 
         // Build the appropriate packet header.
         /// @todo khustup
-        //packet p(this, packet_type::datagram);
+        // packet p(this, packet_type::datagram);
         tx_frame_t p(this, frame_type::EMPTY);
 
         // Assign this packet an ASN as if it were a data segment,
@@ -734,17 +734,17 @@ base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagr
 
         // Build the datagram header.
         ///@todo khustup
-        //p.payload.resize(channel::header_len + sizeof(datagram_header) + size);
-        auto header = p.header<datagram_header>();
+        // p.payload.resize(channel::header_len + sizeof(datagram_header) + size);
+        // auto header = p.header<datagram_header>();
 
         // header->stream_id - later
         /// @todo khustup
-        //header->type_subtype = type_and_subtype(packet_type::datagram, flags);
+        // header->type_subtype = type_and_subtype(packet_type::datagram, flags);
         // header->window - later
 
         // Copy in the application payload
-        char* payload = reinterpret_cast<char*>(header + 1);
-        memcpy(payload, data, size);
+        // char* payload = reinterpret_cast<char*>(header + 1);
+        // memcpy(payload, data, size);
 
         // Queue up the packet
         tx_enqueue_packet(p);
@@ -752,10 +752,10 @@ base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagr
         // On to the next fragment...
         data += size;
         remain -= size;
-        flags &= ~flags::datagram_begin;
+        // flags &= ~flags::datagram_begin;
     } while (remain > 0);
 
-    assert(flags & flags::datagram_end);
+    // assert(flags & flags::datagram_end);
 
     // Once we've enqueued all the fragments of the datagram,
     // add our stream to our flow's transmit queue,
@@ -871,7 +871,7 @@ base_stream::shutdown(stream::shutdown_mode mode)
 
     if (is_link_up() and !end_write_ and (fmode & to_underlying(stream::shutdown_mode::write))) {
         // Shutdown for writing
-        write_data(nullptr, 0, flags::data_close);
+        // write_data(nullptr, 0, flags::data_close);
     }
 }
 
@@ -967,13 +967,13 @@ base_stream::tx_attach()
     // Build the Attach packet header
     tx_frame_t p(this, frame_type::STREAM);
     /// @todo khustup
-    //packet p(this, packet_type::attach);
-    auto header = p.header<attach_header>();
+    // packet p(this, packet_type::attach);
+    // auto header = p.header<attach_header>();
 
-    header->stream_id = tx_current_attachment_->stream_id_;
-    header->type_subtype = type_and_subtype(frame_type::STREAM,
-                 (init_ ? flags::attach_init : 0) | (slot & flags::attach_slot_mask));
-    header->window = receive_window_byte();
+    // header->stream_id    = tx_current_attachment_->stream_id_;
+    // header->type_subtype = type_and_subtype(
+    // frame_type::STREAM, (init_ ? flags::attach_init : 0) | (slot & flags::attach_slot_mask));
+    // header->window = receive_window_byte();
 
     // The body of the Attach packet is the stream's full USID,
     // and the parent's USID too if we're still initiating the stream.
@@ -1007,16 +1007,17 @@ base_stream::tx_attach_data(frame_type type, local_stream_id_t ref_sid)
     tx_queue_.pop_front();
 
     assert(p.type() == frame_type::STREAM);
-    assert(p.tx_byte_seq <= 0xffff);
+    assert(p.tx_byte_seq_ <= 0xffff);
 
     // Build the init_header.
-    auto header = p.header<init_header>();
-    header->stream_id = tx_current_attachment_->stream_id_;
+    // auto header       = p.header<init_header>();
+    // header->stream_id = tx_current_attachment_->stream_id_;
     // Preserve flags already set.
-    header->type_subtype = type_and_subtype(type, header->type_subtype); //@fixme & dataAllFlags);
-    header->window = receive_window_byte();
-    header->new_stream_id = ref_sid;
-    header->tx_seq_no = p.tx_byte_seq; // Note: 16-bit TSN
+    // header->type_subtype  = type_and_subtype(type, header->type_subtype); //@fixme &
+    // dataAllFlags);
+    // header->window        = receive_window_byte();
+    // header->new_stream_id = ref_sid;
+    // header->tx_seq_no     = p.tx_byte_seq; // Note: 16-bit TSN
 
     logger::debug() << p;
 
@@ -1031,9 +1032,10 @@ base_stream::tx_data(tx_frame_t& p)
 
     // Transmit the packet on our current channel.
     packet_seq_t pktseq;
-    channel->channel_transmit(p.payload, pktseq);
+    channel->channel_transmit(p.payload_, pktseq);
 
-    logger::debug() << "tx_data " << pktseq << " pos " << p.tx_byte_seq << " size " << p.payload.size();
+    logger::debug() << "tx_data " << pktseq << " pos " << p.tx_byte_seq_ << " size "
+                    << boost::asio::buffer_size(p.payload_);
 
     // Save the data packet in the channel's ackwait hash.
     p.late = false;
@@ -1058,14 +1060,14 @@ base_stream::tx_datagram()
     // so that all fragments get consecutive packet sequence numbers.
     while (true) {
         assert(!tx_queue_.empty());
-        packet p = tx_queue_.front();
+        tx_frame_t p = tx_queue_.front();
         tx_queue_.pop_front();
-        assert(p.type() == packet_type::datagram);
+        // assert(p.type() == packet_type::datagram);
 
-        auto header = p.header<datagram_header>();
-        bool at_end = (header->type_subtype & flags::datagram_end) != 0;
-        header->stream_id = tx_current_attachment_->stream_id_;
-        header->window = receive_window_byte();
+        // auto header       = p.header<datagram_header>();
+        // bool at_end       = (header->type_subtype & flags::datagram_end) != 0;
+        // header->stream_id = tx_current_attachment_->stream_id_;
+        // header->window    = receive_window_byte();
 
         // Adjust the in-flight byte count.
         // We don't need to register datagram packets in tx_inflight_
@@ -1076,10 +1078,10 @@ base_stream::tx_datagram()
 
         // Transmit this datagram packet, but don't save it anywhere - just fire & forget.
         packet_seq_t pktseq;
-        tx_current_attachment_->channel_->channel_transmit(p.payload, pktseq);
+        tx_current_attachment_->channel_->channel_transmit(p.payload_, pktseq);
 
-        if (at_end)
-            break;
+        // if (at_end)
+        // break;
     }
 
     // Re-queue us on our channel immediately if we still have more data to send.
@@ -1092,121 +1094,134 @@ base_stream::tx_reset(stream_channel* channel, local_stream_id_t sid, uint8_t fl
     logger::warning() << "Base stream tx_reset";
 
     // Build the Reset packet header
-    packet p(nullptr, packet_type::reset);
-    auto header = p.header<reset_header>();
+    // tx_frame_t p(nullptr, packet_type::reset);
+    // auto header = p.header<reset_header>();
 
-    header->stream_id = sid;
-    header->type_subtype = type_and_subtype(packet_type::reset, flags);
-    header->window = 0; // No space
+    // header->stream_id    = sid;
+    // header->type_subtype = type_and_subtype(packet_type::reset, flags);
+    // header->window       = 0; // No space
 
     // Transmit it on the current channel.
-    packet_seq_t pktseq;
-    channel->channel_transmit(p.payload, pktseq);
+    // packet_seq_t pktseq;
+    // channel->channel_transmit(p.payload_, pktseq);
 
     // Save the attach packet in the channel's waiting_ack_ hash,
     // so that we'll be notified when the attach packet gets acked.
     // XXX for the packets with O flag set, we don't need to ack
-    if (!(flags & flags::reset_remote_sid))
-    {
-        p.late = false;
-        channel->waiting_ack_.insert(make_pair(pktseq, p));
-    }
+    // if (!(flags & flags::reset_remote_sid)) {
+    //     p.late = false;
+    //     channel->waiting_ack_.insert(make_pair(pktseq, p));
+    // }
 
     logger::debug() << "Reset packet sent, garbage collecting the stream!";
 
     // shutdown(stream::shutdown_mode::reset);
     // if (auto stream = owner_.lock()) {
-        // stream->on_reset_notify();
+    // stream->on_reset_notify();
     // }
     // self_.reset();
 
-// as per the PDF:
-// As in TCP, either host may unilaterally terminate an SST stream in both directions and discard
-// any buffered data. A host resets a stream by sending a Reset packet (Figure 6) containing
-// an LSID in either the sender’s or receiver’s LSID space, and an O (Orientation) flag indicating
-// in which space the LSID is to be interpreted. When a host uses a Reset packet to terminate
-// a stream it believes to be active, it uses its own LSID referring to the stream, and resends
-// the Reset packet as necessary until it obtains an acknowledgment. A host also sends a Reset
-// in response to a packet it receives referring to an unknown LSID or USID. This situation
-// may occur if the host has closed and garbage collected its state for a stream but one of its
-// acknowledgments to its peer’s data segments is lost in transit, causing its peer to retransmit
-// those segments. The stateless Reset response indicates to the peer that it can garbage collect
-// its stream state as well. Stateless Reset responses always refer to the peer’s LSID space,
-// since by definition the host itself does not have an LSID assigned to the unknown stream.
+    // as per the PDF:
+    // As in TCP, either host may unilaterally terminate an SST stream in both directions and
+    // discard
+    // any buffered data. A host resets a stream by sending a Reset packet (Figure 6) containing
+    // an LSID in either the sender’s or receiver’s LSID space, and an O (Orientation) flag
+    // indicating
+    // in which space the LSID is to be interpreted. When a host uses a Reset packet to terminate
+    // a stream it believes to be active, it uses its own LSID referring to the stream, and resends
+    // the Reset packet as necessary until it obtains an acknowledgment. A host also sends a Reset
+    // in response to a packet it receives referring to an unknown LSID or USID. This situation
+    // may occur if the host has closed and garbage collected its state for a stream but one of its
+    // acknowledgments to its peer’s data segments is lost in transit, causing its peer to
+    // retransmit
+    // those segments. The stateless Reset response indicates to the peer that it can garbage
+    // collect
+    // its stream state as well. Stateless Reset responses always refer to the peer’s LSID space,
+    // since by definition the host itself does not have an LSID assigned to the unknown stream.
 }
 
 void
 base_stream::acknowledged(stream_channel* channel, tx_frame_t const& pkt, packet_seq_t rx_seq)
 {
-    logger::debug() << "Base stream ACKed packet of size " << dec << pkt.payload.size();
+    logger::debug() << "Base stream ACKed packet of size " << dec << pkt.payload_size();
 
-    switch (pkt.type())
-    {
-        /// @todo
-        /*
-        case packet_type::data:
-            // Mark the segment no longer "in flight".
-            end_flight(pkt);
+    switch (pkt.type()) {
+        case frame_type::EMPTY:
+        case frame_type::PADDING:
+        case frame_type::SETTINGS:
+        case frame_type::STREAM:
+        case frame_type::DETACH:
+        case frame_type::DECONGESTION:
+        case frame_type::RESET:
+        case frame_type::CLOSE:
+        case frame_type::ACK:
+        case frame_type::PRIORITY:
+            break;
+            /// @todo
+            /*
+            case packet_type::data:
+                // Mark the segment no longer "in flight".
+                end_flight(pkt);
 
-            // Record this TSN as having been ACKed (if not already),
-            // so that we don't spuriously resend it
-            // if another instance is back in our transmit queue.
-            if (contains(tx_waiting_ack_, pkt.tx_byte_seq))
-            {
-                tx_waiting_ack_.erase(pkt.tx_byte_seq);
-                tx_waiting_size_ -= pkt.payload_size();
+                // Record this TSN as having been ACKed (if not already),
+                // so that we don't spuriously resend it
+                // if another instance is back in our transmit queue.
+                if (contains(tx_waiting_ack_, pkt.tx_byte_seq))
+                {
+                    tx_waiting_ack_.erase(pkt.tx_byte_seq);
+                    tx_waiting_size_ -= pkt.payload_size();
 
-                logger::debug() << "tx_waiting_ack remove " << pkt.tx_byte_seq
-                         << ", size " << pkt.payload_size()
-                         << ", new wait count " << tx_waiting_ack_.size()
-                         << ", waiting to ack " << tx_waiting_size_
-                         << " bytes";
-            }
-            assert(tx_waiting_size_ >= 0);
-            if (auto stream = owner_.lock()) {
-                stream->on_bytes_written(pkt.payload_size()); // XXX delay and coalesce signal
-            }
-
-            // fall through...
-
-        case packet_type::attach:
-            if (tx_current_attachment_
-                and tx_current_attachment_->channel_ == channel
-                and !tx_current_attachment_->is_acknowledged())
-            {
-                // We've gotten our first ack for a new attachment.
-                // Save the rxseq the ack came in on as the attachment's reference pktseq.
-                logger::debug() << "Got attach ack " << rx_seq;
-                tx_current_attachment_->set_active(rx_seq);
-                init_ = false;
-
-                // Normal data transmission may now proceed.
-                tx_enqueue_channel();
-
-                // Notify anyone interested that we're attached.
-                on_attached();
-                auto stream = owner_.lock();
-                if (stream and state_ == state::connected) {
-                    stream->on_link_up();
+                    logger::debug() << "tx_waiting_ack remove " << pkt.tx_byte_seq
+                             << ", size " << pkt.payload_size()
+                             << ", new wait count " << tx_waiting_ack_.size()
+                             << ", waiting to ack " << tx_waiting_size_
+                             << " bytes";
                 }
-            }
-            break;
+                assert(tx_waiting_size_ >= 0);
+                if (auto stream = owner_.lock()) {
+                    stream->on_bytes_written(pkt.payload_size()); // XXX delay and coalesce signal
+                }
 
-        case packet_type::ack:
-            // nothing to do
-            break;
+                // fall through...
 
-        case packet_type::datagram:
-            tx_inflight_ -= pkt.payload_size();  // no longer "in flight"
-            assert(tx_inflight_ >= 0);
-            break;
+            case packet_type::attach:
+                if (tx_current_attachment_
+                    and tx_current_attachment_->channel_ == channel
+                    and !tx_current_attachment_->is_acknowledged())
+                {
+                    // We've gotten our first ack for a new attachment.
+                    // Save the rxseq the ack came in on as the attachment's reference pktseq.
+                    logger::debug() << "Got attach ack " << rx_seq;
+                    tx_current_attachment_->set_active(rx_seq);
+                    init_ = false;
 
-        case packet_type::detach:
-        case packet_type::reset:
-        default:
-            logger::warning() << "Got ACK for unknown packet type " << int(pkt.type());
-            break;
-        */
+                    // Normal data transmission may now proceed.
+                    tx_enqueue_channel();
+
+                    // Notify anyone interested that we're attached.
+                    on_attached();
+                    auto stream = owner_.lock();
+                    if (stream and state_ == state::connected) {
+                        stream->on_link_up();
+                    }
+                }
+                break;
+
+            case packet_type::ack:
+                // nothing to do
+                break;
+
+            case packet_type::datagram:
+                tx_inflight_ -= pkt.payload_size();  // no longer "in flight"
+                assert(tx_inflight_ >= 0);
+                break;
+
+            case packet_type::detach:
+            case packet_type::reset:
+            default:
+                logger::warning() << "Got ACK for unknown packet type " << int(pkt.type());
+                break;
+            */
     }
 }
 
@@ -1230,26 +1245,26 @@ base_stream::missed(stream_channel* channel, tx_frame_t const& pkt)
             return true; // ...but keep the tx record until expiry in case it gets acked late!
         }
 
-        case packet_type::attach:
+        case frame_type::STREAM:
             logger::debug() << "Attach packet lost: trying again to attach";
             tx_enqueue_channel();
             return true;
 
-        case packet_type::datagram:
+        case frame_type::ACK:
             logger::debug() << "Datagram packet lost: oops, gone for good";
 
             // Mark the segment no longer "in flight".
             // We know we'll only do this once per DatagramPacket
             // because we drop it immediately below ("return false");
             // thus acked() cannot be called on it after this.
-            tx_inflight_ -= pkt.payload_size();  // no longer "in flight"
+            tx_inflight_ -= pkt.payload_size(); // no longer "in flight"
             assert(tx_inflight_ >= 0);
 
             return false;
 
-        case packet_type::ack:
-        case packet_type::detach:
-        case packet_type::reset:
+        case frame_type::DETACH:
+        case frame_type::RESET:
+        case frame_type::CLOSE:
         default:
             logger::warning() << "Missed unknown packet type " << int(pkt.type());
             return false;
@@ -1268,348 +1283,329 @@ base_stream::expire(stream_channel* channel, tx_frame_t const& pkt)
 void
 base_stream::end_flight(tx_frame_t const& pkt)
 {
-    auto header = pkt.header<data_header>();
+    // auto header = pkt.header<data_header>();
 
-    if (type_from_header(header) == packet_type::init)
-    {
-        if (auto parent = parent_.lock())
-        {
-            parent->tx_inflight_ -= pkt.payload_size();
-            logger::debug() << "Endflight " << pkt.tx_byte_seq
-                << ", bytes in flight on parent " << parent->tx_inflight_;
-            assert(parent->tx_inflight_ >= 0);
-        }
-    } else {    // Reply or Data packet
-        tx_inflight_ -= pkt.payload_size();
-        logger::debug() << "Endflight " << pkt.tx_byte_seq
-            << ", bytes in flight " << tx_inflight_;
-        assert(tx_inflight_ >= 0);
-    }
+    // if (type_from_header(header) == packet_type::init) {
+    //     if (auto parent = parent_.lock()) {
+    //         parent->tx_inflight_ -= pkt.payload_size();
+    //         logger::debug() << "Endflight " << pkt.tx_byte_seq << ", bytes in flight on parent "
+    //                         << parent->tx_inflight_;
+    //         assert(parent->tx_inflight_ >= 0);
+    //     }
+    // } else { // Reply or Data packet
+    //     tx_inflight_ -= pkt.payload_size();
+    //     logger::debug() << "Endflight " << pkt.tx_byte_seq << ", bytes in flight " <<
+    //     tx_inflight_;
+    //     assert(tx_inflight_ >= 0);
+    // }
 }
 
 //-------------------------------------------------------------------------------------------------
 // Packet reception
 //-------------------------------------------------------------------------------------------------
 
-constexpr size_t header_len_min          = channel::header_len + 4;
-constexpr size_t init_header_len_min     = channel::header_len + 8;
-constexpr size_t reply_header_len_min    = channel::header_len + 8;
-constexpr size_t data_header_len_min     = channel::header_len + 8;
-constexpr size_t datagram_header_len_min = channel::header_len + 4;
-constexpr size_t ack_header_len_min      = channel::header_len + 4;
-constexpr size_t reset_header_len_min    = channel::header_len + 4;
-constexpr size_t attach_header_len_min   = channel::header_len + 4;
-constexpr size_t detach_header_len_min   = channel::header_len + 4;
+// constexpr size_t header_len_min          = channel::header_len + 4;
+// constexpr size_t init_header_len_min     = channel::header_len + 8;
+// constexpr size_t reply_header_len_min    = channel::header_len + 8;
+// constexpr size_t data_header_len_min     = channel::header_len + 8;
+// constexpr size_t datagram_header_len_min = channel::header_len + 4;
+// constexpr size_t ack_header_len_min      = channel::header_len + 4;
+// constexpr size_t reset_header_len_min    = channel::header_len + 4;
+// constexpr size_t attach_header_len_min   = channel::header_len + 4;
+// constexpr size_t detach_header_len_min   = channel::header_len + 4;
 
 // Main packet receive entry point, called from stream_channel::channel_receive()
 bool
 base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < header_len_min) {
-        logger::warning() << "Base stream - received runt packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < header_len_min) {
+    //     logger::warning() << "Base stream - received runt packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    auto header = as_header<stream_header>(pkt);
+    // auto header = as_header<stream_header>(pkt);
 
-    switch (type_from_header(header))
-    {
-        case packet_type::init:
-            return rx_init_packet(pktseq, pkt, channel);
-        case packet_type::reply:
-            return rx_reply_packet(pktseq, pkt, channel);
-        case packet_type::data:
-            return rx_data_packet(pktseq, pkt, channel);
-        case packet_type::datagram:
-            return rx_datagram_packet(pktseq, pkt, channel);
-        case packet_type::ack:
-            return rx_ack_packet(pktseq, pkt, channel);
-        case packet_type::reset:
-            return rx_reset_packet(pktseq, pkt, channel);
-        case packet_type::attach:
-            return rx_attach_packet(pktseq, pkt, channel);
-        case packet_type::detach:
-            return rx_detach_packet(pktseq, pkt, channel);
-        default:
-            logger::warning() << "Unknown packet type " << hex << int(type_from_header(header));
-            return false; // @fixme Protocol error, close channel?
-    }
+    // switch (type_from_header(header)) {
+    //     case packet_type::init: return rx_init_packet(pktseq, pkt, channel);
+    //     case packet_type::reply: return rx_reply_packet(pktseq, pkt, channel);
+    //     case packet_type::data: return rx_data_packet(pktseq, pkt, channel);
+    //     case packet_type::datagram: return rx_datagram_packet(pktseq, pkt, channel);
+    //     case packet_type::ack: return rx_ack_packet(pktseq, pkt, channel);
+    //     case packet_type::reset: return rx_reset_packet(pktseq, pkt, channel);
+    //     case packet_type::attach: return rx_attach_packet(pktseq, pkt, channel);
+    //     case packet_type::detach: return rx_detach_packet(pktseq, pkt, channel);
+    //     default:
+    //         logger::warning() << "Unknown packet type " << hex << int(type_from_header(header));
+    //         return false; // @fixme Protocol error, close channel?
+    // }
+    return false;
 }
 
 bool
 base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < init_header_len_min) {
-        logger::warning() << "Received runt init packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < init_header_len_min) {
+    //     logger::warning() << "Received runt init packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    logger::debug() << "Base stream rx_init_packet";
-    auto header = as_header<init_header>(pkt);
+    // logger::debug() << "Base stream rx_init_packet";
+    // auto header = as_header<init_header>(pkt);
 
-    // Look up the stream - if it already exists,
-    // just dispatch it directly as if it were a data packet.
-    if (contains(channel->receive_sids_, header->stream_id))
-    {
-        logger::debug() << "rx_init_packet: stream exists, dispatch data only";
-        stream_attachment* attach = channel->receive_sids_[header->stream_id];
-        if (pktseq < attach->sid_seq_) // earlier init packet; that's OK.
-            attach->sid_seq_ = pktseq;
+    // // Look up the stream - if it already exists,
+    // // just dispatch it directly as if it were a data packet.
+    // if (contains(channel->receive_sids_, header->stream_id)) {
+    //     logger::debug() << "rx_init_packet: stream exists, dispatch data only";
+    //     stream_attachment* attach = channel->receive_sids_[header->stream_id];
+    //     if (pktseq < attach->sid_seq_) // earlier init packet; that's OK.
+    //         attach->sid_seq_ = pktseq;
 
-        channel->ack_sid_ = header->stream_id;
-        attach->stream_->recalculate_transmit_window(header->window);
-        attach->stream_->rx_data(pkt, header->tx_seq_no);
-        return true; // ACK the packet
-    }
+    //     channel->ack_sid_ = header->stream_id;
+    //     attach->stream_->recalculate_transmit_window(header->window);
+    //     attach->stream_->rx_data(pkt, header->tx_seq_no);
+    //     return true; // ACK the packet
+    // }
 
-    // Doesn't yet exist - look up the parent stream.
-    if (!contains(channel->receive_sids_, header->new_stream_id))
-    {
-        // The parent SID is in error, so reset that SID.
-        // Ack the pktseq first so peer won't ignore the reset!
-        logger::warning() << "rx_init_packet: unknown parent stream ID";
-        channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->new_stream_id, flags::reset_remote_sid);
-        return false;
-    }
+    // // Doesn't yet exist - look up the parent stream.
+    // if (!contains(channel->receive_sids_, header->new_stream_id)) {
+    //     // The parent SID is in error, so reset that SID.
+    //     // Ack the pktseq first so peer won't ignore the reset!
+    //     logger::warning() << "rx_init_packet: unknown parent stream ID";
+    //     channel->acknowledge(pktseq, false);
+    //     tx_reset(channel, header->new_stream_id, flags::reset_remote_sid);
+    //     return false;
+    // }
 
-    stream_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
-    logger::debug() << "rx_init_packet: found parent stream attach " << parent_attach;
-    if (pktseq < parent_attach->sid_seq_)
-    {
-        logger::warning() << "rx_init_packet: stale wrt parent SID sequence";
-        return false; // silently drop stale packet
-    }
+    // stream_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
+    // logger::debug() << "rx_init_packet: found parent stream attach " << parent_attach;
+    // if (pktseq < parent_attach->sid_seq_) {
+    //     logger::warning() << "rx_init_packet: stale wrt parent SID sequence";
+    //     return false; // silently drop stale packet
+    // }
 
-    // Extrapolate the sender's stream counter from the new SID it sent,
-    // and use it to form the new stream's USID.
-    counter_t ctr = channel->received_sid_counter_ +
-        (int16_t)(header->stream_id - (int16_t)channel->received_sid_counter_);
-    unique_stream_id_t usid(ctr, channel->rx_channel_id());
+    // // Extrapolate the sender's stream counter from the new SID it sent,
+    // // and use it to form the new stream's USID.
+    // counter_t ctr = channel->received_sid_counter_
+    //                 + (int16_t)(header->stream_id - (int16_t)channel->received_sid_counter_);
+    // unique_stream_id_t usid(ctr, channel->rx_channel_id());
 
-    logger::debug() << "rx_init_packet: parent attach stream " << parent_attach->stream_;
+    // logger::debug() << "rx_init_packet: parent attach stream " << parent_attach->stream_;
 
-    // Create the new substream.
-    auto new_stream = parent_attach->stream_->rx_substream(pktseq,
-        channel, header->stream_id, 0, usid);
+    // // Create the new substream.
+    // auto new_stream =
+    //     parent_attach->stream_->rx_substream(pktseq, channel, header->stream_id, 0, usid);
 
-    if (!new_stream)
-        return false;
+    // if (!new_stream)
+    //     return false;
 
-    // Now process any data segment contained in this init packet.
-    channel->ack_sid_ = header->stream_id;
-    new_stream->recalculate_transmit_window(header->window);
-    new_stream->rx_data(pkt, header->tx_seq_no);
+    // // Now process any data segment contained in this init packet.
+    // channel->ack_sid_ = header->stream_id;
+    // new_stream->recalculate_transmit_window(header->window);
+    // new_stream->rx_data(pkt, header->tx_seq_no);
 
-    return false; // Already acknowledged in rx_substream().
+    // return false; // Already acknowledged in rx_substream().
+    return false;
 }
 
 bool
 base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < reply_header_len_min) {
-        logger::warning() << "Received runt reply packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < reply_header_len_min) {
+    //     logger::warning() << "Received runt reply packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    logger::debug() << "Base stream rx_reply_packet";
-    auto header = as_header<reply_header>(pkt);
+    // logger::debug() << "Base stream rx_reply_packet";
+    // auto header = as_header<reply_header>(pkt);
 
-    // Look up the stream - if it already exists,
-    // just dispatch it directly as if it were a data packet.
-    if (contains(channel->receive_sids_, header->stream_id))
-    {
-        logger::debug() << "rx_reply_packet: stream exists, dispatch data only";
-        stream_attachment* attach = channel->receive_sids_[header->stream_id];
-        if (pktseq < attach->sid_seq_) { // earlier reply packet; that's OK.
-            attach->sid_seq_ = pktseq;
-        }
+    // // Look up the stream - if it already exists,
+    // // just dispatch it directly as if it were a data packet.
+    // if (contains(channel->receive_sids_, header->stream_id)) {
+    //     logger::debug() << "rx_reply_packet: stream exists, dispatch data only";
+    //     stream_attachment* attach = channel->receive_sids_[header->stream_id];
+    //     if (pktseq < attach->sid_seq_) { // earlier reply packet; that's OK.
+    //         attach->sid_seq_ = pktseq;
+    //     }
 
-        channel->ack_sid_ = header->stream_id;
-        attach->stream_->recalculate_transmit_window(header->window);
-        attach->stream_->rx_data(pkt, header->tx_seq_no);
-        return true; // ACK the packet
-    }
+    //     channel->ack_sid_ = header->stream_id;
+    //     attach->stream_->recalculate_transmit_window(header->window);
+    //     attach->stream_->rx_data(pkt, header->tx_seq_no);
+    //     return true; // ACK the packet
+    // }
 
-    // Doesn't yet exist - look up the reference stream in our SID space.
-    if (!contains(channel->transmit_sids_, header->new_stream_id))
-    {
-        // The reference SID supposedly in our own space is invalid!
-        // Respond with a reset indicating that SID in our space.
-        // Ack the pktseq first so peer won't ignore the reset!
-        logger::debug() << "rx_reply_packet: unknown reference stream ID";
-        channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->new_stream_id, 0);
-        return false;
-    }
+    // // Doesn't yet exist - look up the reference stream in our SID space.
+    // if (!contains(channel->transmit_sids_, header->new_stream_id)) {
+    //     // The reference SID supposedly in our own space is invalid!
+    //     // Respond with a reset indicating that SID in our space.
+    //     // Ack the pktseq first so peer won't ignore the reset!
+    //     logger::debug() << "rx_reply_packet: unknown reference stream ID";
+    //     channel->acknowledge(pktseq, false);
+    //     tx_reset(channel, header->new_stream_id, 0);
+    //     return false;
+    // }
 
-    stream_attachment* attach = channel->transmit_sids_[header->new_stream_id];
+    // stream_attachment* attach = channel->transmit_sids_[header->new_stream_id];
 
-    if (pktseq < attach->sid_seq_)
-    {
-        logger::debug() << "rx_reply_packet: stale packet - pktseq " << pktseq
-            << " sidseq " << attach->sid_seq_;
-        return false;   // silently drop stale packet
-    }
+    // if (pktseq < attach->sid_seq_) {
+    //     logger::debug() << "rx_reply_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //                     << attach->sid_seq_;
+    //     return false; // silently drop stale packet
+    // }
 
-    base_stream* stream = attach->stream_;
+    // base_stream* stream = attach->stream_;
 
-    logger::debug() << stream << " Accepting reply " << stream->usid_;
+    // logger::debug() << stream << " Accepting reply " << stream->usid_;
 
-    // OK, we have the stream - just create the receive-side attachment.
-    stream->rx_attachments_[0].set_active(channel, header->stream_id, pktseq);
+    // // OK, we have the stream - just create the receive-side attachment.
+    // stream->rx_attachments_[0].set_active(channel, header->stream_id, pktseq);
 
-    // Now process any data segment contained in this reply packet.
-    channel->ack_sid_ = header->stream_id;
-    stream->recalculate_transmit_window(header->window);
-    stream->rx_data(pkt, header->tx_seq_no);
+    // // Now process any data segment contained in this reply packet.
+    // channel->ack_sid_ = header->stream_id;
+    // stream->recalculate_transmit_window(header->window);
+    // stream->rx_data(pkt, header->tx_seq_no);
 
-    return true;    // Acknowledge the packet
+    // return true; // Acknowledge the packet
+    return false;
 }
 
 bool
 base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < data_header_len_min) {
-        logger::warning() << "Received runt data packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < data_header_len_min) {
+    //     logger::warning() << "Received runt data packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    logger::debug() << "Base stream rx_data_packet";
-    auto header = as_header<data_header>(pkt);
+    // logger::debug() << "Base stream rx_data_packet";
+    // auto header = as_header<data_header>(pkt);
 
-    if (!contains(channel->receive_sids_, header->stream_id))
-    {
-        // Respond with a reset for the unknown stream ID.
-        // Ack the pktseq first so peer won't ignore the reset!
-        logger::debug() << "rx_data_packet: unknown stream ID " << header->stream_id;
-        channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
-        return false;
-    }
+    // if (!contains(channel->receive_sids_, header->stream_id)) {
+    //     // Respond with a reset for the unknown stream ID.
+    //     // Ack the pktseq first so peer won't ignore the reset!
+    //     logger::debug() << "rx_data_packet: unknown stream ID " << header->stream_id;
+    //     channel->acknowledge(pktseq, false);
+    //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+    //     return false;
+    // }
 
-    stream_attachment* attach = channel->receive_sids_[header->stream_id];
-    if (pktseq < attach->sid_seq_)
-    {
-        logger::debug() << "rx_data_packet: stale packet - pktseq " << pktseq
-            << " sidseq " << attach->sid_seq_;
-        return false;   // silently drop stale packet
-    }
+    // stream_attachment* attach = channel->receive_sids_[header->stream_id];
+    // if (pktseq < attach->sid_seq_) {
+    //     logger::debug() << "rx_data_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //                     << attach->sid_seq_;
+    //     return false; // silently drop stale packet
+    // }
 
-    // Process the data, using the full 32-bit TSN.
-    channel->ack_sid_ = header->stream_id;
-    attach->stream_->recalculate_transmit_window(header->window);
-    attach->stream_->rx_data(pkt, header->tx_seq_no);
-    return true; // ACK the packet
+    // // Process the data, using the full 32-bit TSN.
+    // channel->ack_sid_ = header->stream_id;
+    // attach->stream_->recalculate_transmit_window(header->window);
+    // attach->stream_->rx_data(pkt, header->tx_seq_no);
+    // return true; // ACK the packet
+    return false;
 }
 
 bool
 base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < datagram_header_len_min) {
-        logger::warning() << "Received runt datagram packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < datagram_header_len_min) {
+    //     logger::warning() << "Received runt datagram packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    logger::debug() << "Base stream rx_datagram_packet";
-    auto header = as_header<datagram_header>(pkt);
+    // logger::debug() << "Base stream rx_datagram_packet";
+    // auto header = as_header<datagram_header>(pkt);
 
-    // Look up the stream for which the datagram is a substream.
-    if (!contains(channel->receive_sids_, header->stream_id))
-    {
-        // Respond with a reset for the unknown stream ID.
-        // Ack the pktseq first so peer won't ignore the reset!
-        logger::warning() << "rx_datagram_packet: unknown stream ID " << header->stream_id;
-        channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
-        return false;
-    }
+    // // Look up the stream for which the datagram is a substream.
+    // if (!contains(channel->receive_sids_, header->stream_id)) {
+    //     // Respond with a reset for the unknown stream ID.
+    //     // Ack the pktseq first so peer won't ignore the reset!
+    //     logger::warning() << "rx_datagram_packet: unknown stream ID " << header->stream_id;
+    //     channel->acknowledge(pktseq, false);
+    //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+    //     return false;
+    // }
 
-    stream_attachment* attach = channel->receive_sids_[header->stream_id];
+    // stream_attachment* attach = channel->receive_sids_[header->stream_id];
 
-    channel->ack_sid_ = header->stream_id; // @fixme Why do we update ack_sid here?
+    // channel->ack_sid_ = header->stream_id; // @fixme Why do we update ack_sid here?
 
-    if (pktseq < attach->sid_seq_)
-    {
-        logger::debug() << "rx_datagram_packet: stale packet - pktseq " << pktseq
-            << " sidseq " << attach->sid_seq_;
-        return false;   // silently drop stale packet
-    }
+    // if (pktseq < attach->sid_seq_) {
+    //     logger::debug() << "rx_datagram_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //                     << attach->sid_seq_;
+    //     return false; // silently drop stale packet
+    // }
 
-    base_stream* base = attach->stream_;
+    // base_stream* base = attach->stream_;
 
-    if (base->state_ != state::connected)
-    {
-        // Only accept datagrams while connected
-        channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
-        return false;
-    }
+    // if (base->state_ != state::connected) {
+    //     // Only accept datagrams while connected
+    //     channel->acknowledge(pktseq, false);
+    //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+    //     return false;
+    // }
 
-    int flags = header->type_subtype;
+    // int flags = header->type_subtype;
 
-    if (!(flags & flags::datagram_begin) or !(flags & flags::datagram_end))
-    {
-        // @todo Fix datagram reassembly.
-        logger::fatal() << "OOPS, don't yet know how to reassemble datagrams";
-        return false;
-    }
+    // if (!(flags & flags::datagram_begin) or !(flags & flags::datagram_end)) {
+    //     // @todo Fix datagram reassembly.
+    //     logger::fatal() << "OOPS, don't yet know how to reassemble datagrams";
+    //     return false;
+    // }
 
-    // Build a pseudo-Stream object encapsulating the datagram.
-    auto dgram = make_shared<datagram_stream>(base->host_, pkt, datagram_header_len_min);
-    base->received_datagrams_.push_back(dgram);
+    // // Build a pseudo-Stream object encapsulating the datagram.
+    // auto dgram = make_shared<datagram_stream>(base->host_, pkt, datagram_header_len_min);
+    // base->received_datagrams_.push_back(dgram);
 
-    // Don't need to connect to the sub's on_ready_read_record() signal
-    // because we already know the sub is completely received...
-    if (auto stream = base->owner_.lock()) {
-        stream->on_ready_read_datagram();
-    }
+    // // Don't need to connect to the sub's on_ready_read_record() signal
+    // // because we already know the sub is completely received...
+    // if (auto stream = base->owner_.lock()) {
+    //     stream->on_ready_read_datagram();
+    // }
 
-    return true; // Acknowledge the packet
+    // return true; // Acknowledge the packet
+    return false;
 }
 
 bool
 base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < ack_header_len_min) {
-        logger::warning() << "Received runt ack packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < ack_header_len_min) {
+    //     logger::warning() << "Received runt ack packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    // Count this explicit ack packet as received,
-    // but do NOT send another ack just to ack this ack!
-    channel->acknowledge(pktseq, false);
+    // // Count this explicit ack packet as received,
+    // // but do NOT send another ack just to ack this ack!
+    // channel->acknowledge(pktseq, false);
 
-    logger::debug() << "Base stream rx_ack_packet";
-    auto header = as_header<ack_header>(pkt);
+    // logger::debug() << "Base stream rx_ack_packet";
+    // auto header = as_header<ack_header>(pkt);
 
-    // Look up the stream the data packet belongs to.
-    // The SID field in an Ack packet is in our transmit SID space,
-    // because it reflects data our peer is receiving.
-    if (!contains(channel->transmit_sids_, header->stream_id))
-    {
-        // The reference SID supposedly in our own space is invalid!
-        // Respond with a reset indicating that SID in our space.
-        // Ack the pktseq first so peer won't ignore the reset!
-        logger::debug() << "rx_ack_packet: unknown stream ID " << header->stream_id;
-        channel->acknowledge(pktseq, false);
-        tx_reset(channel, header->stream_id, flags::reset_remote_sid);
-        return false;
-    }
+    // // Look up the stream the data packet belongs to.
+    // // The SID field in an Ack packet is in our transmit SID space,
+    // // because it reflects data our peer is receiving.
+    // if (!contains(channel->transmit_sids_, header->stream_id)) {
+    //     // The reference SID supposedly in our own space is invalid!
+    //     // Respond with a reset indicating that SID in our space.
+    //     // Ack the pktseq first so peer won't ignore the reset!
+    //     logger::debug() << "rx_ack_packet: unknown stream ID " << header->stream_id;
+    //     channel->acknowledge(pktseq, false);
+    //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+    //     return false;
+    // }
 
-    stream_attachment* attach = channel->transmit_sids_[header->stream_id];
+    // stream_attachment* attach = channel->transmit_sids_[header->stream_id];
 
-    if (pktseq < attach->sid_seq_)
-    {
-        logger::debug() << "rx_ack_packet: stale packet - pktseq " << pktseq
-            << " sidseq " << attach->sid_seq_;
-        return false;   // silently drop stale packet
-    }
+    // if (pktseq < attach->sid_seq_) {
+    //     logger::debug() << "rx_ack_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //                     << attach->sid_seq_;
+    //     return false; // silently drop stale packet
+    // }
 
-    // Process the transmit window update.
-    attach->stream_->recalculate_transmit_window(header->window);
+    // // Process the transmit window update.
+    // attach->stream_->recalculate_transmit_window(header->window);
 
-    return false; // Do not acknowledge.
+    // return false; // Do not acknowledge.
+    return false;
 }
 
 /**
@@ -1622,107 +1618,102 @@ base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_ch
 bool
 base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < reset_header_len_min) {
-        logger::warning() << "Received runt reset packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < reset_header_len_min) {
+    //     logger::warning() << "Received runt reset packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    logger::warning() << "Base stream rx_reset_packet UNIMPLEMENTED.";
-    // auto header = as_header<reset_header>(pkt);
-    // bool local_sid = hdr->type & flags::reset_remote_sid;
-    //
-    // if sid not found: do nothing
-    //
-    // @todo...
-    //
+    // logger::warning() << "Base stream rx_reset_packet UNIMPLEMENTED.";
+    // // auto header = as_header<reset_header>(pkt);
+    // // bool local_sid = hdr->type & flags::reset_remote_sid;
+    // //
+    // // if sid not found: do nothing
+    // //
+    // // @todo...
+    // //
+    // return false;
     return false;
 }
 
 bool
 base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < attach_header_len_min) {
-        logger::warning() << "Received runt attach packet";
-        return false; // @fixme Protocol error, close channel?
-    }
+    // if (pkt.size() < attach_header_len_min) {
+    //     logger::warning() << "Received runt attach packet";
+    //     return false; // @fixme Protocol error, close channel?
+    // }
 
-    auto header = as_header<attach_header>(pkt);
-    bool init = (header->type_subtype & flags::attach_init) != 0;
-    int slot = header->type_subtype & flags::attach_slot_mask;
+    // auto header = as_header<attach_header>(pkt);
+    // bool init   = (header->type_subtype & flags::attach_init) != 0;
+    // int slot    = header->type_subtype & flags::attach_slot_mask;
 
-    static_assert(flags::attach_slot_mask == max_attachments - 1,
-        "max_attachments value changed, need to fix some other code too.");
+    // static_assert(flags::attach_slot_mask == max_attachments - 1,
+    //               "max_attachments value changed, need to fix some other code too.");
 
-    unique_stream_id_t usid, parent_usid;
+    // unique_stream_id_t usid, parent_usid;
 
-    logger::debug() << "Base stream received attach packet, "
-        << (init ? "init" : "non-init") << " attach on slot " << slot;
+    // logger::debug() << "Base stream received attach packet, " << (init ? "init" : "non-init")
+    //                 << " attach on slot " << slot;
 
-    byte_array_iwrap<flurry::iarchive> read(pkt);
-    read.archive().skip_raw_data(sizeof(attach_header) + channel::header_len);
+    // byte_array_iwrap<flurry::iarchive> read(pkt);
+    // read.archive().skip_raw_data(sizeof(attach_header) + channel::header_len);
 
-    // Decode the USID(s) in the body
-    read.archive() >> usid;
-    if (init) {
-        read.archive() >> parent_usid;
-    }
+    // // Decode the USID(s) in the body
+    // read.archive() >> usid;
+    // if (init) {
+    //     read.archive() >> parent_usid;
+    // }
 
-    if (usid.is_empty() or (init and parent_usid.is_empty()))
-    {
-        logger::warning() << "Invalid attach packet received";
-        return false; // @fixme Protocol error, shutdown channel?
-    }
+    // if (usid.is_empty() or (init and parent_usid.is_empty())) {
+    //     logger::warning() << "Invalid attach packet received";
+    //     return false; // @fixme Protocol error, shutdown channel?
+    // }
 
-    if (contains(channel->peer_->usid_streams_, usid))
-    {
-        // Found it: the stream already exists, just attach it.
-        base_stream* stream = channel->peer_->usid_streams_[usid];
+    // if (contains(channel->peer_->usid_streams_, usid)) {
+    //     // Found it: the stream already exists, just attach it.
+    //     base_stream* stream = channel->peer_->usid_streams_[usid];
 
-        logger::debug() << "Found USID in existing streams";
-        channel->ack_sid_ = header->stream_id;
-        stream_rx_attachment& rslot = stream->rx_attachments_[slot];
-        if (rslot.is_active())
-        {
-            if (rslot.channel_ == channel and rslot.stream_id_ == header->stream_id)
-            {
-                logger::debug() << stream << " redundant attach " << stream->usid_;
-                rslot.sid_seq_ = min(rslot.sid_seq_, pktseq);
-                return true;
-            }
-            logger::debug() << stream << " replacing attach slot " << slot;
-            rslot.clear();
-        }
-        logger::debug() << stream << " accepting attach " << stream->usid_;
-        rslot.set_active(channel, header->stream_id, pktseq);
-        return true;
-    }
+    //     logger::debug() << "Found USID in existing streams";
+    //     channel->ack_sid_           = header->stream_id;
+    //     stream_rx_attachment& rslot = stream->rx_attachments_[slot];
+    //     if (rslot.is_active()) {
+    //         if (rslot.channel_ == channel and rslot.stream_id_ == header->stream_id) {
+    //             logger::debug() << stream << " redundant attach " << stream->usid_;
+    //             rslot.sid_seq_ = min(rslot.sid_seq_, pktseq);
+    //             return true;
+    //         }
+    //         logger::debug() << stream << " replacing attach slot " << slot;
+    //         rslot.clear();
+    //     }
+    //     logger::debug() << stream << " accepting attach " << stream->usid_;
+    //     rslot.set_active(channel, header->stream_id, pktseq);
+    //     return true;
+    // }
 
-    for (auto x : channel->peer_->usid_streams_)
-    {
-        logger::debug() << "known usid " << x.first;
-    }
+    // for (auto x : channel->peer_->usid_streams_) {
+    //     logger::debug() << "known usid " << x.first;
+    // }
 
-    // Stream doesn't exist - lookup parent if it's an init-attach.
-    base_stream* parent_stream{nullptr};
+    // // Stream doesn't exist - lookup parent if it's an init-attach.
+    // base_stream* parent_stream{nullptr};
 
-    if (init and contains(channel->peer_->usid_streams_, parent_usid))
-    {
-        parent_stream = channel->peer_->usid_streams_[parent_usid];
-    }
+    // if (init and contains(channel->peer_->usid_streams_, parent_usid)) {
+    //     parent_stream = channel->peer_->usid_streams_[parent_usid];
+    // }
 
-    if (parent_stream)
-    {
-        // Found it: create and attach a child stream.
-        channel->ack_sid_ = header->stream_id;
-        parent_stream->rx_substream(pktseq, channel, header->stream_id, slot, usid);
-        // @todo: rx_substream() may fail to create the stream...
-        return false;   // Already acked in rx_substream()
-    }
+    // if (parent_stream) {
+    //     // Found it: create and attach a child stream.
+    //     channel->ack_sid_ = header->stream_id;
+    //     parent_stream->rx_substream(pktseq, channel, header->stream_id, slot, usid);
+    //     // @todo: rx_substream() may fail to create the stream...
+    //     return false; // Already acked in rx_substream()
+    // }
 
-    // No way to attach the stream - just reset it.
-    logger::debug() << "rx_attach_packet: unknown stream " << usid;
-    channel->acknowledge(pktseq, false);
-    tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+    // // No way to attach the stream - just reset it.
+    // logger::debug() << "rx_attach_packet: unknown stream " << usid;
+    // channel->acknowledge(pktseq, false);
+    // tx_reset(channel, header->stream_id, flags::reset_remote_sid);
+    // return false;
     return false;
 }
 
@@ -1732,166 +1723,150 @@ base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream
 bool
 base_stream::rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
-    if (pkt.size() < detach_header_len_min) {
-        logger::warning() << "Received runt detach packet";
-        return false; // @fixme Protocol error, close channel?
-    }
-
-    // auto header = as_header<detach_header>(pkt);
-    // @todo
-    logger::fatal() << "Base stream rx_detach_packet UNIMPLEMENTED.";
     return false;
 }
 
 void
 base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
 {
-    if (end_read_)
-    {
-        // Ignore anything we receive past end of stream
-        // (which we may have forced from our end via close()).
-        logger::warning() << "Ignoring segment received after end-of-stream";
-        assert(readahead_.empty());
-        assert(rx_segments_.empty());
-        return;
-    }
+    // if (end_read_) {
+    //     // Ignore anything we receive past end of stream
+    //     // (which we may have forced from our end via close()).
+    //     logger::warning() << "Ignoring segment received after end-of-stream";
+    //     assert(readahead_.empty());
+    //     assert(rx_segments_.empty());
+    //     return;
+    // }
 
-    rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
-    int seg_size = rseg.segment_size();
+    // rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
+    // int seg_size = rseg.segment_size();
 
-    logger::debug() << "rx_data " << byte_seq << " payload size " << seg_size
-        << " flags " << int(rseg.flags()) << " stream rx_seq " << rx_byte_seq_;
+    // logger::debug() << "rx_data " << byte_seq << " payload size " << seg_size << " flags "
+    //                 << int(rseg.flags()) << " stream rx_seq " << rx_byte_seq_;
 
-    // See where this packet fits in
-    int rx_seq_diff = rseg.rx_byte_seq - rx_byte_seq_;
-    if (rx_seq_diff <= 0)
-    {
-        // The segment is at or before our current receive position.
-        // How much of its data, if any, is actually useful?
-        // Note that we must process packets at our rx_seq with no data,
-        // because they might have important flags.
-        int act_size = seg_size + rx_seq_diff;
-        if (act_size < 0 or (act_size == 0 and !rseg.has_flags()))
-        {
-            // The packet is way out of date -
-            // its end doesn't even come up to our current RSN.
-            logger::debug() << "Duplicate segment at rx_seq " << rseg.rx_byte_seq
-                << " size " << seg_size;
-            return recalculate_receive_window();
-        }
-        rseg.header_len -= rx_seq_diff; // Merge useless data into "headers"
-        logger::debug() << "actual_size " << act_size << " flags " << int(rseg.flags());
+    // // See where this packet fits in
+    // int rx_seq_diff = rseg.rx_byte_seq - rx_byte_seq_;
+    // if (rx_seq_diff <= 0) {
+    //     // The segment is at or before our current receive position.
+    //     // How much of its data, if any, is actually useful?
+    //     // Note that we must process packets at our rx_seq with no data,
+    //     // because they might have important flags.
+    //     int act_size = seg_size + rx_seq_diff;
+    //     if (act_size < 0 or (act_size == 0 and !rseg.has_flags())) {
+    //         // The packet is way out of date -
+    //         // its end doesn't even come up to our current RSN.
+    //         logger::debug() << "Duplicate segment at rx_seq " << rseg.rx_byte_seq << " size "
+    //                         << seg_size;
+    //         return recalculate_receive_window();
+    //     }
+    //     rseg.header_len -= rx_seq_diff; // Merge useless data into "headers"
+    //     logger::debug() << "actual_size " << act_size << " flags " << int(rseg.flags());
 
-        // It gives us exactly the data we want next - very good!
-        bool was_empty = !has_bytes_available();
-        bool was_no_recs = !has_pending_records();
-        bool closed = false;
+    //     // It gives us exactly the data we want next - very good!
+    //     bool was_empty   = !has_bytes_available();
+    //     bool was_no_recs = !has_pending_records();
+    //     bool closed      = false;
 
-        rx_enqueue_segment(rseg, act_size, /*inout*/closed);
+    //     rx_enqueue_segment(rseg, act_size, /*inout*/ closed);
 
-        // Then pull anything we can from the reorder buffer
-        for (; !readahead_.empty(); readahead_.pop_front())
-        {
-            rx_segment_t& read_seg = readahead_.front();
-            int seg_size = read_seg.segment_size();
+    //     // Then pull anything we can from the reorder buffer
+    //     for (; !readahead_.empty(); readahead_.pop_front()) {
+    //         rx_segment_t& read_seg = readahead_.front();
+    //         int seg_size           = read_seg.segment_size();
 
-            int rx_seq_diff = read_seg.rx_byte_seq - rx_byte_seq_;
-            if (rx_seq_diff > 0) {
-                break;  // There's still a gap
-            }
+    //         int rx_seq_diff = read_seg.rx_byte_seq - rx_byte_seq_;
+    //         if (rx_seq_diff > 0) {
+    //             break; // There's still a gap
+    //         }
 
-            // Account for removal of this segment from readhead_;
-            // below we'll re-add whatever part of it we use.
-            rx_buffer_used_ -= seg_size;
+    //         // Account for removal of this segment from readhead_;
+    //         // below we'll re-add whatever part of it we use.
+    //         rx_buffer_used_ -= seg_size;
 
-            logger::debug() << "Pull readahead segment at " << read_seg.rx_byte_seq
-                << " of size " << seg_size << " from reorder buffer";
+    //         logger::debug() << "Pull readahead segment at " << read_seg.rx_byte_seq << " of size
+    //         "
+    //                         << seg_size << " from reorder buffer";
 
-            int act_size = seg_size + rx_seq_diff;
-            if (act_size < 0 or (act_size == 0 and !read_seg.has_flags())) {
-                continue;   // No useful data: drop
-            }
+    //         int act_size = seg_size + rx_seq_diff;
+    //         if (act_size < 0 or (act_size == 0 and !read_seg.has_flags())) {
+    //             continue; // No useful data: drop
+    //         }
 
-            read_seg.header_len -= rx_seq_diff;
+    //         read_seg.header_len -= rx_seq_diff;
 
-            // Consume this segment too.
-            rx_enqueue_segment(read_seg, act_size, /*inout*/closed);
-        }
+    //         // Consume this segment too.
+    //         rx_enqueue_segment(read_seg, act_size, /*inout*/ closed);
+    //     }
 
-        // If we're at the end of stream with no data to read,
-        // go into the end-of-stream state immediately.
-        // We must do this because read_data() may never
-        // see our queued zero-length segment if rx_available_ == 0.
-        if (closed and rx_available_ == 0)
-        {
-            shutdown(stream::shutdown_mode::read);
-            on_ready_read_record();
-            auto stream = owner_.lock();
-            if (is_link_up() and stream)
-            {
-                stream->on_ready_read();
-                stream->on_ready_read_record();
-            }
-            return recalculate_receive_window();
-        }
+    //     // If we're at the end of stream with no data to read,
+    //     // go into the end-of-stream state immediately.
+    //     // We must do this because read_data() may never
+    //     // see our queued zero-length segment if rx_available_ == 0.
+    //     if (closed and rx_available_ == 0) {
+    //         shutdown(stream::shutdown_mode::read);
+    //         on_ready_read_record();
+    //         auto stream = owner_.lock();
+    //         if (is_link_up() and stream) {
+    //             stream->on_ready_read();
+    //             stream->on_ready_read_record();
+    //         }
+    //         return recalculate_receive_window();
+    //     }
 
-        // Notify the client if appropriate
-        if (was_empty)
-        {
-            auto stream = owner_.lock();
-            if (state_ == state::connected and stream) {
-                stream->on_ready_read();
-            }
-        }
+    //     // Notify the client if appropriate
+    //     if (was_empty) {
+    //         auto stream = owner_.lock();
+    //         if (state_ == state::connected and stream) {
+    //             stream->on_ready_read();
+    //         }
+    //     }
 
-        if (was_no_recs and has_pending_records())
-        {
-            if (state_ == state::connected)
-            {
-                on_ready_read_record();
-                if (auto stream = owner_.lock()) {
-                    stream->on_ready_read_record();
-                }
-            }
-            else if (state_ == state::wait_service) {
-                got_service_reply();
-            }
-            else if (state_ == state::accepting) {
-                got_service_request();
-            }
-        }
-    }
-    else if (rx_seq_diff > 0)
-    {
-        // @todo Test this section
+    //     if (was_no_recs and has_pending_records()) {
+    //         if (state_ == state::connected) {
+    //             on_ready_read_record();
+    //             if (auto stream = owner_.lock()) {
+    //                 stream->on_ready_read_record();
+    //             }
+    //         } else if (state_ == state::wait_service) {
+    //             got_service_reply();
+    //         } else if (state_ == state::accepting) {
+    //             got_service_request();
+    //         }
+    //     }
+    // } else if (rx_seq_diff > 0) {
+    //     // @todo Test this section
 
-        // It's out of order beyond our current receive sequence -
-        // stash it in a re-order buffer, sorted by rx_seq.
+    //     // It's out of order beyond our current receive sequence -
+    //     // stash it in a re-order buffer, sorted by rx_seq.
 
-        logger::debug() << "Received out-of-order segment at " << rseg.rx_byte_seq
-            << " size " << seg_size;
+    //     logger::debug() << "Received out-of-order segment at " << rseg.rx_byte_seq << " size "
+    //                     << seg_size;
 
-        // Binary search for the correct position.
-        // lower_bound() because we want to see if there is the same element already in deque
-        auto it = lower_bound(readahead_.begin(), readahead_.end(), rx_seq_diff,
-            [this](rx_segment_t& itr, int val) { return (itr.rx_byte_seq - rx_byte_seq_) < val; } );
+    //     // Binary search for the correct position.
+    //     // lower_bound() because we want to see if there is the same element already in deque
+    //     auto it = lower_bound(
+    //         readahead_.begin(),
+    //         readahead_.end(),
+    //         rx_seq_diff,
+    //         [this](rx_segment_t& itr, int val) { return (itr.rx_byte_seq - rx_byte_seq_) < val;
+    //         });
 
-        // Don't save duplicate segments
-        // (unless the duplicate actually has more data or new flags).
-        if (it != readahead_.end() and (*it).rx_byte_seq == rseg.rx_byte_seq
-                and seg_size <= (*it).segment_size()
-                and rseg.flags() == (*it).flags())
-        {
-            logger::debug() << "rxseg duplicate out-of-order segment - rx_seq " << rseg.rx_byte_seq;
-            return recalculate_receive_window();
-        }
+    //     // Don't save duplicate segments
+    //     // (unless the duplicate actually has more data or new flags).
+    //     if (it != readahead_.end() and (*it).rx_byte_seq == rseg.rx_byte_seq
+    //         and seg_size <= (*it).segment_size()
+    //         and rseg.flags() == (*it).flags()) {
+    //         logger::debug() << "rxseg duplicate out-of-order segment - rx_seq " <<
+    //         rseg.rx_byte_seq;
+    //         return recalculate_receive_window();
+    //     }
 
-        rx_buffer_used_ += seg_size;
-        readahead_.insert(it, rseg);
-    }
+    //     rx_buffer_used_ += seg_size;
+    //     readahead_.insert(it, rseg);
+    // }
 
-    // Recalculate the receive window now that we've probably consumed some buffer space.
-    recalculate_receive_window();
+    // // Recalculate the receive window now that we've probably consumed some buffer space.
+    // recalculate_receive_window();
 }
 
 base_stream_ptr
@@ -1907,7 +1882,7 @@ base_stream::rx_substream(packet_seq_t pktseq,
         // Ack the pktseq first so peer won't ignore the reset!
         logger::warning() << "Other side trying to create substream, but we're not listening.";
         channel->acknowledge(pktseq, false);
-        tx_reset(channel, sid, flags::reset_remote_sid);
+        // tx_reset(channel, sid, flags::reset_remote_sid);
         return nullptr;
     }
 
@@ -1963,14 +1938,15 @@ base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, boo
     rx_record_available_ += actual_size;
     rx_buffer_used_ += actual_size;
 
-    if ((seg.flags() & (flags::data_record | flags::data_close)) and (rx_record_available_ > 0))
-    {
+    if (/*(seg.flags() bitand (flags::data_record | flags::data_close))
+        and*/ (rx_record_available_
+                                                                         > 0)) {
         logger::debug() << "Received complete record";
         rx_record_sizes_.push_back(rx_record_available_);
         rx_record_available_ = 0;
     }
-    if (seg.flags() & flags::data_close)
-        closed = true;
+    /*if (seg.flags() & flags::data_close)
+        closed = true;*/
 }
 
 static inline byte_array
@@ -2078,18 +2054,18 @@ base_stream::parent_attached()
 
 // void base_stream::substream_read_record()
 // {
-    // When one of our queued subs emits an on_ready_read_record() signal,
-    // we have to forward that via our on_ready_read_datagram() signal.
-    // @fixme WHY?
-    // Not sure this is a good idea.
-    // Basically it boils down to when substream has received a record we consider it to be
-    // a datagram substream and fire off datagram reading in client, with the new
-    // received_datagrams_ list it won't work.
-    // See comment in base_stream.h
+// When one of our queued subs emits an on_ready_read_record() signal,
+// we have to forward that via our on_ready_read_datagram() signal.
+// @fixme WHY?
+// Not sure this is a good idea.
+// Basically it boils down to when substream has received a record we consider it to be
+// a datagram substream and fire off datagram reading in client, with the new
+// received_datagrams_ list it won't work.
+// See comment in base_stream.h
 
-    // if (auto stream = owner_.lock()) {
-        // stream->on_ready_read_datagram();
-    // }
+// if (auto stream = owner_.lock()) {
+// stream->on_ready_read_datagram();
+// }
 // }
 
 //=================================================================================================

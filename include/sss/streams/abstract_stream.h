@@ -209,8 +209,9 @@ public:
     // Writing data.
     //=============================================================================================
 
-    virtual ssize_t write_record(char const* data, ssize_t size) {
-        return write_data(data, size, flags::data_record);
+    virtual ssize_t write_record(char const* data, ssize_t size)
+    {
+        return 0; // write_data(data, size, flags::data_record);
     }
 
     virtual ssize_t write_record(byte_array const& rec)

@@ -47,7 +47,7 @@ stream_peer::stream_peer(shared_ptr<host> const& host,
     }
 #endif
 
-    reconnect_timer_.on_timeout.connect([this](bool failed){ retry_timeout(); });
+    // reconnect_timer_.on_timeout.connect([this](bool failed) { retry_timeout(); });
 }
 
 stream_peer::~stream_peer()
@@ -61,8 +61,9 @@ stream_peer::~stream_peer()
     assert(all_streams_.empty());
     assert(usid_streams_.empty());
 }
-
-void stream_peer::connect_channel()
+#if 0
+void
+stream_peer::connect_channel()
 {
     assert(!remote_id_.is_null());
 
@@ -72,7 +73,7 @@ void stream_peer::connect_channel()
     // @todo Need a way to determine if streams need to send. If no streams waiting to send
     // on this channel, don't even bother.
     //
-    //if (receivers(SIGNAL(flowConnected())) == 0) return;
+    // if (receivers(SIGNAL(flowConnected())) == 0) return;
 
     logger::debug() << "Trying to connect channel with peer " << remote_id_;
 
@@ -102,8 +103,9 @@ void stream_peer::connect_channel()
     // Keep firing off connection attempts periodically
     reconnect_timer_.start(connect_retry_period);
 }
-
-void stream_peer::routing_client_ready(ur::client *rc)
+#endif
+void
+stream_peer::routing_client_ready(ur::client* rc)
 {
     if (contains(coord_.lookups_, rc))
         return; // Already polling this regserver
@@ -276,8 +278,10 @@ void
 stream_peer::retry_timeout()
 {
     // If we actually have an active channel now, do nothing.
-    if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
-        return;
+    // if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
+    // @todo:
+    // if (channels_.count() > 0 and channels_.any(|c| c.link_status() == status::up))
+    // return;
 
     // Notify any waiting streams of failure
     if (no_lookups_possible()) {
@@ -285,7 +289,7 @@ stream_peer::retry_timeout()
     }
 
     // If there are (still) any waiting streams, fire off a new batch of connection attempts.
-    connect_channel();
+    // connect_channel();
 }
 
 void
@@ -294,8 +298,10 @@ stream_peer::initiate_key_exchange(uia::comm::socket::wptr l, uia::comm::endpoin
     assert(ep != uia::comm::endpoint());
 
     // No need to initiate new channels if we already have a working one.
-    if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
-        return;
+    // if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
+    // @todo:
+    // if (channels_.count() > 0 and channels_.any(|c| c.link_status() == status::up))
+    // return;
 
     // Don't simultaneously initiate multiple channels to the same endpoint.
     // @todo Eventually multipath support is needed.
@@ -315,12 +321,12 @@ stream_peer::initiate_key_exchange(uia::comm::socket::wptr l, uia::comm::endpoin
     // @todo: Key exchange should spawn channel once we finalize key exchange.
 
     // Create and bind a new channel.
-    channel* chan = new stream_channel(host_, this, remote_id_);
-    if (!chan->bind(l, ep)) {
-        logger::warning() << "Could not bind new channel to target " << ep;
-        delete chan;
-        return on_channel_failed();
-    } // @sa stream_responder::create_channel
+    // channel* chan = new stream_channel(host_, this, remote_id_);
+    // if (!chan->bind(l, ep)) {
+    //     logger::warning() << "Could not bind new channel to target " << ep;
+    //     delete chan;
+    //     return on_channel_failed();
+    // } // @sa stream_responder::create_channel
 
     // Start the key exchange process for the channel.
     kex_initiator_ptr init = make_shared<kex_initiator>(chan, magic_id, remote_id_);
@@ -344,31 +350,30 @@ stream_peer::channel_started(stream_channel* channel)
     // @todo Change this logic completely, as currently we can have many parallel channels
     // between two peers at once. Each may have its own decongestion and encryption settings.
     // Keep a list of channels instead of single primary channel in stream_peer.
-    if (primary_channel_)
-    {
-        // If we already have a working primary channel, we don't need a new one.
-        if (primary_channel_->link_status() == socket::status::up)
-            return; // Shutdown the channel?
+    // if (primary_channel_) {
+    // If we already have a working primary channel, we don't need a new one.
+    // if (primary_channel_->link_status() == socket::status::up)
+    // return; // Shutdown the channel?
 
-        // But if the current primary is on the blink, replace it.
-        clear_primary_channel();
-    }
+    // But if the current primary is on the blink, replace it.
+    // clear_primary_channel();
+    // }
 
     logger::debug() << "Stream peer - new primary channel " << channel;
 
     // Use this channel as our primary channel for this target.
-    primary_channel_ = channel;
-    stall_warnings_ = 0;
+    // primary_channel_ = channel;
+    // stall_warnings_ = 0;
 
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
-    primary_channel_link_status_connection_ = primary_channel_->on_link_status_changed.connect(
-        [this](socket::status new_status) { primary_status_changed(new_status); });
+    // primary_channel_link_status_connection_ = primary_channel_->on_link_status_changed.connect(
+    // [this](socket::status new_status) { primary_status_changed(new_status); });
 
     // Notify all waiting streams
     on_channel_connected();
     on_link_status_changed(socket::status::up);
 }
-
+/*
 void
 stream_peer::clear_primary_channel()
 {
@@ -384,12 +389,12 @@ stream_peer::clear_primary_channel()
     // Clear all transmit-attachments
     // and return outstanding packets to the streams they came from.
     old_primary->detach_all();
-}
+}*/
 
 void
 stream_peer::add_location_hint(uia::comm::endpoint const& hint)
 {
-    assert(!remote_id_.is_empty());
+    // assert(!remote_id_.is_empty());
     // assert(!hint.empty());
 
     if (contains(locations_, hint)) {
@@ -418,8 +423,8 @@ stream_peer::completed(kex_initiator::ptr ki, bool success)
     // @todo Delete channel automatically if key_initiator failed...
     uia::comm::socket_endpoint lep = ki->remote_endpoint();
 
-    logger::debug() << "Stream peer key exchange for ID " << remote_id_ << " to " << lep
-                    << (success ? " succeeded" : " failed");
+    // logger::debug() << "Stream peer key exchange for ID " << remote_id_ << " to " << lep
+    //                 << (success ? " succeeded" : " failed");
 
     assert(!contains(key_exchanges_initiated_, lep) or key_exchanges_initiated_[lep] == ki);
     key_exchanges_initiated_.erase(lep);
@@ -428,12 +433,12 @@ stream_peer::completed(kex_initiator::ptr ki, bool success)
     ki.reset();
 
     // If unsuccessful, notify waiting streams.
-    if (!success) {
-        if (no_lookups_possible()) {
-            return on_channel_failed();
-        }
-        return; // There's still hope
+    // if (!success) {
+    if (no_lookups_possible()) {
+        return on_channel_failed();
     }
+    return; // There's still hope
+    // }
 
     // We should have an active primary channel at this point,
     // since stream_channel::start() attaches the channel if there isn't one.
@@ -442,16 +447,17 @@ stream_peer::completed(kex_initiator::ptr ki, bool success)
     // so servers don't have to initiate back-channels to their clients.
 
     // @todo This invariant doesn't hold here, fixme.
-    // assert(primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up);
+    // assert(primary_channel_ and primary_channel_->link_status() ==
+    // uia::comm::socket::status::up);
 }
 
 void
 stream_peer::primary_status_changed(socket::status new_status)
 {
-    assert(primary_channel_);
+    // assert(primary_channel_);
 
     if (new_status == socket::status::up) {
-        stall_warnings_ = 0;
+        // stall_warnings_ = 0;
         // Now that we (again?) have a working primary channel, cancel and delete all
         // outstanding kex_initiators that are still in an early enough stage not
         // to have possibly created receiver state.
@@ -463,9 +469,9 @@ stream_peer::primary_status_changed(socket::status new_status)
         auto ki_copy = key_exchanges_initiated_;
         for (auto ki : ki_copy) {
             auto initiator = ki.second;
-            if (!initiator->is_early()) {
-                continue; // too late - let it finish
-            }
+            // if (!initiator->is_early()) {
+            // continue; // too late - let it finish
+            // }
             logger::debug() << "Deleting " << initiator << " for " << remote_id_ << " to "
                             << initiator->remote_endpoint();
 
@@ -479,16 +485,16 @@ stream_peer::primary_status_changed(socket::status new_status)
     }
 
     if (new_status == socket::status::stalled) {
-        if (++stall_warnings_ < stall_warnings_max) {
-            logger::warning() << "Primary channel stall " << stall_warnings_ << " of "
-                              << stall_warnings_max;
-            return on_link_status_changed(new_status);
-        }
+        // if (++stall_warnings_ < stall_warnings_max) {
+        //     logger::warning() << "Primary channel stall " << stall_warnings_ << " of "
+        //                       << stall_warnings_max;
+        //     return on_link_status_changed(new_status);
+        // }
     }
 
     // Primary is at least stalled, perhaps permanently failed -
     // start looking for alternate paths right away for quick response.
-    connect_channel();
+    // connect_channel();
 
     // Pass the signal on to all streams connected to this peer.
     on_link_status_changed(new_status);

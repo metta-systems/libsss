@@ -306,7 +306,7 @@ stream::write_data(const char* data, ssize_t size)
         set_error("Stream not connected");
         return -1;
     }
-    return stream_->write_data(data, size, stream_protocol::flags::data_push);
+    return 0; // stream_->write_data(data, size, stream_protocol::flags::data_push);
 }
 
 ssize_t
@@ -316,7 +316,7 @@ stream::write_record(const char* data, ssize_t size)
         set_error("Stream not connected");
         return -1;
     }
-    return stream_->write_data(data, size, stream_protocol::flags::data_record);
+    return 0; // stream_->write_data(data, size, stream_protocol::flags::data_record);
 }
 
 ssize_t

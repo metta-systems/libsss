@@ -853,17 +853,17 @@ size_t channel::may_transmit()
 bool
 channel::channel_transmit(boost::asio::const_buffer packet, packet_seq_t& packet_seq)
 {
-    assert(packet.size() > header_len); // Must be non-empty data packet.
+    // assert(packet.size() > header_len); // Must be non-empty data packet.
 
     // Include implicit acknowledgment of the latest packet(s) we've acked
     uint32_t ack_seq = 0;
-        // make_second_header_word(pimpl_->state_->rx_ack_count_, pimpl_->state_->rx_ack_sequence_);
+    // make_second_header_word(pimpl_->state_->rx_ack_count_, pimpl_->state_->rx_ack_sequence_);
 
-// @todo verify that ackct is always 0xf in case no packets were dropped
-// (that can nicely be a unit test)
-// override channel's armor to a fixture one, with transmit_encode() actually examining
-// packets to be sent and receive_decode() examining packets "received".
-// then prove that ackct goes up from 1 to 15 and stays there.
+    // @todo verify that ackct is always 0xf in case no packets were dropped
+    // (that can nicely be a unit test)
+    // override channel's armor to a fixture one, with transmit_encode() actually examining
+    // packets to be sent and receive_decode() examining packets "received".
+    // then prove that ackct goes up from 1 to 15 and stays there.
 
     if (pimpl_->state_->rx_unacked_)
     {
@@ -894,43 +894,43 @@ channel::transmit(boost::asio::const_buffer packet,
     logger::debug() << "Channel sending a packet";
 
     // Don't allow tx_sequence_ counter to wrap (@fixme re-key before it does!)
-    packet_seq = pimpl_->state_->tx_sequence_;
-    assert(packet_seq < max_packet_sequence);
-    uint32_t tx_seq = packet_seq;
+    // packet_seq = pimpl_->state_->tx_sequence_;
+    // assert(packet_seq < max_packet_sequence);
+    // uint32_t tx_seq = packet_seq;
 
     // Fill in the transmit and ACK sequence number fields.
-    assert(packet.size() >= header_len);
-    big_uint32_t* pkt_header = packet.as<big_uint32_t>(2);
-    pkt_header[0] = tx_seq;
-    pkt_header[1] = ack_seq;
+    // assert(packet.size() >= header_len);
+    // big_uint32_t* pkt_header = packet.as<big_uint32_t>(2);
+    // pkt_header[0]            = tx_seq;
+    // pkt_header[1]            = ack_seq;
 
-    logger::file_dump(packet, "sending channel packet before encrypt");
+    // logger::file_dump(packet, "sending channel packet before encrypt");
 
-    // Encrypt and compute the MAC for the packet
-    byte_array epkt = transmit_encode(asio::mutable_buffer(packet.data(), packet.size()));
+    // // Encrypt and compute the MAC for the packet
+    // byte_array epkt = transmit_encode(asio::mutable_buffer(packet.data(), packet.size()));
 
-    logger::file_dump(epkt, "sending channel packet after encrypt");
+    // logger::file_dump(epkt, "sending channel packet after encrypt");
 
-    // Bump transmit sequence number,
-    // and timestamp if this packet is marked for RTT measurement
-    // This is the "Point of no return" -
-    // a failure after this still consumes sequence number space.
-    pimpl_->state_->bump_tx_sequence();
+    // // Bump transmit sequence number,
+    // // and timestamp if this packet is marked for RTT measurement
+    // // This is the "Point of no return" -
+    // // a failure after this still consumes sequence number space.
+    // pimpl_->state_->bump_tx_sequence();
 
-    // Record the transmission event
-    transmit_event_t evt(packet.size(), is_data);
-    if (is_data)
-    {
-        pimpl_->state_->tx_inflight_count_++;
-        pimpl_->state_->tx_inflight_size_ += evt.size_;
-    }
-    pimpl_->state_->tx_events_.push_back(evt);
-    assert(pimpl_->state_->tx_event_sequence_ + pimpl_->state_->tx_events_.size()
-        == pimpl_->state_->tx_sequence_);
-    assert(pimpl_->state_->tx_inflight_count_ <= (unsigned)pimpl_->state_->tx_events_.size());
+    // // Record the transmission event
+    // transmit_event_t evt(packet.size(), is_data);
+    // if (is_data) {
+    //     pimpl_->state_->tx_inflight_count_++;
+    //     pimpl_->state_->tx_inflight_size_ += evt.size_;
+    // }
+    // pimpl_->state_->tx_events_.push_back(evt);
+    // assert(pimpl_->state_->tx_event_sequence_ + pimpl_->state_->tx_events_.size()
+    //        == pimpl_->state_->tx_sequence_);
+    // assert(pimpl_->state_->tx_inflight_count_ <= (unsigned)pimpl_->state_->tx_events_.size());
 
-    logger::debug() << "Channel transmit tx seq " << dec << pimpl_->state_->tx_sequence_
-        << " size " << epkt.size();
+    // logger::debug() << "Channel transmit tx seq " << dec << pimpl_->state_->tx_sequence_ << "
+    // size "
+    //                 << epkt.size();
 
     // Ship it out
     return send(epkt);
@@ -1099,9 +1099,9 @@ bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_coun
     assert(ack_count <= max_ack_count);
 
     // if (packet.size() < header_len)
-        // packet.resize(header_len);
+    // packet.resize(header_len);
 
-    uint32_t ack_word = 0;//make_second_header_word(ack_count, ackseq);
+    uint32_t ack_word = 0; // make_second_header_word(ack_count, ackseq);
     packet_seq_t pktseq;
 
     return transmit(packet, ack_word, pktseq, false);
@@ -1163,7 +1163,7 @@ channel::receive_decode(asio::const_buffer in, byte_array& out)
 {
     try {
         sss::channels::message_packet_header msg;
-        tie(msg, in) = fusionary::read(msg, in);
+        // tie(msg, in) = /*fusionary::*/ read(msg, in);
 
         assert(asio::buffer_size(in) == 0);
 
@@ -1216,12 +1216,12 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
     sss::framing::packet_header phdr;
     asio::const_buffer packet_buf(asio::buffer(msg.as_string()));
 
-    tie(phdr, packet_buf) = fusionary::read(phdr, packet_buf);
+    // tie(phdr, packet_buf) = /*fusionary::*/ read(phdr, packet_buf);
 
     // packet_seq_t pktseq = derive_packet_seq(phdr.packet_sequence.value());
 
     // if (phdr.flags bitand flags::fec) {
-        // Insert packet to FEC queue
+    // Insert packet to FEC queue
     // }
     // else
     // Frame decode loop
@@ -1234,8 +1234,8 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
                 continue;
             case stream_protocol::frame_type::STREAM: // stream
             {
-                sss::framing::stream_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::stream_frame_header hdr;
+                // tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
 
                 // find stream
                 // run rx_stream_frame(hdr)
@@ -1243,8 +1243,8 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
             }
             case stream_protocol::frame_type::ACK: // channel/stream
             {
-                sss::framing::ack_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::ack_frame_header hdr;
+                // tie(hdr, packet_buf) = /*fusionary::*/ read(hdr, packet_buf);
 
                 // find all acked packets and associated streams
                 // for each stream run rx_ack_frame(pktseq)
@@ -1252,215 +1252,221 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
             }
             case stream_protocol::frame_type::PADDING: // here
             {
-                sss::framing::padding_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::padding_frame_header hdr;
+                // tie(hdr, packet_buf) = /*fusionary::*/ read(hdr, packet_buf);
                 continue;
             }
             case stream_protocol::frame_type::DECONGESTION: // channel
             {
-                sss::framing::decongestion_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::decongestion_frame_header hdr;
+                // tie(hdr, packet_buf) = /*fusionary::*/ read(hdr, packet_buf);
                 continue;
             }
             case stream_protocol::frame_type::DETACH: // stream
             {
-                sss::framing::detach_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::detach_frame_header hdr;
+                // tie(hdr, packet_buf) = /*fusionary::*/ read(hdr, packet_buf);
                 continue;
             }
             case stream_protocol::frame_type::RESET: // stream
             {
-                sss::framing::reset_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::reset_frame_header hdr;
+                // tie(hdr, packet_buf) = /*fusionary::*/ read(hdr, packet_buf);
                 continue;
             }
             case stream_protocol::frame_type::CLOSE: // channel
             {
-                sss::framing::close_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::close_frame_header hdr;
+                // tie(hdr, packet_buf) =
+                //     fusionary::read<sss::framing::close_frame_header>(packet_buf);
                 continue;
             }
             case stream_protocol::frame_type::SETTINGS: // channel
             {
-                sss::framing::settings_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::settings_frame_header hdr;
+                // tie(hdr, packet_buf) =
+                //     fusionary::read<sss::framing::settings_frame_header>(packet_buf);
                 continue;
             }
             case stream_protocol::frame_type::PRIORITY: // stream
             {
-                sss::framing::priority_frame_header hdr;
-                tie(hdr, packet_buf) = fusionary::read(hdr, packet_buf);
+                // sss::framing::priority_frame_header hdr;
+                // tie(hdr, packet_buf) =
+                //     fusionary::read<sss::framing::priority_frame_header>(packet_buf);
                 continue;
             }
-            default:
-                break;
+            default: break;
         }
     }
-/*
-    // Immediately drop too-old or already-received packets
-    static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == mask_bits, "Invalid RX mask size");
+    /*
+        // Immediately drop too-old or already-received packets
+        static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == mask_bits, "Invalid RX mask size");
 
-    if (seqdiff > 0) {
-        if (pktseq < pimpl_->state_->rx_sequence_) {
-            logger::warning() << "Channel receive - 64-bit wraparound detected!";
+        if (seqdiff > 0) {
+            if (pktseq < pimpl_->state_->rx_sequence_) {
+                logger::warning() << "Channel receive - 64-bit wraparound detected!";
+                return;
+            }
+        } else if (seqdiff <= -mask_bits) {
+            logger::debug() << "Channel receive - too-old packet dropped";
             return;
-        }
-    } else if (seqdiff <= -mask_bits) {
-        logger::debug() << "Channel receive - too-old packet dropped";
-        return;
-    } else if (seqdiff <= 0) {
-        if (pimpl_->state_->rx_mask_ & (1 << -seqdiff)) {
-            logger::debug() << "Channel receive - duplicate packet dropped";
-            return;
-        }
-    }
-
-    // Record this packet as received for replay protection
-    if (seqdiff > 0) {
-        // Roll rxseq and rxmask forward appropriately.
-        pimpl_->state_->rx_sequence_ = pktseq;
-        // @fixme This if is not necessary...
-        if (seqdiff < mask_bits)
-            pimpl_->state_->rx_mask_ = (pimpl_->state_->rx_mask_ << seqdiff) | 1;
-        else
-            pimpl_->state_->rx_mask_ = 1; // bit 0 = packet just received
-    } else {
-        // Set appropriate bit in rx_mask_
-        assert(seqdiff < 0 and seqdiff > -mask_bits);
-        pimpl_->state_->rx_mask_ |= (1 << -seqdiff);
-    }
-
-    // @todo rx_ack_frame()
-        // Notify the upper layer of newly-acknowledged data packets
-        for (packet_seq_t seq = pimpl_->state_->tx_ack_sequence_ - new_packets + 1;
-                seq <= pimpl_->state_->tx_ack_sequence_;
-                ++seq)
-        {
-            transmit_event_t& e = pimpl_->state_->tx_events_[seq - pimpl_->state_->tx_event_sequence_];
-            if (e.pipe_)
-            {
-                e.pipe_ = false;
-                pimpl_->state_->tx_inflight_count_--;
-                pimpl_->state_->tx_inflight_size_ -= e.size_;
-
-                acknowledged(seq, 1, pktseq);
+        } else if (seqdiff <= 0) {
+            if (pimpl_->state_->rx_mask_ & (1 << -seqdiff)) {
+                logger::debug() << "Channel receive - duplicate packet dropped";
+                return;
             }
         }
 
-        // Infer that packets left un-acknowledged sufficiently late
-        // have been dropped, and notify the upper layer as such.
-        // XX we could avoid some of this arithmetic if we just
-        // made sequence numbers start a bit higher.
-        packet_seq_t miss_lim = pimpl_->state_->tx_ack_sequence_ -
-            min(pimpl_->state_->tx_ack_sequence_,
-                packet_seq_t(max(pimpl_->state_->miss_threshold_, new_packets)));
+        // Record this packet as received for replay protection
+        if (seqdiff > 0) {
+            // Roll rxseq and rxmask forward appropriately.
+            pimpl_->state_->rx_sequence_ = pktseq;
+            // @fixme This if is not necessary...
+            if (seqdiff < mask_bits)
+                pimpl_->state_->rx_mask_ = (pimpl_->state_->rx_mask_ << seqdiff) | 1;
+            else
+                pimpl_->state_->rx_mask_ = 1; // bit 0 = packet just received
+        } else {
+            // Set appropriate bit in rx_mask_
+            assert(seqdiff < 0 and seqdiff > -mask_bits);
+            pimpl_->state_->rx_mask_ |= (1 << -seqdiff);
+        }
 
-        for (packet_seq_t miss_seq = pimpl_->state_->tx_ack_sequence_ -
-            min(pimpl_->state_->tx_ack_sequence_,
-                packet_seq_t(pimpl_->state_->miss_threshold_ + ack_diff - 1));
-            miss_seq <= miss_lim;
-            ++miss_seq)
-        {
-            transmit_event_t& e = pimpl_->state_->tx_events_[miss_seq - pimpl_->state_->tx_event_sequence_];
-            if (e.pipe_)
+        // @todo rx_ack_frame()
+            // Notify the upper layer of newly-acknowledged data packets
+            for (packet_seq_t seq = pimpl_->state_->tx_ack_sequence_ - new_packets + 1;
+                    seq <= pimpl_->state_->tx_ack_sequence_;
+                    ++seq)
             {
-                logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_
-                    << " inferred dropped";
+                transmit_event_t& e = pimpl_->state_->tx_events_[seq -
+       pimpl_->state_->tx_event_sequence_];
+                if (e.pipe_)
+                {
+                    e.pipe_ = false;
+                    pimpl_->state_->tx_inflight_count_--;
+                    pimpl_->state_->tx_inflight_size_ -= e.size_;
 
-                e.pipe_ = false;
-                pimpl_->state_->tx_inflight_count_--;
-                pimpl_->state_->tx_inflight_size_ -= e.size_;
+                    acknowledged(seq, 1, pktseq);
+                }
+            }
 
-                if (!pimpl_->nocc_) {
-                    pimpl_->congestion_control->missed(miss_seq);
+            // Infer that packets left un-acknowledged sufficiently late
+            // have been dropped, and notify the upper layer as such.
+            // XX we could avoid some of this arithmetic if we just
+            // made sequence numbers start a bit higher.
+            packet_seq_t miss_lim = pimpl_->state_->tx_ack_sequence_ -
+                min(pimpl_->state_->tx_ack_sequence_,
+                    packet_seq_t(max(pimpl_->state_->miss_threshold_, new_packets)));
+
+            for (packet_seq_t miss_seq = pimpl_->state_->tx_ack_sequence_ -
+                min(pimpl_->state_->tx_ack_sequence_,
+                    packet_seq_t(pimpl_->state_->miss_threshold_ + ack_diff - 1));
+                miss_seq <= miss_lim;
+                ++miss_seq)
+            {
+                transmit_event_t& e = pimpl_->state_->tx_events_[miss_seq -
+       pimpl_->state_->tx_event_sequence_];
+                if (e.pipe_)
+                {
+                    logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_
+                        << " inferred dropped";
+
+                    e.pipe_ = false;
+                    pimpl_->state_->tx_inflight_count_--;
+                    pimpl_->state_->tx_inflight_size_ -= e.size_;
+
+                    if (!pimpl_->nocc_) {
+                        pimpl_->congestion_control->missed(miss_seq);
+                    }
+
+                    missed(miss_seq, 1);
+                    logger::debug() << "Infer-missed seq " << miss_seq
+                        << " tx inflight " << pimpl_->state_->tx_inflight_count_;
+                }
+            }
+
+            // Finally, notice packets as they exit our ack window,
+            // and garbage collect their transmit records,
+            // since they can never be acknowledged after that.
+            if (pimpl_->state_->tx_ack_sequence_ > mask_bits)
+            {
+                while (pimpl_->state_->tx_event_sequence_ <= pimpl_->state_->tx_ack_sequence_ -
+       mask_bits)
+                {
+                    logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_ << "
+       expired";
+                    assert(!pimpl_->state_->tx_events_.front().pipe_);
+                    pimpl_->state_->tx_events_.pop_front();
+                    pimpl_->state_->tx_event_sequence_++;
+                    expire(pimpl_->state_->tx_event_sequence_ - 1, 1);
+                }
+            }
+
+            // Reset the retransmission timer, since we've made progress.
+            // Only re-arm it if there's still outstanding unACKed data.
+            set_link_status(uia::comm::socket::status::up);
+            if (pimpl_->state_->tx_inflight_count_ > 0)
+            {
+                start_retransmit_timer();
+            }
+            else
+            {
+                logger::debug() << "Stopping retransmission timer";
+                pimpl_->retransmit_timer_.stop();
+            }
+
+            // Now that we've moved tx_ack_sequence_ forward to the packet's ackseq,
+            // they're now the same, which is important to the code below.
+            ack_diff = 0;
+        }
+
+        assert(ack_diff <= 0);
+
+        // @todo Factor this off into a separate function (in pimpl_ perhaps).
+
+        // Handle acknowledgments for any straggling out-of-order packets
+        // (or an out-of-order acknowledgment for in-order packets).
+        // Set the appropriate bits in our tx_ack_mask_,
+        // and count newly acknowledged packets within our window.
+        uint32_t newmask = (1 << ackct) - 1;
+        if ((pimpl_->state_->tx_ack_mask_ & newmask) != newmask) {
+            for (unsigned i = 0; i <= ackct; i++) {
+                int bit = -ack_diff + i;
+                if (bit >= mask_bits)
+                    break;
+                if (pimpl_->state_->tx_ack_mask_ & (1 << bit))
+                    continue;   // already ACKed
+                pimpl_->state_->tx_ack_mask_ |= (1 << bit);
+
+                transmit_event_t& e
+                    = pimpl_->state_->tx_events_[pimpl_->state_->tx_ack_sequence_
+                        - bit - pimpl_->state_->tx_event_sequence_];
+
+                if (e.pipe_)
+                {
+                    e.pipe_ = false;
+                    pimpl_->state_->tx_inflight_count_--;
+                    pimpl_->state_->tx_inflight_size_ -= e.size_;
+
+                    acknowledged(pimpl_->state_->tx_ack_sequence_ - bit, 1, pktseq);
                 }
 
-                missed(miss_seq, 1);
-                logger::debug() << "Infer-missed seq " << miss_seq
-                    << " tx inflight " << pimpl_->state_->tx_inflight_count_;
+                new_packets++;
             }
         }
 
-        // Finally, notice packets as they exit our ack window,
-        // and garbage collect their transmit records,
-        // since they can never be acknowledged after that.
-        if (pimpl_->state_->tx_ack_sequence_ > mask_bits)
-        {
-            while (pimpl_->state_->tx_event_sequence_ <= pimpl_->state_->tx_ack_sequence_ - mask_bits)
-            {
-                logger::debug() << "Sequence " << pimpl_->state_->tx_event_sequence_ << " expired";
-                assert(!pimpl_->state_->tx_events_.front().pipe_);
-                pimpl_->state_->tx_events_.pop_front();
-                pimpl_->state_->tx_event_sequence_++;
-                expire(pimpl_->state_->tx_event_sequence_ - 1, 1);
-            }
+        // Count the total number of acknowledged packets since the last mark.
+        pimpl_->state_->mark_acks_ += new_packets;
+
+        pimpl_->cc_and_rtt_update(new_packets, ackseq);
+
+        // Pass the received packet to the upper layer for processing.
+        // It'll return true if it wants us to ack the packet, false otherwise.
+        if (channel_receive(pktseq, msg)) { // <-- @fixme
+            acknowledge(pktseq, true);
         }
-
-        // Reset the retransmission timer, since we've made progress.
-        // Only re-arm it if there's still outstanding unACKed data.
-        set_link_status(uia::comm::socket::status::up);
-        if (pimpl_->state_->tx_inflight_count_ > 0)
-        {
-            start_retransmit_timer();
-        }
-        else
-        {
-            logger::debug() << "Stopping retransmission timer";
-            pimpl_->retransmit_timer_.stop();
-        }
-
-        // Now that we've moved tx_ack_sequence_ forward to the packet's ackseq,
-        // they're now the same, which is important to the code below.
-        ack_diff = 0;
-    }
-
-    assert(ack_diff <= 0);
-
-    // @todo Factor this off into a separate function (in pimpl_ perhaps).
-
-    // Handle acknowledgments for any straggling out-of-order packets
-    // (or an out-of-order acknowledgment for in-order packets).
-    // Set the appropriate bits in our tx_ack_mask_,
-    // and count newly acknowledged packets within our window.
-    uint32_t newmask = (1 << ackct) - 1;
-    if ((pimpl_->state_->tx_ack_mask_ & newmask) != newmask) {
-        for (unsigned i = 0; i <= ackct; i++) {
-            int bit = -ack_diff + i;
-            if (bit >= mask_bits)
-                break;
-            if (pimpl_->state_->tx_ack_mask_ & (1 << bit))
-                continue;   // already ACKed
-            pimpl_->state_->tx_ack_mask_ |= (1 << bit);
-
-            transmit_event_t& e
-                = pimpl_->state_->tx_events_[pimpl_->state_->tx_ack_sequence_
-                    - bit - pimpl_->state_->tx_event_sequence_];
-
-            if (e.pipe_)
-            {
-                e.pipe_ = false;
-                pimpl_->state_->tx_inflight_count_--;
-                pimpl_->state_->tx_inflight_size_ -= e.size_;
-
-                acknowledged(pimpl_->state_->tx_ack_sequence_ - bit, 1, pktseq);
-            }
-
-            new_packets++;
-        }
-    }
-
-    // Count the total number of acknowledged packets since the last mark.
-    pimpl_->state_->mark_acks_ += new_packets;
-
-    pimpl_->cc_and_rtt_update(new_packets, ackseq);
-
-    // Pass the received packet to the upper layer for processing.
-    // It'll return true if it wants us to ack the packet, false otherwise.
-    if (channel_receive(pktseq, msg)) { // <-- @fixme
-        acknowledge(pktseq, true);
-    }
-    // XX should still replay-protect even if no ack!
-*/
+        // XX should still replay-protect even if no ack!
+    */
     // Signal upper layer that we can transmit more, if appropriate
     if (/*new_packets > 0 and*/ may_transmit()) {
         on_ready_transmit();

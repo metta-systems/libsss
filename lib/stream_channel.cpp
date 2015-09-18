@@ -169,7 +169,7 @@ stream_channel::stop()
 //=================================================================================================
 // Framing
 //=================================================================================================
-
+#if 0
 /**
  * Assemble packet preamble - fixed prefix part and framing area start.
  */
@@ -251,7 +251,7 @@ stream_channel::assemble_packet(asio::mutable_buffer out_packet)
         }                           // end for
     }                               // end while
 }
-
+#endif
 //=================================================================================================
 // Stream interface
 //=================================================================================================
@@ -330,11 +330,11 @@ stream_channel::transmit_ack(byte_array& pkt, packet_seq_t ackseq, int ack_count
     assert(attach);
 
     // Build a bare Ack packet header
-    auto header          = as_header<ack_header>(pkt);
-    header->stream_id    = attach->stream_id_;
-    header->type_subtype = type_and_subtype(packet_type::ack, 0);
-    header->window       = attach->stream_->receive_window_byte();
-
+    /*    auto header          = as_header<ack_header>(pkt);
+        header->stream_id    = attach->stream_id_;
+        header->type_subtype = type_and_subtype(packet_type::ack, 0);
+        header->window       = attach->stream_->receive_window_byte();
+    */
     // Let channel protocol put together its part of the packet and send it.
     return super::transmit_ack(pkt, ackseq, ack_count);
 }
