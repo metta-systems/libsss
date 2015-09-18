@@ -22,7 +22,7 @@ class socket_endpoint;
  * Abstract base class for packet receivers.
  * Provides support for receiving messages for registered types.
  */
-class packet_receiver : std::enable_shared_from_this<packet_receiver>
+class packet_receiver : public std::enable_shared_from_this<packet_receiver>
 {
     socket_host_interface* host_interface_{nullptr};
     std::string magic_;
