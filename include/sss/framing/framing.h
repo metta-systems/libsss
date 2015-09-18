@@ -12,11 +12,6 @@
 #include <memory>
 #include <boost/asio/buffers.hpp>
 
-
-// clangcomplete compiled with custom llvm that's why
-// /usr/local/opt/llvm/include/c++/v1/iosfwd:90:10: fatal error: 'wchar.h' file not found
-// is happening'
-// need to fix/reset default include paths somehow??
 namespace sss {
 namespace framing {
 
@@ -36,9 +31,6 @@ class framed_packet
     std::vector<asio::mutable_buffer> frames; // packet subranges covering sequence of frames
 };
 
-// EMPTY frame - tag 0 byte, nothing contained - can be used to pad 1 or 2 byte gaps where PADDING
-// frame doesn't fit
-
 /**
  * Given multiple packets to send and a packet buffer, figure out most efficient packing,
  * complying to security policy etc. and write those packets into the buffer.
@@ -52,6 +44,7 @@ class framed_packet
  * Assembled packets are owned by channel transmission layer.
  * When channel is shut down these frames must be returned to owning stream.
  * (They should be stream-buffered until acked)
+ * ^- @todo this means they're better owned by the stream
  */
 class framing_t
 {
@@ -69,9 +62,10 @@ private:
     using read_handler_type = void (framing::*)(asio::const_buffer);
     std::array<read_handler_type, max_frame_count_t::value> handlers_;
 
-    // References to streams and channel associated with this framing instance.
-    // When parsing received frames, call into stream_[lsid]->rx_*() and channel_->rx_*() functions
-    // to process associated frames.
+    // Reference to channel associated with this framing instance.
+    // When parsing received frames, obtain streams from channel by lsid/usid and call rx_*()
+    // functions to process associated frames. Call channel's rx_*() functions to process
+    // channel-level frames.
     channel::ptr channel_;
 };
 

@@ -135,6 +135,7 @@ public:
     // }
 
     /// Service message codes
+    /// These are sent on stream LSID 0
     enum service_code : uint32_t
     {
         connect_request = 0x101, ///< Connect to named service.

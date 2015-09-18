@@ -34,6 +34,7 @@ class channel : public uia::comm::socket_channel
     // Packet encode/decode.
     // @todo Move to pimpl
 
+    // @todo change these to krypto::secret_key and krypto::public_key
     sodiumpp::secret_key local_key_;
     sodiumpp::public_key remote_key_;
 

@@ -23,7 +23,7 @@ class channel;
 namespace negotiation {
 
 /**
- * Key initiator maintains host state with respect to initiated key exchanges.
+ * Key exchange initiator maintains host state with respect to initiated key exchanges.
  * One initiator keeps state about key exchange with one peer.
  *
  * XXX make key_initiator an abstract base class like key_responder,
@@ -84,7 +84,8 @@ public:
     void exchange_keys();
 
     /**
-     * Cancel all of this KeyInitiator's activities (without actually deleting the object just yet).
+     * Cancel all of this kex_initiator's activities (without actually deleting the object just
+     * yet).
      */
     void cancel();
 

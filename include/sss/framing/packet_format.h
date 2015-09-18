@@ -11,7 +11,7 @@
 #include "sss/framing/framing_types.h"
 
 //=================================================================================================
-// Channel/packet layer
+// Channel layer - transmitted packets
 //=================================================================================================
 
 // clang-format off
@@ -51,7 +51,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (eckey_t, initiator_shortterm_public_key)
     (sss::channels::responder_cookie, responder_cookie)
     (cnonce8_t, nonce)
-    (rest_t, box) // variable size box --v
+    (rest_t, box) // variable size box -- see struct below
 );
 
 BOOST_FUSION_DEFINE_STRUCT(

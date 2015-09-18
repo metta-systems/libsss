@@ -132,7 +132,7 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
      * Frame's logical byte position refers to position within full stream,
      * they are used for ACKing.
      * Frame's range covers [tx_byte_seq_ .. tx_byte_seq_ + buffer_size(payload_)]
-     * Frames are assembled via framing layer.
+     * Frames are assembled via framing layer into packets for actual transmission.
      */
     struct tx_frame_t
     {
@@ -411,7 +411,7 @@ private:
 
     /**
      * Create a base_stream instance.
-     * @param host parent host
+     * @param h parent host
      * @param peer the endpoint identifier (EID) of the remote host with which this stream
      *        will be used to communicate. The destination may be either a cryptographic EID
      *        or a non-cryptographic legacy address as defined by the Ident class.
