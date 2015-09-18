@@ -38,9 +38,7 @@ public:
     using weak_ptr = std::weak_ptr<socket_channel>;
     using ptr = std::shared_ptr<socket_channel>;
 
-    inline virtual ~socket_channel() {
-        unbind();
-    }
+    inline virtual ~socket_channel() { unbind(); }
 
     /**
      * Start the channel.
@@ -55,31 +53,24 @@ public:
     /**
      * Stop the channel.
      */
-    inline virtual void stop() {
-        active_ = false;
-    }
+    inline virtual void stop() { active_ = false; }
 
-    inline bool is_active() const {
-        return active_;
-    }
+    inline bool is_active() const { return active_; }
 
-    inline bool is_bound()  const {
-        return socket_.lock() != nullptr;
-    }
+    inline bool is_bound() const { return socket_.lock() != nullptr; }
 
     /**
      * Test whether underlying socket is already congestion controlled.
      */
-    inline bool is_congestion_controlled() {
+    inline bool is_congestion_controlled()
+    {
         return socket_.lock()->is_congestion_controlled(remote_ep_);
     }
 
     /**
      * Return the remote endpoint we're bound to, if any.
      */
-    inline socket_endpoint remote_endpoint() const {
-        return socket_endpoint(socket_, remote_ep_);
-    }
+    inline socket_endpoint remote_endpoint() const { return socket_endpoint(socket_, remote_ep_); }
 
     /**
      * Set up for communication with specified remote endpoint,
@@ -112,24 +103,18 @@ public:
     /**
      * Return current local channel number.
      */
-    inline std::string local_channel() const {
-        return local_channel_key_;
-    }
+    inline std::string local_channel() const { return local_channel_key_; }
 
     /**
      * Return current remote channel number.
      */
-    inline std::string remote_channel() const {
-        return remote_channel_key_;
-    }
+    inline std::string remote_channel() const { return remote_channel_key_; }
 
     /**
      * Set the channel number to direct packets to the remote endpoint.
      * This MUST be done before a new channel can be activated.
      */
-    inline void set_remote_channel(std::string ch) {
-        remote_channel_key_ = ch;
-    }
+    inline void set_remote_channel(std::string ch) { remote_channel_key_ = ch; }
 
     /**
      * Receive a network packet msg from endpoint src.
@@ -138,16 +123,17 @@ public:
      * @param msg A received network packet
      * @param src Sender endpoint
      */
-    inline virtual void receive(boost::asio::const_buffer msg, socket_endpoint const& src) {
+    inline virtual void receive(boost::asio::const_buffer msg, socket_endpoint const& src)
+    {
         on_received(msg, src);
     }
 
     /** @name Signals. */
     /**@{*/
     // Provide access to signal types for clients
-    using received_signal
-        = boost::signals2::signal<void (boost::asio::const_buffer, socket_endpoint const&)>;
-    using ready_transmit_signal = boost::signals2::signal<void ()>;
+    using received_signal =
+        boost::signals2::signal<void(boost::asio::const_buffer, socket_endpoint const&)>;
+    using ready_transmit_signal = boost::signals2::signal<void()>;
 
     /**
      * Signalled when channel receives a packet.

@@ -45,7 +45,8 @@ public:
     using weak_ptr = std::weak_ptr<socket>;
 
     /// sss expresses current socket status as one of three states:
-    enum class status {
+    enum class status
+    {
         down,    ///< Definitely appears to be down.
         stalled, ///< Briefly lost connectivity, but may be temporary.
         up       ///< Apparently alive, all is well as far as we know.
@@ -53,7 +54,10 @@ public:
 
     static std::string status_string(status s);
 
-    socket(socket_host_interface* hi) : host_interface_(hi) {}
+    socket(socket_host_interface* hi)
+        : host_interface_(hi)
+    {
+    }
     virtual ~socket();
 
     /**
@@ -61,9 +65,7 @@ public:
      * Only active sockets are returned by socket_host_state::active_sockets().
      * @return true if socket is active.
      */
-    inline bool is_active() const {
-        return active_;
-    }
+    inline bool is_active() const { return active_; }
 
     /**
      * Activate or deactivate this socket.
@@ -100,7 +102,8 @@ public:
      * @param msg the packet data.
      * @return true if send was successful.
      */
-    inline bool send(endpoint const& ep, byte_array const& msg) {
+    inline bool send(endpoint const& ep, byte_array const& msg)
+    {
         return send(ep, msg.const_data(), msg.size());
     }
 
@@ -134,7 +137,7 @@ public:
      */
     virtual size_t may_transmit(endpoint const& ep);
 
-    using socket_error_signal = boost::signals2::signal<void (std::string)>;
+    using socket_error_signal = boost::signals2::signal<void(std::string)>;
     /**
      * Socket emits this signal when socket operations raise an error.
      */

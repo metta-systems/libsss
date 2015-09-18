@@ -25,12 +25,13 @@ class socket_endpoint;
 class packet_receiver : std::enable_shared_from_this<packet_receiver>
 {
     socket_host_interface* host_interface_{nullptr};
-    std::string            magic_;
+    std::string magic_;
 
 protected:
     inline packet_receiver(socket_host_interface* hi)
         : host_interface_(hi)
-    {}
+    {
+    }
 
     inline packet_receiver(socket_host_interface* hi, std::string magic)
         : host_interface_(hi)
@@ -38,20 +39,14 @@ protected:
         bind(magic);
     }
 
-    inline ~packet_receiver() {
-        unbind();
-    }
+    inline ~packet_receiver() { unbind(); }
 
     void bind(std::string magic);
     void unbind();
 
-    inline std::string magic() const {
-        return magic_;
-    }
+    inline std::string magic() const { return magic_; }
 
-    inline bool is_bound() const {
-        return !magic_.empty();
-    }
+    inline bool is_bound() const { return !magic_.empty(); }
 
     // @fixme Possibly set_magic() might set a magic on default packet_receiver and bind() it.
     // just use bind(magic);

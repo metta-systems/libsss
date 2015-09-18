@@ -20,8 +20,10 @@ namespace simulation {
 
 static const int packet_overhead = 32; // Bytes of link/inet overhead per packet
 
-sim_packet::sim_packet(std::shared_ptr<sim_host> source_host, uia::comm::endpoint const& src,
-                       std::shared_ptr<sim_connection> pipe, uia::comm::endpoint const& dst,
+sim_packet::sim_packet(std::shared_ptr<sim_host> source_host,
+                       uia::comm::endpoint const& src,
+                       std::shared_ptr<sim_connection> pipe,
+                       uia::comm::endpoint const& dst,
                        byte_array data)
     : simulator_(source_host->get_simulator())
     , from_(src)
@@ -42,20 +44,20 @@ sim_packet::~sim_packet()
     timer_.stop();
 }
 
-void sim_packet::send()
+void
+sim_packet::send()
 {
     boost::posix_time::ptime now = simulator_->current_time();
 
     // Get other side's params
-    sim_connection::params param = pipe_->params_for(target_host_);
+    sim_connection::params param           = pipe_->params_for(target_host_);
     boost::posix_time::ptime& arrival_time = pipe_->arrival_time_for(target_host_);
 
     static boost::random::mt19937 rng;
-    boost::uniform_real<> uni_dist(0,1);
+    boost::uniform_real<> uni_dist(0, 1);
 
     // Simulate random loss
-    if (param.loss > 0.0 and uni_dist(rng) <= param.loss)
-    {
+    if (param.loss > 0.0 and uni_dist(rng) <= param.loss) {
         logger::info() << "Packet randomly DROPPED";
         return; // @todo - this packet should clean up itself somehow
     }
@@ -69,8 +71,7 @@ void sim_packet::send()
 
     // If the computed arrival time is too late, drop this packet.
     // Implements a standard, basic drop-tail policy.
-    if (actual_arrival > nominal_arrival + param.queue)
-    {
+    if (actual_arrival > nominal_arrival + param.queue) {
         logger::info() << "Packet DROPPED";
         return; // @todo - this packet should clean up itself somehow
     }
@@ -83,22 +84,22 @@ void sim_packet::send()
 
     // Finally, record the time the packet will finish arriving,
     // and schedule the packet to arrive at that time.
-    arrival_time = actual_arrival + packet_time; // Updates connection's actual arrival time.
+    arrival_time  = actual_arrival + packet_time; // Updates connection's actual arrival time.
     arrival_time_ = arrival_time;
 
     logger::info() << "Scheduling packet to arrive at " << arrival_time_;
 
     target_host_->enqueue_packet(shared_from_this());
 
-    timer_.on_timeout.connect([this](bool){arrive();});
+    timer_.on_timeout.connect([this](bool) { arrive(); });
     timer_.start(arrival_time - now);
 }
 
-void sim_packet::arrive()
+void
+sim_packet::arrive()
 {
     // Make sure we're still on the destination host's queue
-    if (!target_host_ or !target_host_->packet_on_queue(shared_from_this()))
-    {
+    if (!target_host_ or !target_host_->packet_on_queue(shared_from_this())) {
         logger::info() << "No longer queued to destination " << to_;
         return; // @todo - this packet should clean up itself somehow
     }
@@ -106,18 +107,18 @@ void sim_packet::arrive()
     timer_.stop();
 
     std::shared_ptr<sim_socket> socket = target_host_->link_for(to_.port());
-    if (!socket)
-    {
+    if (!socket) {
         logger::info() << "No listener registered on port " << to_.port() << " in target host";
         return; // @todo - this packet should clean up itself somehow
     }
 
-    // Get hold of a shared pointer to self, which is needed to keep ourselves alive a little bit more.
+    // Get hold of a shared pointer to self, which is needed to keep ourselves alive a little bit
+    // more.
     std::shared_ptr<sim_packet> self = shared_from_this();
 
     target_host_->dequeue_packet(self);
 
-    uia::comm::socket_endpoint src_ep(socket.get(), from_);
+    uia::comm::socket_endpoint src_ep(socket, from_);
     socket->receive(data_, src_ep);
 
     self.reset(); // We are ought to be deleted now.

@@ -19,7 +19,8 @@ sim_socket::sim_socket(sim_host::ptr host)
     : uia::comm::socket(host.get())
     , simulator_(host->get_simulator())
     , host_(host)
-{}
+{
+}
 
 sim_socket::~sim_socket()
 {
@@ -54,8 +55,7 @@ sim_socket::bind(uia::comm::endpoint const& ep)
 void
 sim_socket::unbind()
 {
-    if (port_ > 0)
-    {
+    if (port_ > 0) {
         host_->unregister_socket_for_port(port_, shared_from_this());
         port_ = 0;
     }
@@ -64,7 +64,8 @@ sim_socket::unbind()
 
 // Target address must be routable to in order to send.
 // Find the destination host in the "routing table" (a simple list of neighbors).
-bool sim_socket::send(uia::comm::endpoint const& ep, const char *data, size_t size)
+bool
+sim_socket::send(uia::comm::endpoint const& ep, const char* data, size_t size)
 {
     assert(port_ > 0);
 

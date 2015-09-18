@@ -14,16 +14,21 @@
 // Channel/packet layer
 //=================================================================================================
 
+// clang-format off
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(channels), responder_cookie,
     (cnonce16_t, nonce)
     (box80_t, box)
 );
+// clang-format on
 
-inline std::string as_string(sss::channels::responder_cookie const& a) {
+inline std::string
+as_string(sss::channels::responder_cookie const& a)
+{
     return as_string(a.nonce) + as_string(a.box);
 }
 
+// clang-format off
 BOOST_FUSION_DEFINE_STRUCT(
     (sss)(channels), hello_packet_header,
     (magic::hello_packet, magic)
@@ -64,3 +69,4 @@ BOOST_FUSION_DEFINE_STRUCT(
     (cnonce8_t, nonce)
     (rest_t, box) // variable size box containing message
 );
+// clang-format on

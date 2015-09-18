@@ -28,8 +28,7 @@ class host;
  * This mixin class encapsulates socket-related part of host state.
  * @see host
  */
-class socket_host_state : protected virtual asio_host_state
-    , public uia::comm::socket_host_interface
+class socket_host_state : protected virtual asio_host_state, public uia::comm::socket_host_interface
 {
     using packet_receiver = uia::comm::packet_receiver;
     using socket_set = std::set<uia::comm::socket::weak_ptr,
@@ -71,7 +70,7 @@ protected:
      * @return the created socket (during this or a previous call).
      */
     void init_socket(settings_provider* settings,
-        uint16_t default_port = stream_protocol::default_port);
+                     uint16_t default_port = stream_protocol::default_port);
 
 public:
     /*@{*/
@@ -83,13 +82,9 @@ public:
         receivers_.insert(std::make_pair(magic, receiver)); // @todo: Will NOT replace existing element.
     }
 
-    void unbind_receiver(std::string magic) override {
-        receivers_.erase(magic);
-    }
+    void unbind_receiver(std::string magic) override { receivers_.erase(magic); }
 
-    bool has_receiver_for(std::string magic) override {
-        return contains(receivers_, magic);
-    }
+    bool has_receiver_for(std::string magic) override { return contains(receivers_, magic); }
 
     /**
      * Find and return a receiver for given control channel magic value.
@@ -123,9 +118,7 @@ public:
      * the specific socket a discovery response was seen on.
      * @return a set of pointers to each currently active socket.
      */
-    inline socket_set active_sockets() const {
-        return active_sockets_;
-    }
+    inline socket_set active_sockets() const { return active_sockets_; }
 
     /**
      * Get a set of all known local endpoints for all active sockets.
@@ -140,4 +133,3 @@ public:
 };
 
 } // sss namespace
-

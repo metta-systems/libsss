@@ -19,7 +19,7 @@ namespace sss {
 class host;
 class stream;
 namespace internal {
-    class stream_peer;
+class stream_peer;
 }
 
 /**
@@ -42,10 +42,10 @@ class abstract_stream : public stream_protocol
     friend class stream;
 
 protected:
-    std::shared_ptr<host> host_;     ///< Per-host state.
-    std::weak_ptr<stream> owner_;    ///< Back-pointer to stream object,
-                                     ///< or nullptr if stream has been deleted.
-    uia::peer_identity    peer_id_;  ///< EID of peer we're connected to.
+    std::shared_ptr<host> host_;  ///< Per-host state.
+    std::weak_ptr<stream> owner_; ///< Back-pointer to stream object,
+                                  ///< or nullptr if stream has been deleted.
+    uia::peer_identity peer_id_;  ///< EID of peer we're connected to.
 
 public:
     /**
@@ -60,11 +60,11 @@ public:
      */
     using priority_t = uint32_t;
 
-    using ptr = std::shared_ptr<abstract_stream>;
+    using ptr      = std::shared_ptr<abstract_stream>;
     using weak_ptr = std::weak_ptr<abstract_stream>;
 
 private:
-    priority_t priority_{0}; ///< Current priority level
+    priority_t priority_{0};                                       ///< Current priority level
     stream::listen_mode listen_mode_{stream::listen_mode::reject}; ///< Listen for substreams.
 
 public:
@@ -136,9 +136,7 @@ public:
     /**
      * Returns true if at least one byte is available for reading.
      */
-    inline bool has_bytes_available() const {
-        return bytes_available() > 0;
-    }
+    inline bool has_bytes_available() const { return bytes_available() > 0; }
 
     /**
      * Returns true if all data has been read from the stream
@@ -178,9 +176,7 @@ public:
     /**
      * Return true if at least one complete record is currently available for reading.
      */
-    inline bool has_pending_records() const {
-        return pending_records() > 0;
-    }
+    inline bool has_pending_records() const { return pending_records() > 0; }
 
     /**
      * Determine the number of bytes available in a frontmost received record.
@@ -217,7 +213,8 @@ public:
         return write_data(data, size, flags::data_record);
     }
 
-    virtual ssize_t write_record(byte_array const& rec) {
+    virtual ssize_t write_record(byte_array const& rec)
+    {
         return write_record(rec.data(), rec.size());
     }
 
@@ -230,8 +227,8 @@ public:
     virtual ssize_t read_datagram(char* data, ssize_t max_size) = 0;
     virtual byte_array read_datagram(ssize_t max_size) = 0;
 
-    virtual ssize_t write_datagram(char const* data, ssize_t size,
-        stream::datagram_type is_reliable) = 0;
+    virtual ssize_t
+    write_datagram(char const* data, ssize_t size, stream::datagram_type is_reliable) = 0;
 
     //=============================================================================================
     // Substreams management.
@@ -253,20 +250,14 @@ public:
     /**
      * Listen for incoming substreams on this stream.
      */
-    inline void listen(stream::listen_mode mode) {
-        listen_mode_ = mode;
-    }
+    inline void listen(stream::listen_mode mode) { listen_mode_ = mode; }
 
-    inline stream::listen_mode listen_mode() const {
-        return listen_mode_;
-    }
+    inline stream::listen_mode listen_mode() const { return listen_mode_; }
 
     /**
      * Returns true if this stream is set to accept incoming substreams.
      */
-    inline bool is_listening() const {
-        return listen_mode_ != stream::listen_mode::reject;
-    }
+    inline bool is_listening() const { return listen_mode_ != stream::listen_mode::reject; }
 
     /**
      * Accept a waiting incoming substream.
@@ -312,7 +303,8 @@ protected:
      * Set an error condition including an error description string
      * on the user-facing stream object.
      */
-    inline void set_error(std::string const& error) {
+    inline void set_error(std::string const& error)
+    {
         if (auto stream = owner_.lock()) {
             stream->set_error(error);
         }

@@ -44,19 +44,20 @@ namespace negotiation {
 class kex_initiator : public std::enable_shared_from_this<kex_initiator>
 {
     std::shared_ptr<host> host_;
-    uia::comm::socket_endpoint  target_;     ///< Remote endpoint we're trying to contact.
-    uia::peer_identity    remote_id_; ///< Target's host id (empty if unspecified).
-    bool                  early_{true}; ///< This initiator can still be canceled.
+    uia::comm::socket_endpoint target_; ///< Remote endpoint we're trying to contact.
+    uia::peer_identity remote_id_;      ///< Target's host id (empty if unspecified).
+    bool early_{true};                  ///< This initiator can still be canceled.
 
     /**
      * Current phase of the protocol negotiation.
      * CurveCP-style.
      */
-    enum class state {
+    enum class state
+    {
         idle,
-        hello /*init1*/,  // gives server short-term client pk
-        cookie /*init2*/, // gives client server's short-term pk
-        initiate,         // exchanges long-term sk between server and client - auth phase
+        hello,    // gives server short-term client pk
+        cookie,   // gives client server's short-term pk
+        initiate, // exchanges long-term sk between server and client - auth phase
         done
     } state_{state::idle};
 

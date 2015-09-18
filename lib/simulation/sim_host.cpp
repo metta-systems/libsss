@@ -23,7 +23,7 @@ namespace simulation {
 shared_ptr<sim_host>
 sim_host::create(shared_ptr<simulator> sim)
 {
-    auto host = make_shared<sim_host>(sim);
+    auto host         = make_shared<sim_host>(sim);
     host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme LOOP
     // No need to call init_link here because primary link initialized and bound there
     // is not used anywhere! Calling init_link here causes errors because of real endpoint
@@ -35,7 +35,8 @@ sim_host::create(shared_ptr<simulator> sim)
 sim_host::sim_host(shared_ptr<simulator> sim)
     : host()
     , simulator_(sim)
-{}
+{
+}
 
 sim_host::~sim_host()
 {
@@ -76,8 +77,7 @@ sim_host::enqueue_packet(shared_ptr<sim_packet> packet)
 {
     // @todo replace with std::upper_bound()?
     size_t i = 0;
-    for (; i < packet_queue_.size(); ++i)
-    {
+    for (; i < packet_queue_.size(); ++i) {
         if (packet->arrival_time() < packet_queue_[i]->arrival_time()) {
             break;
         }
@@ -90,8 +90,7 @@ sim_host::dequeue_packet(shared_ptr<sim_packet> packet)
 {
     // @todo Replace with .erase(packet)?
     for (auto it = find(packet_queue_.begin(), packet_queue_.end(), packet);
-        it != packet_queue_.end();)
-    {
+         it != packet_queue_.end();) {
         packet_queue_.erase(it);
         it = find(packet_queue_.begin(), packet_queue_.end(), packet);
     }
@@ -105,7 +104,7 @@ sim_host::packet_on_queue(shared_ptr<sim_packet> packet) const
 
 void
 sim_host::register_connection_at(uia::comm::endpoint const& address,
-    shared_ptr<sim_connection> conn)
+                                 shared_ptr<sim_connection> conn)
 {
     assert(!contains(connections_, address));
     connections_.insert(std::make_pair(address, conn));
@@ -113,7 +112,7 @@ sim_host::register_connection_at(uia::comm::endpoint const& address,
 
 void
 sim_host::unregister_connection_at(uia::comm::endpoint const& address,
-    shared_ptr<sim_connection> conn)
+                                   shared_ptr<sim_connection> conn)
 {
     assert(contains(connections_, address));
     assert(connections_.find(address)->second == conn);
@@ -129,12 +128,10 @@ sim_host::connection_at(uia::comm::endpoint const& ep)
 shared_ptr<sim_host>
 sim_host::neighbor_at(uia::comm::endpoint const& dst, uia::comm::endpoint& src)
 {
-    for (auto conn : connections_)
-    {
+    for (auto conn : connections_) {
         shared_ptr<sim_host> uplink =
             conn.second->uplink_for(static_pointer_cast<sim_host>(shared_from_this()));
-        if (conn.second->address_for(uplink) == dst)
-        {
+        if (conn.second->address_for(uplink) == dst) {
             src = conn.first;
             return uplink;
         }

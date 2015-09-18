@@ -33,9 +33,9 @@ stream_peer::stream_peer(shared_ptr<host> const& host,
 {
     assert(!remote_id.is_null());
 
-    // If the remote_id is just an encapsulated IP endpoint,
-    // then also use it as a destination address hint.
-    // @fixme Not possible anymore...
+// If the remote_id is just an encapsulated IP endpoint,
+// then also use it as a destination address hint.
+// @fixme Not possible anymore...
 #if 0
     uia::peer_identity ident(remote_id_.id());
     if (ident.is_ip_key_scheme()) {
@@ -55,8 +55,7 @@ stream_peer::~stream_peer()
     logger::debug() << this << " ~stream_peer";
     // Clear the state of all streams associated with this peer.
     auto streams_copy = all_streams_;
-    for (auto v : streams_copy)
-    {
+    for (auto v : streams_copy) {
         v->clear();
     }
     assert(all_streams_.empty());
@@ -80,13 +79,10 @@ void stream_peer::connect_channel()
     // @todo Ask routing to figure out other possible endpoints for this peer.
 
     // Send a lookup request to each known registration server.
-    for (auto rc : host_->coordinator->routing_clients())
-    {
+    for (auto rc : host_->coordinator->routing_clients()) {
         if (!rc->is_ready()) {
             // Can't poll an inactive regserver
-            rc->on_ready.connect([this, rc] {
-                routing_client_ready(rc);
-            });
+            rc->on_ready.connect([this, rc] { routing_client_ready(rc); });
             continue;
         }
 
@@ -95,10 +91,8 @@ void stream_peer::connect_channel()
 
     // Initiate key exchange attempts to all already-known endpoints
     // using each of the network links we have available.
-    for (auto s : host_->active_sockets())
-    {
-        for (auto endpoint : locations_)
-        {
+    for (auto s : host_->active_sockets()) {
+        for (auto endpoint : locations_) {
             if (auto sock = s.lock()) {
                 initiate_key_exchange(sock.get(), endpoint);
             }
@@ -111,8 +105,8 @@ void stream_peer::connect_channel()
 
 void stream_peer::routing_client_ready(ur::client *rc)
 {
-    if (contains(lookups_, rc))
-        return;   // Already polling this regserver
+    if (contains(coord_.lookups_, rc))
+        return; // Already polling this regserver
 
     // Make sure we're hooked up to this client's signals
     connect_routing_client(rc);
@@ -122,7 +116,8 @@ void stream_peer::routing_client_ready(ur::client *rc)
     rc->lookup(remote_id_, /*notify:*/true);
 }
 
-void stream_peer::connect_routing_client(ur::client *rc)
+void
+stream_peer::connect_routing_client(ur::client* rc)
 {
     if (contains(connected_routing_clients_, rc))
         return;
@@ -130,9 +125,8 @@ void stream_peer::connect_routing_client(ur::client *rc)
 
     // Listen for the lookup response
     rc->on_lookup_done.connect([this, rc](uia::peer_identity const& target_peer,
-                                      uia::comm::endpoint const& peer_endpoint,
-                                      ur::client_profile const& peer_profile)
-    {
+                                          uia::comm::endpoint const& peer_endpoint,
+                                          ur::client_profile const& peer_profile) {
         lookup_done(rc, target_peer, peer_endpoint, peer_profile);
     });
 
@@ -169,13 +163,14 @@ affinity(address const& a, address const& b)
 #endif
 
 void
-stream_peer::lookup_done(ur::client *rc, uia::peer_identity const& target_peer,
-    uia::comm::endpoint const& peer_endpoint,
-    ur::client_profile const& peer_profile)
+stream_peer::lookup_done(ur::client* rc,
+                         uia::peer_identity const& target_peer,
+                         uia::comm::endpoint const& peer_endpoint,
+                         ur::client_profile const& peer_profile)
 {
     if (target_peer != remote_id_) {
-        logger::debug() << "Got lookup_done for wrong id " << target_peer
-            << " expecting " << remote_id_ << " (harmless, ignored)";
+        logger::debug() << "Got lookup_done for wrong id " << target_peer << " expecting "
+                        << remote_id_ << " (harmless, ignored)";
         return; // ignore responses for other lookup requests
     }
 
@@ -187,8 +182,7 @@ stream_peer::lookup_done(ur::client *rc, uia::peer_identity const& target_peer,
     lookups_.erase(rc);
 
     // If the lookup failed, notify waiting streams as appropriate.
-    if (peer_endpoint.address().is_unspecified())
-    {
+    if (peer_endpoint.address().is_unspecified()) {
         logger::debug() << "Lookup on " << target_peer << " failed";
         if (!lookups_.empty() or !key_exchanges_initiated_.empty())
             return;     // There's still hope
@@ -196,19 +190,19 @@ stream_peer::lookup_done(ur::client *rc, uia::peer_identity const& target_peer,
     }
 
     logger::debug() << "Stream peer - lookup found primary " << peer_endpoint
-        << ", num secondaries " << peer_profile.endpoints().size();
+                    << ", num secondaries " << peer_profile.endpoints().size();
 
-    // @todo
-    // Find intersection between our and targets' IP addresses.
-    // Prefer local network addresses first, initiate there in case the peer is in our network.
+// @todo
+// Find intersection between our and targets' IP addresses.
+// Prefer local network addresses first, initiate there in case the peer is in our network.
 
-    // Sort hints by longest-common-IP-prefix.
-    // This way the closest IP addresses would be at the top of the list.
-    // Prefer local network addresses to external ones,
-    // for the moment prefer ipv4 addresses over ipv6.
+// Sort hints by longest-common-IP-prefix.
+// This way the closest IP addresses would be at the top of the list.
+// Prefer local network addresses to external ones,
+// for the moment prefer ipv4 addresses over ipv6.
 
-    // PROBLEM: A common shared external IP address will have ALL bits matching and therefore
-    // longest-common prefix. Therefore match only internal endpoints.
+// PROBLEM: A common shared external IP address will have ALL bits matching and therefore
+// longest-common prefix. Therefore match only internal endpoints.
 
 #if 0
     // Need to distinguish internal and external endpoints in the endpoint list.
@@ -226,7 +220,7 @@ stream_peer::lookup_done(ur::client *rc, uia::peer_identity const& target_peer,
     }
 #endif
 
-    add_location_hint(peer_endpoint);//temp
+    add_location_hint(peer_endpoint); // temp
 #if 0
     // Add the endpoint information we've received to our address list,
     // and initiate flow setup attempts to those endpoints.
@@ -262,7 +256,8 @@ stream_peer::lookup_done(ur::client *rc, uia::peer_identity const& target_peer,
 #endif
 }
 
-void stream_peer::regclient_destroyed(ur::client *rc)
+void
+stream_peer::regclient_destroyed(ur::client* rc)
 {
     logger::debug() << "Stream peer - regclient destroyed before lookup done";
 
@@ -277,7 +272,8 @@ void stream_peer::regclient_destroyed(ur::client *rc)
     }
 }
 
-void stream_peer::retry_timeout()
+void
+stream_peer::retry_timeout()
 {
     // If we actually have an active channel now, do nothing.
     if (primary_channel_ and primary_channel_->link_status() == socket::status::up)
@@ -292,7 +288,8 @@ void stream_peer::retry_timeout()
     connect_channel();
 }
 
-void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoint const& ep)
+void
+stream_peer::initiate_key_exchange(uia::comm::socket::wptr l, uia::comm::endpoint const& ep)
 {
     assert(ep != uia::comm::endpoint());
 
@@ -303,13 +300,13 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     // Don't simultaneously initiate multiple channels to the same endpoint.
     // @todo Eventually multipath support is needed.
     uia::comm::socket_endpoint lep(l, ep);
-    if (contains(key_exchanges_initiated_, lep))
-    {
+    if (contains(key_exchanges_initiated_, lep)) {
         logger::debug() << "Already attempting connection to " << ep;
         return;
     }
 
-    logger::debug() << "Initiating key exchange from socket " << l << " to remote endpoint " << ep;
+    logger::debug() << "Initiating key exchange from socket " << l.lock() << " to remote endpoint "
+                    << ep;
 
     // Make sure our stream_responder exists to receive and dispatch incoming
     // key exchange control packets.
@@ -336,7 +333,8 @@ void stream_peer::initiate_key_exchange(uia::comm::socket* l, uia::comm::endpoin
     init->exchange_keys();
 }
 
-void stream_peer::channel_started(stream_channel* channel)
+void
+stream_peer::channel_started(stream_channel* channel)
 {
     logger::debug() << "Stream peer - channel " << channel << " started";
 
@@ -364,18 +362,16 @@ void stream_peer::channel_started(stream_channel* channel)
     stall_warnings_ = 0;
 
     // Watch the link status of our primary channel, so we can try to replace it if it fails.
-    primary_channel_link_status_connection_ =
-        primary_channel_->on_link_status_changed.connect([this](socket::status new_status)
-        {
-            primary_status_changed(new_status);
-        });
+    primary_channel_link_status_connection_ = primary_channel_->on_link_status_changed.connect(
+        [this](socket::status new_status) { primary_status_changed(new_status); });
 
     // Notify all waiting streams
     on_channel_connected();
     on_link_status_changed(socket::status::up);
 }
 
-void stream_peer::clear_primary_channel()
+void
+stream_peer::clear_primary_channel()
 {
     if (!primary_channel_)
         return;
@@ -391,7 +387,8 @@ void stream_peer::clear_primary_channel()
     old_primary->detach_all();
 }
 
-void stream_peer::add_location_hint(uia::comm::endpoint const& hint)
+void
+stream_peer::add_location_hint(uia::comm::endpoint const& hint)
 {
     assert(!remote_id_.is_empty());
     // assert(!hint.empty());
@@ -411,7 +408,8 @@ void stream_peer::add_location_hint(uia::comm::endpoint const& hint)
     }
 }
 
-void stream_peer::completed(kex_initiator::ptr ki, bool success)
+void
+stream_peer::completed(kex_initiator::ptr ki, bool success)
 {
     assert(ki and ki->is_done());
 
@@ -422,7 +420,7 @@ void stream_peer::completed(kex_initiator::ptr ki, bool success)
     uia::comm::socket_endpoint lep = ki->remote_endpoint();
 
     logger::debug() << "Stream peer key exchange for ID " << remote_id_ << " to " << lep
-        << (success ? " succeeded" : " failed");
+                    << (success ? " succeeded" : " failed");
 
     assert(!contains(key_exchanges_initiated_, lep) or key_exchanges_initiated_[lep] == ki);
     key_exchanges_initiated_.erase(lep);
@@ -431,8 +429,7 @@ void stream_peer::completed(kex_initiator::ptr ki, bool success)
     ki.reset();
 
     // If unsuccessful, notify waiting streams.
-    if (!success)
-    {
+    if (!success) {
         if (no_lookups_possible()) {
             return on_channel_failed();
         }
@@ -449,12 +446,12 @@ void stream_peer::completed(kex_initiator::ptr ki, bool success)
     // assert(primary_channel_ and primary_channel_->link_status() == uia::comm::socket::status::up);
 }
 
-void stream_peer::primary_status_changed(socket::status new_status)
+void
+stream_peer::primary_status_changed(socket::status new_status)
 {
     assert(primary_channel_);
 
-    if (new_status == socket::status::up)
-    {
+    if (new_status == socket::status::up) {
         stall_warnings_ = 0;
         // Now that we (again?) have a working primary channel, cancel and delete all
         // outstanding kex_initiators that are still in an early enough stage not
@@ -465,14 +462,13 @@ void stream_peer::primary_status_changed(socket::status new_status)
         // multiple channels at once.
         // @todo Even trickier, kill only initiators to already established endpoints!
         auto ki_copy = key_exchanges_initiated_;
-        for (auto ki : ki_copy)
-        {
+        for (auto ki : ki_copy) {
             auto initiator = ki.second;
             if (!initiator->is_early()) {
                 continue; // too late - let it finish
             }
-            logger::debug() << "Deleting " << initiator << " for " << remote_id_
-                << " to " << initiator->remote_endpoint();
+            logger::debug() << "Deleting " << initiator << " for " << remote_id_ << " to "
+                            << initiator->remote_endpoint();
 
             assert(ki.first == initiator->remote_endpoint());
             key_exchanges_initiated_.erase(ki.first);
@@ -483,12 +479,10 @@ void stream_peer::primary_status_changed(socket::status new_status)
         return on_link_status_changed(new_status);
     }
 
-    if (new_status == socket::status::stalled)
-    {
-        if (++stall_warnings_ < stall_warnings_max)
-        {
-            logger::warning() << "Primary channel stall "
-                << stall_warnings_ << " of " << stall_warnings_max;
+    if (new_status == socket::status::stalled) {
+        if (++stall_warnings_ < stall_warnings_max) {
+            logger::warning() << "Primary channel stall " << stall_warnings_ << " of "
+                              << stall_warnings_max;
             return on_link_status_changed(new_status);
         }
     }

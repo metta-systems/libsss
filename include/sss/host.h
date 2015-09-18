@@ -32,17 +32,19 @@ namespace sss {
  * Example: it is customary to create a shared_ptr to host.
  * @snippet doc/snippets.cpp Creating a host
  */
-class host
-    : public std::enable_shared_from_this<host>
-    , public socket_host_state
-    , public kex_host_state
-    , public uia::identity_host_state
-    , protected stream_host_state
-    , protected virtual asio_host_state
-    , public timer_host_state
-    , protected routing_host_state
+class host : public std::enable_shared_from_this<host>,
+             public socket_host_state,
+             public kex_host_state,
+             public uia::identity_host_state,
+             public stream_host_state,
+             protected virtual asio_host_state,
+             public timer_host_state,
+             public routing_host_state
 {
-    struct private_tag {};
+    struct private_tag
+    {
+    };
+
 public:
     using ptr = std::shared_ptr<host>;
     using weak_ptr = std::weak_ptr<host>;
@@ -76,10 +78,10 @@ public:
      * and updates settings with this new value.
      */
     static host::ptr create(settings_provider* settings,
-        uint16_t default_port = stream_protocol::default_port);
+                            uint16_t default_port = stream_protocol::default_port);
     // Overload to make calls simpler.
     static inline host::ptr create(std::shared_ptr<settings_provider> settings,
-        uint16_t default_port = stream_protocol::default_port)
+                                   uint16_t default_port = stream_protocol::default_port)
     {
         return create(settings.get(), default_port);
     }

@@ -34,8 +34,6 @@ class stream_protocol
 public:
     static constexpr uint16_t default_port = 9660;
 
-    static constexpr size_t mtu = 1280; // an ipv6 frame size, not fragmentable
-    static constexpr size_t min_receive_buffer_size = mtu * 2;
 
     // Maximum size of datagram to send using the stateless optimization.
     // @fixme Should be dynamic.
@@ -65,6 +63,8 @@ public:
     // using reset_header = stream_header;
     // using attach_header = stream_header;
     // using detach_header = stream_header;
+    static constexpr size_t mtu                     = 1280; // an ipv6 frame size, not fragmentable
+    static constexpr size_t min_receive_buffer_size = mtu * 2; // @todo Not needed?
 
     enum class frame_type : uint8_t
     {
@@ -137,20 +137,20 @@ public:
     /// Service message codes
     enum service_code : uint32_t
     {
-        connect_request        = 0x101, ///< Connect to named service.
+        connect_request = 0x101, ///< Connect to named service.
         // request format: string service, string protocol
-        connect_reply          = 0x201, ///< Response to connect request.
+        connect_reply = 0x201, ///< Response to connect request.
         // reply format: reply code, string description
-        list_services_request  = 0x102, ///< Spec 4.4 end
-        list_services_reply    = 0x202, ///< with human-readable descriptions
+        list_services_request = 0x102, ///< Spec 4.4 end
+        list_services_reply   = 0x202, ///< with human-readable descriptions
         /// reply format: array of pairs <service, service_desc>
         list_protocols_request = 0x103, ///< List protocols for given service
         /// request format: string service_name
-        list_protocols_reply   = 0x203, ///< with descriptions
+        list_protocols_reply = 0x203, ///< with descriptions
         /// reply format: array of pairs <protocol, protocol_desc>
 
-        reply_ok         = 0,        ///< Service request accepted.
-        reply_not_found  = 1,        ///< Specified service pair not found.
+        reply_ok        = 0, ///< Service request accepted.
+        reply_not_found = 1, ///< Specified service pair not found.
     };
 
     // Maximum size of a service request or response record

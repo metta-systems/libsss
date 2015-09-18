@@ -28,10 +28,10 @@ using byte_seq_t = uint64_t;
 class stream_attachment : public stream_protocol
 {
 public:
-    base_stream*      stream_{nullptr};  ///< Our stream.
-    stream_channel*   channel_{nullptr}; ///< Channel our stream is attached to.
-    local_stream_id_t stream_id_{0};     ///< Our stream ID in this channel.
-    packet_seq_t      sid_seq_{~0ULL};   ///< Reference packet sequence for stream ID.
+    base_stream* stream_{nullptr};     ///< Our stream.
+    stream_channel* channel_{nullptr}; ///< Channel our stream is attached to.
+    local_stream_id_t stream_id_{0};   ///< Our stream ID in this channel.
+    packet_seq_t sid_seq_{~0ULL};      ///< Reference packet sequence for stream ID.
 };
 
 /**
@@ -43,10 +43,10 @@ class stream_tx_attachment : public stream_attachment
     bool deprecated_{false}; ///< Opening a replacement channel.
 
 public:
-    inline bool is_in_use()       const { return channel_ != nullptr; }
-    inline bool is_acknowledged() const { return sid_seq_ != ~0ULL; }// todo fixme magic value
-    inline bool is_active()       const { return active_; }
-    inline bool is_deprecated()   const { return deprecated_; }
+    inline bool is_in_use() const { return channel_ != nullptr; }
+    inline bool is_acknowledged() const { return sid_seq_ != ~0ULL; } // todo fixme magic value
+    inline bool is_active() const { return active_; }
+    inline bool is_deprecated() const { return deprecated_; }
 
     /**
      * Transition from Unused to Attaching -
@@ -62,7 +62,7 @@ public:
     {
         assert(is_in_use() and not is_acknowledged());
         sid_seq_ = rxseq;
-        active_ = true;
+        active_  = true;
     }
 
     // Transition to the unused state.
@@ -105,12 +105,13 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     friend class stream_channel;
     friend class stream_tx_attachment; // access to tx_current_attachment_
 
-    enum class state {
-        created = 0,   ///< Newly created.
-        wait_service,  ///< Initiating, waiting for service reply.
-        accepting,     ///< Accepting, waiting for service request.
-        connected,     ///< Connection established.
-        disconnected   ///< Connection terminated.
+    enum class state
+    {
+        created = 0,  ///< Newly created.
+        wait_service, ///< Initiating, waiting for service reply.
+        accepting,    ///< Accepting, waiting for service request.
+        connected,    ///< Connection established.
+        disconnected  ///< Connection terminated.
     };
 
     //=============================================================================================
@@ -135,43 +136,39 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
      */
     struct tx_frame_t
     {
-        base_stream* owner{nullptr};            ///< Frame owner.
-        byte_seq_t tx_byte_seq_{0};             ///< Transmit byte position within stream.
-        boost::asio::const_buffer payload_;            ///< Frame data.
+        base_stream* owner{nullptr};        ///< Frame owner.
+        byte_seq_t tx_byte_seq_{0};         ///< Transmit byte position within stream.
+        boost::asio::const_buffer payload_; ///< Frame data.
         frame_type type_;
-        bool late{false};                       ///< Possibly lost frame.
+        bool late{false}; ///< Possibly lost frame.
 
         inline tx_frame_t() = default;
         inline tx_frame_t(base_stream* o, frame_type t)
             : owner(o)
             , type_(t)
-        {}
-        inline frame_type type() const {
-            return type_;
+        {
         }
-        inline bool is_null() const {
-            return owner == nullptr;
-        }
-        inline int payload_size() const {
-            return boost::asio::buffer_size(payload_);
-        }
+        inline frame_type type() const { return type_; }
+        inline bool is_null() const { return owner == nullptr; }
+        inline int payload_size() const { return boost::asio::buffer_size(payload_); }
 
         template <typename T>
         inline T* header()
         {
             auto header_len = channel::header_len + sizeof(T);
             if (payload_size() < decltype(payload_size())(header_len)) {
-                //payload_.resize(header_len);
+                // payload_.resize(header_len);
             }
             return boost::asio::buffer_cast<T*>(payload_);
         }
 
         template <typename T>
-        inline T const* header() const {
+        inline T const* header() const
+        {
             return boost::asio::buffer_cast<T const*>(payload_);
         }
     };
-    friend std::ostream& operator << (std::ostream& os, tx_frame_t const& frame);
+    friend std::ostream& operator<<(std::ostream& os, tx_frame_t const& frame);
 
     /**
      * @internal
@@ -180,22 +177,19 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     struct rx_segment_t
     {
         byte_seq_t rx_byte_seq_{0}; ///< Logical byte position.
-        byte_array buf;         ///< Packet buffer including headers.
-        bool end_marker_{false};///< This segment is end of record.
+        byte_array buf;             ///< Packet buffer including headers. @todo asio::const_buf
+        bool end_marker_{false};    ///< This segment is end of record.
 
         inline rx_segment_t(byte_array const& data, byte_seq_t rx_seq, bool end)
             : rx_byte_seq_(rx_seq)
             , buf(data)
             , end_marker_(end)
-        {}
-
-        inline int segment_size() const {
-            return buf.size();
+        {
         }
 
-        inline bool is_record_end() const {
-            return end_marker_;
-        }
+        inline int segment_size() const { return buf.size(); }
+
+        inline bool is_record_end() const { return end_marker_; }
     };
 
     //=============================================================================================
@@ -221,9 +215,9 @@ private:
     bool end_read_{false};  ///< Seen or forced EOF for reading.
     bool end_write_{false}; ///< We've written EOF marker.
 
-    unique_stream_id_t usid_,        ///< Unique stream ID.
-                       parent_usid_; ///< Unique ID of parent stream.
-    internal::stream_peer* peer_;    ///< Information about the other side of this connection.
+    unique_stream_id_t usid_,     ///< Unique stream ID.
+        parent_usid_;             ///< Unique ID of parent stream.
+    internal::stream_peer* peer_; ///< Information about the other side of this connection.
 
     /**@}*/
     //=============================================================================================
@@ -235,10 +229,10 @@ private:
     /// When migrating from old to new channel, stream may be connected to two channels at once,
     /// the new channel being connected via attachment index 1.
 
-    static constexpr int  max_attachments = 2;
-    stream_tx_attachment  tx_attachments_[max_attachments];  // Our channel attachments
-    stream_rx_attachment  rx_attachments_[max_attachments];  // Peer's channel attachments
-    stream_tx_attachment* tx_current_attachment_{0};         // Current transmit-attachment
+    static constexpr int max_attachments = 2;
+    stream_tx_attachment tx_attachments_[max_attachments]; // Our channel attachments
+    stream_rx_attachment rx_attachments_[max_attachments]; // Peer's channel attachments
+    stream_tx_attachment* tx_current_attachment_{0};       // Current transmit-attachment
 
     /**@}*/
     //=============================================================================================
@@ -246,12 +240,12 @@ private:
     //=============================================================================================
     /**@{*/
 
-    byte_seq_t tx_byte_seq_{0}; ///< Next transmit byte sequence number to assign.
-    int32_t tx_window_{0}; ///< Current transmit window.
-    int32_t tx_inflight_{0}; ///< Bytes currently in flight.
+    byte_seq_t tx_byte_seq_{0};       ///< Next transmit byte sequence number to assign.
+    int32_t tx_window_{0};            ///< Current transmit window.
+    int32_t tx_inflight_{0};          ///< Bytes currently in flight.
     bool tx_enqueued_channel_{false}; ///< We're enqueued for transmission on our channel.
     std::unordered_set<byte_seq_t> tx_waiting_ack_; ///< Frames waiting to be ACKed.
-    std::deque<tx_frame_t> tx_queue_; ///< Transmit frames queue.
+    std::deque<tx_frame_t> tx_queue_;               ///< Transmit frames queue.
     size_t tx_waiting_size_{0}; ///< Cumulative size of all segments waiting to be ACKed.
 
     /**@}*/
@@ -354,26 +348,26 @@ private:
     // composite callback from channel
     bool rx_ack_frame(byte_seq_t byteseq, size_t size);
 
-    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
-    static bool rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt,
-        stream_channel* channel);
+    static bool rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool
+    rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool
+    rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool
+    rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool
+    rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
+    static bool
+    rx_detach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel);
     void rx_data(byte_array const& pkt, uint32_t byte_seq);
 
-    std::shared_ptr<base_stream> rx_substream(packet_seq_t pktseq, stream_channel* channel,
-        local_stream_id_t sid, unsigned slot, unique_stream_id_t const& usid);
+    std::shared_ptr<base_stream> rx_substream(packet_seq_t pktseq,
+                                              stream_channel* channel,
+                                              local_stream_id_t sid,
+                                              unsigned slot,
+                                              unique_stream_id_t const& usid);
 
     // Helper function to enqueue useful rx segment data.
     void rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, bool& closed);
@@ -381,9 +375,7 @@ private:
     // Return the next receive window update byte
     // for some packet we are transmitting on this stream.
     // XX alternate between byte-window and substream-window updates.
-    inline uint8_t receive_window_byte() const {
-        return receive_window_byte_;
-    }
+    inline uint8_t receive_window_byte() const { return receive_window_byte_; }
 
     void recalculate_receive_window();
     void recalculate_transmit_window(uint8_t window_byte);
@@ -424,8 +416,9 @@ private:
      *        or a non-cryptographic legacy address as defined by the Ident class.
      * @param parent the parent stream, or nullptr if none (yet).
      */
-    base_stream(std::shared_ptr<host> h, uia::peer_identity const& peer,
-        std::shared_ptr<base_stream> parent);
+    base_stream(std::shared_ptr<host> h,
+                uia::peer_identity const& peer,
+                std::shared_ptr<base_stream> parent);
     virtual ~base_stream();
 
     //=============================================================================================
@@ -460,9 +453,7 @@ private:
     /**
      * Returns true if the underlying link is currently connected and usable for data transfer.
      */
-    inline bool is_link_up() const override {
-        return state_ == state::connected;
-    }
+    inline bool is_link_up() const override { return state_ == state::connected; }
 
     void shutdown(stream::shutdown_mode mode) override;
 
@@ -473,11 +464,10 @@ private:
     ssize_t bytes_available() const override;
     bool at_end() const override;
 
-    inline size_t pending_records() const override {
-        return rx_record_sizes_.size();
-    }
+    inline size_t pending_records() const override { return rx_record_sizes_.size(); }
 
-    inline ssize_t pending_record_size() const override {
+    inline ssize_t pending_record_size() const override
+    {
         return has_pending_records() ? rx_record_sizes_.front() : -1;
     }
 
@@ -499,8 +489,8 @@ private:
     abstract_stream::ptr get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
-    ssize_t write_datagram(char const* data, ssize_t size,
-        stream::datagram_type is_reliable) override;
+    ssize_t
+    write_datagram(char const* data, ssize_t size, stream::datagram_type is_reliable) override;
 
     void set_receive_buffer_size(size_t size) override;
     void set_child_receive_buffer_size(size_t size) override;
@@ -549,38 +539,40 @@ private:
 // Helper functions.
 //=================================================================================================
 
-inline std::ostream& operator << (std::ostream& os, sss::base_stream::tx_frame_t const& pkt)
+inline std::ostream&
+operator<<(std::ostream& os, sss::base_stream::tx_frame_t const& pkt)
 {
-    std::string frame_type = [](stream_protocol::frame_type type){
+    std::string frame_type = [](stream_protocol::frame_type type) {
         switch (type) {
-            case stream_protocol::frame_type::ACK:          return "ack";
-            case stream_protocol::frame_type::CLOSE:        return "close";
+            case stream_protocol::frame_type::ACK: return "ack";
+            case stream_protocol::frame_type::CLOSE: return "close";
             case stream_protocol::frame_type::DECONGESTION: return "decongestion";
-            case stream_protocol::frame_type::DETACH:       return "detach";
-            case stream_protocol::frame_type::EMPTY:        return "empty";
-            case stream_protocol::frame_type::RESET:        return "reset";
-            case stream_protocol::frame_type::SETTINGS:     return "settings";
-            case stream_protocol::frame_type::STREAM:       return "stream";
-            case stream_protocol::frame_type::PADDING:      return "padding";
-            case stream_protocol::frame_type::PRIORITY:     return "priority";
-            default:                                        return "unknown";
+            case stream_protocol::frame_type::DETACH: return "detach";
+            case stream_protocol::frame_type::EMPTY: return "empty";
+            case stream_protocol::frame_type::RESET: return "reset";
+            case stream_protocol::frame_type::SETTINGS: return "settings";
+            case stream_protocol::frame_type::STREAM: return "stream";
+            case stream_protocol::frame_type::PADDING: return "padding";
+            case stream_protocol::frame_type::PRIORITY: return "priority";
+            default: return "unknown";
         }
     }(pkt.type());
 
-    os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type
-       << ", owner " << pkt.owner << (pkt.late ? ", late" : ", not late")
-       << ", payload " << pkt << "]";
+    os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type << ", owner " << pkt.owner
+       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt << "]";
     return os;
 }
 
 template <typename T>
-inline T const* as_header(byte_array const& v)
+inline T const*
+as_header(byte_array const& v)
 {
     return reinterpret_cast<T const*>(v.const_data() + channel::header_len);
 }
 
 template <typename T>
-inline T* as_header(byte_array& v)
+inline T*
+as_header(byte_array& v)
 {
     size_t header_len = channel::header_len + sizeof(T);
     if (v.size() < header_len) {

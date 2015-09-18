@@ -58,7 +58,8 @@ stream_channel::~stream_channel()
     root_->state_ = base_stream::state::disconnected;
 }
 
-void stream_channel::got_ready_transmit()
+void
+stream_channel::got_ready_transmit()
 {
     if (sending_streams_.empty()) {
         return;
@@ -69,7 +70,7 @@ void stream_channel::got_ready_transmit()
     // Round-robin between our streams for now.
     do {
         // Grab the next stream in line to transmit
-        base_stream *stream = sending_streams_.front();
+        base_stream* stream = sending_streams_.front();
         sending_streams_.pop_front();
 
         // Allow it to transmit one packet.
@@ -79,10 +80,11 @@ void stream_channel::got_ready_transmit()
     } while (not sending_streams_.empty() and may_transmit());
 }
 
-void stream_channel::got_link_status_changed(uia::comm::socket::status new_status)
+void
+stream_channel::got_link_status_changed(uia::comm::socket::status new_status)
 {
     logger::debug() << "Stream channel - link status changed, new status "
-        << uia::comm::socket::status_string(new_status);
+                    << uia::comm::socket::status_string(new_status);
 
     if (new_status != uia::comm::socket::status::down) {
         return;
@@ -105,13 +107,13 @@ void stream_channel::got_link_status_changed(uia::comm::socket::status new_statu
     delete this;
 }
 
-stream_protocol::counter_t stream_channel::allocate_transmit_sid()
+counter_t
+stream_channel::allocate_transmit_sid()
 {
     counter_t sid = transmit_sid_counter_;
-    if (contains(transmit_sids_, sid))
-    {
+    if (contains(transmit_sids_, sid)) {
         int maxsearch = 0x7ff0 - (transmit_sid_counter_ - transmit_sid_acked_);
-        maxsearch = min(maxsearch, max_sid_skip);
+        maxsearch     = min(maxsearch, max_sid_skip);
         do {
             if (maxsearch-- <= 0) {
                 logger::fatal() << "allocate_transmit_sid: no free SIDs";
@@ -126,7 +128,8 @@ stream_protocol::counter_t stream_channel::allocate_transmit_sid()
     return sid;
 }
 
-void stream_channel::start(bool initiate)
+void
+stream_channel::start(bool initiate)
 {
     logger::debug() << "Stream channel - start as " << (initiate ? "initiator" : "responder");
     super::start(initiate);
@@ -142,7 +145,8 @@ void stream_channel::start(bool initiate)
     target_peer()->channel_started(this);
 }
 
-void stream_channel::stop()
+void
+stream_channel::stop()
 {
     logger::debug() << "Stream channel - stop";
     super::stop();
@@ -151,14 +155,12 @@ void stream_channel::stop()
 
     // Detach and notify all affected streams.
     auto tsids_copy = transmit_sids_;
-    for (auto it : tsids_copy)
-    {
+    for (auto it : tsids_copy) {
         assert(it.second->channel_ == this);
         it.second->clear();
     }
     auto rsids_copy = receive_sids_;
-    for (auto it : rsids_copy)
-    {
+    for (auto it : rsids_copy) {
         assert(it.second->channel_ == this);
         it.second->clear();
     }
@@ -171,13 +173,15 @@ void stream_channel::stop()
 /**
  * Assemble packet preamble - fixed prefix part and framing area start.
  */
-size_t stream_channel::assemble_preamble(asio::mutable_buffer out_packet)
+size_t
+stream_channel::assemble_preamble(boost::asio::mutable_buffer out_packet)
 {
     // Fill outgoing packet information - fixed part.
     return 0;
 }
 
-size_t stream_channel::assemble_item(int type, item t, asio::mutable_buffer out_packet)
+size_t
+stream_channel::assemble_item(int type, item t, boost::asio::mutable_buffer out_packet)
 {
     return 0;
 }
@@ -188,26 +192,33 @@ size_t stream_channel::assemble_item(int type, item t, asio::mutable_buffer out_
  * Framing layer is used here to pack actual frames into the packet and give estimations
  * of frame overhead.
  */
-void stream_channel::assemble_packet(asio::mutable_buffer out_packet)
+void
+stream_channel::assemble_packet(asio::mutable_buffer out_packet)
 {
     out_packet += assemble_preamble(out_packet);
-    while (out_packet.size() > 0)
-    {
-        types_by_priority = [ SETTINGS, ACK, RESET, PRIORITY, DECONGESTION, DETACH,
-                              CLOSE, STREAM_ATTACH, PADDING, EMPTY ];
+    while (out_packet.size() > 0) {
+        types_by_priority = [
+            SETTINGS,
+            ACK,
+            RESET,
+            PRIORITY,
+            DECONGESTION,
+            DETACH,
+            CLOSE,
+            STREAM_ATTACH,
+            PADDING,
+            EMPTY
+        ];
         // Check remaining items based on their priorities.
         // Frame type priorities are increased every time the frame is skipped.
-        for (type = 0; type < countof(types_by_priority); ++type)
-        {
-            if (not queue_by(type).empty())
-            {
-                if (type == STREAM_ATTACH)
-                {
+        for (type = 0; type < countof(types_by_priority); ++type) {
+            if (not queue_by(type).empty()) {
+                if (type == STREAM_ATTACH) {
                     // stream/attach queue has specific treatment - we want to ensure that ALL
                     // streams make progress.
                     // this means we take streams with highest priority and divide packet
                     // bandwidth between them. all other streams get their priority boosted.
-                    auto items = queue(type).takeAll(priority = queue(type).front().priority);
+                    auto items = queue(type).takeAll(priority == queue(type).front().priority);
                     auto remainingBandwidth = out_packet.size();
                     // @todo Juggling in case remaining bandwidth is too small
                     auto streamBandwidth = remainingBandwidth / items.size();
@@ -224,9 +235,7 @@ void stream_channel::assemble_packet(asio::mutable_buffer out_packet)
                     for (auto&& item : queue(type)) {
                         ++item.priority;
                     }
-                }
-                else
-                {
+                } else {
                     for (auto& item : queue(type)) {
                         if (item.size() > out_packet.size()) { // won't fit
                             ++item.priority; // look at it sooner in the next iteration
@@ -238,41 +247,44 @@ void stream_channel::assemble_packet(asio::mutable_buffer out_packet)
                     }
                 }
                 queue(type).sort(); // re-sort the queue by priority
-            } // end if not empty
-        } // end for
-    } // end while
+            }                       // end if not empty
+        }                           // end for
+    }                               // end while
 }
 
 //=================================================================================================
 // Stream interface
 //=================================================================================================
 
-void stream_channel::enqueue_stream(base_stream* stream)
+void
+stream_channel::enqueue_stream(base_stream* stream)
 {
     logger::debug() << "Stream channel - enqueue stream " << stream;
 
     // Find the correct position at which to enqueue this stream,
     // based on priority.
-    auto it = upper_bound(sending_streams_.begin(), sending_streams_.end(),
+    auto it = upper_bound(
+        sending_streams_.begin(),
+        sending_streams_.end(),
         stream->current_priority(),
-        [this](int prio, base_stream* str) {
-            return str->current_priority() >= prio;
-        });
+        [this](priority_t prio, base_stream* str) { return str->current_priority() >= prio; });
 
     logger::debug() << "Stream channel - enqueue stream at pos " << (it - sending_streams_.begin())
-        << " of total " << sending_streams_.size() << " streams";
+                    << " of total " << sending_streams_.size() << " streams";
 
     sending_streams_.insert(it, stream);
 }
 
-void stream_channel::dequeue_stream(base_stream* stream)
+void
+stream_channel::dequeue_stream(base_stream* stream)
 {
     logger::debug() << "Stream channel - dequeue stream " << stream;
-    sending_streams_.erase(
-        remove(sending_streams_.begin(), sending_streams_.end(), stream), sending_streams_.end());
+    sending_streams_.erase(remove(sending_streams_.begin(), sending_streams_.end(), stream),
+                           sending_streams_.end());
 }
 
-void stream_channel::detach_all()
+void
+stream_channel::detach_all()
 {
     // Save off and clear the channel's entire waiting_ack_ table -
     // it'll be more efficient to go through it once
@@ -283,17 +295,15 @@ void stream_channel::detach_all()
 
     // Detach all the streams with transmit-attachments to this flow.
     auto tsids_copy = transmit_sids_;
-    for (auto v : tsids_copy)
-    {
+    for (auto v : tsids_copy) {
         v.second->clear();
     }
     assert(transmit_sids_.empty());
 
     // Finally, send back all the waiting packets to their streams.
     logger::debug() << "Returning " << ack_copy.size() << " channel packets for retransmission";
-    for (auto v : ack_copy)
-    {
-        base_stream::packet& p = v.second;
+    for (auto v : ack_copy) {
+        base_stream::tx_frame_t& p = v.second;
         assert(!p.is_null());
         if (!p.late) {
             p.late = true;
@@ -304,7 +314,8 @@ void stream_channel::detach_all()
     }
 }
 
-bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count)
+bool
+stream_channel::transmit_ack(byte_array& pkt, packet_seq_t ackseq, int ack_count)
 {
     logger::debug() << "Stream channel - transmit ACK " << ackseq;
 
@@ -319,20 +330,20 @@ bool stream_channel::transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_
     assert(attach);
 
     // Build a bare Ack packet header
-    auto header = as_header<ack_header>(pkt);
-    header->stream_id = attach->stream_id_;
+    auto header          = as_header<ack_header>(pkt);
+    header->stream_id    = attach->stream_id_;
     header->type_subtype = type_and_subtype(packet_type::ack, 0);
-    header->window = attach->stream_->receive_window_byte();
+    header->window       = attach->stream_->receive_window_byte();
 
     // Let channel protocol put together its part of the packet and send it.
     return super::transmit_ack(pkt, ackseq, ack_count);
 }
 
-void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
+void
+stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
 {
     logger::debug() << "Stream channel - ACKed seq " << txseq;
-    for (; npackets > 0; txseq++, npackets--)
-    {
+    for (; npackets > 0; txseq++, npackets--) {
         // find and remove the packet
         if (!contains(waiting_ack_, txseq))
             continue;
@@ -340,31 +351,29 @@ void stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t
         base_stream::packet p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
 
-        logger::debug() << "Stream channel - acknowledged packet " << txseq
-            << " of size " << p.payload.size();
+        logger::debug() << "Stream channel - acknowledged packet " << txseq << " of size "
+                        << p.payload.size();
         p.owner->acknowledged(this, p, rxackseq);
     }
 }
 
-void stream_channel::missed(packet_seq_t txseq, int npackets)
+void
+stream_channel::missed(packet_seq_t txseq, int npackets)
 {
     logger::debug() << "Stream channel - missed seq " << txseq;
-    for (; npackets > 0; txseq++, npackets--)
-    {
+    for (; npackets > 0; txseq++, npackets--) {
         // find but don't remove (common case for missed packets)
-        if (!contains(waiting_ack_, txseq))
-        {
+        if (!contains(waiting_ack_, txseq)) {
             logger::warning() << "Missed packet " << txseq << " but can't find it!";
             continue;
         }
 
         base_stream::packet p = waiting_ack_[txseq];
 
-        logger::debug() << "Stream channel - missed packet " << txseq
-            << " of size " << p.payload.size();
+        logger::debug() << "Stream channel - missed packet " << txseq << " of size "
+                        << p.payload.size();
 
-        if (!p.late)
-        {
+        if (!p.late) {
             p.late = true;
             if (!p.owner->missed(this, p)) {
                 waiting_ack_.erase(txseq);
@@ -373,11 +382,11 @@ void stream_channel::missed(packet_seq_t txseq, int npackets)
     }
 }
 
-void stream_channel::expire(packet_seq_t txseq, int npackets)
+void
+stream_channel::expire(packet_seq_t txseq, int npackets)
 {
     logger::debug() << "Stream channel - expire seq " << txseq;
-    for (; npackets > 0; txseq++, npackets--)
-    {
+    for (; npackets > 0; txseq++, npackets--) {
         // find and unconditionally remove packet when it expires
         base_stream::packet p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
@@ -387,14 +396,15 @@ void stream_channel::expire(packet_seq_t txseq, int npackets)
             continue;
         }
 
-        logger::debug() << "Stream channel - expired packet " << txseq
-            << " of size " << p.payload_size();
+        logger::debug() << "Stream channel - expired packet " << txseq << " of size "
+                        << p.payload_size();
 
         p.owner->expire(this, p);
     }
 }
 
-bool stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
+bool
+stream_channel::channel_receive(packet_seq_t pktseq, byte_array const& pkt)
 {
     logger::debug() << "Stream channel - receive seq " << pktseq;
     return base_stream::receive(pktseq, pkt, this);

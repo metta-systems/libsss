@@ -45,7 +45,7 @@ shared_ptr<stream>
 stream::create(shared_ptr<abstract_stream> other_stream)
 {
     shared_ptr<stream> st = make_shared<stream>(other_stream);
-    other_stream->owner_ = st;
+    other_stream->owner_  = st;
     return st;
 }
 
@@ -55,7 +55,8 @@ stream::~stream()
     assert(stream_ == nullptr);
 }
 
-void stream::disconnect()
+void
+stream::disconnect()
 {
     if (!stream_) {
         return; // Already disconnected
@@ -65,7 +66,8 @@ void stream::disconnect()
     // peer_link_status_changed_signal.disconnect();
     // stream_peer* peer = host_->stream_peer_if_exists(stream_->peerid_);
     // if (peer)
-    //     peer->on_link_status_changed.disconnect(boost::bind(&stream::on_link_status_changed, this));
+    //     peer->on_link_status_changed.disconnect(boost::bind(&stream::on_link_status_changed,
+    //     this));
 
     // Clear the back-link from the base_stream.
     stream_->owner_.reset();
@@ -79,9 +81,11 @@ void stream::disconnect()
     // setOpenMode(NotOpen);
 }
 
-void stream::shutdown(shutdown_mode mode)
+void
+stream::shutdown(shutdown_mode mode)
 {
-    if (!stream_) return;
+    if (!stream_)
+        return;
 
     stream_->shutdown(mode);
 
@@ -95,20 +99,25 @@ void stream::shutdown(shutdown_mode mode)
     //     setOpenMode(isReadable() ? ReadOnly : NotOpen);
 }
 
-bool stream::is_connected() const
+bool
+stream::is_connected() const
 {
     return stream_ != nullptr;
 }
 
-bool stream::is_link_up() const
+bool
+stream::is_link_up() const
 {
-    if (!stream_) return false;
+    if (!stream_)
+        return false;
     return stream_->is_link_up();
 }
 
-bool stream::connect_to(uia::peer_identity const& destination,
-    string service, string protocol,
-    uia::comm::endpoint const& destination_endpoint_hint)
+bool
+stream::connect_to(uia::peer_identity const& destination,
+                   string service,
+                   string protocol,
+                   uia::comm::endpoint const& destination_endpoint_hint)
 {
     // Determine a suitable target EID.
     // If the caller didn't specify one (doesn't know the target's EID),
@@ -117,7 +126,7 @@ bool stream::connect_to(uia::peer_identity const& destination,
     // this won't work anymore @fixme
     // if (eid.is_empty()) {
     //     eid = identity::from_endpoint(destination_endpoint_hint).id().id();//UGH! :(
-        assert(!eid.is_empty());
+    assert(!eid.is_empty());
     // }
 
     disconnect();
@@ -125,10 +134,10 @@ bool stream::connect_to(uia::peer_identity const& destination,
     logger::debug() << "Connecting to peer with id " << eid;
 
     // Create a top-level application stream object for this connection.
-    auto base = make_shared<base_stream>(host_, eid, nullptr);
+    auto base    = make_shared<base_stream>(host_, eid, nullptr);
     base->owner_ = shared_from_this();
-    base->self_ = base; // Self-reference for the base_stream to stay around until finished.
-    stream_ = base;
+    base->self_  = base; // Self-reference for the base_stream to stay around until finished.
+    stream_      = base;
 
     // Get our link status signal hooked up, if it needs to be.
     connect_link_status_signal();
@@ -148,21 +157,23 @@ bool stream::connect_to(uia::peer_identity const& destination,
     return true;
 }
 
-void stream::connect_link_status_signal()
+void
+stream::connect_link_status_signal()
 {
     if (status_signal_connected_ or !stream_) {
         return;
     }
 
-    internal::stream_peer* peer = host_->stream_peer(stream_->peerid_);
+    internal::stream_peer* peer = host_->stream_peer(stream_->peer_id_);
 
-    peer->on_link_status_changed.connect([this](uia::comm::socket::status new_status) {
-        on_link_status_changed(new_status);
-    });
+    peer->on_link_status_changed.connect(
+        [this](uia::comm::socket::status new_status) { on_link_status_changed(new_status); });
+
     status_signal_connected_ = true;
 }
 
-void stream::connect_at(uia::comm::endpoint const& ep)
+void
+stream::connect_at(uia::comm::endpoint const& ep)
 {
     if (!stream_) {
         return;
@@ -170,10 +181,10 @@ void stream::connect_at(uia::comm::endpoint const& ep)
     host_->stream_peer(stream_->peerid_)->add_location_hint(ep);
 }
 
-bool stream::add_location_hint(uia::peer_identity const& eid, uia::comm::endpoint const& hint)
+bool
+stream::add_location_hint(uia::peer_identity const& eid, uia::comm::endpoint const& hint)
 {
-    if (eid.is_null())
-    {
+    if (eid.is_null()) {
         set_error("No target EID for location hint");
         return false;
     }
@@ -182,17 +193,18 @@ bool stream::add_location_hint(uia::peer_identity const& eid, uia::comm::endpoin
     return true;
 }
 
-void stream::set_priority(int priority)
+void
+stream::set_priority(int priority)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return;
     }
     stream_->set_priority(priority);
 }
 
-int stream::current_priority() const
+int
+stream::current_priority() const
 {
     if (!stream_) {
         return 0;
@@ -200,13 +212,15 @@ int stream::current_priority() const
     return stream_->current_priority();
 }
 
-void stream::set_error(string const& error)
+void
+stream::set_error(string const& error)
 {
     error_string_ = error;
     on_error_notify(error);
 }
 
-ssize_t stream::bytes_available() const
+ssize_t
+stream::bytes_available() const
 {
     if (!stream_) {
         return 0;
@@ -214,7 +228,8 @@ ssize_t stream::bytes_available() const
     return stream_->bytes_available();
 }
 
-bool stream::at_end() const
+bool
+stream::at_end() const
 {
     if (!stream_) {
         return true;
@@ -222,7 +237,8 @@ bool stream::at_end() const
     return stream_->at_end();
 }
 
-int stream::pending_records() const
+int
+stream::pending_records() const
 {
     if (!stream_) {
         return 0;
@@ -230,7 +246,8 @@ int stream::pending_records() const
     return stream_->pending_records();
 }
 
-ssize_t stream::pending_record_size() const
+ssize_t
+stream::pending_record_size() const
 {
     if (!stream_) {
         return 0;
@@ -238,37 +255,38 @@ ssize_t stream::pending_record_size() const
     return stream_->pending_record_size();
 }
 
-ssize_t stream::read_record(char* data, ssize_t max_size)
+ssize_t
+stream::read_record(char* data, ssize_t max_size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->read_record(data, max_size);
 }
 
-byte_array stream::read_record(ssize_t max_size)
+byte_array
+stream::read_record(ssize_t max_size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return byte_array();
     }
     return stream_->read_record(max_size);
 }
 
-ssize_t stream::read_data(char* data, ssize_t max_size)
+ssize_t
+stream::read_data(char* data, ssize_t max_size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->read_data(data, max_size);
 }
 
-byte_array stream::read_data(ssize_t max_size)
+byte_array
+stream::read_data(ssize_t max_size)
 {
     byte_array buf;
     max_size = min(max_size, bytes_available());
@@ -281,57 +299,58 @@ byte_array stream::read_data(ssize_t max_size)
     return buf;
 }
 
-ssize_t stream::write_data(const char* data, ssize_t size)
+ssize_t
+stream::write_data(const char* data, ssize_t size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->write_data(data, size, stream_protocol::flags::data_push);
 }
 
-ssize_t stream::write_record(const char* data, ssize_t size)
+ssize_t
+stream::write_record(const char* data, ssize_t size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->write_data(data, size, stream_protocol::flags::data_record);
 }
 
-ssize_t stream::read_datagram(char* data, ssize_t max_size)
+ssize_t
+stream::read_datagram(char* data, ssize_t max_size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->read_datagram(data, max_size);
 }
 
-byte_array stream::read_datagram(ssize_t max_size)
+byte_array
+stream::read_datagram(ssize_t max_size)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return byte_array();
     }
     return stream_->read_datagram(max_size);
 }
 
-ssize_t stream::write_datagram(const char* data, ssize_t size, datagram_type is_reliable)
+ssize_t
+stream::write_datagram(const char* data, ssize_t size, datagram_type is_reliable)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return -1;
     }
     return stream_->write_datagram(data, size, is_reliable);
 }
 
-uia::peer_identity stream::local_host_id() const
+uia::peer_identity
+stream::local_host_id() const
 {
     if (!stream_) {
         return uia::peer_identity();
@@ -339,7 +358,8 @@ uia::peer_identity stream::local_host_id() const
     return stream_->local_host_id();
 }
 
-uia::peer_identity stream::remote_host_id() const
+uia::peer_identity
+stream::remote_host_id() const
 {
     if (!stream_) {
         return uia::peer_identity();
@@ -347,7 +367,8 @@ uia::peer_identity stream::remote_host_id() const
     return stream_->remote_host_id();
 }
 
-void stream::set_receive_buffer_size(ssize_t size)
+void
+stream::set_receive_buffer_size(ssize_t size)
 {
     if (!stream_) {
         return;
@@ -355,7 +376,8 @@ void stream::set_receive_buffer_size(ssize_t size)
     stream_->set_receive_buffer_size(size);
 }
 
-void stream::set_child_receive_buffer_size(ssize_t size)
+void
+stream::set_child_receive_buffer_size(ssize_t size)
 {
     if (!stream_) {
         return;
@@ -363,10 +385,10 @@ void stream::set_child_receive_buffer_size(ssize_t size)
     stream_->set_child_receive_buffer_size(size);
 }
 
-void stream::dump()
+void
+stream::dump()
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         logger::debug() << this << " is a detached user stream";
         return;
     }
@@ -377,17 +399,16 @@ void stream::dump()
 // Substream management.
 //-------------------------------------------------------------------------------------------------
 
-shared_ptr<stream> stream::accept_substream()
+shared_ptr<stream>
+stream::accept_substream()
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return nullptr;
     }
 
     auto new_stream = stream_->accept_substream();
-    if (!new_stream)
-    {
+    if (!new_stream) {
         set_error("No waiting substreams");
         return nullptr;
     }
@@ -395,17 +416,16 @@ shared_ptr<stream> stream::accept_substream()
     return stream::create(new_stream);
 }
 
-shared_ptr<stream> stream::open_substream()
+shared_ptr<stream>
+stream::open_substream()
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return nullptr;
     }
 
     auto new_stream = stream_->open_substream();
-    if (!new_stream)
-    {
+    if (!new_stream) {
         set_error("Unable to create substream"); // @todo Forward stream_'s error?
         return nullptr;
     }
@@ -413,17 +433,18 @@ shared_ptr<stream> stream::open_substream()
     return stream::create(new_stream);
 }
 
-void stream::listen(listen_mode mode)
+void
+stream::listen(listen_mode mode)
 {
-    if (!stream_)
-    {
+    if (!stream_) {
         set_error("Stream not connected");
         return;
     }
     stream_->listen(mode);
 }
 
-bool stream::is_listening() const
+bool
+stream::is_listening() const
 {
     if (!stream_) {
         return false;
@@ -443,17 +464,18 @@ stream_host_state::all_peers() const
     return values;
 }
 
-internal::stream_peer* stream_host_state::stream_peer(uia::peer_identity const& id)
+internal::stream_peer*
+stream_host_state::stream_peer(uia::peer_identity const& id)
 {
-    if (!contains(peers_, id))
-    {
-        peers_[id] = make_shared<internal::stream_peer>(get_host(), id,
-            internal::stream_peer::private_tag{});
+    if (!contains(peers_, id)) {
+        peers_[id] = make_shared<internal::stream_peer>(
+            get_host(), id, internal::stream_peer::private_tag{});
     }
     return peers_[id].get();
 }
 
-internal::stream_peer* stream_host_state::stream_peer_if_exists(uia::peer_identity const& id)
+internal::stream_peer*
+stream_host_state::stream_peer_if_exists(uia::peer_identity const& id)
 {
     if (!contains(peers_, id)) {
         return nullptr;

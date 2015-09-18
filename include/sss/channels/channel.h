@@ -29,7 +29,7 @@ class channel : public uia::comm::socket_channel
     using super = uia::comm::socket_channel;
 
     class private_data;
-    std::unique_ptr<private_data> pimpl_;  ///< Most of the state is hidden from interface.
+    std::unique_ptr<private_data> pimpl_; ///< Most of the state is hidden from interface.
 
     // Packet encode/decode.
     // @todo Move to pimpl
@@ -53,9 +53,10 @@ class channel : public uia::comm::socket_channel
 
     /// Per-direction unique channel IDs for this channel.
     /// Stream layer uses these in assigning USIDs to new streams.
-    byte_array   tx_channel_id_;                   ///< Transmit ID of the channel.
-    byte_array   rx_channel_id_;                   ///< Receive ID of the channel.
-    uia::comm::socket::status link_status_{uia::comm::socket::status::down}; ///< Link online status.
+    byte_array tx_channel_id_; ///< Transmit ID of the channel.
+    byte_array rx_channel_id_; ///< Receive ID of the channel.
+    uia::comm::socket::status link_status_{
+        uia::comm::socket::status::down}; ///< Link online status.
 
     /**
      * When packet sequence reaches this number, the channel is no longer usable
@@ -67,7 +68,9 @@ class channel : public uia::comm::socket_channel
 public:
     static constexpr size_t header_len = 0; // @fixme Get rid of this
 
-    channel(std::shared_ptr<host> host, sodiumpp::secret_key local_key, sodiumpp::public_key remote);
+    channel(std::shared_ptr<host> host,
+            sodiumpp::secret_key local_key,
+            sodiumpp::public_key remote);
     virtual ~channel();
 
     virtual std::shared_ptr<host> get_host();
@@ -81,12 +84,8 @@ public:
     /// if any, that flow control says we may transmit now.
     size_t may_transmit() override;
 
-    inline byte_array tx_channel_id() {
-        return tx_channel_id_;
-    }
-    inline byte_array rx_channel_id() {
-        return rx_channel_id_;
-    }
+    inline byte_array tx_channel_id() { return tx_channel_id_; }
+    inline byte_array rx_channel_id() { return rx_channel_id_; }
 
     /// Set the channel IDs for this channel.
     inline void set_channel_ids(byte_array const& tx_id, byte_array const& rx_id)
@@ -109,17 +108,15 @@ public:
      * This MUST be set before a new channel can be activated.
      */
     // inline void set_armor(std::unique_ptr<channel_armor> armor) {
-        // armor_ = std::move(armor);
+    // armor_ = std::move(armor);
     // }
 
     /**
      * Return the current link status as observed by this channel.
      */
-    inline uia::comm::socket::status link_status() const {
-        return link_status_;
-    }
+    inline uia::comm::socket::status link_status() const { return link_status_; }
 
-    using link_status_changed_signal = boost::signals2::signal<void (uia::comm::socket::status)>;
+    using link_status_changed_signal = boost::signals2::signal<void(uia::comm::socket::status)>;
 
     /// Indicates when this channel observes a change in link status.
     link_status_changed_signal on_link_status_changed;
@@ -149,7 +146,7 @@ protected:
      * Upper layer may override this if ack packets should contain
      * more than just an empty channel payload.
      */
-    virtual bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count);
+    virtual bool transmit_ack(byte_array& pkt, packet_seq_t ackseq, int ack_count);
 
     virtual void acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq);
     virtual void missed(packet_seq_t txseq, int npackets);
@@ -192,7 +189,8 @@ private:
     /// Repeat stall indications but not other socket status changes.
     /// XXX hack - maybe "stall severity" or "stall time" should be part of status?
     /// Or perhaps status should be (up, stalltime)?
-    inline void set_link_status(uia::comm::socket::status new_status) {
+    inline void set_link_status(uia::comm::socket::status new_status)
+    {
         if (link_status_ != new_status or new_status == uia::comm::socket::status::stalled) {
             link_status_ = new_status;
             on_link_status_changed(new_status);

@@ -2,7 +2,8 @@
 
 #include "packet_frame.h"
 
-namespace sss { namespace framing {
+namespace sss {
+namespace framing {
 
 class framing_t;
 
@@ -17,5 +18,5 @@ private:
     stream_frame_header header_;
     string data_;
 };
-
-} }
+}
+}

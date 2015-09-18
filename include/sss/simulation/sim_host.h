@@ -71,9 +71,9 @@ public:
     bool packet_on_queue(std::shared_ptr<sim_packet> packet) const;
 
     void register_connection_at(uia::comm::endpoint const& address,
-        std::shared_ptr<sim_connection> conn);
+                                std::shared_ptr<sim_connection> conn);
     void unregister_connection_at(uia::comm::endpoint const& address,
-        std::shared_ptr<sim_connection> conn);
+                                  std::shared_ptr<sim_connection> conn);
     std::shared_ptr<sim_connection> connection_at(uia::comm::endpoint const& ep);
 
     void register_link_at(uint16_t port, std::shared_ptr<sim_socket> socket);

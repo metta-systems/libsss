@@ -34,15 +34,11 @@ public:
     bool bind(uia::comm::endpoint const& ep) override;
     void unbind() override;
 
-    bool send(uia::comm::endpoint const& ep, const char *data, size_t size) override;
+    bool send(uia::comm::endpoint const& ep, const char* data, size_t size) override;
 
     std::vector<uia::comm::endpoint> local_endpoints() override;
-    inline uint16_t local_port() override {
-        return port_;
-    }
-    inline std::string error_string() override {
-        return "";
-    }
+    inline uint16_t local_port() override { return port_; }
+    inline std::string error_string() override { return ""; }
     using uia::comm::socket::receive;
 };
 

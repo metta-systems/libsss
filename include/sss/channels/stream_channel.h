@@ -16,7 +16,7 @@
 namespace sss {
 
 namespace internal {
-    class stream_peer;
+class stream_peer;
 }
 
 /**
@@ -24,7 +24,7 @@ namespace internal {
  */
 class stream_channel : public channel, public stream_protocol
 {
-    friend class base_stream; /// @fixme
+    friend class base_stream;          /// @fixme
     friend class stream_rx_attachment; /// @fixme
     friend class stream_tx_attachment; /// @fixme
 
@@ -41,7 +41,7 @@ class stream_channel : public channel, public stream_protocol
      */
     static constexpr int stall_warnings_max = 3;
 
-    int stall_warnings_{0};  ///< Stall warnings before new lookup.
+    int stall_warnings_{0}; ///< Stall warnings before new lookup.
 
     /**
      * Stream peer this channel is associated with.
@@ -56,8 +56,10 @@ class stream_channel : public channel, public stream_protocol
     std::shared_ptr<base_stream> root_{nullptr};
 
     // Hash table of active streams indexed by stream ID
-    std::unordered_map<local_stream_id_t, stream_tx_attachment*> transmit_sids_; // Our SID namespace
-    std::unordered_map<local_stream_id_t, stream_rx_attachment*> receive_sids_; // Peer's SID namespace
+    std::unordered_map<local_stream_id_t, stream_tx_attachment*>
+        transmit_sids_; // Our SID namespace
+    std::unordered_map<local_stream_id_t, stream_rx_attachment*>
+        receive_sids_; // Peer's SID namespace
 
     counter_t transmit_sid_counter_{1}; // Next stream counter to assign.
     counter_t transmit_sid_acked_{0};   // Last acknowledged stream counter.
@@ -102,8 +104,8 @@ class stream_channel : public channel, public stream_protocol
 
 public:
     stream_channel(std::shared_ptr<host> host,
-        internal::stream_peer* peer,
-        uia::peer_identity const& id);
+                   internal::stream_peer* peer,
+                   uia::peer_identity const& id);
     ~stream_channel();
 
     void start(bool initiate) override;
@@ -127,7 +129,7 @@ public:
      * Override channel's default transmit_ack() method
      * to include stream-layer info in explicit ack packets.
      */
-    bool transmit_ack(byte_array &pkt, packet_seq_t ackseq, int ack_count) override;
+    bool transmit_ack(byte_array& pkt, packet_seq_t ackseq, int ack_count) override;
 
     void acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq) override;
     void missed(packet_seq_t txseq, int npackets) override;

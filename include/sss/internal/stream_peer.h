@@ -51,13 +51,13 @@ namespace internal {
  */
 class stream_peer : public stream_protocol
 {
-    friend class sss::base_stream; // @fixme Use accessors n stuff.
+    friend class sss::base_stream;       // @fixme Use accessors n stuff.
     friend class sss::stream_host_state; // @fixme used only to construct.
-    friend class sss::stream_channel; // @fixme Used to call channel_started() only.
+    friend class sss::stream_channel;    // @fixme Used to call channel_started() only.
 
-    host::ptr                        host_;         ///< Per-host state.
-    const uia::peer_identity         remote_id_;    ///< Host ID of target.
-    std::map<channel_key, stream_channel::ptr> channels_;     ///< Currently established channels.
+    host::ptr host_;                                      ///< Per-host state.
+    const uia::peer_identity remote_id_;                  ///< Host ID of target.
+    std::map<channel_key, stream_channel::ptr> channels_; ///< Currently established channels.
 
     /// @internal
     boost::signals2::connection primary_channel_link_status_connection_;
@@ -66,8 +66,7 @@ class stream_peer : public stream_protocol
     std::unordered_set<uia::comm::endpoint> locations_; ///< Potential peer locations known
 
     // @fixme key on sockets or permanent IDs? hmm
-    std::map<uia::comm::socket_endpoint, negotiation::kex_initiator::ptr>
-        key_exchanges_initiated_;
+    std::map<uia::comm::socket_endpoint, negotiation::kex_initiator::ptr> key_exchanges_initiated_;
 
     // All existing streams involving this peer.
     std::unordered_set<base_stream::ptr> all_streams_;
@@ -80,7 +79,8 @@ class stream_peer : public stream_protocol
 private:
     inline uia::peer_identity remote_host_id() const { return remote_id_; }
 
-    inline bool no_lookups_possible() {
+    inline bool no_lookups_possible()
+    {
         return coord_.lookups_.empty() and key_exchanges_initiated_.empty();
     }
 
@@ -113,20 +113,25 @@ private:
     void primary_status_changed(uia::comm::socket::status new_status);
 
     // Routing client handlers
-    void routing_client_ready(uia::routing::client *rc);
-    void connect_routing_client(uia::routing::client *rc);
+    void routing_client_ready(uia::routing::client* rc);
+    void connect_routing_client(uia::routing::client* rc);
 
     // Routing client handlers
-    void lookup_done(uia::routing::client *rc, uia::peer_identity const& target_peer,
-        uia::comm::endpoint const& peer_endpoint,
-        uia::routing::client_profile const& peer_profile);
-    void regclient_destroyed(uia::routing::client *rc);
+    void lookup_done(uia::routing::client* rc,
+                     uia::peer_identity const& target_peer,
+                     uia::comm::endpoint const& peer_endpoint,
+                     uia::routing::client_profile const& peer_profile);
+    void regclient_destroyed(uia::routing::client* rc);
     void retry_timeout();
 
-    struct private_tag {};
+    struct private_tag
+    {
+    };
 
 public:
-    stream_peer(std::shared_ptr<host> const& host, uia::peer_identity const& remote_id, private_tag);
+    stream_peer(std::shared_ptr<host> const& host,
+                uia::peer_identity const& remote_id,
+                private_tag);
     ~stream_peer();
 
     /**
@@ -141,8 +146,8 @@ public:
      */
     void add_location_hint(uia::comm::endpoint const& hint);
 
-    using channel_state_signal = boost::signals2::signal<void (void)>;
-    using link_status_changed_signal = boost::signals2::signal<void (uia::comm::socket::status)>;
+    using channel_state_signal       = boost::signals2::signal<void(void)>;
+    using link_status_changed_signal = boost::signals2::signal<void(uia::comm::socket::status)>;
 
     /**
      * Primary channel connection attempt succeeded.

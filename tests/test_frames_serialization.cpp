@@ -19,54 +19,52 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE(serialize_frames)
 {
-	std::vector<char> b(5000);
-	boost::asio::buffer buf(b);
-	empty_frame   ef;
-	stream_frame  sf;
-	ack_frame	  af;
-	padding_frame pf;
-	decongestion_frame dcf;
-	detach_frame  dtf;
-	reset_frame	  rf;
-	close_frame   cf;
-	settings_frame sef;
-	priority_frame prf;	
+    std::vector<char> b(5000);
+    boost::asio::buffer buf(b);
+    empty_frame empty;
+    stream_frame stream;
+    ack_frame ack;
+    padding_frame padding;
+    decongestion_frame decongestion;
+    detach_frame detach;
+    reset_frame reset;
+    close_frame close;
+    settings_frame settings;
+    priority_frame priority;
 
+    /*
+        empty.write(buf);
+        stream.write(buf);
+        ack.write(buf);
+        padding.write(buf);
+        decongestion.write(buf);
+        detach.write(buf);
+        reset.write(buf);
+        close.write(buf);
+        settings.write(buf);
+        priority.write(buf);
+    */
+    buf = fusionary::write(buf, empty);
+    buf = fusionary::write(buf, settings);
+    buf = fusionary::write(buf, ack);
+    buf = fusionary::write(buf, padding);
+    buf = fusionary::write(buf, decongestion);
+    buf = fusionary::write(buf, detach);
+    buf = fusionary::write(buf, reset);
+    buf = fusionary::write(buf, close);
+    buf = fusionary::write(buf, settings);
+    buf = fusionary::write(buf, priority);
 
-/*
-	ef.write(buf);
-	sf.write(buf);
-	af.write(buf);
-	pf.write(buf);
-	dcf.write(buf);
-	dtf.write(buf);
-	rf.write(buf);
-	cf.write(buf);
-	sef.write(buf);
-	prf.write(buf);
-*/
-	buf = fusionary::write(buf, ef);
-	buf = fusionary::write(buf, sef);
-	buf = fusionary::write(buf, af);
-	buf = fusionary::write(buf, pf);
-	buf = fusionary::write(buf, dcf);
-	buf = fusionary::write(buf, dtf);
-	buf = fusionary::write(buf, rf);
-	buf = fusionary::write(buf, cf);
-	buf = fusionary::write(buf, sef);
-	buf = fusionary::write(buf, prf);
-
-
-	BOOST_CHECK(empty_frame::read(buf) == ef);
-	BOOST_CHECK(stream_frame::read(buf) == sf);
-	BOOST_CHECK(ack_frame::read(buf) == af);
-	BOOST_CHECK(padding_frame::read(buf) == pf);
-	BOOST_CHECK(decongestion_frame::read(buf) == dcf);
-	BOOST_CHECK(detach_frame::read(buf) == dtf);
-	BOOST_CHECK(reset_frame::read(buf) == rf);
-	BOOST_CHECK(close_frame::read(buf) == cf);
-	BOOST_CHECK(settings_frame::read(buf) == sef);
-	BOOST_CHECK(priority_frame::read(buf) == prf);
+    BOOST_CHECK(empty_frame::read(buf) == empty);
+    BOOST_CHECK(stream_frame::read(buf) == stream);
+    BOOST_CHECK(ack_frame::read(buf) == af);
+    BOOST_CHECK(padding_frame::read(buf) == padding);
+    BOOST_CHECK(decongestion_frame::read(buf) == decongestion);
+    BOOST_CHECK(detach_frame::read(buf) == detach);
+    BOOST_CHECK(reset_frame::read(buf) == reset);
+    BOOST_CHECK(close_frame::read(buf) == close);
+    BOOST_CHECK(settings_frame::read(buf) == settings);
+    BOOST_CHECK(priority_frame::read(buf) == priority);
 
     logger::file_dump(data, "frames serialization test");
 }

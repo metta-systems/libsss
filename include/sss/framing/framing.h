@@ -4,12 +4,13 @@
 #include <memory>
 #include <boost/asio/buffers.hpp>
 
-namespace sss { namespace framing {
 
 // clangcomplete compiled with custom llvm that's why
 // /usr/local/opt/llvm/include/c++/v1/iosfwd:90:10: fatal error: 'wchar.h' file not found
 // is happening'
 // need to fix/reset default include paths somehow??
+namespace sss {
+namespace framing {
 
 /**
  * framed packet
@@ -57,8 +58,8 @@ private:
     read_handler(asio::const_buffer input);
 
 private:
-    using read_handler_type = void (framing::*) (asio::const_buffer);
-    std::array<read_handler_type, max_frame_count_type_t::value> handlers_;
+    using read_handler_type = void (framing::*)(asio::const_buffer);
+    std::array<read_handler_type, max_frame_count_t::value> handlers_;
 
     // References to streams and channel associated with this framing instance.
     // When parsing received frames, call into stream_[lsid]->rx_*() and channel_->rx_*() functions
