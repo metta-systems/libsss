@@ -329,10 +329,9 @@ stream_peer::initiate_key_exchange(uia::comm::socket::wptr l, uia::comm::endpoin
     // } // @sa stream_responder::create_channel
 
     // Start the key exchange process for the channel.
-    kex_initiator_ptr init = make_shared<kex_initiator>(chan, magic_id, remote_id_);
+    kex_initiator_ptr init = make_shared<kex_initiator>(host_, remote_id_);
 
-    init->on_completed.connect(
-        [this](kex_initiator_ptr ki, bool success) { completed(ki, success); });
+    init->on_completed.connect([this](kex_initiator_ptr ki, channel_ptr ch) { completed(ki, ch); });
 
     key_exchanges_initiated_.insert(make_pair(lep, init));
     init->exchange_keys();
@@ -413,7 +412,7 @@ stream_peer::add_location_hint(uia::comm::endpoint const& hint)
 }
 
 void
-stream_peer::completed(kex_initiator::ptr ki, bool success)
+stream_peer::completed(kex_initiator_ptr ki, channel_ptr chan)
 {
     assert(ki and ki->is_done());
 

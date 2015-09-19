@@ -12,13 +12,12 @@
 #include <boost/signals2/signal.hpp>
 #include "comm/socket_endpoint.h"
 #include "sss/channels/peer_identity.h"
+#include "sss/channels/channel.h"
 #include "sss/internal/timer.h"
-// #include "krypto/krypto.h"
 
 namespace sss {
 
 class host;
-class channel;
 
 namespace negotiation {
 
@@ -68,7 +67,7 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
     void done();
 
 protected:
-    virtual std::shared_ptr<channel> create_channel() = 0;
+    virtual channel::ptr create_channel() = 0;
 
 public:
     using ptr = std::shared_ptr<kex_initiator>;
@@ -100,9 +99,9 @@ public:
     void send_initiate();
 
     /**
-     * Send completion signal, indicating success when true or failure when false.
+     * Send completion signal, giving created channel on success or nullptr on failure.
      */
-    using completion_signal = boost::signals2::signal<void (kex_initiator::ptr, bool)>;
+    using completion_signal = boost::signals2::signal<void(kex_initiator::ptr, channel::ptr)>;
     completion_signal on_completed;
 };
 

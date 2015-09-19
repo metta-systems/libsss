@@ -112,7 +112,7 @@ private:
     // void clear_primary_channel();
 
     // Handlers.
-    void completed(std::shared_ptr<negotiation::kex_initiator> ki, bool success); // KEX inited
+    void completed(negotiation::kex_initiator_ptr ki, channel_ptr chan); // KEX inited
     void primary_status_changed(uia::comm::socket::status new_status);
 
     // Routing client handlers
