@@ -250,7 +250,7 @@ ofs : sz  : description
 0   : 8   : magic
 8   : 32  : initiator short-term public key I'
 40  : 64  : zero
-104 : 8   : compressed nonce, prefix with "cURVEcp-CLIENT-h"
+104 : 8   : compressed nonce, prefix with "cUVVYcp-CLIENT-h"
 112 : 80  : box I'->R containing:
     : ofs : sz  :
     : 0   : 32  : initiator long-term public key I (for pre-auth)
