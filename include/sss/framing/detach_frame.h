@@ -9,20 +9,12 @@
 #pragma once
 
 #include "packet_frame.h"
+#include "frame_format.h"
 
 namespace sss {
 namespace framing {
 
-class detach_frame_t : public packet_frame_t
-{
-public:
-    int write(asio::mutable_buffer output) const;
-    int read(asio::const_buffer input);
-    void dispatch(channel::ptr);
+using detach_frame_t = packet_frame_t<detach_frame_header>;
 
-private:
-    sss::framing::detach_frame_header_t header_;
-    string data_;
-};
-}
-}
+} // framing namespace
+} // sss namespace

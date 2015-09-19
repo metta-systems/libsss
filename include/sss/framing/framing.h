@@ -10,7 +10,7 @@
 
 #include "packet_frame.h"
 #include "frame_format.h"
-
+#include "sss/forward_ptrs.h"
 #include <memory>
 #include <boost/asio/buffers.hpp>
 
@@ -51,7 +51,7 @@ class framed_packet
 class framing_t
 {
 public:
-    framing_t(channel::ptr c);
+    framing_t(channel_ptr c);
 
     void enframe(asio::mutable_buffer output);
     void deframe(asio::const_buffer input);
@@ -68,7 +68,7 @@ private:
     // When parsing received frames, obtain streams from channel by lsid/usid and call rx_*()
     // functions to process associated frames. Call channel's rx_*() functions to process
     // channel-level frames.
-    channel::ptr channel_;
+    channel_ptr channel_;
 };
 
 }

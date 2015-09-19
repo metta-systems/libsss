@@ -9,20 +9,17 @@
 #pragma once
 
 #include "packet_frame.h"
+#include "frame_format.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
 namespace framing {
 
-class priority_frame_t : public packet_frame_t
+class priority_frame_t : public packet_frame_t<priority_frame_header>
 {
 public:
-    int write(asio::mutable_buffer output) const;
-    int read(asio::const_buffer input);
-    void dispatch(channel::ptr);
-
-private:
-    sss::framing::priority_frame_header_t header_;
-    string data_;
+    void dispatch(channel_ptr);
 };
-}
-}
+
+} // framing namespace
+} // sss namespace
