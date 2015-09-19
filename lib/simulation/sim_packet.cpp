@@ -106,7 +106,7 @@ sim_packet::arrive()
 
     timer_.stop();
 
-    std::shared_ptr<sim_socket> socket = target_host_->link_for(to_.port());
+    std::shared_ptr<sim_socket> socket = target_host_->socket_for_port(to_.port());
     if (!socket) {
         logger::info() << "No listener registered on port " << to_.port() << " in target host";
         return; // @todo - this packet should clean up itself somehow
@@ -119,7 +119,7 @@ sim_packet::arrive()
     target_host_->dequeue_packet(self);
 
     uia::comm::socket_endpoint src_ep(socket, from_);
-    socket->receive(data_, src_ep);
+    socket->receive(boost::asio::const_buffer(data_.const_data(), data_.size()), src_ep);
 
     self.reset(); // We are ought to be deleted now.
 }

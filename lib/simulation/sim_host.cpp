@@ -33,7 +33,7 @@ sim_host::create(shared_ptr<simulator> sim)
 }
 
 sim_host::sim_host(shared_ptr<simulator> sim)
-    : host()
+    : host(private_tag())
     , simulator_(sim)
 {
 }
@@ -140,21 +140,21 @@ sim_host::neighbor_at(uia::comm::endpoint const& dst, uia::comm::endpoint& src)
 }
 
 void
-sim_host::register_link_at(uint16_t port, std::shared_ptr<sim_socket> socket)
+sim_host::register_socket_for_port(uint16_t port, std::shared_ptr<sim_socket> socket)
 {
     assert(sockets_[port] == nullptr);
     sockets_[port] = socket;
 }
 
 void
-sim_host::unregister_link_at(uint16_t port, std::shared_ptr<sim_socket> socket)
+sim_host::unregister_socket_for_port(uint16_t port, std::shared_ptr<sim_socket> socket)
 {
     assert(sockets_[port] == socket);
     sockets_.erase(port);
 }
 
 shared_ptr<sim_socket>
-sim_host::link_for(uint16_t port)
+sim_host::socket_for_port(uint16_t port)
 {
     return sockets_[port];
 }

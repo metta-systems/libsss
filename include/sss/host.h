@@ -42,6 +42,7 @@ class host : public std::enable_shared_from_this<host>,
              public timer_host_state,
              public routing_host_state
 {
+protected:
     struct private_tag
     {
     };
