@@ -11,24 +11,19 @@
 #include "sss/host.h" // @todo Remove, temporarily used to make socket.h below compile
 // when decoupled, should not need host.h include above
 #include "comm/socket.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
-
-class host;
-
 namespace simulation {
-
-class sim_host;
-class simulator;
 
 class sim_socket : public uia::comm::socket, public std::enable_shared_from_this<sim_socket>
 {
-    std::shared_ptr<simulator> simulator_;
-    std::shared_ptr<sim_host> host_;
+    simulator_ptr simulator_;
+    sim_host_ptr host_;
     uint16_t port_{0};
 
 public:
-    sim_socket(std::shared_ptr<sim_host> host);
+    sim_socket(sim_host_ptr host);
     ~sim_socket();
 
     bool bind(uia::comm::endpoint const& ep) override;

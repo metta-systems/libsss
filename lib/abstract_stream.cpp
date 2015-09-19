@@ -8,10 +8,11 @@
 //
 #include "sss/streams/abstract_stream.h"
 #include "sss/host.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
 
-abstract_stream::abstract_stream(host::ptr h)
+abstract_stream::abstract_stream(host_ptr h)
     : host_(h)
 {}
 

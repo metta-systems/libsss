@@ -41,9 +41,6 @@ class socket : std::enable_shared_from_this<socket>
     bool active_{false};
 
 public:
-    using ptr = std::shared_ptr<socket>;
-    using weak_ptr = std::weak_ptr<socket>;
-
     /// sss expresses current socket status as one of three states:
     enum class status
     {

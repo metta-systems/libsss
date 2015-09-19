@@ -52,9 +52,6 @@ protected:
     // just use bind(magic);
 
 public:
-    using ptr = std::shared_ptr<packet_receiver>;
-    using weak_ptr = std::weak_ptr<packet_receiver>;
-
     /**
      * Socket calls this method to dispatch packets.
      * @param msg Data packet.

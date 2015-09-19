@@ -4,7 +4,7 @@ socket_channel::weak_ptr
 message_receiver::channel_for(string channel_key)
 {
     if (!contains(channels_, channel_key)) {
-        return socket_channel::ptr();
+        return socket_channel_ptr();
     }
     return channels_[channel_key];
 }

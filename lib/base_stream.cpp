@@ -652,7 +652,7 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
 // Unreliable datagrams
 //-------------------------------------------------------------------------------------------------
 
-abstract_stream::ptr
+abstract_stream_ptr
 base_stream::get_datagram()
 {
     // Scan through the list of queued datagrams
@@ -1894,7 +1894,7 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     recalculate_receive_window();
 }
 
-base_stream::ptr
+base_stream_ptr
 base_stream::rx_substream(packet_seq_t pktseq,
                           stream_channel* channel,
                           local_stream_id_t sid,

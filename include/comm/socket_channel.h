@@ -15,6 +15,7 @@
 #include "comm/socket_endpoint.h"
 #include "comm/packet_receiver.h"
 #include "comm/socket.h"
+#include "sss/forward_ptrs.h"
 
 namespace uia {
 namespace comm {
@@ -27,17 +28,14 @@ namespace comm {
  */
 class socket_channel : std::enable_shared_from_this<socket_channel>
 {
-    socket::weak_ptr socket_;             ///< Socket we're currently bound to, if any.
-    endpoint         remote_ep_;          ///< Endpoint of the remote side.
-    bool             active_{false};      ///< True if we're sending and accepting packets.
-    std::string      remote_channel_key_; ///< Far end short-term public key.
-    std::string      local_channel_key_;  ///< Channel key of this channel at local node
-                                          ///< (Near end short-term public key).
+    socket_wptr socket_;             ///< Socket we're currently bound to, if any.
+    endpoint remote_ep_;             ///< Endpoint of the remote side.
+    bool active_{false};             ///< True if we're sending and accepting packets.
+    std::string remote_channel_key_; ///< Far end short-term public key.
+    std::string local_channel_key_;  ///< Channel key of this channel at local node
+                                     ///< (Near end short-term public key).
 
 public:
-    using weak_ptr = std::weak_ptr<socket_channel>;
-    using ptr = std::shared_ptr<socket_channel>;
-
     inline virtual ~socket_channel() { unbind(); }
 
     /**

@@ -44,6 +44,9 @@ class sim_host : public host
     std::vector<std::shared_ptr<sim_packet>> packet_queue_;
 
 public:
+    using ptr  = std::shared_ptr<sim_host>;
+    using wptr = std::weak_ptr<sim_host>;
+
     std::shared_ptr<simulator> get_simulator() const { return simulator_; }
 
     /**

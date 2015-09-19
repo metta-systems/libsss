@@ -113,7 +113,7 @@ void stream_peer::routing_client_ready(ur::client *rc)
 
     // Start the lookup, with hole punching
     lookups_.insert(rc);
-    rc->lookup(remote_id_, /*notify:*/true);
+    rc->lookup(remote_id_, /*notify:*/ true);
 }
 
 void
@@ -185,7 +185,7 @@ stream_peer::lookup_done(ur::client* rc,
     if (peer_endpoint.address().is_unspecified()) {
         logger::debug() << "Lookup on " << target_peer << " failed";
         if (!lookups_.empty() or !key_exchanges_initiated_.empty())
-            return;     // There's still hope
+            return; // There's still hope
         return on_channel_failed();
     }
 
@@ -323,11 +323,10 @@ stream_peer::initiate_key_exchange(uia::comm::socket::wptr l, uia::comm::endpoin
     } // @sa stream_responder::create_channel
 
     // Start the key exchange process for the channel.
-    kex_initiator::ptr init = make_shared<kex_initiator>(chan, magic_id, remote_id_);
+    kex_initiator_ptr init = make_shared<kex_initiator>(chan, magic_id, remote_id_);
 
-    init->on_completed.connect([this](kex_initiator::ptr ki, bool success) {
-        completed(ki, success);
-    });
+    init->on_completed.connect(
+        [this](kex_initiator_ptr ki, bool success) { completed(ki, success); });
 
     key_exchanges_initiated_.insert(make_pair(lep, init));
     init->exchange_keys();

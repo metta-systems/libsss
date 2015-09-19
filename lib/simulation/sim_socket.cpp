@@ -15,7 +15,7 @@ using namespace std;
 namespace sss {
 namespace simulation {
 
-sim_socket::sim_socket(sim_host::ptr host)
+sim_socket::sim_socket(sim_host_ptr host)
     : uia::comm::socket(host.get())
     , simulator_(host->get_simulator())
     , host_(host)
@@ -71,13 +71,13 @@ sim_socket::send(uia::comm::endpoint const& ep, const char* data, size_t size)
 
     uia::comm::endpoint src;
     src.port(port_);
-    sim_host::ptr dest_host = host_->neighbor_at(ep, src);
+    sim_host_ptr dest_host = host_->neighbor_at(ep, src);
     if (!dest_host) {
         logger::warning() << "Unknown or non-adjacent target host " << ep;
         return false;
     }
 
-    sim_connection::ptr pipe(host_->connection_at(src));
+    sim_connection_ptr pipe(host_->connection_at(src));
     assert(pipe);
 
     make_shared<sim_packet>(host_, src, pipe, ep, byte_array(data, size))->send();

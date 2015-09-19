@@ -33,6 +33,9 @@ class simulator
     void run_actions();
 
 public:
+    using ptr  = std::shared_ptr<simulator>;
+    using wptr = std::weak_ptr<simulator>;
+
     simulator();
     ~simulator();
 

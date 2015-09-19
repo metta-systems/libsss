@@ -15,6 +15,7 @@
 #include "sss/internal/stream_host_state.h"
 #include "sss/channels/routing_host_state.h"
 #include "sss/internal/socket_host_state.h"
+#include "sss/forward_ptrs.h"
 
 class settings_provider;
 
@@ -46,16 +47,13 @@ class host : public std::enable_shared_from_this<host>,
     };
 
 public:
-    using ptr = std::shared_ptr<host>;
-    using weak_ptr = std::weak_ptr<host>;
-
     using stream_host_state::stream_peer;
 
     // Hide the constructor.
     explicit host(private_tag) {}
 
     ~host() { logger::debug() << this << " ~host"; }
-    inline host::ptr get_host() override { return shared_from_this(); }
+    inline host_ptr get_host() override { return shared_from_this(); }
 
     /**
      * @name Factory functions.
@@ -67,7 +65,7 @@ public:
      * Client must establish a host identity via set_host_identity()
      * and activate one or more network sockets before using sss.
      */
-    static host::ptr create();
+    static host_ptr create();
     /**
      * Create an easy-to-use default Host object. Uses the provided setting_provider
      * registry to locate, or create if necessary, a persistent host identity,
@@ -77,11 +75,11 @@ public:
      * If the desired UDP port cannot be bound, just picks an arbitrary UDP port instead
      * and updates settings with this new value.
      */
-    static host::ptr create(settings_provider* settings,
-                            uint16_t default_port = stream_protocol::default_port);
+    static host_ptr create(settings_provider* settings,
+                           uint16_t default_port = stream_protocol::default_port);
     // Overload to make calls simpler.
-    static inline host::ptr create(std::shared_ptr<settings_provider> settings,
-                                   uint16_t default_port = stream_protocol::default_port)
+    static inline host_ptr create(std::shared_ptr<settings_provider> settings,
+                                  uint16_t default_port = stream_protocol::default_port)
     {
         return create(settings.get(), default_port);
     }

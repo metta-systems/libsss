@@ -43,7 +43,7 @@ namespace negotiation {
 //
 class kex_initiator : public std::enable_shared_from_this<kex_initiator>
 {
-    std::shared_ptr<host> host_;
+    host_ptr host_;
     uia::comm::socket_endpoint target_; ///< Remote endpoint we're trying to contact.
     uia::peer_identity remote_id_;      ///< Target's host id (empty if unspecified).
     bool early_{true};                  ///< This initiator can still be canceled.

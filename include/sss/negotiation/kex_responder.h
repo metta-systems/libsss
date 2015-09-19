@@ -14,12 +14,9 @@
 #include "comm/packet_receiver.h"
 #include "sss/internal/timer.h"
 #include "sss/negotiation/kex_message.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
-
-class host;
-class channel;
-
 namespace negotiation {
 
 /**
@@ -34,16 +31,16 @@ namespace negotiation {
  */
 class kex_responder : public uia::comm::packet_receiver
 {
-    std::shared_ptr<host> host_;
+    host_ptr host_;
 
 public:
     /**
      * Create a key exchange responder and set it listening on a particular link.
      * @fixme The new key_responder becomes a child of the link.
      */
-    kex_responder(std::shared_ptr<host> host);
+    kex_responder(host_ptr host);
 
-    virtual std::shared_ptr<host> get_host() { return host_; }
+    virtual host_ptr get_host() { return host_; }
 
     /**
      * Socket calls this with key exchange messages intended for us.
@@ -79,9 +76,10 @@ protected:
      * and the 'user_data_out' block will be passed back to the client.
      * This method can return nullptr to reject the incoming connection.
      */
-    virtual std::unique_ptr<channel> create_channel(uia::comm::socket_endpoint const& initiator_ep,
-            byte_array const& initiator_eid,
-            byte_array const& user_data_in, byte_array& user_data_out) = 0;
+    virtual channel_uptr create_channel(uia::comm::socket_endpoint const& initiator_ep,
+                                        byte_array const& initiator_eid,
+                                        byte_array const& user_data_in,
+                                        byte_array& user_data_out) = 0;
 
 private:
     struct kex_hello_chunk;

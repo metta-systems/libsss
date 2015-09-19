@@ -198,17 +198,18 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     /**@{*/
 
 public:
-    using ptr = std::shared_ptr<base_stream>;
-    using weak_ptr = std::weak_ptr<base_stream>;
+    using ptr  = std::shared_ptr<base_stream>;
+    using wptr = std::weak_ptr<base_stream>;
 
 private:
-    base_stream::weak_ptr parent_; ///< Parent, if it still exists.
+    base_stream::wptr parent_; ///< Parent, if it still exists.
+
     /**
      * Self-reference to keep this stream around until it is done.
      * It is initialized from stream::connect_to() or stream private constructor.
      * @fixme This is nasty, think of a better implementation.
      */
-    base_stream::ptr self_;
+    base_stream_ptr self_;
     state state_{state::created};
     bool init_{true};       ///< Starting a new stream and its attach hasn't been acknowledged yet.
     bool top_level_{false}; ///< This is a top-level stream.
@@ -285,9 +286,9 @@ private:
     /**@{*/
 
     /// Received, waiting substreams.
-    std::deque<abstract_stream::ptr> received_substreams_;
+    std::deque<abstract_stream_ptr> received_substreams_;
     /// Received, waiting datagram streams.
-    std::deque<abstract_stream::ptr> received_datagrams_;
+    std::deque<abstract_stream_ptr> received_datagrams_;
 
     /**@}*/
 private:
@@ -482,11 +483,11 @@ private:
     //=============================================================================================
 
     // Initiate or accept substreams
-    abstract_stream::ptr open_substream() override;
-    abstract_stream::ptr accept_substream() override;
+    abstract_stream_ptr open_substream() override;
+    abstract_stream_ptr accept_substream() override;
 
     // Send and receive unordered, unreliable datagrams on this stream.
-    abstract_stream::ptr get_datagram();
+    abstract_stream_ptr get_datagram();
     ssize_t read_datagram(char* data, ssize_t max_size) override;
     byte_array read_datagram(ssize_t max_size) override;
     ssize_t

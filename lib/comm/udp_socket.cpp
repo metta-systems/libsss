@@ -86,7 +86,7 @@ using shared_request = std::shared_ptr<udp_request>;
 // udp_socket
 //=================================================================================================
 
-udp_socket::udp_socket(host::ptr host)
+udp_socket::udp_socket(host_ptr host)
     : socket(host.get())
     , udp_socket_(host->get_io_service())
     , strand_(host->get_io_service())

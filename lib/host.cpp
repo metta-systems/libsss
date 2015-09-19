@@ -12,14 +12,16 @@ using namespace std;
 
 namespace sss {
 
-host::ptr host::create()
+host_ptr
+host::create()
 {
     shared_ptr<host> host(make_shared<host>(private_tag()));
     host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme ptr LOOP
     return host;
 }
 
-host::ptr host::create(settings_provider* settings, uint16_t default_port)
+host_ptr
+host::create(settings_provider* settings, uint16_t default_port)
 {
     shared_ptr<host> host(make_shared<host>(private_tag()));
     host->coordinator = make_shared<uia::routing::client_coordinator>(host); // @fixme ptr LOOP

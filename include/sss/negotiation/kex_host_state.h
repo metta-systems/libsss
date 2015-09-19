@@ -13,6 +13,7 @@
 #include "arsenal/byte_array.h"
 #include "comm/socket_endpoint.h"
 #include "sss/negotiation/kex_initiator.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
 
@@ -24,22 +25,23 @@ class kex_host_state
     /**
      * Initiators by nonce.
      */
-    std::unordered_map<byte_array, negotiation::kex_initiator::ptr> dh_initiators_;
+    std::unordered_map<byte_array, negotiation::kex_initiator_ptr> initiators_;
     /**
      * Initiators by endpoint.
      * Used for handling R0 packets during hole-punching.
      */
-    std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initiator::ptr> ep_initiators_;
+    std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initiator_ptr> ep_initiators_;
 
 public:
     using ep_iterator =
-        std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initiator::ptr>::iterator;
+        std::unordered_multimap<uia::comm::endpoint, negotiation::kex_initiator_ptr>::iterator;
 
-    negotiation::kex_initiator::ptr get_initiator(byte_array nonce);
+    negotiation::kex_initiator_ptr get_initiator(byte_array nonce);
     std::pair<ep_iterator, ep_iterator> get_initiators(uia::comm::endpoint const& ep);
 
-    void register_dh_initiator(byte_array const& nonce, uia::comm::endpoint const& ep,
-        negotiation::kex_initiator::ptr ki);
+    void register_dh_initiator(byte_array const& nonce,
+                               uia::comm::endpoint const& ep,
+                               negotiation::kex_initiator::ptr ki);
     void unregister_dh_initiator(byte_array const& nonce, uia::comm::endpoint const& ep);
 };
 

@@ -28,7 +28,7 @@ namespace sss {
 // socket_host_state
 //=================================================================================================
 
-packet_receiver::weak_ptr
+packet_receiver::wptr
 socket_host_state::receiver_for(std::string magic)
 {
     auto it = receivers_.find(magic);
@@ -40,7 +40,7 @@ socket_host_state::receiver_for(std::string magic)
     return it->second;
 }
 
-uia::comm::socket::ptr
+uia::comm::socket_ptr
 socket_host_state::create_socket()
 {
     return make_shared<udp_socket>(get_host());

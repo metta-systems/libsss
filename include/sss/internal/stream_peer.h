@@ -15,7 +15,10 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "sss/framing/stream_protocol.h"
 #include "sss/host.h"
+#include "sss/streams/base_stream.h"
 #include "sss/channels/peer_identity.h"
+#include "sss/channels/stream_channel.h"
+#include "sss/forward_ptrs.h"
 
 namespace uia {
 namespace routing {
@@ -55,9 +58,9 @@ class stream_peer : public stream_protocol
     friend class sss::stream_host_state; // @fixme used only to construct.
     friend class sss::stream_channel;    // @fixme Used to call channel_started() only.
 
-    host::ptr host_;                                      ///< Per-host state.
-    const uia::peer_identity remote_id_;                  ///< Host ID of target.
-    std::map<channel_key, stream_channel::ptr> channels_; ///< Currently established channels.
+    host_ptr host_;                                      ///< Per-host state.
+    const uia::peer_identity remote_id_;                 ///< Host ID of target.
+    std::map<channel_key, stream_channel_ptr> channels_; ///< Currently established channels.
 
     /// @internal
     boost::signals2::connection primary_channel_link_status_connection_;
@@ -66,13 +69,13 @@ class stream_peer : public stream_protocol
     std::unordered_set<uia::comm::endpoint> locations_; ///< Potential peer locations known
 
     // @fixme key on sockets or permanent IDs? hmm
-    std::map<uia::comm::socket_endpoint, negotiation::kex_initiator::ptr> key_exchanges_initiated_;
+    std::map<uia::comm::socket_endpoint, negotiation::kex_initiator_ptr> key_exchanges_initiated_;
 
     // All existing streams involving this peer.
-    std::unordered_set<base_stream::ptr> all_streams_;
+    std::unordered_set<base_stream_ptr> all_streams_;
     // All streams that have USIDs, registered by their USIDs
     // @todo change into weak_ptrs<base_stream>
-    std::unordered_map<unique_stream_id_t, base_stream::weak_ptr> usid_streams_;
+    std::unordered_map<unique_stream_id_t, base_stream_wptr> usid_streams_;
 
     uia::routing::routing_coordination coord_;
 
@@ -93,7 +96,7 @@ private:
      * Initiate a key exchange attempt to a given endpoint,
      * if such an attempt isn't already in progress.
      */
-    void initiate_key_exchange(uia::comm::socket* s, uia::comm::endpoint const& ep);
+    void initiate_key_exchange(uia::comm::socket_wptr s, uia::comm::endpoint const& ep);
     // ^^ @todo Do we care about EPs now at all? new key exchange would initiate a new channel
     // each time this is called.
 
@@ -129,9 +132,7 @@ private:
     };
 
 public:
-    stream_peer(std::shared_ptr<host> const& host,
-                uia::peer_identity const& remote_id,
-                private_tag);
+    stream_peer(host_ptr const& host, uia::peer_identity const& remote_id, private_tag);
     ~stream_peer();
 
     /**

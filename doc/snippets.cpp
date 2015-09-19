@@ -2,15 +2,17 @@
 #include "sss/server.h"
 #include "sss/stream.h"
 
-int main()
+int
+main()
 {
-//! [Creating a host]
-host::ptr my_host(host::create());
-//! [Creating a host]
+    //! [Creating a host]
+    host_ptr my_host(host::create());
+    //! [Creating a host]
 }
 
 //! [Accepting a connection]
-void some_accept_func(sss::server::ptr server)
+void
+some_accept_func(sss::server_ptr server)
 {
     while (auto stream = server->accept()) {
         // Do something with a new stream.
