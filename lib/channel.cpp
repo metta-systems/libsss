@@ -1224,7 +1224,7 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
     // Insert packet to FEC queue
     // }
     // else
-    sss::framing::framing_t fr(shared_from_this());
+    sss::framing::framing_t fr(this->enable_shared_from_this<channel>::shared_from_this());
     fr.deframe(packet_buf);
 
     // packet_seq_t pktseq = derive_packet_seq(phdr.packet_sequence.value());
