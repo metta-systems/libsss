@@ -263,11 +263,12 @@ stream_channel::enqueue_stream(base_stream* stream)
 
     // Find the correct position at which to enqueue this stream,
     // based on priority.
-    auto it = upper_bound(
-        sending_streams_.begin(),
-        sending_streams_.end(),
-        stream->current_priority(),
-        [this](priority_t prio, base_stream* str) { return str->current_priority() >= prio; });
+    auto it = upper_bound(sending_streams_.begin(),
+                          sending_streams_.end(),
+                          stream->current_priority(),
+                          [this](base_stream::priority_t prio, base_stream* str) {
+                              return str->current_priority() >= prio;
+                          });
 
     logger::debug() << "Stream channel - enqueue stream at pos " << (it - sending_streams_.begin())
                     << " of total " << sending_streams_.size() << " streams";

@@ -20,10 +20,12 @@
 
 using namespace std;
 using namespace sodiumpp;
-namespace asio = boost::asio;
+namespace asio  = boost::asio;
 namespace time_ = boost::posix_time;
 
-std::string as_string(asio::const_buffer buf) {
+std::string
+as_string(asio::const_buffer buf)
+{
     return string(asio::buffer_cast<char const*>(buf), asio::buffer_size(buf));
 }
 
@@ -38,20 +40,20 @@ static constexpr int mask_bits = 64;
 
 static constexpr int max_ack_count = 0xf;
 
-static constexpr unsigned CWND_MIN = 2;     // Min congestion window (packets/RTT)
-static constexpr unsigned CWND_MAX = 1<<20; // Max congestion window (packets/RTT)
+static constexpr unsigned CWND_MIN = 2;       // Min congestion window (packets/RTT)
+static constexpr unsigned CWND_MAX = 1 << 20; // Max congestion window (packets/RTT)
 
 static const async::timer::duration_type RTT_INIT = time_::milliseconds(500);
-static const async::timer::duration_type RTT_MAX = time_::seconds(30);
+static const async::timer::duration_type RTT_MAX  = time_::seconds(30);
 
 constexpr size_t channel::header_len;
 constexpr packet_seq_t channel::max_packet_sequence;
 
 struct transmit_event_t
 {
-    int32_t size_;   ///< Total size of packet including header
-    bool    data_;   ///< Was an upper-layer data packet
-    bool    pipe_;   ///< Currently counted toward transmit_data_pipe
+    int32_t size_; ///< Total size of packet including header
+    bool data_;    ///< Was an upper-layer data packet
+    bool pipe_;    ///< Currently counted toward transmit_data_pipe
 
     inline transmit_event_t(int32_t size, bool is_data)
         : size_(size)
@@ -59,7 +61,7 @@ struct transmit_event_t
         , pipe_(is_data)
     {
         logger::debug() << "New transmission event for " << size_
-            << (data_ ? " data bytes" : " control bytes");
+                        << (data_ ? " data bytes" : " control bytes");
     }
 };
 
@@ -127,7 +129,7 @@ public:
 
     /**@}*/
 
-    static_assert(sizeof(tx_ack_mask_)*8 == mask_bits, "Invalid TX ack mask size");
+    static_assert(sizeof(tx_ack_mask_) * 8 == mask_bits, "Invalid TX ack mask size");
 
     shared_state(shared_ptr<host> const& host)
         : host_(host)
@@ -136,16 +138,14 @@ public:
     }
 
     /// Compute the time elapsed since the mark.
-    inline async::timer::duration_type
-    elapsed_since_mark()
+    inline async::timer::duration_type elapsed_since_mark()
     {
         return host_->current_time() - mark_time_;
     }
 
     void bump_tx_sequence()
     {
-        if (tx_sequence_ == mark_sequence_)
-        {
+        if (tx_sequence_ == mark_sequence_) {
             mark_time_ = host_->current_time();
             mark_acks_ = 0;
             mark_base_ = tx_ack_sequence_;
@@ -165,8 +165,8 @@ class congestion_control_strategy
 public:
     shared_ptr<shared_state> const& state_;
 
-    uint32_t cwnd_{CWND_MIN};       ///< Current congestion window
-    bool cwnd_limited_{true};      ///< We were cwnd-limited this round-trip
+    uint32_t cwnd_{CWND_MIN}; ///< Current congestion window
+    bool cwnd_limited_{true}; ///< We were cwnd-limited this round-trip
 
     //-------------------------------------------
     /** @name Transmit state */
@@ -177,16 +177,16 @@ public:
     packet_seq_t recovseq{1};
 
     // TCP congestion control
-    uint32_t ssthresh;   ///< Slow start threshold
-    bool sstoggle;      ///< Slow start toggle flag for CC_VEGAS
+    uint32_t ssthresh; ///< Slow start threshold
+    bool sstoggle;     ///< Slow start toggle flag for CC_VEGAS
 
     // Aggressive/Low-delay congestion control
-    uint32_t ssbase;     ///< Slow start baseline
+    uint32_t ssbase; ///< Slow start baseline
 
     // Low-delay congestion control
-    int cwndinc;//cc_delay only
+    int cwndinc;                         // cc_delay only
     async::timer::duration_type lastrtt; ///< Measured RTT of last round-trip (cc_delay/cc_aggro)
-    float lastpps; ///< Measured PPS of last round-trip
+    float lastpps;                       ///< Measured PPS of last round-trip
     uint32_t basewnd;
     float basertt, basepps, basepwr;
 
@@ -198,12 +198,12 @@ public:
 
     /// Cumulative measured RTT in milliseconds.
     async::timer::duration_type cumulative_rtt_;
-    float cumulative_rtt_variance_;    ///< Cumulative variation in RTT
-    float cumulative_pps_;       ///< Cumulative measured packets per second
-    float cumulative_pps_var;    ///< Cumulative variation in PPS
-    float cumpwr;       ///< Cumulative measured network power (pps/rtt)
-    float cumbps;       ///< Cumulative measured bytes per second
-    float cumloss;      ///< Cumulative measured packet loss ratio
+    float cumulative_rtt_variance_; ///< Cumulative variation in RTT
+    float cumulative_pps_;          ///< Cumulative measured packets per second
+    float cumulative_pps_var;       ///< Cumulative variation in PPS
+    float cumpwr;                   ///< Cumulative measured network power (pps/rtt)
+    float cumbps;                   ///< Cumulative measured bytes per second
+    float cumloss;                  ///< Cumulative measured packet loss ratio
 
     /**@}*/
 
@@ -237,29 +237,31 @@ public:
     inline uint32_t tx_packets_in_flight() const { return state_->tx_inflight_count_; }
 };
 
-void congestion_control_strategy::reset()
+void
+congestion_control_strategy::reset()
 {
     logger::debug() << "CC reset";
-    cwnd_ = CWND_MIN;
-    cwnd_limited_ = true;
-    ssthresh = CWND_MAX;
-    sstoggle = true;
-    ssbase = 0;
-    cwndinc = 1;
-    lastrtt = time_::milliseconds(0);
-    lastpps = 0;
-    basertt = 0;
-    basepps = 0;
-    cumulative_rtt_ = RTT_INIT;
+    cwnd_                    = CWND_MIN;
+    cwnd_limited_            = true;
+    ssthresh                 = CWND_MAX;
+    sstoggle                 = true;
+    ssbase                   = 0;
+    cwndinc                  = 1;
+    lastrtt                  = time_::milliseconds(0);
+    lastpps                  = 0;
+    basertt                  = 0;
+    basepps                  = 0;
+    cumulative_rtt_          = RTT_INIT;
     cumulative_rtt_variance_ = 0;
-    cumulative_pps_ = 0;
-    cumulative_pps_var = 0;
-    cumpwr = 0;
-    cumbps = 0;
-    cumloss = 0;
+    cumulative_pps_          = 0;
+    cumulative_pps_var       = 0;
+    cumpwr                   = 0;
+    cumbps                   = 0;
+    cumloss                  = 0;
 }
 
-void congestion_control_strategy::missed(uint64_t pktseq)
+void
+congestion_control_strategy::missed(uint64_t pktseq)
 {
     logger::debug() << "Missed seq " << pktseq;
 
@@ -274,7 +276,7 @@ void congestion_control_strategy::missed(uint64_t pktseq)
     }
 
     // new loss event: cut ssthresh and cwnd
-    //ssthresh = (tx_sequence_ - tx_ack_sequence_) / 2;    XXX
+    // ssthresh = (tx_sequence_ - tx_ack_sequence_) / 2;    XXX
     ssthresh = cwnd_ / 2;
     ssthresh = max(ssthresh, CWND_MIN);
     // logger::debug() << "%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
@@ -284,7 +286,8 @@ void congestion_control_strategy::missed(uint64_t pktseq)
     recovseq = state_->tx_sequence_;
 }
 
-void congestion_control_strategy::timeout()
+void
+congestion_control_strategy::timeout()
 {
     // If fixed cwnd, no congestion control, otherwise
     // Reset cwnd and go back to slow start
@@ -294,39 +297,37 @@ void congestion_control_strategy::timeout()
     logger::debug() << "CC retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd_;
 }
 
-void congestion_control_strategy::log_rtt_stats()
+void
+congestion_control_strategy::log_rtt_stats()
 {
     logger::debug() << boost::format(
-        "Cumulative: rtt %.3f[±%.3f] pps %.3f[±%.3f] pwr %.3f loss %.3f")
-        % cumulative_rtt_
-        % cumulative_rtt_variance_
-        % cumulative_pps_
-        % cumulative_pps_var
-        % cumpwr
-        % cumloss;
+                           "Cumulative: rtt %.3f[±%.3f] pps %.3f[±%.3f] pwr %.3f loss %.3f")
+                           % cumulative_rtt_ % cumulative_rtt_variance_ % cumulative_pps_
+                           % cumulative_pps_var % cumpwr % cumloss;
 }
 
-void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
+void
+congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
 {
     // 'rtt' is the total round-trip delay in microseconds before
     // we receive an ACK for a packet at or beyond the mark.
     // Fold this into 'rtt' to determine avg round-trip time,
     // and restart the timer to measure the next round-trip.
     async::timer::duration_type rtt = state_->elapsed_since_mark();
-    rtt = max(time_::time_duration(time_::microseconds(1)), min(RTT_MAX, rtt));
+    rtt                             = max(time_::time_duration(time_::microseconds(1)), min(RTT_MAX, rtt));
     cumulative_rtt_ = time_::microseconds(
         (cumulative_rtt_.total_microseconds() * 7.0 + rtt.total_microseconds()) / 8.0);
 
     rtt_out = rtt.total_microseconds();
 
     // Compute an RTT variance measure
-    float rttvar = fabs((rtt - cumulative_rtt_).total_microseconds());
+    float rttvar             = fabs((rtt - cumulative_rtt_).total_microseconds());
     cumulative_rtt_variance_ = ((cumulative_rtt_variance_ * 7.0) + rttvar) / 8.0;
 
     // 'mark_acks_' is the number of unique packets ACKed
     // by the receiver during the time since the last mark.
     // Use this to gauge throughput during this round-trip.
-    float pps = (float)state_->mark_acks_ * 1000000.0 / rtt.total_microseconds();
+    float pps       = (float)state_->mark_acks_ * 1000000.0 / rtt.total_microseconds();
     cumulative_pps_ = ((cumulative_pps_ * 7.0) + pps) / 8.0;
 
     pps_out = pps;
@@ -334,18 +335,18 @@ void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
     // "Power" measures network efficiency
     // in the sense of both minimizing rtt and maximizing pps.
     float pwr = pps / rtt.total_microseconds();
-    cumpwr = ((cumpwr * 7.0) + pwr) / 8.0;
+    cumpwr    = ((cumpwr * 7.0) + pwr) / 8.0;
 
     // Compute a PPS variance measure
-    float ppsvar = fabsf(pps - cumulative_pps_);
+    float ppsvar       = fabsf(pps - cumulative_pps_);
     cumulative_pps_var = ((cumulative_pps_var * 7.0) + ppsvar) / 8.0;
 
     // Calculate loss rate during this last round-trip,
     // and a cumulative loss ratio.
     // Could go out of (0.0,1.0) range due to out-of-order acks.
     float loss = (float)(state_->mark_sent_ - state_->mark_acks_) / (float)state_->mark_sent_;
-    loss = max(0.0f, min(1.0f, loss));
-    cumloss = ((cumloss * 7.0) + loss) / 8.0;
+    loss       = max(0.0f, min(1.0f, loss));
+    cumloss    = ((cumloss * 7.0) + loss) / 8.0;
 
     // Reset pimpl_->mark_sequence_ to be the next packet transmitted.
     // The new timestamp will be taken when that packet is sent.
@@ -365,12 +366,16 @@ void congestion_control_strategy::stats_update(float& pps_out, float& rtt_out)
 class cc_tcp : public congestion_control_strategy
 {
 public:
-    cc_tcp(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    cc_tcp(shared_ptr<shared_state> const& state)
+        : congestion_control_strategy(state)
+    {
+    }
     void rtt_update(float pps, float rtt) override;
     void update(unsigned new_packets) override;
 };
 
-void cc_tcp::rtt_update(float pps, float rtt)
+void
+cc_tcp::rtt_update(float pps, float rtt)
 {
     // Normal TCP congestion control: during congestion avoidance,
     // increment cwnd once each RTT, but only on round-trips that were cwnd-limited.
@@ -381,17 +386,17 @@ void cc_tcp::rtt_update(float pps, float rtt)
     cwnd_limited_ = false;
 }
 
-void cc_tcp::update(unsigned new_packets)
+void
+cc_tcp::update(unsigned new_packets)
 {
     // During standard TCP slow start procedure,
     // increment cwnd for each newly-ACKed packet.
     // XX TCP spec allows this to be <=,
     // which puts us in slow start briefly after each loss...
-    if (new_packets and cwnd_limited_ and cwnd_ < ssthresh)
-    {
+    if (new_packets and cwnd_limited_ and cwnd_ < ssthresh) {
         cwnd_ = min(cwnd_ + new_packets, ssthresh);
-        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
-            << cwnd_ << " (ssthresh " << ssthresh << ")";
+        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_
+                        << " (ssthresh " << ssthresh << ")";
     }
 }
 
@@ -401,18 +406,22 @@ void cc_tcp::update(unsigned new_packets)
 class cc_aggressive : public congestion_control_strategy
 {
 public:
-    cc_aggressive(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    cc_aggressive(shared_ptr<shared_state> const& state)
+        : congestion_control_strategy(state)
+    {
+    }
     void missed(uint64_t pktseq) override;
     void rtt_update(float pps, float rtt) override;
     void update(unsigned new_packets) override;
 };
 
-void cc_aggressive::missed(uint64_t pktseq)
+void
+cc_aggressive::missed(uint64_t pktseq)
 {
     // Number of packets we think have been lost
     // so far during this round-trip.
     int lost = (state_->tx_ack_sequence_ - state_->mark_base_) - state_->mark_acks_;
-    lost = max(0, lost);
+    lost     = max(0, lost);
 
     // Number of packets we expect to receive,
     // assuming the lost ones are really lost
@@ -427,19 +436,20 @@ void cc_aggressive::missed(uint64_t pktseq)
     }
 }
 
-void cc_aggressive::rtt_update(float pps, float rtt)
+void
+cc_aggressive::rtt_update(float pps, float rtt)
 {
     // aggressive doesn't track RTT
 }
 
-void cc_aggressive::update(unsigned new_packets)
+void
+cc_aggressive::update(unsigned new_packets)
 {
     // We're always in slow start, but we only count ACKs received
     // on schedule and after a per-roundtrip baseline.
     if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
         cwnd_ += min(new_packets, state_->mark_acks_ - ssbase);
-        logger::debug() << "Slow start: " << new_packets
-            << " new ACKs; boost cwnd to " << cwnd_;
+        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_;
     }
 }
 
@@ -449,12 +459,16 @@ void cc_aggressive::update(unsigned new_packets)
 class cc_delay : public congestion_control_strategy
 {
 public:
-    cc_delay(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    cc_delay(shared_ptr<shared_state> const& state)
+        : congestion_control_strategy(state)
+    {
+    }
     void rtt_update(float pps, float rtt) override;
     void update(unsigned new_packets) override;
 };
 
-void cc_delay::rtt_update(float pps, float rtt)
+void
+cc_delay::rtt_update(float pps, float rtt)
 {
     float pwr = pps / rtt;
     if (pwr > basepwr) {
@@ -483,7 +497,7 @@ void cc_delay::rtt_update(float pps, float rtt)
         // Window going down.
         // If PPS makes a significant dive, reverse.
         if (pps < basepps or cwnd_ <= CWND_MIN) {
-            ssbase = cwnd_++;
+            ssbase  = cwnd_++;
             cwndinc = +1;
         } else {
             // Additively decrease the window
@@ -494,20 +508,13 @@ void cc_delay::rtt_update(float pps, float rtt)
     cwnd_ = min(CWND_MAX, cwnd_);
 
     logger::debug() << boost::format(
-        "RT: pwr %.0f[%.0f/%.0f]@%d base %.0f[%.0f/%.0f]@%d cwnd %d%+d")
-        % (pwr*1000.0)
-        % pps
-        % rtt
-        % state_->mark_acks_
-        % (basepwr*1000.0)
-        % basepps
-        % basertt
-        % basewnd
-        % cwnd_
-        % cwndinc;
+                           "RT: pwr %.0f[%.0f/%.0f]@%d base %.0f[%.0f/%.0f]@%d cwnd %d%+d")
+                           % (pwr * 1000.0) % pps % rtt % state_->mark_acks_ % (basepwr * 1000.0)
+                           % basepps % basertt % basewnd % cwnd_ % cwndinc;
 }
 
-void cc_delay::update(unsigned new_packets)
+void
+cc_delay::update(unsigned new_packets)
 {
     if (cwndinc < 0) { // Only slow start during up-phase
         return;
@@ -521,8 +528,7 @@ void cc_delay::update(unsigned new_packets)
     // on schedule and after a per-roundtrip baseline.
     if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
         cwnd_ += min(new_packets, state_->mark_acks_ - ssbase);
-        logger::debug() << "Slow start: " << new_packets
-            << " new ACKs; boost cwnd to " << cwnd_;
+        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_;
     }
 }
 
@@ -532,26 +538,30 @@ void cc_delay::update(unsigned new_packets)
 class cc_vegas : public congestion_control_strategy
 {
 public:
-    cc_vegas(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    cc_vegas(shared_ptr<shared_state> const& state)
+        : congestion_control_strategy(state)
+    {
+    }
     void rtt_update(float pps, float rtt) override;
     void update(unsigned new_packets) override;
 };
 
-void cc_vegas::rtt_update(float pps, float rtt)
+void
+cc_vegas::rtt_update(float pps, float rtt)
 {
     // Keep track of the lowest RTT ever seen,
     // as per the original Vegas algorithm.
     // This has the known problem that it screws up
     // if the path's actual base RTT changes.
-    if (basertt == 0)   // first packet
+    if (basertt == 0) // first packet
         basertt = rtt;
     else if (rtt < basertt)
         basertt = rtt;
-    //else
+    // else
     //  basertt = (basertt * 255.0 + rtt) / 256.0;
 
-    float expect = (float)state_->mark_sent_ / basertt;
-    float actual = (float)state_->mark_sent_ / rtt;
+    float expect  = (float)state_->mark_sent_ / basertt;
+    float actual  = (float)state_->mark_sent_ / rtt;
     float diffpps = expect - actual;
     assert(diffpps >= 0.0);
     float diffpprt = diffpps * rtt;
@@ -564,22 +574,19 @@ void cc_vegas::rtt_update(float pps, float rtt)
         ssthresh = min(ssthresh, cwnd_); // /2??
     }
 
-    logger::debug() << boost::format("Round-trip: win %d basertt %.3f rtt %d "
-        "exp-pps %f act-pps %f diff-pprt %.3f cwnd %d")
-        % state_->mark_sent_
-        % basertt
-        % rtt
-        % (expect*1000000.0)
-        % (actual*1000000.0)
-        % diffpprt
-        % cwnd_;
+    logger::debug() << boost::format(
+                           "Round-trip: win %d basertt %.3f rtt %d "
+                           "exp-pps %f act-pps %f diff-pprt %.3f cwnd %d")
+                           % state_->mark_sent_ % basertt % rtt % (expect * 1000000.0)
+                           % (actual * 1000000.0) % diffpprt % cwnd_;
 }
 
-void cc_vegas::update(unsigned new_packets)
+void
+cc_vegas::update(unsigned new_packets)
 {
     sstoggle = !sstoggle;
     if (sstoggle)
-        return;  // do slow start only once every two RTTs
+        return; // do slow start only once every two RTTs
 
     // call into cc_tcp::update()
     // for now copypasted
@@ -588,11 +595,10 @@ void cc_vegas::update(unsigned new_packets)
     // increment cwnd for each newly-ACKed packet.
     // XX TCP spec allows this to be <=,
     // which puts us in slow start briefly after each loss...
-    if (new_packets and cwnd_limited_ and cwnd_ < ssthresh)
-    {
+    if (new_packets and cwnd_limited_ and cwnd_ < ssthresh) {
         cwnd_ = min(cwnd_ + new_packets, ssthresh);
-        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to "
-            << cwnd_ << " (ssthresh " << ssthresh << ")";
+        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_
+                        << " (ssthresh " << ssthresh << ")";
     }
 }
 
@@ -602,18 +608,23 @@ void cc_vegas::update(unsigned new_packets)
 class cc_ctcp : public congestion_control_strategy
 {
 public:
-    cc_ctcp(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    cc_ctcp(shared_ptr<shared_state> const& state)
+        : congestion_control_strategy(state)
+    {
+    }
     void missed(uint64_t pktseq) override;
     void rtt_update(float pps, float rtt) override;
     void update(unsigned new_packets) override;
 };
 
-void cc_ctcp::missed(uint64_t pktseq)
+void
+cc_ctcp::missed(uint64_t pktseq)
 {
     assert(0); // XXX
 }
 
-void cc_ctcp::rtt_update(float pps, float rtt)
+void
+cc_ctcp::rtt_update(float pps, float rtt)
 {
 #if 0
     k = 0.8; a = 1/8; B = 1/2
@@ -626,7 +637,8 @@ void cc_ctcp::rtt_update(float pps, float rtt)
 #endif
 }
 
-void cc_ctcp::update(unsigned new_packets)
+void
+cc_ctcp::update(unsigned new_packets)
 {
     assert(0); // XXX
 }
@@ -637,23 +649,29 @@ void cc_ctcp::update(unsigned new_packets)
 class cc_fixed : public congestion_control_strategy
 {
 public:
-    cc_fixed(shared_ptr<shared_state> const& state) : congestion_control_strategy(state) {}
+    cc_fixed(shared_ptr<shared_state> const& state)
+        : congestion_control_strategy(state)
+    {
+    }
     void missed(uint64_t pktseq) override;
     void timeout() override;
     void update(unsigned new_packets) override;
 };
 
-void cc_fixed::missed(uint64_t pktseq)
+void
+cc_fixed::missed(uint64_t pktseq)
 {
     // fixed cwnd, no congestion control
 }
 
-void cc_fixed::timeout()
+void
+cc_fixed::timeout()
 {
     // fixed cwnd, no congestion control
 }
 
-void cc_fixed::update(unsigned new_packets)
+void
+cc_fixed::update(unsigned new_packets)
 {
     // fixed cwnd, no congestion control
 }
@@ -665,8 +683,8 @@ void cc_fixed::update(unsigned new_packets)
 class channel::private_data
 {
 public:
-    shared_ptr<host>          host_;
-    shared_ptr<shared_state>  state_;
+    shared_ptr<host> host_;
+    shared_ptr<shared_state> state_;
 
     //-------------------------------------------
     // Congestion control
@@ -675,10 +693,10 @@ public:
     bool nocc_{false};
 
     // bool delayack;      ///< Enable delayed acknowledgments
-    async::timer ack_timer_;  ///< Delayed ACK timer.
+    async::timer ack_timer_; ///< Delayed ACK timer.
 
     // Retransmit state
-    async::timer retransmit_timer_;  ///< Retransmit timer.
+    async::timer retransmit_timer_; ///< Retransmit timer.
 
     async::timer stats_timer_;
 
@@ -697,9 +715,7 @@ public:
         reset_congestion_control();
     }
 
-    ~private_data() {
-        logger::debug() << "~channel::private_data";
-    }
+    ~private_data() { logger::debug() << "~channel::private_data"; }
 
     void cc_and_rtt_update(unsigned new_packets, packet_seq_t ackseq);
 
@@ -713,7 +729,8 @@ public:
     inline int64_t unacked_packets() { return state_->tx_sequence_ - state_->tx_ack_sequence_; }
 };
 
-void channel::private_data::reset_congestion_control()
+void
+channel::private_data::reset_congestion_control()
 {
     // Initialize congestion control state
     congestion_control.reset(new cc_tcp(state_));
@@ -724,31 +741,27 @@ void channel::private_data::reset_congestion_control()
     // --end CC control-----------------------------------------------
 
     // Statistics gathering state
-    stats_timer_.on_timeout.connect([this](bool) {
-        stats_timeout();
-    });
+    stats_timer_.on_timeout.connect([this](bool) { stats_timeout(); });
     stats_timer_.start(time_::seconds(5));
 }
 
 // Transmit statistics
-void channel::private_data::stats_timeout()
+void
+channel::private_data::stats_timeout()
 {
-    logger::info() << boost::format("STATS: txseq %llu, txackseq %llu, rxseq %llu, rxackseq %llu, "
-        "txfltcnt %d, cwnd %d, ssthresh %d, "
-        "cumrtt %.3f, cumpps %.3f, cumloss %.3f")
-        % state_->tx_sequence_
-        % state_->tx_ack_sequence_
-        % state_->rx_sequence_
-        % state_->rx_ack_sequence_
-        % state_->tx_inflight_count_
-        % congestion_control->cwnd_
-        % congestion_control->ssthresh
-        % congestion_control->cumulative_rtt_
-        % congestion_control->cumulative_pps_
-        % congestion_control->cumloss;
+    logger::info() << boost::format(
+                          "STATS: txseq %llu, txackseq %llu, rxseq %llu, rxackseq %llu, "
+                          "txfltcnt %d, cwnd %d, ssthresh %d, "
+                          "cumrtt %.3f, cumpps %.3f, cumloss %.3f")
+                          % state_->tx_sequence_ % state_->tx_ack_sequence_ % state_->rx_sequence_
+                          % state_->rx_ack_sequence_ % state_->tx_inflight_count_
+                          % congestion_control->cwnd_ % congestion_control->ssthresh
+                          % congestion_control->cumulative_rtt_
+                          % congestion_control->cumulative_pps_ % congestion_control->cumloss;
 }
 
-void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t ackseq)
+void
+channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t ackseq)
 {
     if (!nocc_) {
         congestion_control->update(new_packets);
@@ -756,20 +769,16 @@ void channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t
 
     // When ackseq passes mark_sequence_, we've observed a round-trip,
     // so update our round-trip statistics.
-    if (ackseq >= state_->mark_sequence_)
-    {
+    if (ackseq >= state_->mark_sequence_) {
         float pps, rtt;
         congestion_control->stats_update(pps, rtt);
 
-        if (!nocc_)
-        {
+        if (!nocc_) {
             congestion_control->rtt_update(pps, rtt);
             congestion_control->log_rtt_stats();
-        }
-        else
-        {
-            logger::debug() << "End-to-end rtt " << rtt
-                << " cumulative rtt " << congestion_control->cumulative_rtt_;//fixme, nullptr access?
+        } else {
+            logger::debug() << "End-to-end rtt " << rtt << " cumulative rtt "
+                            << congestion_control->cumulative_rtt_; // fixme, nullptr access?
         }
     }
 
@@ -787,25 +796,24 @@ channel::channel(shared_ptr<host> host, secret_key local, public_key remote)
     , local_key_(local)
     , remote_key_(remote)
 {
-    pimpl_->retransmit_timer_.on_timeout.connect([this](bool fail) {
-        retransmit_timeout(fail);
-    });
+    pimpl_->retransmit_timer_.on_timeout.connect([this](bool fail) { retransmit_timeout(fail); });
 
     // Delayed ACK state
-    pimpl_->ack_timer_.on_timeout.connect([this](bool) {
-        ack_timeout();
-    });
+    pimpl_->ack_timer_.on_timeout.connect([this](bool) { ack_timeout(); });
 }
 
 channel::~channel()
-{}
+{
+}
 
-shared_ptr<host> channel::get_host()
+shared_ptr<host>
+channel::get_host()
 {
     return pimpl_->host_;
 }
 
-void channel::start(bool initiate)
+void
+channel::start(bool initiate)
 {
     logger::debug() << "Channel - start as " << (initiate ? "initiator" : "responder");
 
@@ -819,7 +827,8 @@ void channel::start(bool initiate)
     start_retransmit_timer();
 }
 
-void channel::stop()
+void
+channel::stop()
 {
     logger::debug() << "Channel - stop";
     pimpl_->retransmit_timer_.stop();
@@ -831,15 +840,15 @@ void channel::stop()
     set_link_status(uia::comm::socket::status::down);
 }
 
-size_t channel::may_transmit()
+size_t
+channel::may_transmit()
 {
     logger::debug(200) << "Channel - may_transmit";
     if (pimpl_->nocc_) {
         return super::may_transmit();
     }
 
-    if (pimpl_->congestion_control->cwnd_ > pimpl_->state_->tx_inflight_count_)
-    {
+    if (pimpl_->congestion_control->cwnd_ > pimpl_->state_->tx_inflight_count_) {
         int allowance = pimpl_->congestion_control->cwnd_ - pimpl_->state_->tx_inflight_count_;
         logger::debug(200) << "Channel - congestion window limits may_transmit to " << allowance;
         return allowance;
@@ -865,8 +874,7 @@ channel::channel_transmit(boost::asio::const_buffer packet, packet_seq_t& packet
     // packets to be sent and receive_decode() examining packets "received".
     // then prove that ackct goes up from 1 to 15 and stays there.
 
-    if (pimpl_->state_->rx_unacked_)
-    {
+    if (pimpl_->state_->rx_unacked_) {
         pimpl_->state_->rx_unacked_ = 0;
         pimpl_->ack_timer_.stop();
     }
@@ -936,7 +944,8 @@ channel::transmit(boost::asio::const_buffer packet,
     return send(epkt);
 }
 
-void channel::start_retransmit_timer()
+void
+channel::start_retransmit_timer()
 {
     async::timer::duration_type timeout =
         time_::milliseconds(pimpl_->congestion_control->cumulative_rtt_.total_milliseconds() * 2);
@@ -944,10 +953,11 @@ void channel::start_retransmit_timer()
 }
 
 // channel::retransmit_timer_ invokes this slot when the retransmission timer expires.
-void channel::retransmit_timeout(bool failed)
+void
+channel::retransmit_timeout(bool failed)
 {
-    logger::debug() << "Retransmit timeout" << (failed ? " - TX FAILED" : "")
-        << ", interval " << pimpl_->retransmit_timer_.interval();
+    logger::debug() << "Retransmit timeout" << (failed ? " - TX FAILED" : "") << ", interval "
+                    << pimpl_->retransmit_timer_.interval();
 
     // Restart the retransmission timer
     // with an exponentially increased backoff delay.
@@ -962,21 +972,18 @@ void channel::retransmit_timeout(bool failed)
     // Snapshot txseq first, because the missed() calls in the loop
     // might cause more packets to be transmitted.
     packet_seq_t seqlim = pimpl_->state_->tx_sequence_;
-    for (packet_seq_t seq = pimpl_->state_->tx_event_sequence_; seq < seqlim; ++seq)
-    {
+    for (packet_seq_t seq = pimpl_->state_->tx_event_sequence_; seq < seqlim; ++seq) {
         transmit_event_t& e = pimpl_->state_->tx_events_[seq - pimpl_->state_->tx_event_sequence_];
-        if (e.pipe_)
-        {
+        if (e.pipe_) {
             e.pipe_ = false;
             pimpl_->state_->tx_inflight_count_--;
             pimpl_->state_->tx_inflight_size_ -= e.size_;
             missed(seq, 1);
-            logger::debug() << "Retransmit timeout missed seq " << seq
-                << ", in flight " << pimpl_->state_->tx_inflight_count_;
+            logger::debug() << "Retransmit timeout missed seq " << seq << ", in flight "
+                            << pimpl_->state_->tx_inflight_count_;
         }
     }
-    if (seqlim == pimpl_->state_->tx_sequence_)
-    {
+    if (seqlim == pimpl_->state_->tx_sequence_) {
         assert(pimpl_->state_->tx_inflight_count_ == 0);
         assert(pimpl_->state_->tx_inflight_size_ == 0);
     }
@@ -993,18 +1000,18 @@ void channel::retransmit_timeout(bool failed)
     set_link_status(failed ? uia::comm::socket::status::down : uia::comm::socket::status::stalled);
 }
 
-void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
+void
+channel::acknowledge(packet_seq_t pktseq, bool send_ack)
 {
     constexpr int min_ack_packets = 2;
     constexpr int max_ack_packets = 4;
 
     logger::debug() << "Channel - acknowledge " << pktseq
-        << (send_ack ? " (sending)" : " (not sending)");
+                    << (send_ack ? " (sending)" : " (not sending)");
 
     // Update our receive state to account for this packet
     int32_t seq_diff = pktseq - pimpl_->state_->rx_ack_sequence_;
-    if (seq_diff == 1)
-    {
+    if (seq_diff == 1) {
         // Received packet is in-order and contiguous.
         // Roll rx_ack_sequence_ forward appropriately.
         pimpl_->state_->rx_ack_sequence_ = pktseq;
@@ -1038,9 +1045,7 @@ void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
             // But make sure we send an ack every max_ack_packets (4) no matter what...
             flush_ack();
         }
-    }
-    else if (seq_diff > 1)
-    {
+    } else if (seq_diff > 1) {
         // Received packet is in-order but discontiguous.
         // One or more packets probably were lost.
         // Flush any delayed ACK immediately, before updating our receive state.
@@ -1050,16 +1055,14 @@ void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
         pimpl_->state_->rx_ack_sequence_ = pktseq;
 
         // Reset the contiguous packet counter
-        pimpl_->state_->rx_ack_count_ = 0;    // (0 means 1 packet received)
+        pimpl_->state_->rx_ack_count_ = 0; // (0 means 1 packet received)
 
         // ACK this discontiguous packet immediately
         // so that the sender is informed of lost packets ASAP.
         if (send_ack) {
             tx_ack(pimpl_->state_->rx_ack_sequence_, 0);
         }
-    }
-    else if (seq_diff < 0)
-    {
+    } else if (seq_diff < 0) {
         // Old packet recieved out of order.
         // Flush any delayed ACK immediately.
         flush_ack();
@@ -1071,30 +1074,33 @@ void channel::acknowledge(packet_seq_t pktseq, bool send_ack)
     }
 }
 
-inline bool channel::tx_ack(packet_seq_t ackseq, int ack_count)
+inline bool
+channel::tx_ack(packet_seq_t ackseq, int ack_count)
 {
     byte_array pkt;
     return transmit_ack(pkt, ackseq, ack_count);
 }
 
-inline void channel::flush_ack()
+inline void
+channel::flush_ack()
 {
-    if (pimpl_->state_->rx_unacked_)
-    {
+    if (pimpl_->state_->rx_unacked_) {
         pimpl_->state_->rx_unacked_ = 0;
         tx_ack(pimpl_->state_->rx_ack_sequence_, pimpl_->state_->rx_ack_count_);
     }
     pimpl_->ack_timer_.stop();
 }
 
-inline void channel::ack_timeout()
+inline void
+channel::ack_timeout()
 {
     flush_ack();
 }
 
-bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
+bool
+channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 {
-    logger::debug() << "Channel - transmit_ack seq " << ackseq << ", count " << ack_count+1;
+    logger::debug() << "Channel - transmit_ack seq " << ackseq << ", count " << ack_count + 1;
 
     assert(ack_count <= max_ack_count);
 
@@ -1107,18 +1113,21 @@ bool channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_coun
     return transmit(packet, ack_word, pktseq, false);
 }
 
-void channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
+void
+channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
 {
-    logger::debug() << "Channel " << this << " - tx seqs "
-        << dec << txseq << "-" << txseq+npackets-1 << " acknowledged";
+    logger::debug() << "Channel " << this << " - tx seqs " << dec << txseq << "-"
+                    << txseq + npackets - 1 << " acknowledged";
 }
 
-void channel::missed(uint64_t txseq, int npackets)
+void
+channel::missed(uint64_t txseq, int npackets)
 {
     logger::debug() << "Channel " << this << " - tx seq " << txseq << " missed";
 }
 
-void channel::expire(uint64_t txseq, int npackets)
+void
+channel::expire(uint64_t txseq, int npackets)
 {
     logger::debug() << "Channel " << this << " - tx seq " << txseq << " expired";
 }
@@ -1128,14 +1137,12 @@ packet_seq_t
 channel::derive_packet_seq(packet_seq_t tx_seq)
 {
     // kill high 8 bits (channel number)
-    int32_t seqdiff = ((int32_t)(tx_seq << 8)
-                    - ((int32_t)pimpl_->state_->rx_sequence_ << 8))
-                    >> 8;
+    int32_t seqdiff = ((int32_t)(tx_seq << 8) - ((int32_t)pimpl_->state_->rx_sequence_ << 8)) >> 8;
 
     packet_seq_t pktseq = pimpl_->state_->rx_sequence_ + seqdiff;
 
     // Immediately drop too-old or already-received packets
-    static_assert(sizeof(pimpl_->state_->rx_mask_)*8 == mask_bits, "Invalid RX mask size");
+    static_assert(sizeof(pimpl_->state_->rx_mask_) * 8 == mask_bits, "Invalid RX mask size");
 
     if (seqdiff > 0) {
         if (pktseq < pimpl_->state_->rx_sequence_) {
@@ -1171,9 +1178,7 @@ channel::receive_decode(asio::const_buffer in, byte_array& out)
         unboxer<recv_nonce> unseal(as_string(msg.shortterm_public_key), local_key_, nonce);
 
         out = unseal.unbox(msg.box.data);
-    }
-    catch (char const* err)
-    {
+    } catch (char const* err) {
         logger::warning() << err;
         return false;
     }
@@ -1185,13 +1190,11 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
 {
     logger::debug() << "Channel " << this << " - receive from " << src;
 
-    if (!is_active())
-    {
+    if (!is_active()) {
         logger::warning() << "Channel receive - inactive channel";
         return;
     }
-    if (asio::buffer_size(pkt) < MIN_PACKET_SIZE)
-    {
+    if (asio::buffer_size(pkt) < MIN_PACKET_SIZE) {
         logger::warning() << "Channel receive - runt packet";
         runt_packet_received(src);
         return;
@@ -1203,8 +1206,7 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
     // is rather straightforward
 
     // Authenticate and decrypt the packet
-    if (!receive_decode(pkt, msg))
-    {
+    if (!receive_decode(pkt, msg)) {
         logger::warning() << "Received packet auth failed";
         bad_auth_received(src);
         return;
@@ -1225,13 +1227,9 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
     // }
     // else
     // Frame decode loop
-    while (asio::buffer_size(packet_buf) > 0)
-    {
-        switch (*asio::buffer_cast<stream_protocol::frame_type*>(packet_buf))
-        {
-            case stream_protocol::frame_type::EMPTY:
-                packet_buf = packet_buf + 1;
-                continue;
+    while (asio::buffer_size(packet_buf) > 0) {
+        switch (*asio::buffer_cast<stream_protocol::frame_type*>(packet_buf)) {
+            case stream_protocol::frame_type::EMPTY: packet_buf = packet_buf + 1; continue;
             case stream_protocol::frame_type::STREAM: // stream
             {
                 // sss::framing::stream_frame_header hdr;

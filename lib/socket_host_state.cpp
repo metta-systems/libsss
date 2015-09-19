@@ -32,10 +32,10 @@ packet_receiver::wptr
 socket_host_state::receiver_for(std::string magic)
 {
     auto it = receivers_.find(magic);
-    if (it == receivers_.end())
-    {
-        logger::debug() << "Receiver not found looking for magic " << magic; // @todo magic is binary
-        return packet_receiver::weak_ptr();
+    if (it == receivers_.end()) {
+        logger::debug() << "Receiver not found looking for magic "
+                        << magic; // @todo magic is binary
+        return packet_receiver::wptr();
     }
     return it->second;
 }
@@ -71,7 +71,7 @@ socket_host_state::init_socket(settings_provider* settings, uint16_t default_por
     ip::udp::endpoint local_ep(ip::address_v4::any(), default_port);
 
     // Create and bind the main sockets.
-    primary_socket_ = create_socket();
+    primary_socket_  = create_socket();
     primary_socket6_ = create_socket();
 
     // See https://raw.github.com/boostcon/2011_presentations/master/wed/IPv6.pdf
@@ -80,7 +80,7 @@ socket_host_state::init_socket(settings_provider* settings, uint16_t default_por
             break;
         }
         logger::warning() << "Can't bind to port " << dec << default_port << " ("
-            << primary_socket_->error_string() << ") - trying another";
+                          << primary_socket_->error_string() << ") - trying another";
 
         local_ep.port(0);
         if (primary_socket_->bind(local_ep)) {
@@ -88,25 +88,25 @@ socket_host_state::init_socket(settings_provider* settings, uint16_t default_por
         }
         // @todo There might be a day when ipv4 does not exist anymore...
         logger::fatal() << "Couldn't bind the socket on ipv4 - " << primary_socket_->error_string();
-    } while(0);
+    } while (0);
 
     do {
         if (primary_socket6_->bind(local_ep6)) {
             break;
         }
         logger::warning() << "Can't bind to port " << dec << default_port << " ("
-            << primary_socket6_->error_string() << ") - trying another";
+                          << primary_socket6_->error_string() << ") - trying another";
 
         local_ep6.port(0);
         if (primary_socket6_->bind(local_ep6)) {
             break;
         }
         logger::warning() << "Couldn't bind the socket on ipv6 ("
-            << primary_socket6_->error_string() << "), trying ipv4";
-    } while(0);
+                          << primary_socket6_->error_string() << "), trying ipv4";
+    } while (0);
 
     default_port = primary_socket_->local_port();
-    //ipv6 may have a different port here...
+    // ipv6 may have a different port here...
     // @todo Fix port to whatever worked for the first bind and fail if second bind fails?
 
     // Remember the port number we ended up using.
@@ -119,8 +119,7 @@ unordered_set<uia::comm::endpoint>
 socket_host_state::active_local_endpoints()
 {
     unordered_set<uia::comm::endpoint> result;
-    for (auto s : active_sockets())
-    {
+    for (auto s : active_sockets()) {
         if (auto sock = s.lock()) {
             assert(sock->is_active());
             for (auto ep : sock->local_endpoints()) {

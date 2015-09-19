@@ -14,19 +14,23 @@ namespace sss {
 
 abstract_stream::abstract_stream(host_ptr h)
     : host_(h)
-{}
+{
+}
 
-void abstract_stream::set_priority(priority_t priority)
+void
+abstract_stream::set_priority(priority_t priority)
 {
     priority_ = priority;
 }
 
-uia::peer_identity abstract_stream::local_host_id() const
+uia::peer_identity
+abstract_stream::local_host_id() const
 {
     return host_->host_identity().id();
 }
 
-uia::peer_identity abstract_stream::remote_host_id() const
+uia::peer_identity
+abstract_stream::remote_host_id() const
 {
     return peer_id_;
 }
