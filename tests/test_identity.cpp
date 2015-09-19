@@ -9,10 +9,10 @@
 #define BOOST_TEST_MODULE Test_identity
 #include <boost/test/unit_test.hpp>
 
-#include "sss/identity.h"
+#include "sss/channels/peer_identity.h"
 
 using namespace std;
-using namespace sss;
+using namespace uia;
 
 BOOST_AUTO_TEST_CASE(null_identity)
 {

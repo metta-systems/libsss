@@ -83,28 +83,23 @@ peer_identity::generate()
     // identity ident(id);
     // ident.key_ = key;
 
-    return ident;
+    return peer_identity(byte_array("blablab"));
 }
 
 byte_array
 peer_identity::public_key() const
 {
-    if (!key_)
+    if (id_.empty())
         return byte_array();
-    return key_->public_key();
+    return id_;
 }
 
 byte_array
 peer_identity::secret_key() const
 {
-    if (!key_)
+    if (private_key_.empty())
         return byte_array();
-    return key_->private_key();
-}
-
-byte_array peer_identity::hash(char const* data, int len) const
-{
-    return crypto::sha256::hash(data, len);
+    return private_key_;
 }
 
 //=================================================================================================
@@ -156,8 +151,8 @@ identity_host_state::init_identity(settings_provider* settings)
     host_identity_ = peer_identity::generate();
 
     // Save it in our host settings
-    settings->set("id", host_identity_.id().id().as_vector());
-    settings->set("key", host_identity_.private_key().as_vector());
+    settings->set("id", host_identity_.id().as_vector());
+    settings->set("key", host_identity_.secret_key().as_vector());
     settings->sync();
 }
 

@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(created_stream)
 
 BOOST_AUTO_TEST_CASE(connect_to)
 {
-    peer_identity eid;
+    uia::peer_identity eid;
     uia::comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
     shared_ptr<host> h(host::create());
     stream s(h);
