@@ -138,15 +138,16 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         base_stream* owner{nullptr};            ///< Frame owner.
         byte_seq_t tx_byte_seq_{0};             ///< Transmit byte position within stream.
         boost::asio::const_buffer payload_;            ///< Frame data.
+        frame_type type_;
         bool late{false};                       ///< Possibly lost frame.
 
         inline tx_frame_t() = default;
-        inline tx_frame_t(base_stream* o, bool is_fec)
+        inline tx_frame_t(base_stream* o, frame_type t)
             : owner(o)
-            // , FEC(is_fec)
+            , type_(t)
         {}
         inline frame_type type() const {
-            return frame_type::EMPTY;
+            return type_;
         }
         inline bool is_null() const {
             return owner == nullptr;
@@ -155,20 +156,20 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
             return boost::asio::buffer_size(payload_);
         }
 
-        // template <typename T>
-        // inline T* header()
-        // {
-        //     header_len = channel::header_len + sizeof(T);
-        //     if (payload.size() < size_t(header_len)) {
-        //         payload.resize(header_len);
-        //     }
-        //     return boost::asio::buffer_cast<T*>(payload_);
-        // }
+        template <typename T>
+        inline T* header()
+        {
+            auto header_len = channel::header_len + sizeof(T);
+            if (payload_size() < decltype(payload_size())(header_len)) {
+                //payload_.resize(header_len);
+            }
+            return boost::asio::buffer_cast<T*>(payload_);
+        }
 
-        // template <typename T>
-        // inline T const* header() const {
-        //     return boost::asio::buffer_cast<T const*>(payload_);
-        // }
+        template <typename T>
+        inline T const* header() const {
+            return boost::asio::buffer_cast<T const*>(payload_);
+        }
     };
     friend std::ostream& operator << (std::ostream& os, tx_frame_t const& frame);
 
@@ -202,6 +203,11 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //=============================================================================================
     /**@{*/
 
+public:
+    using ptr = std::shared_ptr<base_stream>;
+    using weak_ptr = std::weak_ptr<base_stream>;
+
+private:
     base_stream::weak_ptr parent_; ///< Parent, if it still exists.
     /**
      * Self-reference to keep this stream around until it is done.
@@ -410,10 +416,6 @@ private:
      */
     // void substream_read_record();
 
-public:
-    using ptr = std::shared_ptr<base_stream>;
-    using weak_ptr = std::weak_ptr<base_stream>;
-
     /**
      * Create a base_stream instance.
      * @param host parent host
@@ -567,7 +569,7 @@ inline std::ostream& operator << (std::ostream& os, sss::base_stream::tx_frame_t
 
     os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type
        << ", owner " << pkt.owner << (pkt.late ? ", late" : ", not late")
-       << ", payload " << pkt.payload_ << "]";
+       << ", payload " << pkt << "]";
     return os;
 }
 

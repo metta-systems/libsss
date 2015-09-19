@@ -1,16 +1,24 @@
-#include "arsenal/fusionary.hpp"
+//
 
-using namespace std;
+#include "arsenal/fusionary.hpp"
+#include "ack_frame.h"
+
 namespace asio = boost::asio;
 namespace mpl = boost::mpl;
 
 // Write ACK frame.
-void ack_frame::write(asio::mutable_buffer output, ack_frame_header_t hdr, string data)
+int ack_frame_t::write(asio::mutable_buffer output)
 {
-    write(output, hdr);
-    write_buffer(output, data);
+    write(output, header_);
+    write_buffer(output, data_);
+    return 1;
 }
 
-void stream_frame::read(asio::const_buffer input)
+int ack_frame_t::read(asio::const_buffer input)
+{
+    return 1;
+}
+
+void ack_frame_t::dispatch(channel::ptr c)
 {
 }
