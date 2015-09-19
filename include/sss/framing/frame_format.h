@@ -9,6 +9,8 @@
 #pragma once
 
 #include "sss/framing/framing_types.h"
+#include "sss/framing/stream_protocol.h"
+#include "arsenal/underlying.h"
 
 //=================================================================================================
 // Framing layer
@@ -131,17 +133,27 @@ struct ext_sized_field_t
 namespace sss {
 namespace framing {
 
-using empty_frame_type_t        = std::integral_constant<uint8_t, frame_type::EMPTY>;
-using stream_frame_type_t       = std::integral_constant<uint8_t, frame_type::STREAM>;
-using ack_frame_type_t          = std::integral_constant<uint8_t, frame_type::ACK>;
-using padding_frame_type_t      = std::integral_constant<uint8_t, frame_type::PADDING>;
-using decongestion_frame_type_t = std::integral_constant<uint8_t, frame_type::DECONGESTION>;
-using detach_frame_type_t       = std::integral_constant<uint8_t, frame_type::DETACH>;
-using reset_frame_type_t        = std::integral_constant<uint8_t, frame_type::RESET>;
-using close_frame_type_t        = std::integral_constant<uint8_t, frame_type::CLOSE>;
-using settings_frame_type_t     = std::integral_constant<uint8_t, frame_type::SETTINGS>;
-using priority_frame_type_t     = std::integral_constant<uint8_t, frame_type::PRIORITY>;
-using max_frame_count_t         = std::integral_constant<uint8_t, 10>;
+using empty_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::EMPTY)>;
+using stream_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::STREAM)>;
+using ack_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::ACK)>;
+using padding_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::PADDING)>;
+using decongestion_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::DECONGESTION)>;
+using detach_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::DETACH)>;
+using reset_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::RESET)>;
+using close_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::CLOSE)>;
+using settings_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::SETTINGS)>;
+using priority_frame_type_t =
+    std::integral_constant<uint8_t, to_underlying(stream_protocol::frame_type::PRIORITY)>;
+using max_frame_count_t = std::integral_constant<uint8_t, 10>;
 
 using stream_flags_field_t   = field_flag<uint8_t>;
 using optional_parent_sid_t  = optional_field_specification<uint32_t, field_index<1>, 6_bits_shift>;
