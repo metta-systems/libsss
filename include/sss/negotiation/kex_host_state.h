@@ -39,10 +39,10 @@ public:
     negotiation::kex_initiator_ptr get_initiator(byte_array nonce);
     std::pair<ep_iterator, ep_iterator> get_initiators(uia::comm::endpoint const& ep);
 
-    void register_dh_initiator(byte_array const& nonce,
-                               uia::comm::endpoint const& ep,
-                               negotiation::kex_initiator::ptr ki);
-    void unregister_dh_initiator(byte_array const& nonce, uia::comm::endpoint const& ep);
+    void register_initiator(byte_array const& nonce,
+                            uia::comm::endpoint const& ep,
+                            negotiation::kex_initiator_ptr ki);
+    void unregister_initiator(byte_array const& nonce, uia::comm::endpoint const& ep);
 };
 
 } // sss namespace

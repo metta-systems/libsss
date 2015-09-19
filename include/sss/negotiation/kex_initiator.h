@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://atta-metta.net for latest version.
 //
-// Copyright 2007 - 2014, Stanislav Karchebnyy <berkus@atta-metta.net>
+// Copyright 2007 - 2015, Stanislav Karchebnyy <berkus@atta-metta.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,11 +14,9 @@
 #include "sss/channels/peer_identity.h"
 #include "sss/channels/channel.h"
 #include "sss/internal/timer.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
-
-class host;
-
 namespace negotiation {
 
 /**
@@ -39,6 +37,7 @@ namespace negotiation {
 // 1) attempt to send Hello packets periodically until we get a Cookie or give up
 // 2) when Cookie is received, allocate our state and attempt to send Initiate with
 // some data.
+// 3) If after retrying Initiate we don't get response for 30 seconds, send another Hello.
 //
 class kex_initiator : public std::enable_shared_from_this<kex_initiator>
 {
@@ -67,18 +66,16 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
     void done();
 
 protected:
-    virtual channel::ptr create_channel() = 0;
+    virtual channel_ptr create_channel() { return nullptr; }; //@TODO pure virtual = 0;
 
 public:
-    using ptr = std::shared_ptr<kex_initiator>;
-
     /// Start key negotiation for a channel that has been bound to a link but not yet activated.
     /// If 'target_peer' is non-empty, only connect to specified host ID.
-    kex_initiator(uia::peer_identity const& target_peer);
+    kex_initiator(std::shared_ptr<host> host, uia::peer_identity const& target_peer);
     ~kex_initiator();
 
     /**
-     * Actually start init1 phase.
+     * Actually start hello phase.
      */
     void exchange_keys();
 
@@ -101,7 +98,7 @@ public:
     /**
      * Send completion signal, giving created channel on success or nullptr on failure.
      */
-    using completion_signal = boost::signals2::signal<void(kex_initiator::ptr, channel::ptr)>;
+    using completion_signal = boost::signals2::signal<void(kex_initiator_ptr, channel_ptr)>;
     completion_signal on_completed;
 };
 
