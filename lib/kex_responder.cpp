@@ -7,15 +7,17 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "sss/negotiation/kex_responder.h"
-#include "sss/negotiation/kex_message.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/make_unique.h"
 #include "arsenal/algorithm.h"
 #include "arsenal/flurry.h"
 #include "sss/host.h"
 #include "sss/channels/channel.h"
+#include "sss/framing/packet_format.h"
+#include "sss/framing/framing_types.h"
 
 using namespace std;
+using namespace sodiumpp;
 
 //=================================================================================================
 // Supplemental functions.
@@ -82,10 +84,10 @@ void
 kex_responder::got_hello(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src)
 {
     sss::channels::hello_packet_header hello;
-    tie(hello, ignore) = fusionary::read<sss::channels::hello_packet_header>(msg);
+    fusionary::read(hello, msg);
 
     string clientKey = as_string(hello.initiator_shortterm_public_key);
-    string nonce     = helloNoncePrefix + as_string(hello.nonce);
+    string nonce     = HELLO_NONCE_PREFIX + as_string(hello.nonce);
 
     unboxer<recv_nonce> unseal(clientKey, long_term_key, nonce);
     string open = unseal.unbox(as_string(hello.box));
@@ -107,7 +109,7 @@ kex_responder::send_cookie(string clientKey)
     fixmeNeedToRebuildSessionPk = sessionKey.pk.get();
 
     // minute-key secretbox nonce
-    random_nonce<8> minuteKeyNonce(minuteKeyNoncePrefix);
+    random_nonce<8> minuteKeyNonce(MINUTEKEY_NONCE_PREFIX);
     // Client short-term public key + Server short-term secret key
     cookie.box = as_array<80>(
         crypto_secretbox(clientKey + sessionKey.get(), minuteKeyNonce.get(), minute_key.get()));
@@ -115,7 +117,7 @@ kex_responder::send_cookie(string clientKey)
     // Compressed cookie nonce
     cookie.nonce = as_array<16>(minuteKeyNonce.sequential());
 
-    boxer<random_nonce<8>> seal(clientKey, long_term_key, cookieNoncePrefix);
+    boxer<random_nonce<8>> seal(clientKey, long_term_key, COOKIE_NONCE_PREFIX);
 
     // Server short-term public key + cookie
     // Box the cookies
@@ -130,13 +132,13 @@ kex_responder::send_cookie(string clientKey)
 }
 
 void
-kex_responder::got_initiate(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src)
+kex_responder::got_initiate(boost::asio::const_buffer buf, uia::comm::socket_endpoint const& src)
 {
     sss::channels::initiate_packet_header init;
-    tie(init, msg) = fusionary::read<sss::channels::initiate_packet_header>(msg);
+    buf = fusionary::read(init, buf);
 
     // Try to open the cookie
-    string nonce = minuteKeyNoncePrefix + as_string(init.responder_cookie.nonce);
+    string nonce = MINUTEKEY_NONCE_PREFIX + as_string(init.responder_cookie.nonce);
 
     string cookie =
         crypto_secretbox_open(as_string(init.responder_cookie.box), nonce, minute_key.get());
@@ -149,7 +151,7 @@ kex_responder::got_initiate(boost::asio::const_buffer msg, uia::comm::socket_end
     // short_term_key = secret_key(public_key(""), subrange(cookie, 32, 32));
 
     // Open the Initiate box using both short-term keys
-    string initiateNonce = initiateNoncePrefix + as_string(init.nonce);
+    string initiateNonce = INITIATE_NONCE_PREFIX + as_string(init.nonce);
 
     unboxer<recv_nonce> unseal(
         as_string(init.initiator_shortterm_public_key), short_term_key, initiateNonce);
@@ -221,11 +223,11 @@ kex_responder::send_probe(uia::comm::endpoint const& dest)
 // kex_host_state
 //=================================================================================================
 
-shared_ptr<sss::negotiation::key_initiator>
+negotiation::kex_initiator_ptr
 kex_host_state::get_initiator(byte_array nonce)
 {
-    auto it = dh_initiators_.find(nonce);
-    if (it == dh_initiators_.end()) {
+    auto it = initiators_.find(nonce);
+    if (it == initiators_.end()) {
         return nullptr;
     }
     return it->second;
@@ -240,16 +242,16 @@ kex_host_state::get_initiators(uia::comm::endpoint const& ep)
 void
 kex_host_state::register_initiator(byte_array const& nonce,
                                    uia::comm::endpoint const& ep,
-                                   shared_ptr<sss::negotiation::key_initiator> ki)
+                                   negotiation::kex_initiator_ptr ki)
 {
-    dh_initiators_.insert(make_pair(nonce, ki));
+    initiators_.insert(make_pair(nonce, ki));
     ep_initiators_.insert(make_pair(ep, ki));
 }
 
 void
 kex_host_state::unregister_initiator(byte_array const& nonce, uia::comm::endpoint const& ep)
 {
-    dh_initiators_.erase(nonce);
+    initiators_.erase(nonce);
     ep_initiators_.erase(ep);
 }
 

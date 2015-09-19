@@ -8,12 +8,14 @@
 //
 #pragma once
 
+#include <set>
 #include <boost/signals2/signal.hpp>
 #include "comm/socket_endpoint.h"
 #include "comm/packet_receiver.h"
 #include "sss/internal/timer.h"
-#include "sss/negotiation/kex_message.h"
+#include "sss/channels/peer_identity.h"
 #include "sss/forward_ptrs.h"
+#include "sodiumpp/sodiumpp.h"
 
 namespace sss {
 namespace negotiation {
@@ -31,6 +33,17 @@ namespace negotiation {
 class kex_responder : public uia::comm::packet_receiver
 {
     host_ptr host_;
+
+    // Temp state
+    sodiumpp::secret_key long_term_key;
+    sodiumpp::secret_key short_term_key;
+    sodiumpp::secret_key minute_key;
+    std::set<std::string> cookie_cache;
+    struct client
+    {
+        std::string short_term_key;
+    } client;
+    std::string fixmeNeedToRebuildSessionPk;
 
 public:
     /**

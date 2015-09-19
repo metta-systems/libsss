@@ -15,6 +15,7 @@
 #include "sss/channels/channel.h"
 #include "sss/internal/timer.h"
 #include "sss/forward_ptrs.h"
+#include "sodiumpp/sodiumpp.h"
 
 namespace sss {
 namespace negotiation {
@@ -65,6 +66,15 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
 
     void done();
 
+    // Temp state
+    sodiumpp::secret_key long_term_key;
+    sodiumpp::secret_key short_term_key;
+    struct server
+    {
+        std::string long_term_key; // == kex_responder.long_term_key.pk
+        std::string short_term_key;
+    } server;
+
 protected:
     virtual channel_ptr create_channel() { return nullptr; }; //@TODO pure virtual = 0;
 
@@ -92,8 +102,8 @@ public:
      * Key exchange protocol.
      */
     void send_hello();
-    void got_cookie();
-    void send_initiate();
+    void got_cookie(boost::asio::const_buffer buf);
+    void send_initiate(std::string cookie, std::string payload);
 
     /**
      * Send completion signal, giving created channel on success or nullptr on failure.

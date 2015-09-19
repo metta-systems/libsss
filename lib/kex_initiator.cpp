@@ -13,6 +13,7 @@
 #include "arsenal/flurry.h"
 #include "sss/host.h"
 #include "sss/channels/channel.h"
+#include "sss/framing/packet_format.h"
 
 using namespace std;
 using namespace sodiumpp;
@@ -108,7 +109,7 @@ kex_initiator::send_hello()
     logger::debug() << "Send hello to " << target_;
     state_ = state::hello;
 
-    boxer<nonce64> seal(server.long_term_key, short_term_key, helloNoncePrefix);
+    boxer<nonce64> seal(server.long_term_key, short_term_key, HELLO_NONCE_PREFIX);
 
     sss::channels::hello_packet_header pkt;
     pkt.initiator_shortterm_public_key = as_array<32>(short_term_key.pk.get());
@@ -119,14 +120,13 @@ kex_initiator::send_hello()
 }
 
 void
-kex_initiator::got_cookie()
+kex_initiator::got_cookie(boost::asio::const_buffer buf)
 {
     sss::channels::cookie_packet_header cookie;
-    asio::const_buffer buf(pkt.data(), pkt.size());
-    tie(cookie, ignore) = fusionary::read<sss::channels::cookie_packet_header>(buf);
+    fusionary::read(cookie, buf);
 
     // open cookie box
-    string nonce = cookieNoncePrefix + as_string(cookie.nonce);
+    string nonce = COOKIE_NONCE_PREFIX + as_string(cookie.nonce);
 
     unboxer<recv_nonce> unseal(server.long_term_key, short_term_key, nonce);
     string open = unseal.unbox(as_string(cookie.box));
@@ -139,10 +139,10 @@ kex_initiator::got_cookie()
 }
 
 void
-kex_initiator::send_initiate()
+kex_initiator::send_initiate(std::string cookie, std::string payload)
 {
     // Create vouch subpacket
-    boxer<random_nonce<8>> vouchSeal(server.long_term_key, long_term_key, vouchNoncePrefix);
+    boxer<random_nonce<8>> vouchSeal(server.long_term_key, long_term_key, VOUCH_NONCE_PREFIX);
     string vouch = vouchSeal.box(short_term_key.pk.get());
     assert(vouch.size() == 48);
 
@@ -152,7 +152,7 @@ kex_initiator::send_initiate()
     // pkt.responder_cookie.nonce         = as_array<16>(subrange(cookie, 0, 16));
     // pkt.responder_cookie.box           = as_array<80>(subrange(cookie, 16));
 
-    boxer<nonce64> seal(server.short_term_key, short_term_key, initiateNoncePrefix);
+    boxer<nonce64> seal(server.short_term_key, short_term_key, INITIATE_NONCE_PREFIX);
     pkt.box = seal.box(long_term_key.pk.get() + vouchSeal.nonce_sequential() + vouch + payload);
     // @todo Round payload size to next or second next multiple of 16..
     pkt.nonce = as_array<8>(seal.nonce_sequential());
