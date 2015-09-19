@@ -22,6 +22,7 @@
 
 namespace uia {
 namespace routing {
+
 class client;
 class client_profile;
 
@@ -32,6 +33,8 @@ struct routing_coordination
     sss::async::timer reconnect_timer_;                 ///< For persistent lookup requests
     // Set of RegClients we've connected to so far: @todo move to routing
     std::unordered_set<uia::routing::client*> connected_routing_clients_;
+
+    routing_coordination(std::shared_ptr<sss::host> host);
 };
 
 } // routing namespace

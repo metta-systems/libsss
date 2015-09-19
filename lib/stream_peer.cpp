@@ -17,19 +17,25 @@ namespace ur = uia::routing;
 using uia::comm::socket;
 using namespace sss::negotiation;
 
+namespace uia {
+namespace routing {
+
+routing_coordination::routing_coordination(shared_ptr<sss::host> host)
+    : reconnect_timer_(host.get())
+{
+}
+}
+}
+
 namespace sss {
 namespace internal {
-
-constexpr int stream_peer::stall_warnings_max;
-
-const async::timer::duration_type stream_peer::connect_retry_period = boost::posix_time::minutes(1);
 
 stream_peer::stream_peer(shared_ptr<host> const& host,
                          uia::peer_identity const& remote_id,
                          stream_peer::private_tag)
     : host_(host)
     , remote_id_(remote_id)
-    , reconnect_timer_(host.get())
+    , coord_(host)
 {
     assert(!remote_id.is_null());
 
@@ -114,16 +120,16 @@ stream_peer::routing_client_ready(ur::client* rc)
     connect_routing_client(rc);
 
     // Start the lookup, with hole punching
-    lookups_.insert(rc);
+    coord_.lookups_.insert(rc);
     rc->lookup(remote_id_, /*notify:*/ true);
 }
 
 void
 stream_peer::connect_routing_client(ur::client* rc)
 {
-    if (contains(connected_routing_clients_, rc))
+    if (contains(coord_.connected_routing_clients_, rc))
         return;
-    connected_routing_clients_.insert(rc);
+    coord_.connected_routing_clients_.insert(rc);
 
     // Listen for the lookup response
     rc->on_lookup_done.connect([this, rc](uia::peer_identity const& target_peer,
@@ -177,16 +183,16 @@ stream_peer::lookup_done(ur::client* rc,
     }
 
     // Mark this outstanding lookup as completed.
-    if (!contains(lookups_, rc)) {
+    if (!contains(coord_.lookups_, rc)) {
         logger::debug() << "Stream peer - unexpected lookup_done signal";
         return; // ignore duplicates caused by concurrent requests
     }
-    lookups_.erase(rc);
+    coord_.lookups_.erase(rc);
 
     // If the lookup failed, notify waiting streams as appropriate.
     if (peer_endpoint.address().is_unspecified()) {
         logger::debug() << "Lookup on " << target_peer << " failed";
-        if (!lookups_.empty() or !key_exchanges_initiated_.empty())
+        if (!coord_.lookups_.empty() or !key_exchanges_initiated_.empty())
             return; // There's still hope
         return on_channel_failed();
     }
@@ -263,14 +269,14 @@ stream_peer::regclient_destroyed(ur::client* rc)
 {
     logger::debug() << "Stream peer - regclient destroyed before lookup done";
 
-    lookups_.erase(rc);
-    connected_routing_clients_.erase(rc);
+    coord_.lookups_.erase(rc);
+    coord_.connected_routing_clients_.erase(rc);
 
     // If there are no more RegClients available at all,
     // notify waiting streams of connection failure
     // next time we get back to the main loop.
     if (no_lookups_possible()) {
-        reconnect_timer_.start(boost::posix_time::milliseconds(0));
+        coord_.reconnect_timer_.start(boost::posix_time::milliseconds(0));
     }
 }
 
