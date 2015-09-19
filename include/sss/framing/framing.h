@@ -12,7 +12,7 @@
 #include "frame_format.h"
 #include "sss/forward_ptrs.h"
 #include <memory>
-#include <boost/asio/buffers.hpp>
+#include <boost/asio/buffer.hpp>
 
 namespace sss {
 namespace framing {
@@ -27,10 +27,10 @@ namespace framing {
 */
 class framed_packet
 {
-    asio::mutable_buffer packet;              // whole packet
-    asio::mutable_buffer unencrypted_header;  // packet subrange covering unencrypted header
-    asio::mutable_buffer packet_header;       // packet subrange covering packet header
-    std::vector<asio::mutable_buffer> frames; // packet subranges covering sequence of frames
+    boost::asio::mutable_buffer packet;              // whole packet
+    boost::asio::mutable_buffer unencrypted_header;  // packet subrange covering unencrypted header
+    boost::asio::mutable_buffer packet_header;       // packet subrange covering packet header
+    std::vector<boost::asio::mutable_buffer> frames; // packet subranges covering sequence of frames
 };
 
 /**
@@ -53,16 +53,16 @@ class framing_t
 public:
     framing_t(channel_ptr c);
 
-    void enframe(asio::mutable_buffer output);
-    void deframe(asio::const_buffer input);
+    void enframe(boost::asio::mutable_buffer output);
+    void deframe(boost::asio::const_buffer input);
 
 private:
     template <typename T>
-    read_handler(asio::const_buffer input);
+    void read_handler(boost::asio::const_buffer input);
 
 private:
-    using read_handler_type = void (framing::*)(asio::const_buffer);
-    std::array<read_handler_type, max_frame_count_t::value> handlers_;
+    using read_handler_type = void (framing_t::*)(boost::asio::const_buffer);
+    static std::array<read_handler_type, max_frame_count_t::value> handlers_;
 
     // Reference to channel associated with this framing instance.
     // When parsing received frames, obtain streams from channel by lsid/usid and call rx_*()
@@ -71,6 +71,5 @@ private:
     channel_ptr channel_;
 };
 
-}
-
-}
+} // framing namespace
+} // sss namespace

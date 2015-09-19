@@ -1,16 +1,16 @@
-#include "framing.h"
+#include "sss/framing/framing.h"
 
-#include "ack_frame.h"
-#include "close_frame.h"
-#include "decongestion_frame.h"
-#include "detach_frame.h"
-#include "empty_frame.h"
-#include "frame_format.h"
-#include "padding_frame.h"
-#include "priority_frame.h"
-#include "reset_frame.h"
-#include "settings_frame.h"
-#include "stream_frame.h"
+#include "sss/framing/ack_frame.h"
+#include "sss/framing/close_frame.h"
+#include "sss/framing/decongestion_frame.h"
+#include "sss/framing/detach_frame.h"
+#include "sss/framing/empty_frame.h"
+#include "sss/framing/frame_format.h"
+#include "sss/framing/padding_frame.h"
+#include "sss/framing/priority_frame.h"
+#include "sss/framing/reset_frame.h"
+#include "sss/framing/settings_frame.h"
+#include "sss/framing/stream_frame.h"
 
 namespace sss {
 namespace framing {
@@ -35,7 +35,7 @@ template <typename T, bool c>
 struct dispatch_caller__
 {
 public:
-    static void call(T& o, channel_ptr c) {}
+    static void call(T&, channel_ptr) {}
 };
 
 template <typename T>
@@ -78,13 +78,15 @@ framing_t::framing_t(channel_ptr c)
 void
 framing_t::enframe(boost::asio::mutable_buffer output)
 {
-    if (sizer::estimate_size(packets.front()) < asio::buffer_size(output_buffer)) {
+    /*
+    if (sizer::estimate_size(packets.front()) < boost::asio::buffer_size(output_buffer)) {
         write(output_buffer, packets.front());
         packets.pop();
     }
-    if (asio::buffer_size(output_buffer) > 0) {
+    if (boost::asio::buffer_size(output_buffer) > 0) {
         filler(output_buffer);
     }
+    */
 }
 
 // Read packet frames and deliver decoded frames to appropriate handlers.
