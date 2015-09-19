@@ -31,12 +31,14 @@ peer_identity::peer_identity(byte_array const& id, byte_array const& key)
     }
 }
 
-void peer_identity::clear_key()
+void
+peer_identity::clear_key()
 {
     private_key_.clear();
 }
 
-bool peer_identity::set_key(byte_array const& key)
+bool
+peer_identity::set_key(byte_array const& key)
 {
     clear_key();
 
@@ -51,13 +53,14 @@ bool peer_identity::set_key(byte_array const& key)
     // {
     //     clear_key();
     //     logger::warning() << "Attempt to set mismatching identity key!";
-        return false;
+    return false;
     // }
 
     // return true;
 }
 
-peer_identity peer_identity::generate(scheme sch, int bits)
+peer_identity
+peer_identity::generate()
 {
     // shared_ptr<crypto::sign_key> key{nullptr};
     // switch (sch) {
@@ -83,14 +86,16 @@ peer_identity peer_identity::generate(scheme sch, int bits)
     return ident;
 }
 
-byte_array peer_identity::public_key() const
+byte_array
+peer_identity::public_key() const
 {
     if (!key_)
         return byte_array();
     return key_->public_key();
 }
 
-byte_array peer_identity::private_key() const
+byte_array
+peer_identity::secret_key() const
 {
     if (!key_)
         return byte_array();
@@ -106,16 +111,17 @@ byte_array peer_identity::hash(char const* data, int len) const
 // identity_host_state
 //=================================================================================================
 
-identity identity_host_state::host_identity()
+peer_identity
+identity_host_state::host_identity()
 {
-    if (!host_identity_.has_private_key())
-    {
+    if (!host_identity_.has_private_key()) {
         host_identity_ = peer_identity::generate();
     }
     return host_identity_;
 }
 
-void identity_host_state::set_host_identity(peer_identity const& ident)
+void
+identity_host_state::set_host_identity(peer_identity const& ident)
 {
     if (!ident.has_private_key()) {
         logger::warning() << "Using a host identity with no private key!";
@@ -123,26 +129,25 @@ void identity_host_state::set_host_identity(peer_identity const& ident)
     host_identity_ = ident;
 }
 
-void identity_host_state::init_identity(settings_provider* settings)
+void
+identity_host_state::init_identity(settings_provider* settings)
 {
     if (host_identity_.has_private_key())
         return; // Already initialized.
 
-    if (!settings)
-    {
+    if (!settings) {
         host_identity(); // No persistence available.
         return;
     }
 
     // Find and decode the host's existing key, if any.
-    byte_array id = settings->get_byte_array("id");
+    byte_array id  = settings->get_byte_array("id");
     byte_array key = settings->get_byte_array("key");
 
-    if (!id.is_empty() and !key.is_empty())
-    {
+    if (!id.is_empty() and !key.is_empty()) {
         host_identity_.set_id(id);
         if (host_identity_.set_key(key) and host_identity_.has_private_key())
-            return;     // Success
+            return; // Success
     }
 
     logger::warning() << "Invalid host identity in settings: generating new identity";

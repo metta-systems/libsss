@@ -24,7 +24,8 @@ BOOST_AUTO_TEST_CASE(serialize_msgpack_types)
     byte_array data;
     {
         byte_array_owrap<flurry::oarchive> write(data);
-        write.archive() << true << false << 42 << 0xdeadbeefabba << byte_array({'a','b','c','d','e'});
+        write.archive() << true << false << 42 << 0xdeadbeefabba
+                        << byte_array({'a', 'b', 'c', 'd', 'e'});
     }
     logger::file_dump(data, "serialization test");
 }

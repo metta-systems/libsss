@@ -39,9 +39,13 @@ public:
     /**
      * Exception thrown when invalid identity key is encountered.
      */
-    class bad_key final : public std::runtime_error {
+    class bad_key final : public std::runtime_error
+    {
     public:
-        explicit inline bad_key() : std::runtime_error("bad identity key") {}
+        explicit inline bad_key()
+            : std::runtime_error("bad identity key")
+        {
+        }
     };
 
     /**
@@ -61,7 +65,8 @@ public:
      */
     inline peer_identity(std::string proquint)
         : peer_identity(byte_array(encode::from_proquint(proquint)))
-    {}
+    {
+    }
 
     /**
      * Create an identity with a binary identifier and corresponding private key.
@@ -82,16 +87,15 @@ public:
      * Get this identity's short binary EID.
      * @return the binary identifier as a byte_array.
      */
-    byte_array id() const {
-        return id_;
-    }
+    byte_array id() const { return id_; }
 
     /**
      * Set the identity's short binary EID.
      * Clears any associated key information.
      * @param id the binary identifier.
      */
-    inline void set_id(byte_array const& id) {
+    inline void set_id(byte_array const& id)
+    {
         id_ = id.as_string();
         clear_key();
     }
@@ -101,26 +105,20 @@ public:
      * usable for signature verification.
      * @return true if this identity contains a public key.
      */
-    inline bool has_key() const {
-        return !id_.empty();
-    }
+    inline bool has_key() const { return !id_.empty(); }
 
     /**
      * Determine whether this identifier contains a private key
      * usable for both signing and verification.
      * @return true if this identity contains a private key.
      */
-    inline bool has_private_key() const {
-        return !private_key_.empty();
-    }
+    inline bool has_private_key() const { return !private_key_.empty(); }
 
     /**
      * Check for the distinguished "null identity".
      * @return true if this is a null identity.
      */
-    inline bool is_null() const {
-        return id_.empty();
-    }
+    inline bool is_null() const { return id_.empty(); }
 
     /**
      * Get this identity's binary-encoded public key.
@@ -148,10 +146,19 @@ public:
     inline std::string to_string() const { return encode::to_proquint(id_); }
 };
 
-inline bool operator == (peer_identity const& a, peer_identity const& b) { return a.id() == b.id(); }
-inline bool operator != (peer_identity const& a, peer_identity const& b) { return a.id() != b.id(); }
+inline bool
+operator==(peer_identity const& a, peer_identity const& b)
+{
+    return a.id() == b.id();
+}
+inline bool
+operator!=(peer_identity const& a, peer_identity const& b)
+{
+    return a.id() != b.id();
+}
 
-inline std::ostream& operator << (std::ostream& os, peer_identity const& id)
+inline std::ostream&
+operator<<(std::ostream& os, peer_identity const& id)
 {
     return os << id.to_string();
 }
@@ -162,6 +169,7 @@ inline std::ostream& operator << (std::ostream& os, peer_identity const& id)
 class identity_host_state
 {
     peer_identity host_identity_;
+
 public:
     /**
      * Create if necessary and return the host's global cryptographic identity.
@@ -199,13 +207,15 @@ public:
 
 namespace flurry {
 
-inline flurry::oarchive& operator << (flurry::oarchive& oa, uia::peer_identity const& id)
+inline flurry::oarchive&
+operator<<(flurry::oarchive& oa, uia::peer_identity const& id)
 {
     oa << id.id();
     return oa;
 }
 
-inline flurry::iarchive& operator >> (flurry::iarchive& ia, uia::peer_identity& id)
+inline flurry::iarchive&
+operator>>(flurry::iarchive& ia, uia::peer_identity& id)
 {
     byte_array i;
     ia >> i;
@@ -218,7 +228,7 @@ inline flurry::iarchive& operator >> (flurry::iarchive& ia, uia::peer_identity& 
 // Hash specialization for peer_id
 namespace std {
 
-template<>
+template <>
 struct hash<uia::peer_identity> : public std::unary_function<uia::peer_identity, size_t>
 {
     inline size_t operator()(uia::peer_identity const& a) const noexcept
@@ -228,4 +238,3 @@ struct hash<uia::peer_identity> : public std::unary_function<uia::peer_identity,
 };
 
 } // std namespace
-

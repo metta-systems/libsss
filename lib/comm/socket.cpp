@@ -20,13 +20,13 @@ socket::~socket()
 {
 }
 
-string socket::status_string(socket::status s)
+string
+socket::status_string(socket::status s)
 {
-    switch (s)
-    {
-        case status::down:    return "down";
+    switch (s) {
+        case status::down: return "down";
         case status::stalled: return "stalled";
-        case status::up:      return "up";
+        case status::up: return "up";
     }
 }
 
@@ -36,15 +36,15 @@ socket::set_active(bool active)
     active_ = active;
     if (active_) {
         host_interface_->activate_socket(shared_from_this());
-    }
-    else {
+    } else {
         host_interface_->deactivate_socket(shared_from_this());
     }
 }
 
 // @todo Use boost::string_ref or std::experimental::string_view for MOST of the stuff
 // that handles refs into constantly allocated strings. Need to limit the scope somehow though.
-string as_string(boost::asio::const_buffer value, size_t start, size_t size)
+string
+as_string(boost::asio::const_buffer value, size_t start, size_t size)
 {
     return string(asio::buffer_cast<char const*>(value) + start, size);
 }
@@ -60,9 +60,8 @@ string as_string(boost::asio::const_buffer value, size_t start, size_t size)
 void
 socket::receive(asio::const_buffer msg, socket_endpoint const& src)
 {
-    if (buffer_size(msg) >= sss::MIN_PACKET_SIZE)
-    {
-        logger::file_dump(msg, "received raw socket packet");
+    if (buffer_size(msg) >= sss::MIN_PACKET_SIZE) {
+        // logger::file_dump(msg, "received raw socket packet");
 
         string magic = as_string(msg, 0, 8);
 

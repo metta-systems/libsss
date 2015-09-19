@@ -34,7 +34,8 @@ struct simulator_fixture
     std::shared_ptr<uia::comm::socket> client_link;
     std::shared_ptr<sss::stream> client;
 
-    simulator_fixture() {
+    simulator_fixture()
+    {
         simulator = std::make_shared<sss::simulation::simulator>();
         BOOST_CHECK(simulator != nullptr);
 
@@ -43,7 +44,8 @@ struct simulator_fixture
         setup_test_connection();
     }
 
-    ~simulator_fixture() {
+    ~simulator_fixture()
+    {
         server_client_connection.reset();
         client.reset();
         client_link.reset();
@@ -53,7 +55,7 @@ struct simulator_fixture
         server_host.reset();
         simulator.reset();
         logger::debug() << "<<< host use counts after reset " << std::dec << client_host.use_count()
-            << " and " << server_host.use_count();
+                        << " and " << server_host.use_count();
     }
 
     void setup_test_server()
@@ -61,9 +63,9 @@ struct simulator_fixture
         server_host = sss::simulation::sim_host::create(simulator);
         BOOST_CHECK(server_host != nullptr);
         server_host_eid = server_host->host_identity().id();
-        server_host_address = uia::comm::endpoint(
-            boost::asio::ip::address_v4::from_string("10.0.0.2"),
-            sss::stream_protocol::default_port);
+        server_host_address =
+            uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),
+                                sss::stream_protocol::default_port);
 
         server_link = server_host->create_socket();
         BOOST_CHECK(server_link != nullptr);
@@ -81,9 +83,9 @@ struct simulator_fixture
         client_host = sss::simulation::sim_host::create(simulator);
         BOOST_CHECK(client_host != nullptr);
         client_host_eid = client_host->host_identity().id();
-        client_host_address = uia::comm::endpoint(
-            boost::asio::ip::address_v4::from_string("10.0.0.1"),
-            sss::stream_protocol::default_port);
+        client_host_address =
+            uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),
+                                sss::stream_protocol::default_port);
 
         client_link = client_host->create_socket();
         BOOST_CHECK(client_link != nullptr);
@@ -98,8 +100,7 @@ struct simulator_fixture
     {
         server_client_connection = std::make_shared<sss::simulation::sim_connection>();
         BOOST_CHECK(server_client_connection != nullptr);
-        server_client_connection->connect(server_host, server_host_address,
-                                          client_host, client_host_address);
+        server_client_connection->connect(
+            server_host, server_host_address, client_host, client_host_address);
     }
 };
-

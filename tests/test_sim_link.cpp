@@ -35,8 +35,10 @@ BOOST_AUTO_TEST_CASE(connected_link)
     shared_ptr<sim_host> other_host(sim_host::create(sim));
 
     shared_ptr<sim_connection> conn = make_shared<sim_connection>();
-    conn->connect(other_host, comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),0),
-                  my_host, comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),0));
+    conn->connect(other_host,
+                  comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"), 0),
+                  my_host,
+                  comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"), 0));
 
     shared_ptr<comm::socket> link = my_host->create_socket();
     BOOST_CHECK(link->local_endpoints().size() == 1);

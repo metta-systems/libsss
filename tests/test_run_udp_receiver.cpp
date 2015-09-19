@@ -13,7 +13,8 @@ using namespace std;
 using namespace sss;
 using namespace uia;
 
-int main()
+int
+main()
 {
 	try
 	{
