@@ -299,7 +299,7 @@ stream_peer::retry_timeout()
 }
 
 void
-stream_peer::initiate_key_exchange(uia::comm::socket::wptr l, uia::comm::endpoint const& ep)
+stream_peer::initiate_key_exchange(uia::comm::socket_wptr l, uia::comm::endpoint const& ep)
 {
     assert(ep != uia::comm::endpoint());
 

@@ -37,7 +37,7 @@ class socket_host_state : protected virtual asio_host_state, public uia::comm::s
     /**
      * Lookup table of all registered packet_receivers for this host, keyed on their magic.
      */
-    std::unordered_map<std::string, packet_receiver_wptr> receivers_;
+    std::unordered_map<std::string, uia::comm::packet_receiver_wptr> receivers_;
     /**
      * List of all currently-active sockets.
      */
@@ -77,7 +77,7 @@ public:
     /**
      * Create a receiver and bind it to control channel magic.
      */
-    void bind_receiver(std::string magic, packet_receiver_wptr receiver) override
+    void bind_receiver(std::string magic, uia::comm::packet_receiver_wptr receiver) override
     {
         // @todo: Will NOT replace existing element.
         receivers_.insert(std::make_pair(magic, receiver));
@@ -90,7 +90,7 @@ public:
     /**
      * Find and return a receiver for given control channel magic value.
      */
-    packet_receiver_wptr receiver_for(std::string magic) override;
+    uia::comm::packet_receiver_wptr receiver_for(std::string magic) override;
     /*@}*/
 
     /*@{*/
