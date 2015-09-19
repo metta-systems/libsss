@@ -16,17 +16,14 @@ using namespace uia;
 int
 main()
 {
-	try
-	{
-		shared_ptr<host> host(make_shared<host>());
-		comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
-		udp_socket l(host);
-		l.bind(local_ep);
-		l.send(local_ep, "\0SSSohai!", 10);
-		host->run_io_service();
-	}
-	catch (exception& e)
-	{
-		cerr << e.what() << endl;
-	}
+    try {
+        host_ptr host(host::create());
+        comm::endpoint local_ep(boost::asio::ip::udp::v4(), stream_protocol::default_port);
+        udp_socket l(host);
+        l.bind(local_ep);
+        l.send(local_ep, "\0SSSohai!", 10);
+        // host->run_io_service();
+    } catch (exception& e) {
+        cerr << e.what() << endl;
+    }
 }

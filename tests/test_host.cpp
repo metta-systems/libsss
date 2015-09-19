@@ -15,5 +15,5 @@ using namespace sss;
 
 BOOST_AUTO_TEST_CASE(created_host)
 {
-    std::shared_ptr<host> my_host(std::make_shared<host>());
+    std::shared_ptr<host> my_host(host::create());
 }
