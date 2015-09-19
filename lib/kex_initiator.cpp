@@ -74,9 +74,9 @@ kex_initiator::retransmit(bool fail)
     host_->register_initiator(byte_array(), target_, shared_from_this());
 
     if (state_ == state::hello) {
-        send_hello();
+        // send_hello();
     } else if (state_ == state::initiate) {
-        send_initiate();
+        // send_initiate();
     }
     retransmit_timer_.restart();
 }
@@ -115,7 +115,7 @@ kex_initiator::send_hello()
     pkt.box                            = as_array<80>(seal.box(long_term_key.pk.get() + string(32, '\0')));
     pkt.nonce                          = as_array<8>(seal.nonce_sequential());
 
-    return make_packet(pkt);
+    // return make_packet(pkt);
 }
 
 void
@@ -131,11 +131,11 @@ kex_initiator::got_cookie()
     unboxer<recv_nonce> unseal(server.long_term_key, short_term_key, nonce);
     string open = unseal.unbox(as_string(cookie.box));
 
-    server.short_term_key = subrange(open, 0, 32);
-    string cookie_buf     = subrange(open, 32, 96);
+    // server.short_term_key = subrange(open, 0, 32);
+    // string cookie_buf     = subrange(open, 32, 96);
 
     // @todo Must get payload from client
-    return send_initiate(cookie_buf, "Hello, world!");
+    // return send_initiate(cookie_buf, "Hello, world!");
 }
 
 void
@@ -149,15 +149,15 @@ kex_initiator::send_initiate()
     // Assemble initiate packet
     sss::channels::initiate_packet_header pkt;
     pkt.initiator_shortterm_public_key = as_array<32>(short_term_key.pk.get());
-    pkt.responder_cookie.nonce         = as_array<16>(subrange(cookie, 0, 16));
-    pkt.responder_cookie.box           = as_array<80>(subrange(cookie, 16));
+    // pkt.responder_cookie.nonce         = as_array<16>(subrange(cookie, 0, 16));
+    // pkt.responder_cookie.box           = as_array<80>(subrange(cookie, 16));
 
     boxer<nonce64> seal(server.short_term_key, short_term_key, initiateNoncePrefix);
     pkt.box = seal.box(long_term_key.pk.get() + vouchSeal.nonce_sequential() + vouch + payload);
     // @todo Round payload size to next or second next multiple of 16..
     pkt.nonce = as_array<8>(seal.nonce_sequential());
 
-    return make_packet(pkt);
+    // return make_packet(pkt);
 }
 
 } // negotiation namespace

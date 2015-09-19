@@ -80,8 +80,8 @@ peer_identity::generate()
     // id[0] = (id[0] & 7) | (sch << 3); // replace top 5 bits of ID with scheme used
     // logger::debug() << "Generated key id " << id;
 
-    identity ident(id);
-    ident.key_ = key;
+    // identity ident(id);
+    // ident.key_ = key;
 
     return ident;
 }

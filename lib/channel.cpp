@@ -942,7 +942,8 @@ channel::transmit(boost::asio::const_buffer packet,
     //                 << epkt.size();
 
     // Ship it out
-    return send(epkt);
+    // return send(epkt);
+    return false;
 }
 
 void
@@ -1103,15 +1104,16 @@ channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 {
     logger::debug() << "Channel - transmit_ack seq " << ackseq << ", count " << ack_count + 1;
 
-    assert(ack_count <= max_ack_count);
+    // assert(ack_count <= max_ack_count);
 
     // if (packet.size() < header_len)
     // packet.resize(header_len);
 
-    uint32_t ack_word = 0; // make_second_header_word(ack_count, ackseq);
-    packet_seq_t pktseq;
+    // uint32_t ack_word = 0; // make_second_header_word(ack_count, ackseq);
+    // packet_seq_t pktseq;
 
-    return transmit(packet, ack_word, pktseq, false);
+    // return transmit(packet, ack_word, pktseq, false);
+    return false;
 }
 
 void

@@ -23,35 +23,35 @@ generate_dh1_chunk()
 {
     byte_array data;
     {
-        sss::negotiation::key_message m;
-        sss::negotiation::key_chunk chu, chu2;
-        sss::negotiation::dh_init1_chunk dh;
-        sss::negotiation::packet_chunk pkt;
+        // sss::negotiation::key_message m;
+        // sss::negotiation::key_chunk chu, chu2;
+        // sss::negotiation::dh_init1_chunk dh;
+        // sss::negotiation::packet_chunk pkt;
 
-        m.magic = sss::stream_protocol::magic_id;
-        chu.type = sss::negotiation::key_chunk_type::dh_init1;
-        dh.group = sss::negotiation::dh_group_type::dh_group_1024;
-        dh.key_min_length = 0x10;
+        // m.magic           = sss::stream_protocol::magic_id;
+        // chu.type          = sss::negotiation::key_chunk_type::dh_init1;
+        // dh.group          = sss::negotiation::dh_group_type::dh_group_1024;
+        // dh.key_min_length = 0x10;
 
-        dh.initiator_hashed_nonce.resize(32);
-        for (int i = 0; i < 32; ++i)
-            dh.initiator_hashed_nonce[i] = i;
-        dh.initiator_dh_public_key.resize(128);
-        for (int i = 0; i < 128; ++i)
-            dh.initiator_dh_public_key[i] = 255 - i;
+        // dh.initiator_hashed_nonce.resize(32);
+        // for (int i = 0; i < 32; ++i)
+        //     dh.initiator_hashed_nonce[i] = i;
+        // dh.initiator_dh_public_key.resize(128);
+        // for (int i = 0; i < 128; ++i)
+        //     dh.initiator_dh_public_key[i] = 255 - i;
 
-        chu.dh_init1 = dh;
+        // chu.dh_init1 = dh;
 
-        m.chunks.push_back(chu);
+        // m.chunks.push_back(chu);
 
-        chu2.type = sss::negotiation::key_chunk_type::packet;
-        pkt.data = {'H','e','l','l','o',' ','w','o','r','l','d','!'};
-        chu2.packet = pkt;
+        // chu2.type   = sss::negotiation::key_chunk_type::packet;
+        // pkt.data    = {'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!'};
+        // chu2.packet = pkt;
 
-        m.chunks.push_back(chu2);
+        // m.chunks.push_back(chu2);
 
-        byte_array_owrap<flurry::oarchive> write(data);
-        write.archive() << m;
+        // byte_array_owrap<flurry::oarchive> write(data);
+        // write.archive() << m;
     }
     return data;
 }
