@@ -10,24 +10,24 @@ endif()
 create_test(frames_serialization LIBS sss arsenal)
 create_test(identity LIBS sss arsenal ${OPENSSL_LIBRARIES})
 
-create_test(host LIBS sss arsenal krypto ${OPENSSL_LIBRARIES})
+create_test(host LIBS sss arsenal routing ${OPENSSL_LIBRARIES})
 create_test(channel LIBS sss arsenal)
-create_test(stream_user LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
+create_test(stream_user LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES})
 create_test(stream_internal LIBS sss arsenal)
-create_test(substreams LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
-create_test(server LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
+create_test(substreams LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES})
+create_test(server LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES})
 
 create_test(optional LIBS sss arsenal)
 create_test(serialization LIBS sss arsenal)
 
-create_test(sim_host LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
-create_test(sim_link LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
-create_test(sim_connection LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
-create_test(simulator LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES})
+create_test(sim_host LIBS ${SSS_LIBS} arsenal ${OPENSSL_LIBRARIES})
+create_test(sim_link LIBS ${SSS_LIBS} arsenal ${OPENSSL_LIBRARIES})
+create_test(sim_connection LIBS ${SSS_LIBS} arsenal ${OPENSSL_LIBRARIES})
+create_test(simulator LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES})
 
 # Regression tests are fairly long
-create_test(datagrams LIBS ${SSS_LIBS} arsenal krypto ${OPENSSL_LIBRARIES} NO_CTEST)
+create_test(datagrams LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES} NO_CTEST)
 
 # These need a way to limit io_service run time (or a way to cancel async_receive_from).
-create_test(udp_link LIBS sss arsenal krypto ${OPENSSL_LIBRARIES} NO_CTEST)
-create_test(run_udp_receiver LIBS sss arsenal krypto ${OPENSSL_LIBRARIES} NO_CTEST)
+create_test(udp_link LIBS sss arsenal ${OPENSSL_LIBRARIES} NO_CTEST)
+create_test(run_udp_receiver LIBS sss arsenal routing ${OPENSSL_LIBRARIES} NO_CTEST)
