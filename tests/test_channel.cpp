@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Test_sss_channel
 #include <boost/test/unit_test.hpp>
 
-#include "sss/channel.h"
+#include "sss/channels/channel.h"
 
 BOOST_AUTO_TEST_CASE(created_channel)
 {
