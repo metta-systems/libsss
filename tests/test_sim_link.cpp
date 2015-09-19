@@ -11,7 +11,7 @@
 
 #include "sss/simulation/simulator.h"
 #include "sss/simulation/sim_host.h"
-#include "sss/simulation/sim_link.h"
+#include "sss/simulation/sim_socket.h"
 #include "sss/simulation/sim_connection.h"
 
 using namespace std;

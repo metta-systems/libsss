@@ -11,8 +11,7 @@
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
-#include "sss/stream_protocol.h"
-#include "sss/negotiation/key_message.h"
+#include "sss/framing/stream_protocol.h"
 
 /**
  * Generate a binary blob for testing key_message.h I/O functions.
