@@ -11,6 +11,7 @@
 #include "sss/channels/peer_identity.h"
 #include "sss/channels/stream_channel.h"
 #include "sss/negotiation/kex_responder.h"
+#include "sss/internal/stream_peer.h"
 #include "routing/routing_client.h"
 
 using namespace std;
@@ -71,7 +72,7 @@ unique_ptr<channel> stream_responder::create_channel(uia::comm::socket_endpoint 
 {
     internal::stream_peer* peer = get_host()->stream_peer(initiator_eid);
 
-    unique_ptr<stream_channel> chan = make_unique<stream_channel>(get_host(), peer, initiator_eid);
+    unique_ptr<channel> chan = make_unique<stream_channel>(get_host(), peer, initiator_eid);
     /*    if (!chan->bind(initiator_ep))
         {
             logger::warning() << "Stream responder - could not bind new channel";
