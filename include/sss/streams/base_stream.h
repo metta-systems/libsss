@@ -15,6 +15,8 @@
 #include "sss/channels/channel.h"
 #include "sss/internal/usid.h"
 
+#include "arsenal/asio_buffer.hpp"
+
 namespace sss {
 
 class base_stream;
@@ -197,12 +199,8 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
     //=============================================================================================
     /**@{*/
 
-public:
-    using ptr  = std::shared_ptr<base_stream>;
-    using wptr = std::weak_ptr<base_stream>;
-
 private:
-    base_stream::wptr parent_; ///< Parent, if it still exists.
+    base_stream_wptr parent_; ///< Parent, if it still exists.
 
     /**
      * Self-reference to keep this stream around until it is done.
@@ -408,6 +406,10 @@ private:
      * Now we need to find a better way to indicate that. Ephemeral stream kind of flag.
      */
     // void substream_read_record();
+protected:
+    struct private_tag
+    {
+    };
 
 public:
     /**
@@ -418,9 +420,15 @@ public:
      *        or a non-cryptographic legacy address as defined by the Ident class.
      * @param parent the parent stream, or nullptr if none (yet).
      */
-    base_stream(std::shared_ptr<host> h,
+    static base_stream_ptr create(std::shared_ptr<host> h,
                 uia::peer_identity const& peer,
                 std::shared_ptr<base_stream> parent);
+
+    base_stream(std::shared_ptr<host> h,
+                uia::peer_identity const& peer,
+                std::shared_ptr<base_stream> parent,
+                private_tag);
+
     virtual ~base_stream();
 
     //=============================================================================================
@@ -561,7 +569,7 @@ operator<<(std::ostream& os, sss::base_stream::tx_frame_t const& pkt)
     }(pkt.type());
 
     os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type << ", owner " << pkt.owner
-       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt << "]";
+       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.payload_ << "]";
     return os;
 }
 
