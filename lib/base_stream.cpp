@@ -27,9 +27,20 @@ namespace sss {
 
 constexpr int base_stream::max_attachments;
 
-base_stream::base_stream(shared_ptr<host> host,
+base_stream::ptr base_stream::create(shared_ptr<host> host,
                          uia::peer_identity const& peer_id,
                          shared_ptr<base_stream> parent)
+{
+    auto p = std::make_shared<base_stream>(host, peer_id, parent, private_tag{});
+    // Insert us into the peer's master list of streams
+    p->peer_->all_streams_.insert(p);
+    return p;
+}
+
+base_stream::base_stream(shared_ptr<host> host,
+                         uia::peer_identity const& peer_id,
+                         shared_ptr<base_stream> parent,
+                         private_tag)
     : abstract_stream(host)
     , parent_(parent)
 {
@@ -49,9 +60,6 @@ base_stream::base_stream(shared_ptr<host> host,
 
     peer_id_ = peer_id;
     peer_    = host->stream_peer(peer_id);
-
-    // Insert us into the peer's master list of streams
-    peer_->all_streams_.insert(this); // @fixme shared_from_this() here
 
     // Initialize the stream back-pointers in the attachment slots.
     for (int i = 0; i < max_attachments; ++i) {
@@ -795,7 +803,7 @@ base_stream::open_substream()
     // Create a new sub-stream.
     // Note that the parent doesn't have to be attached yet:
     // the substream will attach and wait for the parent if necessary.
-    auto new_stream    = make_shared<base_stream>(host_, peer_id_, shared_from_this());
+    auto new_stream    = create(host_, peer_id_, shared_from_this());
     new_stream->state_ = state::connected;
     new_stream->self_  = new_stream; // UGH! :(
 
@@ -1892,7 +1900,7 @@ base_stream::rx_substream(packet_seq_t pktseq,
     channel->acknowledge(pktseq, true);
 
     // Create the child stream.
-    auto new_stream   = make_shared<base_stream>(channel->get_host(), peer_id_, shared_from_this());
+    auto new_stream   = create(channel->get_host(), peer_id_, shared_from_this());
     new_stream->self_ = new_stream; // UGH :(
 
     // We'll accept the new stream: this is the point of no return.
