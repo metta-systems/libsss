@@ -39,6 +39,7 @@ class channel;
 class stream_channel;
 class base_stream;
 class abstract_stream;
+class server;
 
 using host_ptr  = std::shared_ptr<host>;
 using host_wptr = std::weak_ptr<host>;
@@ -59,6 +60,10 @@ using base_stream_uptr = std::unique_ptr<base_stream>;
 using abstract_stream_ptr  = std::shared_ptr<abstract_stream>;
 using abstract_stream_wptr = std::weak_ptr<abstract_stream>;
 using abstract_stream_uptr = std::unique_ptr<abstract_stream>;
+
+using server_ptr  = std::shared_ptr<server>;
+using server_wptr = std::weak_ptr<server>;
+using server_uptr = std::unique_ptr<server>;
 
 namespace negotiation {
 

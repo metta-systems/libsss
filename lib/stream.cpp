@@ -25,13 +25,13 @@ namespace sss {
 // stream
 //=================================================================================================
 
-stream::stream(shared_ptr<host> h)
+stream::stream(host_ptr h)
     : host_(h)
 {
 }
 
 // @fixme Ignore parent for now...
-stream::stream(shared_ptr<abstract_stream> other_stream, stream* parent)
+stream::stream(abstract_stream_ptr other_stream, stream* parent)
     : host_(other_stream->host_)
     , stream_(other_stream)
 {
@@ -42,7 +42,7 @@ stream::stream(shared_ptr<abstract_stream> other_stream, stream* parent)
 }
 
 shared_ptr<stream>
-stream::create(shared_ptr<abstract_stream> other_stream)
+stream::create(abstract_stream_ptr other_stream)
 {
     shared_ptr<stream> st = make_shared<stream>(other_stream);
     other_stream->owner_  = st;
@@ -134,7 +134,7 @@ stream::connect_to(uia::peer_identity const& destination,
     logger::debug() << "Connecting to peer with id " << eid;
 
     // Create a top-level application stream object for this connection.
-    auto base    = make_shared<base_stream>(host_, eid, nullptr);
+    auto base    = base_stream::create(host_, eid, nullptr);
     base->owner_ = shared_from_this();
     base->self_  = base; // Self-reference for the base_stream to stay around until finished.
     stream_      = base;

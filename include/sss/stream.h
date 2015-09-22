@@ -12,17 +12,13 @@
 #include "arsenal/byte_array.h"
 #include "comm/socket_endpoint.h"
 #include "sss/channels/peer_identity.h"
-
+#include "sss/forward_ptrs.h"
 #include "sss/host.h" // @todo Remove, temporarily used to make socket.h below compile
 // when decoupled, should not need host.h include above
 #include "comm/socket.h"
 
 namespace sss {
 
-class host;
-class abstract_stream;
-class channel;
-class server;
 namespace internal {
     class stream_peer;
 }
@@ -74,9 +70,9 @@ namespace internal {
  */
 class stream : public std::enable_shared_from_this<stream>
 {
-    std::shared_ptr<host> host_;              ///< Per-host SSS state
-    std::shared_ptr<abstract_stream> stream_; ///< Internal stream control object
-    bool status_signal_connected_{false};     ///< on_link_status_changed signal connected
+    host_ptr host_;                       ///< Per-host SSS state
+    abstract_stream_ptr stream_;          ///< Internal stream control object
+    bool status_signal_connected_{false}; ///< on_link_status_changed signal connected
     std::string error_string_;
 
     /**
@@ -115,8 +111,8 @@ public:
     /**
      * Use this factory function to create new streams.
      */
-    static std::shared_ptr<stream> create(std::shared_ptr<abstract_stream> other_stream);
-    std::shared_ptr<host> get_host() const { return host_; }
+    static stream_ptr create(abstract_stream_ptr other_stream);
+    host_ptr get_host() const { return host_; }
 
     /**
      * Create a new stream instance.
@@ -126,11 +122,11 @@ public:
      *
      * This constructor is ok to use directly, the next one requires some extra setup.
      */
-    stream(std::shared_ptr<host> host);
+    stream(host_ptr host);
     /**
      * Internal constructor for creating sub-streams from abstract_streams.
      */
-    stream(std::shared_ptr<abstract_stream> other_stream, stream* parent = nullptr);
+    stream(abstract_stream_ptr other_stream, stream* parent = nullptr);
     virtual ~stream();
 
     //-------------------------------------------
@@ -380,7 +376,7 @@ public:
      *
      * @return A stream object representing the new substream.
      */
-    std::shared_ptr<stream> open_substream();
+    stream_ptr open_substream();
 
     /**
      * Listen for incoming substreams on this stream.
@@ -397,7 +393,7 @@ public:
      *
      * @return nullptr if no incoming substreams are waiting.
      */
-    std::shared_ptr<stream> accept_substream();
+    stream_ptr accept_substream();
 
     /**@}*///------------------------------------
     /** @name Stream control. */
