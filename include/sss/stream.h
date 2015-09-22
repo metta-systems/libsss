@@ -20,7 +20,7 @@
 namespace sss {
 
 namespace internal {
-    class stream_peer;
+class stream_peer;
 }
 
 /**
@@ -90,10 +90,10 @@ public:
     enum listen_mode
     {
         // @todo Clean up these values
-        reject         = 0,    ///< Reject incoming substreams.
-        buffer_limit   = 2,    ///< Accept subs up to receive buffer size.
-        unlimited      = 3,    ///< Accept substreams of any size.
-        inherit        = 4,    ///< Flag: Substreams inherit this listen mode.
+        reject       = 0, ///< Reject incoming substreams.
+        buffer_limit = 2, ///< Accept subs up to receive buffer size.
+        unlimited    = 3, ///< Accept substreams of any size.
+        inherit      = 4, ///< Flag: Substreams inherit this listen mode.
     };
 
     /**
@@ -102,10 +102,10 @@ public:
      */
     enum class shutdown_mode
     {
-        read    = 1,    ///< Read (incoming data) direction.
-        write   = 2,    ///< Write (outgoing data) direction.
-        close   = 3,    ///< Both directions (Read|Write).
-        reset   = 4,    ///< Forceful reset.
+        read  = 1, ///< Read (incoming data) direction.
+        write = 2, ///< Write (outgoing data) direction.
+        close = 3, ///< Both directions (Read|Write).
+        reset = 4, ///< Forceful reset.
     };
 
     /**
@@ -131,7 +131,7 @@ public:
 
     //-------------------------------------------
     /** @name Connection-related services. */
-    /**@{*///------------------------------------
+    /**@{*/ //------------------------------------
 
     /**
      * Connect to a given service and protocol on a remote host.
@@ -168,8 +168,9 @@ public:
      * @see sss::identity
      */
     bool connect_to(uia::peer_identity const& destination,
-        std::string service, std::string protocol,
-        uia::comm::endpoint const& destination_endpoint_hint = uia::comm::endpoint());
+                    std::string service,
+                    std::string protocol,
+                    uia::comm::endpoint const& destination_endpoint_hint = uia::comm::endpoint());
 
     /**
      * Disconnect the stream from its current peer.
@@ -204,7 +205,7 @@ public:
     /**@}*/
     //---------------------------------------------------------------
     /** @name Byte-oriented data transfer. Reading data. */
-    /**@{*///--------------------------------------------------------
+    /**@{*/ //--------------------------------------------------------
 
     /**
      * Determine the number of bytes currently available to be read via read_data().
@@ -217,9 +218,7 @@ public:
     /**
      * Returns true if at least one byte is available for reading.
      */
-    inline bool has_bytes_available() const {
-        return bytes_available() > 0;
-    }
+    inline bool has_bytes_available() const { return bytes_available() > 0; }
 
     /**
      * Read up to max_size bytes of data from the stream.
@@ -252,9 +251,7 @@ public:
     /**
      * Return true if at least one complete record is currently available for reading.
      */
-    inline bool has_pending_records() const {
-        return pending_records() > 0;
-    }
+    inline bool has_pending_records() const { return pending_records() > 0; }
 
     /**
      * Return size of the first available record.
@@ -295,9 +292,9 @@ public:
      */
     bool at_end() const; // @fixme QIODevice relic
 
-    /**@}*///--------------------------------------------------------
-    /** @name Byte-oriented data transfer. Writing data. */
-    /**@{*///--------------------------------------------------------
+    /**@}*/ //--------------------------------------------------------
+            /** @name Byte-oriented data transfer. Writing data. */
+    /**@{*/ //--------------------------------------------------------
 
     /**
      * Write data bytes to a stream.
@@ -328,18 +325,19 @@ public:
      * @param rec a byte_array containing the record to write.
      * @overload
      */
-    inline ssize_t write_record(const byte_array& rec) {
+    inline ssize_t write_record(const byte_array& rec)
+    {
         return write_record(rec.data(), rec.size());
     }
 
-    /**@}*///------------------------------------
+    /**@}*/ //------------------------------------
     /** @name Datagram protocol. Send and receive unordered, unreliable datagrams on this stream. */
-    /**@{*///------------------------------------
+    /**@{*/ //------------------------------------
 
     enum class datagram_type
     {
         non_reliable = 0,
-        reliable = 1
+        reliable     = 1
     };
 
     /**
@@ -348,10 +346,8 @@ public:
      */
     ssize_t read_datagram(char* data, ssize_t max_size);
     byte_array read_datagram(ssize_t max_size = 1 << 30);
-    ssize_t write_datagram(const char* data, ssize_t size,
-        datagram_type is_reliable);
-    inline ssize_t write_datagram(const byte_array& dgm,
-        datagram_type is_reliable)
+    ssize_t write_datagram(const char* data, ssize_t size, datagram_type is_reliable);
+    inline ssize_t write_datagram(const byte_array& dgm, datagram_type is_reliable)
     {
         return write_datagram(dgm.data(), dgm.size(), is_reliable);
     }
@@ -362,9 +358,9 @@ public:
     bool has_pending_datagrams() const;
     ssize_t pending_datagram_size() const;
 
-    /**@}*///--------------------------------------------------------
-    /** @name Substreams management. */
-    /**@{*///------------------------------------
+    /**@}*/ //--------------------------------------------------------
+            /** @name Substreams management. */
+    /**@{*/ //------------------------------------
 
     /**
      * Initiate a new substream as a child of this stream.
@@ -395,9 +391,9 @@ public:
      */
     stream_ptr accept_substream();
 
-    /**@}*///------------------------------------
-    /** @name Stream control. */
-    /**@{*///------------------------------------
+    /**@}*/ //------------------------------------
+            /** @name Stream control. */
+    /**@{*/ //------------------------------------
 
     /**
      * Returns the endpoint identifier of the local host as used in connecting the current stream.
@@ -486,18 +482,18 @@ public:
      */
     void dump();
 
-    /**@}*///------------------------------------
+    /**@}*/ //------------------------------------
     /** @name Signals. */
-    /**@{*///------------------------------------
+    /**@{*/ //------------------------------------
 
-    using bytes_written_signal = boost::signals2::signal<void (ssize_t)>;
+    using bytes_written_signal = boost::signals2::signal<void(ssize_t)>;
     /**
      * Emitted when some locally buffered data gets flushed
      * after being delivered to the receiver and acknowledged.
      */
     bytes_written_signal on_bytes_written;
 
-    using ready_signal = boost::signals2::signal<void (void)>;
+    using ready_signal = boost::signals2::signal<void(void)>;
     ready_signal on_ready_read;
 
     /**
@@ -535,7 +531,7 @@ public:
      */
     ready_signal on_receive_blocked;
 
-    using link_status_signal = boost::signals2::signal<void (void)>;
+    using link_status_signal = boost::signals2::signal<void(void)>;
     /**
      * Emitted when the stream establishes live connectivity
      * upon first connecting, or after being down or stalled.
@@ -560,13 +556,13 @@ public:
      */
     link_status_signal on_link_down;
 
-    using link_status_changed_signal = boost::signals2::signal<void (uia::comm::socket::status)>;
+    using link_status_changed_signal = boost::signals2::signal<void(uia::comm::socket::status)>;
     /**
      * Emitted when this stream observes a change in link status.
      */
     link_status_changed_signal on_link_status_changed;
 
-    using substream_notify_signal = boost::signals2::signal<void (void)>;
+    using substream_notify_signal = boost::signals2::signal<void(void)>;
     /**
      * Emitted when we receive an incoming substream while listening.
      * In response the client should call accept_substream() in a loop
@@ -575,8 +571,8 @@ public:
      */
     substream_notify_signal on_new_substream;
 
-    using error_signal = boost::signals2::signal<void (const std::string&)>;
-    using reset_signal = boost::signals2::signal<void (void)>;
+    using error_signal = boost::signals2::signal<void(const std::string&)>;
+    using reset_signal = boost::signals2::signal<void(void)>;
     /**
      * Emitted when an error condition is detected on the stream.
      * Link stalls or failures are not considered error conditions.
