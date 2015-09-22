@@ -27,7 +27,7 @@ constexpr local_stream_id_t root_sid = 0;
 stream_channel::stream_channel(shared_ptr<host> host,
                                internal::stream_peer* peer,
                                uia::peer_identity const& id)
-    : channel(host)
+    : channel(host, sodiumpp::secret_key(), sodiumpp::public_key("")) // @todo
     , peer_(peer)
     , root_(base_stream::create(host, id, nullptr))
 {
