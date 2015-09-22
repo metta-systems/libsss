@@ -568,7 +568,7 @@ operator<<(std::ostream& os, sss::base_stream::tx_frame_t const& pkt)
     }(pkt.type());
 
     os << "[packet txseq " << pkt.tx_byte_seq_ << ", type " << frame_type << ", owner " << pkt.owner
-       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt << "]";
+       << (pkt.late ? ", late" : ", not late") << ", payload " << pkt.payload_ << "]";
     return os;
 }
 
