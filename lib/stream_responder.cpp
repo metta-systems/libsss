@@ -130,7 +130,7 @@ stream_responder::lookup_notify(uia::peer_identity const& target_peer,
     // send them an R0 hole punching packet to their public endpoint.
     // @fixme perhaps make sure we might want to talk with them first?
     // e.g. check they're not in the blacklist.
-    send_probe0(peer_ep);
+    send_probe(peer_ep);
 }
 
 //=================================================================================================

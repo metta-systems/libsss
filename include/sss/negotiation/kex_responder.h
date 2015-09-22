@@ -96,7 +96,7 @@ private:
     void got_hello(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src);
     void got_initiate(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src);
     // temp
-    string send_cookie(string clientKey);
+    std::string send_cookie(std::string clientKey);
 };
 
 } // negotiation namespace
