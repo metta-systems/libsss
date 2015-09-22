@@ -29,7 +29,7 @@ stream_channel::stream_channel(shared_ptr<host> host,
                                uia::peer_identity const& id)
     : channel(host)
     , peer_(peer)
-    , root_(make_shared<base_stream>(host, id, nullptr))
+    , root_(base_stream::create(host, id, nullptr))
 {
     root_->state_ = base_stream::state::connected;
 

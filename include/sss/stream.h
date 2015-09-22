@@ -12,10 +12,10 @@
 #include "arsenal/byte_array.h"
 #include "comm/socket_endpoint.h"
 #include "sss/channels/peer_identity.h"
-#include "sss/forward_ptrs.h"
 #include "sss/host.h" // @todo Remove, temporarily used to make socket.h below compile
 // when decoupled, should not need host.h include above
 #include "comm/socket.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
 

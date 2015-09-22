@@ -27,7 +27,7 @@ namespace sss {
 
 constexpr int base_stream::max_attachments;
 
-base_stream::ptr
+base_stream_ptr
 base_stream::create(host_ptr host, uia::peer_identity const& peer_id, base_stream_ptr parent)
 {
     auto p = std::make_shared<base_stream>(host, peer_id, parent, private_tag{});
@@ -794,7 +794,7 @@ base_stream::set_priority(priority_t priority)
 // Substreams.
 //-------------------------------------------------------------------------------------------------
 
-shared_ptr<abstract_stream>
+abstract_stream_ptr
 base_stream::open_substream()
 {
     logger::debug() << "Base stream open substream";
@@ -812,7 +812,7 @@ base_stream::open_substream()
     return new_stream;
 }
 
-shared_ptr<abstract_stream>
+abstract_stream_ptr
 base_stream::accept_substream()
 {
     logger::debug() << "Base stream accept substream";

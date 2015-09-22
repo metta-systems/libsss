@@ -13,11 +13,10 @@
 #include "sss/framing/stream_protocol.h"
 #include "sss/channels/peer_identity.h"
 #include "sss/stream.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
 
-class host;
-class stream;
 namespace internal {
 class stream_peer;
 }
@@ -42,10 +41,10 @@ class abstract_stream : public stream_protocol
     friend class stream;
 
 protected:
-    std::shared_ptr<host> host_;  ///< Per-host state.
-    std::weak_ptr<stream> owner_; ///< Back-pointer to stream object,
-                                  ///< or nullptr if stream has been deleted.
-    uia::peer_identity peer_id_;  ///< EID of peer we're connected to.
+    host_ptr host_;              ///< Per-host state.
+    stream_wptr owner_;          ///< Back-pointer to stream object,
+                                 ///< or nullptr if stream has been deleted.
+    uia::peer_identity peer_id_; ///< EID of peer we're connected to.
 
 public:
     /**
@@ -60,9 +59,6 @@ public:
      */
     using priority_t = uint32_t;
 
-    using ptr      = std::shared_ptr<abstract_stream>;
-    using weak_ptr = std::weak_ptr<abstract_stream>;
-
 private:
     priority_t priority_{0};                                       ///< Current priority level
     stream::listen_mode listen_mode_{stream::listen_mode::reject}; ///< Listen for substreams.
@@ -71,7 +67,7 @@ public:
     /**
      * Create a new abstract_stream.
      */
-    abstract_stream(std::shared_ptr<host> h);
+    abstract_stream(host_ptr h);
 
     /**
      * Returns the endpoint identifier of the local host as used in connecting the current stream.
@@ -246,7 +242,7 @@ public:
      *
      * @return A stream object representing the new substream.
      */
-    virtual ptr open_substream(/*priority_t prio = 1*/) = 0;
+    virtual abstract_stream_ptr open_substream(/*priority_t prio = 1*/) = 0;
 
     /**
      * Listen for incoming substreams on this stream.
@@ -265,7 +261,7 @@ public:
      *
      * @return nullptr if no incoming substreams are waiting.
      */
-    virtual ptr accept_substream() = 0;
+    virtual abstract_stream_ptr accept_substream() = 0;
 
     //=============================================================================================
     // Stream control.
