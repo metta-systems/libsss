@@ -9,8 +9,7 @@
 #include "sss/channels/channel.h"
 #include "uia/comm/socket.h"
 
-namespace uia {
-namespace comm {
+namespace sss {
 /*
 bool
 socket_channel::bind(socket::weak_ptr socket, endpoint const& remote_ep, std::string channel_key)
@@ -61,5 +60,4 @@ size_t socket_channel::may_transmit()
     return false;
 }
 
-} // comm namespace
-} // uia namespace
+} // sss namespace
