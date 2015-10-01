@@ -10,9 +10,9 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <boost/functional/hash.hpp>
 #include "arsenal/byte_array.h"
 #include "arsenal/flurry.h"
-#include "arsenal/hash_combine.h"
 
 namespace sss {
 
@@ -75,10 +75,9 @@ struct hash<sss::unique_stream_id_t>
 {
     inline size_t operator()(sss::unique_stream_id_t const& a) const noexcept
     {
-        // VEEERY bad implementation for now. @fixme
-        size_t seed = 0xdeafba1d;
-        stdext::hash_combine(seed, a.counter_);
-        stdext::hash_combine(seed, a.half_channel_id_);
+        size_t seed = 0;
+        boost::hash_combine(seed, a.counter_);
+        boost::hash_combine(seed, a.half_channel_id_.as_string());
         return seed;
     }
 };

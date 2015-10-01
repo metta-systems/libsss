@@ -9,9 +9,9 @@
 #pragma once
 
 #include <unordered_map>
+#include <boost/functional/hash.hpp>
 #include <utility>
 #include <string>
-#include "arsenal/hash_combine.h"
 #include "arsenal/algorithm.h"
 
 // Hash specialization for pair<string,string>
@@ -23,10 +23,9 @@ struct hash<std::pair<std::string, std::string>> : public std::unary_function<st
 {
     inline size_t operator()(std::pair<std::string, std::string> const& a) const noexcept
     {
-        // VEEERY bad implementation for now. @fixme
-        size_t seed = 0xdeadbeef;
-        stdext::hash_combine(seed, a.first);
-        stdext::hash_combine(seed, a.second);
+        size_t seed = 0;
+        boost::hash_combine(seed, a.first);
+        boost::hash_combine(seed, a.second);
         return seed;
     }
 };
