@@ -1,6 +1,6 @@
 #include "arsenal/logging.h"
 #include "comm/packet_receiver.h"
-#include "comm/host_interface.h"
+#include "uia/comm/socket_host_interface.h"
 
 using namespace std;
 

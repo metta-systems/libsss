@@ -11,7 +11,7 @@
 #include <memory>
 #include <unordered_map>
 #include "arsenal/byte_array.h"
-#include "comm/socket_endpoint.h"
+#include "uia/comm/socket_endpoint.h"
 #include "sss/negotiation/kex_initiator.h"
 #include "sss/forward_ptrs.h"
 

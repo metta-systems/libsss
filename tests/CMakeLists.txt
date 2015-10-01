@@ -2,15 +2,14 @@
 # There should be some more work on separating the librouting and libsss so that
 # there are no cross-references and libraries could be linked completely independently.
 if (UNIX AND NOT APPLE)
-    set(SSS_LIBS routing sss routing sss)
+    set(SSS_LIBS routing sss routing sss uia)
 else()
-    set(SSS_LIBS routing sss)
+    set(SSS_LIBS routing sss uia)
 endif()
 
 create_test(frames_serialization LIBS sss arsenal)
-create_test(identity LIBS sss arsenal ${OPENSSL_LIBRARIES})
 
-create_test(host LIBS sss arsenal routing ${OPENSSL_LIBRARIES})
+create_test(host LIBS ${SSS_LIBS} arsenal routing ${OPENSSL_LIBRARIES})
 create_test(channel LIBS sss arsenal)
 create_test(stream_user LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES})
 create_test(stream_internal LIBS sss arsenal)
@@ -27,7 +26,3 @@ create_test(simulator LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES})
 
 # Regression tests are fairly long
 create_test(datagrams LIBS ${SSS_LIBS} arsenal sodiumpp ${OPENSSL_LIBRARIES} NO_CTEST)
-
-# These need a way to limit io_service run time (or a way to cancel async_receive_from).
-create_test(udp_link LIBS sss arsenal ${OPENSSL_LIBRARIES} NO_CTEST)
-create_test(run_udp_receiver LIBS sss arsenal routing ${OPENSSL_LIBRARIES} NO_CTEST)

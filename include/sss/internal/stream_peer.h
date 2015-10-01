@@ -16,7 +16,7 @@
 #include "sss/framing/stream_protocol.h"
 #include "sss/host.h"
 #include "sss/streams/base_stream.h"
-#include "sss/channels/peer_identity.h"
+#include "uia/peer_identity.h"
 #include "sss/channels/stream_channel.h"
 #include "sss/forward_ptrs.h"
 

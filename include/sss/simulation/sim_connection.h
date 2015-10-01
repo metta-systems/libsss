@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "comm/socket_endpoint.h"
+#include "uia/comm/socket_endpoint.h"
 #include "sss/internal/timer.h"
 
 namespace sss {

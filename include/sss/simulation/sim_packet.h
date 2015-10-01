@@ -8,8 +8,7 @@
 //
 #pragma once
 
-#include "sss/host.h"//@todo Remove because of sss::host dependency in comm/socket
-#include "comm/socket.h"
+#include "uia/comm/socket.h"
 #include "sss/internal/timer.h"
 
 namespace sss {

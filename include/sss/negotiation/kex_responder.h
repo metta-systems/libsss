@@ -10,12 +10,12 @@
 
 #include <set>
 #include <boost/signals2/signal.hpp>
-#include "comm/socket_endpoint.h"
-#include "comm/packet_receiver.h"
-#include "sss/internal/timer.h"
-#include "sss/channels/peer_identity.h"
-#include "sss/forward_ptrs.h"
 #include "sodiumpp/sodiumpp.h"
+#include "uia/peer_identity.h"
+#include "uia/comm/socket_endpoint.h"
+#include "sss/forward_ptrs.h"
+#include "comm/packet_receiver.h"/// fixme
+#include "sss/internal/timer.h"
 
 namespace sss {
 namespace negotiation {

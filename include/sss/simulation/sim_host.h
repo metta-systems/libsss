@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 #include "sss/host.h"
-#include "comm/socket.h"
+#include "uia/comm/socket.h"
 
 namespace sss {
 namespace simulation {

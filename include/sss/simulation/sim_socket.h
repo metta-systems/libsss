@@ -8,9 +8,7 @@
 //
 #pragma once
 
-#include "sss/simulation/sim_host.h" // @todo Remove, temporarily used to make socket.h below compile
-// when decoupled, should not need host.h include above
-#include "comm/socket.h"
+#include "uia/comm/socket.h"
 #include "sss/forward_ptrs.h"
 
 namespace sss {

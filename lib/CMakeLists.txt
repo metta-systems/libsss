@@ -9,19 +9,14 @@ set(simulator_SOURCES
 set(platform_SOURCES)
 if (UNIX)
     list(APPEND platform_SOURCES
-        platform-unix.cpp
-        comm/platform-unix.cpp)
+        platform-unix.cpp)
 endif()
 if (WIN32)
     list(APPEND platform_SOURCES
-        platform-win.cpp
-        comm/platform-win.cpp)
+        platform-win.cpp)
 endif()
 
 set(comm_SOURCES
-    comm/socket.cpp
-    comm/udp_socket.cpp
-    comm/socket_endpoint.cpp
     comm/socket_channel.cpp
     comm/packet_receiver.cpp
     )
@@ -50,7 +45,6 @@ add_library(sss STATIC
     ${comm_SOURCES}
     ${stream_SOURCES}
     channel.cpp
-    peer_identity.cpp
     kex_responder.cpp
     kex_initiator.cpp
     server.cpp

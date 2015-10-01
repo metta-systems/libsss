@@ -6,9 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "arsenal/logging.h"
-#include "arsenal/base32x.h"
-#include "comm/socket_channel.h"
+#include "sss/channels/channel.h"
+#include "uia/comm/socket.h"
 
 namespace uia {
 namespace comm {

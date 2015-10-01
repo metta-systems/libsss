@@ -9,8 +9,7 @@
 #pragma once
 
 #include "arsenal/byte_array.h"
-#include "comm/socket.h"
-#include "comm/socket_channel.h"
+#include "uia/comm/socket.h"
 #include "sss/framing/stream_protocol.h"
 #include "sodiumpp/sodiumpp.h"
 #include <boost/asio.hpp>

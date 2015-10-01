@@ -11,11 +11,10 @@
 #include "arsenal/any_int_cast.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/settings_provider.h"
-#include "comm/platform.h"
-#include "comm/socket.h"
-#include "comm/socket_channel.h"
+#include "uia/comm/platform.h"
+#include "uia/comm/socket.h"
 #include "comm/packet_receiver.h"
-#include "comm/udp_socket.h"
+#include "uia/comm/udp_socket.h"
 #include "sss/internal/socket_host_state.h"
 
 using namespace std;
