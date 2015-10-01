@@ -29,7 +29,7 @@ class host;
  * This mixin class encapsulates socket-related part of host state.
  * @see host
  */
-class socket_host_state : protected virtual asio_host_state, public uia::comm::socket_host_interface
+class socket_host_state : public virtual asio_host_state, public uia::comm::socket_host_interface
 {
     using packet_receiver = uia::comm::packet_receiver;
     using socket_set      = std::set<uia::comm::socket_wptr, std::owner_less<uia::comm::socket_wptr>>;
