@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "sss/channels/channel.h"
 #include "sss/streams/base_stream.h"
+#include "sss/internal/timer.h"
 
 namespace sss {
 

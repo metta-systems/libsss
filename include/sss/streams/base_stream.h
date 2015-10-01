@@ -9,6 +9,7 @@
 #pragma once
 
 #include <deque>
+#include <unordered_set>
 #include <boost/signals2/signal.hpp>
 #include <boost/circular_buffer.hpp>
 #include "sss/streams/abstract_stream.h"
