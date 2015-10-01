@@ -13,7 +13,7 @@
 #include "sss/internal/timer.h"
 #include "sss/negotiation/kex_host_state.h"
 #include "sss/internal/stream_host_state.h"
-#include "sss/channels/routing_host_state.h"
+#include "sss/internal/routing_host_state.h"
 #include "sss/internal/socket_host_state.h"
 #include "sss/forward_ptrs.h"
 
