@@ -27,7 +27,11 @@ namespace negotiation {
  * XXX make key_initiator an abstract base class like key_responder,
  * calling a create_channel() method when it needs to set up a channel
  * rather than requiring the channel to be passed in at the outset.
+ *
+ * The implemented class of this abstract base is @c stream_initiator.
  */
+
+// @todo Single initiator may set up channel to single peer_identity on multiple endpoints?
 
 // kex_responder side:
 // Hello and Cookie processing requires no state.
@@ -49,14 +53,12 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
 
     /**
      * Current phase of the protocol negotiation.
-     * CurveCP-style.
      */
     enum class state
     {
         idle,
-        hello,    // gives server short-term client pk
-        cookie,   // gives client server's short-term pk
-        initiate, // exchanges long-term sk between server and client - auth phase
+        hello,    // gives server client's short-term public key
+        initiate, // auth phase
         done
     } state_{state::idle};
 
@@ -67,21 +69,24 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
     void done();
 
     // Temp state
-    sodiumpp::secret_key long_term_key;
-    sodiumpp::secret_key short_term_key;
+    sodiumpp::secret_key long_term_key; // our long-term key (host.id)
+    sodiumpp::secret_key short_term_key; // out short-term key (generated)
     struct server
     {
-        std::string long_term_key; // == kex_responder.long_term_key.pk
-        std::string short_term_key;
+        std::string long_term_public_key; // == kex_responder.long_term_key.pk
+        std::string short_term_key; // remote_id.short_term key
     } server;
 
+    std::string cookie_; // one-minute cookie received after hello packet response
+
 protected:
-    virtual channel_ptr create_channel() { return nullptr; }; //@TODO pure virtual = 0;
+    virtual channel_ptr create_channel() {return nullptr;}//= 0;
 
 public:
-    /// Start key negotiation for a channel that has been bound to a link but not yet activated.
-    /// If 'target_peer' is non-empty, only connect to specified host ID.
-    kex_initiator(std::shared_ptr<host> host, uia::peer_identity const& target_peer);
+    /// Start key negotiation with remote peer. If successful, this negotiation will yield a
+    /// new channel via `create_channel()` call.
+    kex_initiator(host_ptr host, uia::peer_identity const& target_peer,
+        uia::comm::socket_endpoint target);
     ~kex_initiator();
 
     /**
@@ -90,8 +95,8 @@ public:
     void exchange_keys();
 
     /**
-     * Cancel all of this kex_initiator's activities (without actually deleting the object just
-     * yet).
+     * Cancel all of this kex_initiator's activities
+     * (without actually deleting the object just yet).
      */
     void cancel();
 
@@ -99,7 +104,7 @@ public:
     inline bool is_done() const { return state_ == state::done; }
 
     /**
-     * Key exchange protocol.
+     * Key exchange protocol from the initiator standpoint.
      */
     void send_hello();
     void got_cookie(boost::asio::const_buffer buf);

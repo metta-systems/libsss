@@ -224,35 +224,26 @@ kex_responder::send_probe(uia::comm::endpoint const& dest)
 //=================================================================================================
 
 negotiation::kex_initiator_ptr
-kex_host_state::get_initiator(byte_array nonce)
+kex_host_state::get_initiator(uia::comm::endpoint const& ep)
 {
-    auto it = initiators_.find(nonce);
+    auto it = initiators_.find(ep);
     if (it == initiators_.end()) {
         return nullptr;
     }
     return it->second;
 }
 
-pair<kex_host_state::ep_iterator, kex_host_state::ep_iterator>
-kex_host_state::get_initiators(uia::comm::endpoint const& ep)
-{
-    return ep_initiators_.equal_range(ep);
-}
-
 void
-kex_host_state::register_initiator(byte_array const& nonce,
-                                   uia::comm::endpoint const& ep,
+kex_host_state::register_initiator(uia::comm::endpoint const& ep,
                                    negotiation::kex_initiator_ptr ki)
 {
-    initiators_.insert(make_pair(nonce, ki));
-    ep_initiators_.insert(make_pair(ep, ki));
+    initiators_.insert(make_pair(ep, ki));
 }
 
 void
-kex_host_state::unregister_initiator(byte_array const& nonce, uia::comm::endpoint const& ep)
+kex_host_state::unregister_initiator(uia::comm::endpoint const& ep)
 {
-    initiators_.erase(nonce);
-    ep_initiators_.erase(ep);
+    initiators_.erase(ep);
 }
 
 } // sss namespace

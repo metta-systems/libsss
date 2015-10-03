@@ -156,10 +156,10 @@ class base_stream : public abstract_stream, public std::enable_shared_from_this<
         template <typename T>
         inline T* header()
         {
-            auto header_len = channel::header_len + sizeof(T);
-            if (payload_size() < decltype(payload_size())(header_len)) {
+            // auto header_len = channel::header_len + sizeof(T);
+            // if (payload_size() < decltype(payload_size())(header_len)) {
                 // payload_.resize(header_len);
-            }
+            // }
             return boost::asio::buffer_cast<T*>(payload_);
         }
 
@@ -576,18 +576,18 @@ template <typename T>
 inline T const*
 as_header(byte_array const& v)
 {
-    return reinterpret_cast<T const*>(v.const_data() + channel::header_len);
+    return reinterpret_cast<T const*>(v.const_data()/* + channel::header_len*/);
 }
 
 template <typename T>
 inline T*
 as_header(byte_array& v)
 {
-    size_t header_len = channel::header_len + sizeof(T);
-    if (v.size() < header_len) {
-        v.resize(header_len);
-    }
-    return reinterpret_cast<T*>(v.data() + channel::header_len);
+    // size_t header_len = channel::header_len + sizeof(T);
+    // if (v.size() < header_len) {
+        // v.resize(header_len);
+    // }
+    return reinterpret_cast<T*>(v.data()/* + channel::header_len*/);
 }
 
 } // sss namespace
