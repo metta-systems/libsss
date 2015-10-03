@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "sss/internal/stream_peer.h"
-#include "sss/channels/stream_channel.h"
+#include "sss/channels/channel.h"
 #include "arsenal/algorithm.h"
 #include "routing/routing_client.h"
 #include "routing/client_profile.h"

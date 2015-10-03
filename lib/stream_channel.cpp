@@ -8,7 +8,7 @@
 //
 #include "arsenal/logging.h"
 #include "arsenal/algorithm.h"
-#include "sss/channels/stream_channel.h"
+#include "sss/channels/channel.h"
 #include "sss/internal/stream_peer.h"
 
 using namespace std;

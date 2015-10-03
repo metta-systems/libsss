@@ -13,7 +13,7 @@
 #include "sss/streams/base_stream.h"
 #include "sss/streams/datagram_stream.h"
 #include "sss/host.h"
-#include "sss/channels/stream_channel.h"
+#include "sss/channels/channel.h"
 #include "sss/server.h"
 #include "sss/internal/stream_peer.h"
 

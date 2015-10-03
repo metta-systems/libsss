@@ -17,7 +17,7 @@
 #include "sss/host.h"
 #include "sss/streams/base_stream.h"
 #include "uia/peer_identity.h"
-#include "sss/channels/stream_channel.h"
+#include "sss/internal/stream_host_state.h"
 #include "sss/forward_ptrs.h"
 
 namespace uia {

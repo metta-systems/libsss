@@ -9,7 +9,7 @@
 #include "arsenal/logging.h"
 #include "sss/host.h"
 #include "uia/peer_identity.h"
-#include "sss/channels/stream_channel.h"
+#include "sss/channels/channel.h"
 #include "sss/negotiation/kex_responder.h"
 #include "sss/internal/stream_peer.h"
 #include "routing/routing_client.h"

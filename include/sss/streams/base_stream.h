@@ -13,7 +13,6 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/circular_buffer.hpp>
 #include "sss/streams/abstract_stream.h"
-#include "sss/channels/channel.h"
 #include "sss/internal/usid.h"
 #include "arsenal/asio_buffer.hpp"
 

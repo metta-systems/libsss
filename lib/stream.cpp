@@ -12,7 +12,7 @@
 #include "arsenal/algorithm.h"
 #include "uia/peer_identity.h"
 #include "sss/stream.h"
-#include "sss/channels/stream_channel.h"
+#include "sss/channels/channel.h"
 #include "sss/internal/stream_peer.h"
 #include "sss/streams/base_stream.h"
 #include "sss/host.h"
