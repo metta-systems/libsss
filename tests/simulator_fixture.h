@@ -65,7 +65,7 @@ struct simulator_fixture
         BOOST_CHECK(server_host != nullptr);
         server_host_eid = server_host->host_identity().id();
         server_host_address =
-            uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),
+            uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),
                                 sss::stream_protocol::default_port);
 
         server_socket = server_host->create_socket();
@@ -85,7 +85,7 @@ struct simulator_fixture
         BOOST_CHECK(client_host != nullptr);
         client_host_eid = client_host->host_identity().id();
         client_host_address =
-            uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),
+            uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),
                                 sss::stream_protocol::default_port);
 
         client_socket = client_host->create_socket();
