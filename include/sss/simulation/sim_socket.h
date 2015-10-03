@@ -14,7 +14,7 @@
 namespace sss {
 namespace simulation {
 
-class sim_socket : public uia::comm::socket, public std::enable_shared_from_this<sim_socket>
+class sim_socket : public uia::comm::socket
 {
     simulator_ptr simulator_;
     sim_host_ptr host_;

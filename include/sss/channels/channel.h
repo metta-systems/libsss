@@ -177,7 +177,7 @@ protected:
 /**
  * Abstract base class representing a channel between a local link and a remote endpoint.
  */
-class channel : public socket_channel, public std::enable_shared_from_this<channel>
+class channel : public socket_channel
 {
     friend class base_stream; // @fixme *sigh*
 
