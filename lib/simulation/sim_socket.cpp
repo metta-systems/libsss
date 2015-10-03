@@ -38,7 +38,8 @@ sim_socket::bind(uia::comm::endpoint const& ep)
         while (port < 65536 and host_->socket_for_port(port) != nullptr)
             ++port;
 
-        assert(port < 65536);
+        if (port >= 65536)
+            return false;
 
         port_ = port;
     } else {
