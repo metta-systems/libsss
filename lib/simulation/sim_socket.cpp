@@ -34,7 +34,7 @@ sim_socket::bind(uia::comm::endpoint const& ep)
     assert(port_ == 0);
 
     if (ep.port() == 0) {
-        int port = 1;
+        int port = 1024;
         while (port < 65536 and host_->socket_for_port(port) != nullptr)
             ++port;
 
