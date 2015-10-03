@@ -16,6 +16,7 @@
 #include "sss/simulation/sim_host.h"
 #include "sss/simulation/sim_socket.h"
 #include "sss/simulation/sim_connection.h"
+#include "sss/forward_ptrs.h"
 
 struct simulator_fixture
 {
@@ -25,13 +26,13 @@ struct simulator_fixture
     std::shared_ptr<sss::simulation::sim_host> server_host;
     uia::peer_identity server_host_eid;
     uia::comm::endpoint server_host_address;
-    std::shared_ptr<uia::comm::socket> server_link;
+    uia::comm::socket_ptr server_socket;
     std::shared_ptr<sss::server> server;
 
     std::shared_ptr<sss::simulation::sim_host> client_host;
     uia::peer_identity client_host_eid;
     uia::comm::endpoint client_host_address;
-    std::shared_ptr<uia::comm::socket> client_link;
+    uia::comm::socket_ptr client_socket;
     std::shared_ptr<sss::stream> client;
 
     simulator_fixture()
@@ -48,10 +49,10 @@ struct simulator_fixture
     {
         server_client_connection.reset();
         client.reset();
-        client_link.reset();
+        client_socket.reset();
         client_host.reset();
         server.reset();
-        server_link.reset();
+        server_socket.reset();
         server_host.reset();
         simulator.reset();
         logger::debug() << "<<< host use counts after reset " << std::dec << client_host.use_count()
@@ -67,10 +68,10 @@ struct simulator_fixture
             uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.2"),
                                 sss::stream_protocol::default_port);
 
-        server_link = server_host->create_socket();
-        BOOST_CHECK(server_link != nullptr);
-        server_link->bind(server_host_address);
-        BOOST_CHECK(server_link->is_active());
+        server_socket = server_host->create_socket();
+        BOOST_CHECK(server_socket != nullptr);
+        server_socket->bind(server_host_address);
+        BOOST_CHECK(server_socket->is_active());
 
         server = std::make_shared<sss::server>(server_host);
         BOOST_CHECK(server != nullptr);
@@ -87,10 +88,10 @@ struct simulator_fixture
             uia::comm::endpoint(boost::asio::ip::address_v4::from_string("10.0.0.1"),
                                 sss::stream_protocol::default_port);
 
-        client_link = client_host->create_socket();
-        BOOST_CHECK(client_link != nullptr);
-        client_link->bind(client_host_address);
-        BOOST_CHECK(client_link->is_active());
+        client_socket = client_host->create_socket();
+        BOOST_CHECK(client_socket != nullptr);
+        client_socket->bind(client_host_address);
+        BOOST_CHECK(client_socket->is_active());
 
         client = std::make_shared<sss::stream>(client_host);
         BOOST_CHECK(client != nullptr);
