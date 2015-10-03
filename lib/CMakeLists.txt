@@ -16,11 +16,6 @@ if (WIN32)
         platform-win.cpp)
 endif()
 
-set(comm_SOURCES
-    comm/socket_channel.cpp
-    comm/packet_receiver.cpp
-    )
-
 set(stream_SOURCES
     abstract_stream.cpp
     base_stream.cpp
@@ -42,9 +37,9 @@ set(framing_SOURCES
     framing/stream_frame.cpp)
 
 add_library(sss STATIC
-    ${comm_SOURCES}
     ${stream_SOURCES}
     channel.cpp
+    socket_channel.cpp
     kex_responder.cpp
     kex_initiator.cpp
     server.cpp

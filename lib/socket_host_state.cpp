@@ -13,7 +13,7 @@
 #include "arsenal/settings_provider.h"
 #include "uia/comm/platform.h"
 #include "uia/comm/socket.h"
-#include "comm/packet_receiver.h"
+#include "uia/comm/packet_receiver.h"
 #include "uia/comm/udp_socket.h"
 #include "sss/internal/socket_host_state.h"
 

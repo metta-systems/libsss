@@ -13,9 +13,9 @@
 #include "sodiumpp/sodiumpp.h"
 #include "uia/peer_identity.h"
 #include "uia/comm/socket_endpoint.h"
-#include "sss/forward_ptrs.h"
-#include "comm/packet_receiver.h"/// fixme
+#include "uia/comm/packet_receiver.h"/// fixme
 #include "sss/internal/timer.h"
+#include "sss/forward_ptrs.h"
 
 namespace sss {
 namespace negotiation {
