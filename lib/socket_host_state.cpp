@@ -28,12 +28,11 @@ namespace sss {
 //=================================================================================================
 
 packet_receiver_wptr
-socket_host_state::receiver_for(std::string magic)
+socket_host_state::receiver_for(uint64_t magic)
 {
     auto it = receivers_.find(magic);
     if (it == receivers_.end()) {
-        logger::debug() << "Receiver not found looking for magic "
-                        << magic; // @todo magic is binary
+        logger::debug() << "Receiver not found looking for magic " << hex << magic;
         return packet_receiver_wptr();
     }
     return it->second;
