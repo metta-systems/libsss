@@ -11,6 +11,7 @@
 #include "arsenal/algorithm.h"
 #include "arsenal/subrange.h"
 #include "arsenal/flurry.h"
+#include "arsenal/proquint.h"
 #include "sss/host.h"
 #include "sss/channels/channel.h"
 #include "sss/framing/packet_format.h"
@@ -18,14 +19,19 @@
 using namespace std;
 using namespace sodiumpp;
 
+namespace {
+
 template <typename T>
 bool socket_send(uia::comm::socket_endpoint const& target, T const& msg)
 {
-    char stack[1280]; // @todo Use a send packet pool
+    char stack[1280] = {0}; // @todo Use a send packet pool
     boost::asio::mutable_buffer buf(stack, 1280);
-    fusionary::write(buf, msg);
-    return target.send(boost::asio::buffer_cast<const char*>(buf), boost::asio::buffer_size(buf));
+    auto end = fusionary::write(buf, msg);
+    return target.send(boost::asio::buffer_cast<const char*>(buf),
+        boost::asio::buffer_size(buf) - boost::asio::buffer_size(end));
 }
+
+} // anonymous namespace
 
 namespace sss {
 namespace negotiation {
@@ -45,6 +51,9 @@ kex_initiator::kex_initiator(host_ptr host,
     logger::debug() << "Creating kex_initiator " << this;
 
     assert(target_ != uia::comm::endpoint());
+
+    server.long_term_public_key = target_peer.public_key();
+    logger::debug() << "Long term responder pk " << encode::to_proquint(server.long_term_public_key);
 }
 
 kex_initiator::~kex_initiator()
@@ -56,7 +65,7 @@ kex_initiator::~kex_initiator()
 void
 kex_initiator::exchange_keys()
 {
-    logger::debug() << "Initiating key exchange connection to " << target_ << " peer id "
+    logger::debug() << "Initiating key exchange connection to peer " << target_ << "/"
                     << remote_id_;
     host_->register_initiator(target_, shared_from_this());
     retransmit_timer_.on_timeout.connect([this](bool fail) { retransmit(fail); });
@@ -130,8 +139,11 @@ kex_initiator::send_hello()
 
 // This is called by kex_responder's packet handling machinery.
 void
-kex_initiator::got_cookie(boost::asio::const_buffer buf)
+kex_initiator::got_cookie(boost::asio::const_buffer buf, uia::comm::socket_endpoint const& src)
 {
+    if (src != target_)
+        return; // not our cookie!
+
     sss::channels::cookie_packet_header cookie;
     fusionary::read(cookie, buf);
 

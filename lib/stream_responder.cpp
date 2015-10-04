@@ -12,6 +12,7 @@
 #include "sss/channels/channel.h"
 #include "sss/negotiation/kex_responder.h"
 #include "sss/internal/stream_peer.h"
+#include "sss/framing/framing_types.h"
 #include "routing/routing_client.h"
 
 using namespace std;
@@ -51,12 +52,14 @@ class stream_responder : public negotiation::kex_responder, public stream_protoc
     /**@}*/
 
 public:
-    stream_responder(std::shared_ptr<host> host);
+    stream_responder(host_ptr host);
 };
 
 stream_responder::stream_responder(shared_ptr<host> host)
-    : kex_responder(host /*, stream_protocol::magic_id*/)
+    : kex_responder(host)
 {
+    logger::debug() << "Creating stream_responder " << this;
+
     // Get us connected to all currently extant routing clients
     for (ur::client* c : host->coordinator->routing_clients()) {
         connect_routing_client(c);
@@ -142,6 +145,9 @@ stream_host_state::instantiate_stream_responder()
 {
     if (!responder_) {
         responder_ = make_shared<stream_responder>(get_host());
+        responder_->bind(magic::hello_packet::value);
+        responder_->bind(magic::cookie_packet::value);
+        responder_->bind(magic::initiate_packet::value);
     }
     assert(responder_);
 }

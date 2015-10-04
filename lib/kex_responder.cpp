@@ -11,6 +11,7 @@
 #include "arsenal/make_unique.h"
 #include "arsenal/algorithm.h"
 #include "arsenal/flurry.h"
+#include "arsenal/subrange.h"
 #include "sss/host.h"
 #include "sss/channels/channel.h"
 #include "sss/framing/packet_format.h"
@@ -31,6 +32,16 @@ warning(string message)
     logger::warning() << "Key exchange - " << message;
 }
 
+template <typename T>
+bool socket_send(uia::comm::socket_endpoint const& target, T const& msg)
+{
+    char stack[1280] = {0}; // @todo Use a send packet pool
+    boost::asio::mutable_buffer buf(stack, 1280);
+    auto end = fusionary::write(buf, msg);
+    return target.send(boost::asio::buffer_cast<const char*>(buf),
+        boost::asio::buffer_size(buf) - boost::asio::buffer_size(end));
+}
+
 } // anonymous namespace
 
 namespace sss {
@@ -43,6 +54,7 @@ namespace negotiation {
 kex_responder::kex_responder(host_ptr host)
     : packet_receiver(host.get())
     , host_(host)
+    , long_term_key(host->host_identity().public_key(), host->host_identity().secret_key())
 {
 }
 
@@ -60,29 +72,28 @@ kex_responder::receive(boost::asio::const_buffer msg, uia::comm::socket_endpoint
     logger::debug() << "kex_responder::receive " << dec << boost::asio::buffer_size(msg)
                     << " bytes from " << src;
 
-    // Find and process the first recognized primary chunk.
-    // for (auto chunk : m.chunks) {
-    //     switch (chunk.type) {
-    //         case key_chunk_type::dh_init1: return got_dh_init1(*chunk.dh_init1, src);
-    //         case key_chunk_type::dh_response1:
-    //             return got_dh_response1(*chunk.dh_response1, src); // key_initiator method?
-    //         case key_chunk_type::dh_init2: return got_dh_init2(*chunk.dh_init2, src);
-    //         case key_chunk_type::dh_response2:
-    //             return got_dh_response2(*chunk.dh_response2, src); // key_initiator method?
-    //         default:
-    //             logger::warning() << "Unknown negotiation chunk type " << uint32_t(chunk.type);
-    //             break;
-    //     }
-    // }
+    const uint64_t magic = *boost::asio::buffer_cast<const uint64_t*>(msg);
+    switch (magic) {
+        case magic::hello_packet::value:
+            return got_hello(msg, src);
+        case magic::cookie_packet::value: {
+            auto initiator = host_->get_initiator(src);
+            return initiator->got_cookie(msg, src);
+        }
+        case magic::initiate_packet::value:
+            return got_initiate(msg, src);
+        // case magic::r0_packet::value:
+        // a responder's ping packet for hole punching.
+            // return got_probe(src);
+    }
 
-    // If there were no recognized primary chunks, it might be just
-    // a responder's ping packet for hole punching.
-    return got_probe(src);
+    // If there was no recognized packet, just ignore it.
 }
 
 void
 kex_responder::got_hello(boost::asio::const_buffer msg, uia::comm::socket_endpoint const& src)
 {
+    logger::debug() << "Responder got hello packet from " << src;
     sss::channels::hello_packet_header hello;
     fusionary::read(hello, msg);
 
@@ -96,12 +107,13 @@ kex_responder::got_hello(boost::asio::const_buffer msg, uia::comm::socket_endpoi
 
     // Send cookie packet if we're willing to accept connection.
     // We never resend the cookie (spec 3.1.1), initiator will repeat hello if packets get lost.
-    // return send_cookie(clientKey);
+    send_cookie(clientKey, src);
 }
 
-string
-kex_responder::send_cookie(string clientKey)
+void
+kex_responder::send_cookie(string clientKey, uia::comm::socket_endpoint const& src)
 {
+    logger::debug() << "Responder sending cookie to " << src;
     sss::channels::cookie_packet_header packet;
     sss::channels::responder_cookie cookie;
     secret_key sessionKey; // Generate short-term server key
@@ -127,13 +139,13 @@ kex_responder::send_cookie(string clientKey)
     packet.nonce = as_array<16>(seal.nonce_sequential());
     packet.box   = as_array<144>(box);
 
-    // return make_packet(packet);
-    return "";
+    socket_send(src, packet);
 }
 
 void
 kex_responder::got_initiate(boost::asio::const_buffer buf, uia::comm::socket_endpoint const& src)
 {
+    logger::debug() << "Responder got initiate packet from " << src;
     sss::channels::initiate_packet_header init;
     buf = fusionary::read(init, buf);
 
@@ -144,11 +156,11 @@ kex_responder::got_initiate(boost::asio::const_buffer buf, uia::comm::socket_end
         crypto_secretbox_open(as_string(init.responder_cookie.box), nonce, minute_key.get());
 
     // Check that cookie and client match
-    // if (as_string(init.initiator_shortterm_public_key) != string(subrange(cookie, 0, 32)))
-    // return warning("cookie and client mismatch");
+    if (as_string(init.initiator_shortterm_public_key) != string(subrange(cookie, 0, 32)))
+        return warning("cookie and client mismatch");
 
     // Extract server short-term secret key
-    // short_term_key = secret_key(public_key(""), subrange(cookie, 32, 32));
+    short_term_key = secret_key(public_key(""), subrange(cookie, 32, 32));
 
     // Open the Initiate box using both short-term keys
     string initiateNonce = INITIATE_NONCE_PREFIX + as_string(init.nonce);
@@ -158,12 +170,12 @@ kex_responder::got_initiate(boost::asio::const_buffer buf, uia::comm::socket_end
     string msg = unseal.unbox(as_string(init.box));
 
     // Extract client long-term public key and check the vouch subpacket.
-    string clientLongTermKey; // = subrange(msg, 0, 32);
+    string clientLongTermKey = subrange(msg, 0, 32);
 
-    string vouchNonce = VOUCH_NONCE_PREFIX; // + string(subrange(msg, 32, 16));
+    string vouchNonce = VOUCH_NONCE_PREFIX + string(subrange(msg, 32, 16));
 
     unboxer<recv_nonce> vouchUnseal(clientLongTermKey, long_term_key, vouchNonce);
-    string vouch; //= vouchUnseal.unbox(subrange(msg, 48, 48));
+    string vouch = vouchUnseal.unbox(subrange(msg, 48, 48));
 
     if (vouch != as_string(init.initiator_shortterm_public_key))
         return warning("vouch subpacket invalid");
@@ -174,6 +186,7 @@ kex_responder::got_initiate(boost::asio::const_buffer buf, uia::comm::socket_end
     // @todo Pass payload to the framing layer.
     // This means here we create channel, bind it and start parsing payload data
     // - investigate what this means lifetime-wise.
+    logger::debug() << "Responder VALIDATED initiate packet from " << src;
 
     // string payload = subrange(msg, 96);
     // hexdump(payload);
@@ -184,7 +197,7 @@ kex_responder::got_probe(uia::comm::socket_endpoint const& src)
 {
     // Trigger a retransmission of the dh_init1 packet
     // for each outstanding initiation attempt to the given target.
-    // logger::debug() << "Got probe from " << src;
+    logger::debug() << "Responder got probe packet from " << src;
 
     // @todo This ruins the init/response chain for the DH exchange
     // Peers are left in a perpetual loop of reinstating almost always broken peer channel.

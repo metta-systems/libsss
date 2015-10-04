@@ -107,7 +107,7 @@ public:
      * Key exchange protocol from the initiator standpoint.
      */
     void send_hello();
-    void got_cookie(boost::asio::const_buffer buf);
+    void got_cookie(boost::asio::const_buffer buf, uia::comm::socket_endpoint const& src);
     void send_initiate(std::string cookie, std::string payload);
 
     /**
