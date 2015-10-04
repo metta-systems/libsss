@@ -73,9 +73,9 @@ stream_responder::create_channel(uia::comm::socket_endpoint const& initiator_ep,
                                  byte_array const&,
                                  byte_array&)
 {
-    internal::stream_peer* peer = get_host()->stream_peer(initiator_eid);
+    internal::stream_peer* peer = get_host()->stream_peer(initiator_eid.as_string());
 
-    unique_ptr<channel> chan = make_unique<stream_channel>(get_host(), peer, initiator_eid);
+    unique_ptr<channel> chan = make_unique<stream_channel>(get_host(), peer, initiator_eid.as_string());
     /*    if (!chan->bind(initiator_ep))
         {
             logger::warning() << "Stream responder - could not bind new channel";
