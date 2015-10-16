@@ -40,6 +40,7 @@ add_library(sss STATIC
     ${stream_SOURCES}
     channel.cpp
     socket_channel.cpp
+    channel_initiator.cpp
     kex_responder.cpp
     kex_initiator.cpp
     server.cpp

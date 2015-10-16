@@ -28,7 +28,7 @@ namespace negotiation {
  * calling a create_channel() method when it needs to set up a channel
  * rather than requiring the channel to be passed in at the outset.
  *
- * The implemented class of this abstract base is @c stream_initiator.
+ * The implemented class of this abstract base is @c channel_initiator.
  */
 
 // @todo Single initiator may set up channel to single peer_identity on multiple endpoints?
@@ -78,7 +78,7 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
     std::string minute_cookie_; // one-minute cookie received after hello packet response
 
 protected:
-    virtual channel_ptr create_channel() {return nullptr;}//= 0;
+    virtual channel_ptr create_channel() = 0;
 
 public:
     /// Start key negotiation with remote peer. If successful, this negotiation will yield a

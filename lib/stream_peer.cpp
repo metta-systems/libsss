@@ -11,6 +11,7 @@
 #include "arsenal/algorithm.h"
 #include "routing/routing_client.h"
 #include "routing/client_profile.h"
+#include "sss/negotiation/channel_initiator.h"
 
 using namespace std;
 namespace ur = uia::routing;
@@ -335,7 +336,7 @@ stream_peer::initiate_key_exchange(uia::comm::socket_wptr l, uia::comm::endpoint
     // } // @sa stream_responder::create_channel
 
     // Start the key exchange process for the channel.
-    kex_initiator_ptr init = make_shared<kex_initiator>(host_, remote_id_, lep);
+    kex_initiator_ptr init = make_shared<channel_initiator>(host_, remote_id_, lep);
 
     init->on_completed.connect([this](kex_initiator_ptr ki, channel_ptr ch) { completed(ki, ch); });
 
