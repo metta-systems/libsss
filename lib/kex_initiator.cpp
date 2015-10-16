@@ -22,13 +22,14 @@ using namespace sodiumpp;
 namespace {
 
 template <typename T>
-bool socket_send(uia::comm::socket_endpoint const& target, T const& msg)
+bool
+socket_send(uia::comm::socket_endpoint const& target, T const& msg)
 {
     char stack[1280] = {0}; // @todo Use a send packet pool
     boost::asio::mutable_buffer buf(stack, 1280);
     auto end = fusionary::write(buf, msg);
     return target.send(boost::asio::buffer_cast<const char*>(buf),
-        boost::asio::buffer_size(buf) - boost::asio::buffer_size(end));
+                       boost::asio::buffer_size(buf) - boost::asio::buffer_size(end));
 }
 
 } // anonymous namespace
