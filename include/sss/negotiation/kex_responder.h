@@ -34,8 +34,6 @@ class kex_responder : public uia::comm::packet_receiver
 {
     host_ptr host_;
 
-    // Temp state
-    sodiumpp::secret_key long_term_key;
     sodiumpp::secret_key short_term_key;
     sodiumpp::secret_key minute_key;
     std::set<std::string> cookie_cache;

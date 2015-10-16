@@ -68,16 +68,14 @@ class kex_initiator : public std::enable_shared_from_this<kex_initiator>
 
     void done();
 
-    // Temp state
-    sodiumpp::secret_key long_term_key; // our long-term key (host.id)
-    sodiumpp::secret_key short_term_key; // out short-term key (generated)
-    struct server
-    {
-        std::string long_term_public_key; // == kex_responder.long_term_key.pk
-        std::string short_term_key; // remote_id.short_term key
-    } server;
+    // Key exchange state
 
-    std::string cookie_; // one-minute cookie received after hello packet response
+    // We know server long term public key on start - this is remote_id_
+    // We need to remember short-term server public key
+    sodiumpp::secret_key short_term_secret_key; // out short-term key (generated)
+    std::string server_short_term_public_key; // remote_peer.short_term key
+
+    std::string minute_cookie_; // one-minute cookie received after hello packet response
 
 protected:
     virtual channel_ptr create_channel() {return nullptr;}//= 0;

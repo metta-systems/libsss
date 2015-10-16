@@ -52,8 +52,8 @@ kex_initiator::kex_initiator(host_ptr host,
 
     assert(target_ != uia::comm::endpoint());
 
-    server.long_term_public_key = target_peer.public_key();
-    logger::debug() << "Long term responder pk " << encode::to_proquint(server.long_term_public_key);
+    logger::debug() << "Long term responder pk "
+                    << encode::to_proquint(remote_id_.public_key());
 }
 
 kex_initiator::~kex_initiator()
@@ -91,7 +91,7 @@ kex_initiator::retransmit(bool fail)
     if (state_ == state::hello) {
         send_hello();
     } else if (state_ == state::initiate) {
-        send_initiate(cookie_, "");
+        send_initiate(minute_cookie_, "");
         // @todo Retry initiate packets only during minute key validity period, then
         // fallback to Hello packet again...
     }
@@ -125,12 +125,13 @@ kex_initiator::send_hello()
 {
     logger::debug() << "Send hello to " << target_;
 
-    boxer<nonce64> seal(server.long_term_public_key, short_term_key, HELLO_NONCE_PREFIX);
+    boxer<nonce64> seal(remote_id_.public_key(), short_term_secret_key, HELLO_NONCE_PREFIX);
 
     sss::channels::hello_packet_header pkt;
-    pkt.initiator_shortterm_public_key = as_array<32>(short_term_key.pk.get());
-    pkt.box                            = as_array<80>(seal.box(long_term_key.pk.get() + string(32, '\0')));
-    pkt.nonce                          = as_array<8>(seal.nonce_sequential());
+    pkt.initiator_shortterm_public_key = as_array<32>(short_term_secret_key.pk.get());
+    pkt.box =
+        as_array<80>(seal.box(host_->host_identity().secret_key().pk.get() + string(32, '\0')));
+    pkt.nonce = as_array<8>(seal.nonce_sequential());
 
     socket_send(target_, pkt);
     retransmit_timer_.start();
@@ -150,34 +151,37 @@ kex_initiator::got_cookie(boost::asio::const_buffer buf, uia::comm::socket_endpo
     // open cookie box
     string nonce = COOKIE_NONCE_PREFIX + as_string(cookie.nonce);
 
-    unboxer<recv_nonce> unseal(server.long_term_public_key, short_term_key, nonce);
+    unboxer<recv_nonce> unseal(remote_id_.public_key(), short_term_secret_key, nonce);
     string open = unseal.unbox(as_string(cookie.box));
 
-    server.short_term_key = subrange(open, 0, 32);
-    string cookie_buf     = subrange(open, 32, 96);
+    server_short_term_public_key = subrange(open, 0, 32);
+    string cookie_buf            = subrange(open, 32, 96);
 
-    // @todo remmeber cookie for 1 minute
-    cookie_ = cookie_buf;
+    // @todo remember cookie for 1 minute
+    minute_cookie_ = cookie_buf;
 
-    send_initiate(cookie_, "");
+    send_initiate(minute_cookie_, "");
 }
 
 void
 kex_initiator::send_initiate(std::string cookie, std::string payload)
 {
     // Create vouch subpacket
-    boxer<random_nonce<8>> vouchSeal(server.long_term_public_key, long_term_key, VOUCH_NONCE_PREFIX);
-    string vouch = vouchSeal.box(short_term_key.pk.get());
+    boxer<random_nonce<8>> vouchSeal(
+        remote_id_.public_key(), host_->host_identity().secret_key(), VOUCH_NONCE_PREFIX);
+    string vouch = vouchSeal.box(short_term_secret_key.pk.get());
     assert(vouch.size() == 48);
 
     // Assemble initiate packet
     sss::channels::initiate_packet_header pkt;
-    pkt.initiator_shortterm_public_key = as_array<32>(short_term_key.pk.get());
+    pkt.initiator_shortterm_public_key = as_array<32>(short_term_secret_key.pk.get());
     pkt.responder_cookie.nonce         = as_array<16>(subrange(cookie, 0, 16));
     pkt.responder_cookie.box           = as_array<80>(subrange(cookie, 16));
 
-    boxer<nonce64> seal(server.short_term_key, short_term_key, INITIATE_NONCE_PREFIX);
-    pkt.box = seal.box(long_term_key.pk.get() + vouchSeal.nonce_sequential() + vouch + payload);
+    boxer<nonce64> seal(server_short_term_public_key, short_term_secret_key, INITIATE_NONCE_PREFIX);
+    pkt.box =
+        seal.box(host_->host_identity().secret_key().pk.get() + vouchSeal.nonce_sequential() + vouch
+                 + payload);
     // @todo Round payload size to next or second next multiple of 16..
     pkt.nonce = as_array<8>(seal.nonce_sequential());
 

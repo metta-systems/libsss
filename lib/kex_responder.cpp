@@ -54,7 +54,6 @@ namespace negotiation {
 kex_responder::kex_responder(host_ptr host)
     : packet_receiver(host.get())
     , host_(host)
-    , long_term_key(host->host_identity().public_key(), host->host_identity().secret_key())
 {
 }
 
@@ -100,7 +99,7 @@ kex_responder::got_hello(boost::asio::const_buffer msg, uia::comm::socket_endpoi
     string clientKey = as_string(hello.initiator_shortterm_public_key);
     string nonce     = HELLO_NONCE_PREFIX + as_string(hello.nonce);
 
-    unboxer<recv_nonce> unseal(clientKey, long_term_key, nonce);
+    unboxer<recv_nonce> unseal(clientKey, host_->host_identity().secret_key(), nonce);
     string open = unseal.unbox(as_string(hello.box));
 
     // Open box contains client's long-term public key which we should check against a blacklist
@@ -129,7 +128,8 @@ kex_responder::send_cookie(string clientKey, uia::comm::socket_endpoint const& s
     // Compressed cookie nonce
     cookie.nonce = as_array<16>(minuteKeyNonce.sequential());
 
-    boxer<random_nonce<8>> seal(clientKey, long_term_key, COOKIE_NONCE_PREFIX);
+    boxer<random_nonce<8>> seal(
+        clientKey, host_->host_identity().secret_key(), COOKIE_NONCE_PREFIX);
 
     // Server short-term public key + cookie
     // Box the cookies
@@ -174,7 +174,8 @@ kex_responder::got_initiate(boost::asio::const_buffer buf, uia::comm::socket_end
 
     string vouchNonce = VOUCH_NONCE_PREFIX + string(subrange(msg, 32, 16));
 
-    unboxer<recv_nonce> vouchUnseal(clientLongTermKey, long_term_key, vouchNonce);
+    unboxer<recv_nonce> vouchUnseal(
+        clientLongTermKey, host_->host_identity().secret_key(), vouchNonce);
     string vouch = vouchUnseal.unbox(subrange(msg, 48, 48));
 
     if (vouch != as_string(init.initiator_shortterm_public_key))
