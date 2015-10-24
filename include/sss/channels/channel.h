@@ -201,8 +201,6 @@ class channel : public socket_channel
     static constexpr packet_seq_t max_packet_sequence = ~0ULL;
 
 public:
-    static constexpr size_t header_len = 0; // @fixme Get rid of this
-
     channel(std::shared_ptr<host> host,
             sodiumpp::secret_key local_key,
             sodiumpp::public_key remote);

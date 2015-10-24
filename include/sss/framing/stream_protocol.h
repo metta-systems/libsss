@@ -16,9 +16,8 @@ namespace sss {
 /**
  * Packet sequence number for packets within a channel.
  */
-using packet_seq_t = uint64_t;
+using packet_seq_t = uint64_t; // @fixme goes to channel...
 
-constexpr size_t MIN_PACKET_SIZE = 64;
 
 /**
  * SSS stream protocol definitions.
@@ -27,9 +26,6 @@ constexpr size_t MIN_PACKET_SIZE = 64;
 class stream_protocol
 {
 public:
-    static constexpr uint16_t default_port = 9660;
-
-    static constexpr size_t mtu                     = 1280; // an ipv6 frame size, not fragmentable
     static constexpr size_t min_receive_buffer_size = mtu * 2; // @todo Not needed?
 
     enum class frame_type : uint8_t

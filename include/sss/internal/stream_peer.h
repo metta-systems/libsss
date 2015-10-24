@@ -45,8 +45,6 @@ namespace sss {
 class base_stream;
 class stream_channel;
 
-using channel_key = std::array<uint8_t, 32>;
-
 namespace internal {
 
 /**
