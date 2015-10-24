@@ -39,15 +39,8 @@ set(framing_SOURCES
 add_library(sss STATIC
     ${stream_SOURCES}
     channel.cpp
-    socket_channel.cpp
-    channel_initiator.cpp
-    kex_responder.cpp
-    kex_initiator.cpp
     server.cpp
-    timer.cpp
     host.cpp
-    asio_host_state.cpp
-    socket_host_state.cpp
     ${simulator_SOURCES}
     ${platform_SOURCES}
     ${framing_SOURCES})
