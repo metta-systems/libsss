@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(libsss)
 
-if (NOT BUILD_IN_METTANODE)
+if (NOT BUILD_IN_UVVY)
     include(cmake/setup.cmake)
     include_directories(3rdparty/endian 3rdparty/arsenal/include)
     include_directories(3rdparty/krypto/include)
@@ -14,7 +14,7 @@ add_subdirectory(doc)
 add_subdirectory(lib)
 
 # Build libarsenal in standalone version.
-if (NOT BUILD_IN_METTANODE)
+if (NOT BUILD_IN_UVVY)
     add_subdirectory(3rdparty/arsenal/lib)
     add_subdirectory(3rdparty/krypto/lib)
     add_subdirectory(3rdparty/routing/lib)
