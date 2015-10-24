@@ -42,49 +42,6 @@ class host : public std::enable_shared_from_this<host>,
              public timer_host_state,
              public routing_host_state
 {
-protected:
-    struct private_tag
-    {
-    };
-
-public:
-    using stream_host_state::stream_peer;
-
-    // Hide the constructor.
-    explicit host(private_tag) {}
-
-    ~host() { logger::debug() << this << " ~host"; }
-    inline host_ptr get_host() override { return shared_from_this(); }
-
-    /**
-     * @name Factory functions.
-     * Use those to create host instance.
-     */
-    /**@{*/
-    /**
-     * Create a "bare-bones" host state object with no sockets or identity.
-     * Client must establish a host identity via set_host_identity()
-     * and activate one or more network sockets before using sss.
-     */
-    static host_ptr create();
-    /**
-     * Create an easy-to-use default Host object. Uses the provided setting_provider
-     * registry to locate, or create if necessary, a persistent host identity,
-     * as described for identity_host_state::init_identity().
-     * Also creates and binds to at least one UDP socket, using a UDP port number specified
-     * in the settings_provider, or defaulting to @a default_port if not.
-     * If the desired UDP port cannot be bound, just picks an arbitrary UDP port instead
-     * and updates settings with this new value.
-     */
-    static host_ptr create(settings_provider* settings,
-                           uint16_t default_port = stream_protocol::default_port);
-    // Overload to make calls simpler.
-    static inline host_ptr create(std::shared_ptr<settings_provider> settings,
-                                  uint16_t default_port = stream_protocol::default_port)
-    {
-        return create(settings.get(), default_port);
-    }
-    /**@}*/
 };
 
 } // sss namespace
