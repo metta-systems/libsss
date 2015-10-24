@@ -186,27 +186,6 @@ class channel : public socket_channel
     class private_data;
     std::unique_ptr<private_data> pimpl_; ///< Most of the state is hidden from interface.
 
-    // Packet encode/decode.
-    // @todo Move to pimpl
-
-    // @todo change these to krypto::secret_key and krypto::public_key
-    sodiumpp::secret_key local_key_;
-    sodiumpp::public_key remote_key_;
-
-    /**
-     * Encode and authenticate data packet.
-     * @param  pkt    Packet to encode.
-     * @return        Encoded and authenticated packet.
-     */
-    byte_array transmit_encode(boost::asio::mutable_buffer pkt);
-    /**
-     * Decode packet.
-     * @param  in     Incoming packet.
-     * @param  out    Decrypted packet.
-     * @return        true if packet is verified to be authentic and decoded.
-     */
-    bool receive_decode(boost::asio::const_buffer in, byte_array& out);
-
     /// Per-direction unique channel IDs for this channel.
     /// Stream layer uses these in assigning USIDs to new streams.
     byte_array tx_channel_id_; ///< Transmit ID of the channel.
