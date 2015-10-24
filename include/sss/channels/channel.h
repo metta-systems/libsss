@@ -190,6 +190,7 @@ class channel : public socket_channel
     /// Stream layer uses these in assigning USIDs to new streams.
     byte_array tx_channel_id_; ///< Transmit ID of the channel.
     byte_array rx_channel_id_; ///< Receive ID of the channel.
+
     uia::comm::socket::status link_status_{
         uia::comm::socket::status::down}; ///< Link online status.
 
@@ -206,7 +207,7 @@ public:
             sodiumpp::public_key remote);
     virtual ~channel();
 
-    virtual std::shared_ptr<host> get_host();
+    virtual host_ptr get_host();
 
     /// Start the channel.
     void start(bool initiate) override;

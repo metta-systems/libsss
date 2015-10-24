@@ -25,7 +25,8 @@ namespace sss {
 //=================================================================================================
 
 /**
- * Private helper class, registers with socket layer to receive key exchange packets.
+ * Private helper class, registers with socket layer to receive key exchange packets
+ * and create new channels in response to initiate packets.
  * Only one instance ever created per host.
  */
 class stream_responder : public negotiation::kex_responder, public stream_protocol
@@ -45,10 +46,10 @@ class stream_responder : public negotiation::kex_responder, public stream_protoc
 
     /** @name Key exchange protocol */
     /**@{*/
-    unique_ptr<channel> create_channel(uia::comm::socket_endpoint const& initiator_ep,
-                                       byte_array const& initiator_eid,
-                                       byte_array const& user_data_in,
-                                       byte_array& user_data_out) override;
+    channel_uptr create_channel(sodiumpp::secret_key local_short,
+                                sodiumpp::public_key remote_short,
+                                sodiumpp::public_key remote_long,
+                                uia::comm::socket_endpoint const& initiator_ep) override;
     /**@}*/
 
 public:
@@ -70,20 +71,16 @@ stream_responder::stream_responder(shared_ptr<host> host)
         [this](ur::client* c) { created_client(c); });
 }
 
-unique_ptr<channel>
-stream_responder::create_channel(uia::comm::socket_endpoint const& initiator_ep,
-                                 byte_array const& initiator_eid,
-                                 byte_array const&,
-                                 byte_array&)
+channel_uptr
+stream_responder::create_channel(sodiumpp::secret_key local_short,
+                                 sodiumpp::public_key remote_short,
+                                 sodiumpp::public_key remote_long,
+                                 uia::comm::socket_endpoint const& initiator_ep)
 {
-    internal::stream_peer* peer = get_host()->stream_peer(initiator_eid.as_string());
+    internal::stream_peer* peer = get_host()->stream_peer(remote_long.get(), initiator_ep);
 
-    unique_ptr<channel> chan = make_unique<stream_channel>(get_host(), peer, initiator_eid.as_string());
-    /*    if (!chan->bind(initiator_ep))
-        {
-            logger::warning() << "Stream responder - could not bind new channel";
-            return nullptr;
-        }*/
+    unique_ptr<channel> chan =
+        make_unique<stream_channel>(get_host(), peer, local_short, remote_short);
 
     return chan;
 }
