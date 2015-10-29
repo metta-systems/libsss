@@ -140,13 +140,6 @@ stream_responder::lookup_notify(uia::peer_identity const& target_peer,
 void
 stream_host_state::instantiate_stream_responder()
 {
-    if (!responder_) {
-        responder_ = make_shared<stream_responder>(get_host());
-        responder_->bind(magic::hello_packet::value);
-        responder_->bind(magic::cookie_packet::value);
-        responder_->bind(magic::initiate_packet::value);
-    }
-    assert(responder_);
 }
 
 } // sss namespace
