@@ -8,13 +8,10 @@
 //
 #pragma once
 
+#include "uia/host.h"
 #include "arsenal/logging.h"
-#include "uia/peer_identity.h"
-#include "sss/internal/timer.h"
-#include "sss/negotiation/kex_host_state.h"
 #include "sss/internal/stream_host_state.h"
 #include "sss/internal/routing_host_state.h"
-#include "sss/internal/socket_host_state.h"
 #include "sss/forward_ptrs.h"
 
 class settings_provider;
@@ -33,13 +30,8 @@ namespace sss {
  * Example: it is customary to create a shared_ptr to host.
  * @snippet doc/snippets.cpp Creating a host
  */
-class host : public std::enable_shared_from_this<host>,
-             public socket_host_state,
-             public kex_host_state,
-             public uia::identity_host_state,
+class host : public uia::host,
              public stream_host_state,
-             protected virtual asio_host_state,
-             public timer_host_state,
              public routing_host_state
 {
 };
