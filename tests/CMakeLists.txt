@@ -16,9 +16,6 @@ create_test(stream_internal LIBS sss arsenal)
 create_test(substreams LIBS ${SSS_LIBS} arsenal sodiumpp sodiumpp)
 create_test(server LIBS ${SSS_LIBS} arsenal sodiumpp sodiumpp)
 
-create_test(optional LIBS sss arsenal)
-create_test(serialization LIBS sss arsenal)
-
 create_test(sim_host LIBS ${SSS_LIBS} arsenal sodiumpp)
 create_test(sim_link LIBS ${SSS_LIBS} arsenal sodiumpp)
 create_test(sim_connection LIBS ${SSS_LIBS} arsenal sodiumpp)
