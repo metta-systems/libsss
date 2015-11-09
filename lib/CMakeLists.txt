@@ -1,11 +1,3 @@
-set(simulator_SOURCES
-    simulation/sim_connection.cpp
-    simulation/sim_host.cpp
-    simulation/sim_socket.cpp
-    simulation/sim_packet.cpp
-    simulation/sim_timer_engine.cpp
-    simulation/simulator.cpp)
-
 set(platform_SOURCES)
 if (UNIX)
     list(APPEND platform_SOURCES
@@ -41,6 +33,5 @@ add_library(sss STATIC
     channel.cpp
     server.cpp
     host.cpp
-    ${simulator_SOURCES}
     ${platform_SOURCES}
     ${framing_SOURCES})
