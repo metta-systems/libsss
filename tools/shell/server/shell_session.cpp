@@ -17,8 +17,8 @@
 #include <sys/socket.h>
 #include <signal.h>
 #include <unistd.h>
+#include <boost/log/trivial.hpp>
 #include "shell_session.h"
-#include "arsenal/logging.h"
 #include "sss/host.h"
 
 using namespace std;
@@ -29,7 +29,7 @@ shell_session::shell_session(std::shared_ptr<sss::stream> stream)
     , ttyfd(-1)
     , aftty(stream->get_host()->get_io_service())
 {
-    logger::debug() << "shell_session";
+    BOOST_LOG_TRIVIAL(debug) << "shell_session";
 
     shs.on_ready_read.connect([this]{in_ready();});
     aftty.on_bytes_written.connect([this](ssize_t){in_ready();});
@@ -42,7 +42,7 @@ shell_session::shell_session(std::shared_ptr<sss::stream> stream)
 
 shell_session::~shell_session()
 {
-    logger::debug() << "~shell_session";
+    BOOST_LOG_TRIVIAL(debug) << "~shell_session";
 
     aftty.close();
 
@@ -63,13 +63,13 @@ void shell_session::in_ready()
         switch (pkt.type) {
             case shell_stream::packet_type::Null:
                 if (shs.at_end()) {
-                    logger::debug() << "End of remote input";
+                    BOOST_LOG_TRIVIAL(debug) << "End of remote input";
                     // aftty.close_write();
                 }
                 return; // nothing more to receive for now
 
             case shell_stream::packet_type::Data:
-                logger::debug() << this << "input:" << pkt.data;
+                BOOST_LOG_TRIVIAL(debug) << this << "input:" << pkt.data;
                 if (!ttyopen) {
                     error("Received shell data before command to start shell");
                     break;
@@ -99,7 +99,7 @@ void shell_session::out_ready()
                 error(aftty.error_string());
             return;
         }
-        logger::debug() << "output: " << byte_array(buf, act);
+        BOOST_LOG_TRIVIAL(debug) << "output: " << byte_array(buf, act);
         shs.send_data(buf, act);
 
         // When our child process(es) have no more output to send,
@@ -107,7 +107,7 @@ void shell_session::out_ready()
         // until the child process dies and we get its exit status.
         // (XX notify client via control message?)
         if (aftty.at_end()) {
-            logger::debug() << "End-of-file on child pseudo-tty";
+            BOOST_LOG_TRIVIAL(debug) << "End-of-file on child pseudo-tty";
             aftty.close();
         }
     }
@@ -125,7 +125,7 @@ void shell_session::got_control_packet(byte_array const& msg)
         case Shell: run_shell(read);  break;
         case Exec:  do_exec(read);    break;
         default:
-            logger::debug() << "Ignoring unknown control message type " << cmd;
+            BOOST_LOG_TRIVIAL(debug) << "Ignoring unknown control message type " << cmd;
     }
 }
 
@@ -146,7 +146,7 @@ void shell_session::open_pty(byte_array_iwrap<flurry::iarchive>& rxs)
     // if (rxs.status() != rxs.Ok)
         // return error("Invalid Terminal request");
 
-    logger::debug() << "Terminal " << termname << ", window " << width << "x" << height;
+    BOOST_LOG_TRIVIAL(debug) << "Terminal " << termname << ", window " << width << "x" << height;
 
     ptyfd = posix_openpt(O_RDWR | O_NOCTTY);
     if (ptyfd < 0)
@@ -163,18 +163,18 @@ void shell_session::open_pty(byte_array_iwrap<flurry::iarchive>& rxs)
     ws.ws_xpixel = xpixels;
     ws.ws_ypixel = ypixels;
     if (ioctl(ptyfd, TIOCSWINSZ, &ws) < 0) {
-        logger::debug() << "Can't set terminal window size";
+        BOOST_LOG_TRIVIAL(debug) << "Can't set terminal window size";
     }
 
     // Set the pty's terminal modes
     if (tcsetattr(ptyfd, TCSANOW, &tios) < 0) {
-        logger::debug() << "Can't set terminal parameters";
+        BOOST_LOG_TRIVIAL(debug) << "Can't set terminal parameters";
     }
 }
 
 void shell_session::run_shell(byte_array_iwrap<flurry::iarchive>&)
 {
-    logger::debug() << "Run shell";
+    BOOST_LOG_TRIVIAL(debug) << "Run shell";
     run();
 }
 
@@ -185,7 +185,7 @@ void shell_session::do_exec(byte_array_iwrap<flurry::iarchive>& rxs)
     // if (rxs.status() != rxs.Ok)
         // return error("Invalid Exec request");
 
-    logger::debug() << "Run command " << cmd;
+    BOOST_LOG_TRIVIAL(debug) << "Run command " << cmd;
 
     run(cmd);
 }
@@ -226,7 +226,7 @@ void shell_session::run(string const&/*cmd XXX*/)
         // XXX authenticate user, setuid appropriately
 
         if (ptyfd >= 0) {
-            logger::debug() << "Setup child ptys";
+            BOOST_LOG_TRIVIAL(debug) << "Setup child ptys";
 
             // Set up the pseudo-tty for the child
             signal(SIGCHLD, SIG_DFL);
@@ -248,7 +248,7 @@ void shell_session::run(string const&/*cmd XXX*/)
             // Open the child end of the terminal
             assert(childfd < 0);
             char *ttyname = ptsname(ptyfd);
-            logger::debug() << "Child ptsname " << ttyname;
+            BOOST_LOG_TRIVIAL(debug) << "Child ptsname " << ttyname;
             if (ttyname == NULL) {
                 perror("Remote shell: ptsname");
                 exit(1);
@@ -274,7 +274,7 @@ void shell_session::run(string const&/*cmd XXX*/)
         }
 
         // Run the shell/command
-        logger::debug() << "child: exec";
+        BOOST_LOG_TRIVIAL(debug) << "child: exec";
         execlp("login", "login", NULL); // XXX
         perror("Remote shell: exec");
         exit(1);
@@ -292,12 +292,12 @@ void shell_session::run(string const&/*cmd XXX*/)
     // Watch for the child process's termination.
     pidw.watch_pid(childpid);
 
-    logger::debug() << "Started shell";
+    BOOST_LOG_TRIVIAL(debug) << "Started shell";
 }
 
 void shell_session::error(std::string const& str)
 {
-    logger::debug() << "Error: " << str;
+    BOOST_LOG_TRIVIAL(debug) << "Error: " << str;
 
     // XXX send error control message
     // this->deleteLater();
@@ -306,7 +306,7 @@ void shell_session::error(std::string const& str)
 void shell_session::child_done()
 {
     int rc = pidw.exit_status();
-    logger::debug() << "Child terminated with status " << rc;
+    BOOST_LOG_TRIVIAL(debug) << "Child terminated with status " << rc;
 
     byte_array cmsg;
     if (WIFEXITED(rc)) {

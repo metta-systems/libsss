@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     // Create and register the shell service
     shell_server svc(host);
 
-    logger::info() << "mshd server listening with EID " << host->host_identity().id();
+    BOOST_LOG_TRIVIAL(info) << "mshd server listening with EID " << host->host_identity().id();
 
     host->run_io_service();
 }

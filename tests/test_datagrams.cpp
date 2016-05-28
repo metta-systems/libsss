@@ -37,7 +37,7 @@ BOOST_FIXTURE_TEST_CASE(transmit_datagrams, simulator_fixture)
         if (dg.is_empty()) {
             return;
         }
-        logger::debug() << "Received datagram size " << dec << dg.size();
+        BOOST_LOG_TRIVIAL(debug) << "Received datagram size " << dec << dg.size();
         n_datagrams_arrived++;
     };
 
@@ -75,7 +75,7 @@ BOOST_FIXTURE_TEST_CASE(transmit_datagrams, simulator_fixture)
 
     simulator->run();
 
-    logger::debug() << "Datagram test completed: " << n_datagrams_arrived
+    BOOST_LOG_TRIVIAL(debug) << "Datagram test completed: " << n_datagrams_arrived
         << " of " << DATAGRAMS_TO_SEND << " datagrams delivered";
 
     BOOST_CHECK(n_datagrams_arrived >= DATAGRAMS_TO_SEND*90/100);

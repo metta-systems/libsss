@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "arsenal/logging.h"
+#include <boost/log/trivial.hpp>
 #include "sss/streams/datagram_stream.h"
 
 using namespace std;
@@ -19,7 +19,7 @@ namespace sss {
 
 void datagram_stream::shutdown(stream::shutdown_mode mode)
 {
-    logger::debug() << "Shutting down datagram stream " << this;
+    BOOST_LOG_TRIVIAL(debug) << "Shutting down datagram stream " << this;
     if (mode != stream::shutdown_mode::write) {
         pos_ = size();
     }
@@ -97,7 +97,7 @@ ssize_t datagram_stream::write_datagram(const char* data, ssize_t size, stream::
 
 void datagram_stream::dump()
 {
-    logger::debug() << this << " datagram_stream - size " << size() << ", pos " << pos_;
+    BOOST_LOG_TRIVIAL(debug) << this << " datagram_stream - size " << size() << ", pos " << pos_;
 }
 
 } // sss namespace

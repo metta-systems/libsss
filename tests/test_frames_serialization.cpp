@@ -7,10 +7,10 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #define BOOST_TEST_MODULE Test_frames_serialization
+#include <boost/log/trivial.hpp>
 #include "arsenal/byte_array.h"
 #include "arsenal/byte_array_wrap.h"
 #include "arsenal/flurry.h"
-#include "arsenal/logging.h"
 #include "sss/framing/frame_format.h"
 #include "sss/framing/ack_frame.h"
 #include "sss/framing/close_frame.h"

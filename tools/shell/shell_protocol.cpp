@@ -1,5 +1,5 @@
+#include <boost/log/trivial.hpp>
 #include "shell_protocol.h"
-#include "arsenal/logging.h"
 
 const std::string shell_protocol::service_name = "Shell";
 const std::string shell_protocol::protocol_name = "MettaShell";
@@ -27,7 +27,7 @@ int shell_protocol::termpackspeed(speed_t speed)
         case B19200:    return 19200;
         case B38400:    return 38400;
         default:
-            logger::warning() << "Unknown termios speed " << speed;
+            BOOST_LOG_TRIVIAL(warning) << "Unknown termios speed " << speed;
             return 9600;
     }
 }
@@ -53,7 +53,7 @@ speed_t shell_protocol::termunpackspeed(uint32_t speed)
         case 19200:     return B19200;
         case 38400:     return B38400;
         default:
-            logger::warning() << "Unknown termios speed " << speed;
+            BOOST_LOG_TRIVIAL(warning) << "Unknown termios speed " << speed;
             return B9600;
     }
 }

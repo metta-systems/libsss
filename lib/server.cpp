@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <boost/format.hpp>
-#include "arsenal/logging.h"
+#include <boost/log/trivial.hpp>
 #include "sss/server.h"
 #include "sss/stream.h"
 #include "sss/streams/base_stream.h"
@@ -30,7 +30,7 @@ bool server::listen(string const& service_name, string const& service_desc,
     assert(!protocol_desc.empty());
     assert(!is_listening());
 
-    logger::debug() << "Registering service '" << service_name << "' protocol '" << protocol_name << "'";
+    BOOST_LOG_TRIVIAL(debug) << "Registering service '" << service_name << "' protocol '" << protocol_name << "'";
 
     // Make sure the stream_responder is initialized and listening.
     host_->instantiate_stream_responder();
@@ -42,7 +42,7 @@ bool server::listen(string const& service_name, string const& service_desc,
     {
         error_string_ = str(boost::format("Service %1% with protocol %2% already registered.")
             % service_name % protocol_name);
-        logger::warning() << error_string_;
+        BOOST_LOG_TRIVIAL(warning) << error_string_;
         return false;
     }
 

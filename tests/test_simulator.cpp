@@ -32,7 +32,7 @@ BOOST_FIXTURE_TEST_CASE(simple_sim_step, simulator_fixture)
 
     simulator->run();
 
-    logger::debug() << "<<< shutdown from this point on";
+    BOOST_LOG_TRIVIAL(debug) << "<<< shutdown from this point on";
 }
 
 BOOST_FIXTURE_TEST_CASE(connect_wrong_service, simulator_fixture)
@@ -42,8 +42,8 @@ BOOST_FIXTURE_TEST_CASE(connect_wrong_service, simulator_fixture)
 
     simulator->run();
 
-    logger::debug() << "<<< shutdown from this point on";
+    BOOST_LOG_TRIVIAL(debug) << "<<< shutdown from this point on";
 
-    logger::debug() << "<<< host use counts " << dec << client_host.use_count()
+    BOOST_LOG_TRIVIAL(debug) << "<<< host use counts " << dec << client_host.use_count()
         << " and " << server_host.use_count();
 }

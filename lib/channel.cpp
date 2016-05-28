@@ -9,8 +9,8 @@
 #define BOOST_OPTIONAL_NO_INPLACE_FACTORY_SUPPORT
 #include <deque>
 #include <boost/format.hpp>
+#include <boost/log/trivial.hpp>
 #include "arsenal/make_unique.h"
-#include "arsenal/logging.h"
 #include "arsenal/fusionary.hpp"
 #include "sss/channels/channel.h"
 #include "sss/host.h"
@@ -61,7 +61,7 @@ struct transmit_event_t
         , data_(is_data)
         , pipe_(is_data)
     {
-        logger::debug() << "New transmission event for " << size_
+        BOOST_LOG_TRIVIAL(debug) << "New transmission event for " << size_
                         << (data_ ? " data bytes" : " control bytes");
     }
 };
@@ -241,7 +241,7 @@ public:
 void
 congestion_control_strategy::reset()
 {
-    logger::debug() << "CC reset";
+    BOOST_LOG_TRIVIAL(debug) << "CC reset";
     cwnd_                    = CWND_MIN;
     cwnd_limited_            = true;
     ssthresh                 = CWND_MAX;
@@ -264,7 +264,7 @@ congestion_control_strategy::reset()
 void
 congestion_control_strategy::missed(uint64_t pktseq)
 {
-    logger::debug() << "Missed seq " << pktseq;
+    BOOST_LOG_TRIVIAL(debug) << "Missed seq " << pktseq;
 
     // This basic missed packet calculation is shared by cc_tcp, cc_delay and cc_vegas:
 
@@ -280,7 +280,7 @@ congestion_control_strategy::missed(uint64_t pktseq)
     // ssthresh = (tx_sequence_ - tx_ack_sequence_) / 2;    XXX
     ssthresh = cwnd_ / 2;
     ssthresh = max(ssthresh, CWND_MIN);
-    // logger::debug() << "%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
+    // BOOST_LOG_TRIVIAL(debug) << "%d PACKETS LOST: cwnd %d -> %d", ackdiff - newpackets, cwnd, ssthresh);
     cwnd_ = ssthresh;
 
     // fast recovery for the rest of this window
@@ -295,13 +295,13 @@ congestion_control_strategy::timeout()
     ssthresh = state_->tx_inflight_count_ / 2;
     ssthresh = max(ssthresh, CWND_MIN);
     cwnd_ = CWND_MIN;
-    logger::debug() << "CC retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd_;
+    BOOST_LOG_TRIVIAL(debug) << "CC retransmit timeout: ssthresh=" << ssthresh << ", cwnd=" << cwnd_;
 }
 
 void
 congestion_control_strategy::log_rtt_stats()
 {
-    logger::debug() << boost::format(
+    BOOST_LOG_TRIVIAL(debug) << boost::format(
                            "Cumulative: rtt %.3f[±%.3f] pps %.3f[±%.3f] pwr %.3f loss %.3f")
                            % cumulative_rtt_ % cumulative_rtt_variance_ % cumulative_pps_
                            % cumulative_pps_var % cumpwr % cumloss;
@@ -382,7 +382,7 @@ cc_tcp::rtt_update(float pps, float rtt)
     // increment cwnd once each RTT, but only on round-trips that were cwnd-limited.
     if (cwnd_limited_) {
         cwnd_++;
-        logger::debug() << "cwnd increased to " << cwnd_ << ", ssthresh " << ssthresh;
+        BOOST_LOG_TRIVIAL(debug) << "cwnd increased to " << cwnd_ << ", ssthresh " << ssthresh;
     }
     cwnd_limited_ = false;
 }
@@ -396,7 +396,7 @@ cc_tcp::update(unsigned new_packets)
     // which puts us in slow start briefly after each loss...
     if (new_packets and cwnd_limited_ and cwnd_ < ssthresh) {
         cwnd_ = min(cwnd_ + new_packets, ssthresh);
-        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_
+        BOOST_LOG_TRIVIAL(debug) << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_
                         << " (ssthresh " << ssthresh << ")";
     }
 }
@@ -431,7 +431,7 @@ cc_aggressive::missed(uint64_t pktseq)
 
     // Clamp the congestion window to this value.
     if (expected < cwnd_) {
-        logger::debug() << "PACKETS LOST: cwnd " << cwnd_ << "->" << expected;
+        BOOST_LOG_TRIVIAL(debug) << "PACKETS LOST: cwnd " << cwnd_ << "->" << expected;
         cwnd_ = ssbase = expected;
         cwnd_ = max(CWND_MIN, cwnd_);
     }
@@ -450,7 +450,7 @@ cc_aggressive::update(unsigned new_packets)
     // on schedule and after a per-roundtrip baseline.
     if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
         cwnd_ += min(new_packets, state_->mark_acks_ - ssbase);
-        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_;
+        BOOST_LOG_TRIVIAL(debug) << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_;
     }
 }
 
@@ -508,7 +508,7 @@ cc_delay::rtt_update(float pps, float rtt)
     cwnd_ = max(CWND_MIN, cwnd_);
     cwnd_ = min(CWND_MAX, cwnd_);
 
-    logger::debug() << boost::format(
+    BOOST_LOG_TRIVIAL(debug) << boost::format(
                            "RT: pwr %.0f[%.0f/%.0f]@%d base %.0f[%.0f/%.0f]@%d cwnd %d%+d")
                            % (pwr * 1000.0) % pps % rtt % state_->mark_acks_ % (basepwr * 1000.0)
                            % basepps % basertt % basewnd % cwnd_ % cwndinc;
@@ -529,7 +529,7 @@ cc_delay::update(unsigned new_packets)
     // on schedule and after a per-roundtrip baseline.
     if (state_->mark_acks_ > ssbase and state_->elapsed_since_mark() <= lastrtt) {
         cwnd_ += min(new_packets, state_->mark_acks_ - ssbase);
-        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_;
+        BOOST_LOG_TRIVIAL(debug) << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_;
     }
 }
 
@@ -575,7 +575,7 @@ cc_vegas::rtt_update(float pps, float rtt)
         ssthresh = min(ssthresh, cwnd_); // /2??
     }
 
-    logger::debug() << boost::format(
+    BOOST_LOG_TRIVIAL(debug) << boost::format(
                            "Round-trip: win %d basertt %.3f rtt %d "
                            "exp-pps %f act-pps %f diff-pprt %.3f cwnd %d")
                            % state_->mark_sent_ % basertt % rtt % (expect * 1000000.0)
@@ -598,7 +598,7 @@ cc_vegas::update(unsigned new_packets)
     // which puts us in slow start briefly after each loss...
     if (new_packets and cwnd_limited_ and cwnd_ < ssthresh) {
         cwnd_ = min(cwnd_ + new_packets, ssthresh);
-        logger::debug() << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_
+        BOOST_LOG_TRIVIAL(debug) << "Slow start: " << new_packets << " new ACKs; boost cwnd to " << cwnd_
                         << " (ssthresh " << ssthresh << ")";
     }
 }
@@ -716,7 +716,7 @@ public:
         reset_congestion_control();
     }
 
-    ~private_data() { logger::debug() << "~channel::private_data"; }
+    ~private_data() { BOOST_LOG_TRIVIAL(debug) << "~channel::private_data"; }
 
     void cc_and_rtt_update(unsigned new_packets, packet_seq_t ackseq);
 
@@ -750,7 +750,7 @@ channel::private_data::reset_congestion_control()
 void
 channel::private_data::stats_timeout()
 {
-    logger::info() << boost::format(
+    BOOST_LOG_TRIVIAL(info) << boost::format(
                           "STATS: txseq %llu, txackseq %llu, rxseq %llu, rxackseq %llu, "
                           "txfltcnt %d, cwnd %d, ssthresh %d, "
                           "cumrtt %.3f, cumpps %.3f, cumloss %.3f")
@@ -778,7 +778,7 @@ channel::private_data::cc_and_rtt_update(unsigned new_packets, packet_seq_t acks
             congestion_control->rtt_update(pps, rtt);
             congestion_control->log_rtt_stats();
         } else {
-            logger::debug() << "End-to-end rtt " << rtt << " cumulative rtt "
+            BOOST_LOG_TRIVIAL(debug) << "End-to-end rtt " << rtt << " cumulative rtt "
                             << congestion_control->cumulative_rtt_; // fixme, nullptr access?
         }
     }
@@ -816,7 +816,7 @@ channel::get_host()
 void
 channel::start(bool initiate)
 {
-    logger::debug() << "Channel - start as " << (initiate ? "initiator" : "responder");
+    BOOST_LOG_TRIVIAL(debug) << "Channel - start as " << (initiate ? "initiator" : "responder");
 
     super::start(initiate);
 
@@ -831,7 +831,7 @@ channel::start(bool initiate)
 void
 channel::stop()
 {
-    logger::debug() << "Channel - stop";
+    BOOST_LOG_TRIVIAL(debug) << "Channel - stop";
     pimpl_->retransmit_timer_.stop();
     pimpl_->ack_timer_.stop();
     pimpl_->stats_timer_.stop();
@@ -900,7 +900,7 @@ channel::transmit(boost::asio::const_buffer packet,
 {
     assert(is_active());
 
-    logger::debug() << "Channel sending a packet";
+    BOOST_LOG_TRIVIAL(debug) << "Channel sending a packet";
 
     // Don't allow tx_sequence_ counter to wrap (@fixme re-key before it does!)
     // packet_seq = pimpl_->state_->tx_sequence_;
@@ -937,7 +937,7 @@ channel::transmit(boost::asio::const_buffer packet,
     //        == pimpl_->state_->tx_sequence_);
     // assert(pimpl_->state_->tx_inflight_count_ <= (unsigned)pimpl_->state_->tx_events_.size());
 
-    // logger::debug() << "Channel transmit tx seq " << dec << pimpl_->state_->tx_sequence_ << "
+    // BOOST_LOG_TRIVIAL(debug) << "Channel transmit tx seq " << dec << pimpl_->state_->tx_sequence_ << "
     // size "
     //                 << epkt.size();
 
@@ -958,7 +958,7 @@ channel::start_retransmit_timer()
 void
 channel::retransmit_timeout(bool failed)
 {
-    logger::debug() << "Retransmit timeout" << (failed ? " - TX FAILED" : "") << ", interval "
+    BOOST_LOG_TRIVIAL(debug) << "Retransmit timeout" << (failed ? " - TX FAILED" : "") << ", interval "
                     << pimpl_->retransmit_timer_.interval();
 
     // Restart the retransmission timer
@@ -981,7 +981,7 @@ channel::retransmit_timeout(bool failed)
             pimpl_->state_->tx_inflight_count_--;
             pimpl_->state_->tx_inflight_size_ -= e.size_;
             missed(seq, 1);
-            logger::debug() << "Retransmit timeout missed seq " << seq << ", in flight "
+            BOOST_LOG_TRIVIAL(debug) << "Retransmit timeout missed seq " << seq << ", in flight "
                             << pimpl_->state_->tx_inflight_count_;
         }
     }
@@ -1008,7 +1008,7 @@ channel::acknowledge(packet_seq_t pktseq, bool send_ack)
     constexpr int min_ack_packets = 2;
     constexpr int max_ack_packets = 4;
 
-    logger::debug() << "Channel - acknowledge " << pktseq
+    BOOST_LOG_TRIVIAL(debug) << "Channel - acknowledge " << pktseq
                     << (send_ack ? " (sending)" : " (not sending)");
 
     // Update our receive state to account for this packet
@@ -1102,7 +1102,7 @@ channel::ack_timeout()
 bool
 channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 {
-    logger::debug() << "Channel - transmit_ack seq " << ackseq << ", count " << ack_count + 1;
+    BOOST_LOG_TRIVIAL(debug) << "Channel - transmit_ack seq " << ackseq << ", count " << ack_count + 1;
 
     // assert(ack_count <= max_ack_count);
 
@@ -1119,20 +1119,20 @@ channel::transmit_ack(byte_array& packet, packet_seq_t ackseq, int ack_count)
 void
 channel::acknowledged(uint64_t txseq, int npackets, uint64_t rxackseq)
 {
-    logger::debug() << "Channel " << this << " - tx seqs " << dec << txseq << "-"
+    BOOST_LOG_TRIVIAL(debug) << "Channel " << this << " - tx seqs " << dec << txseq << "-"
                     << txseq + npackets - 1 << " acknowledged";
 }
 
 void
 channel::missed(uint64_t txseq, int npackets)
 {
-    logger::debug() << "Channel " << this << " - tx seq " << txseq << " missed";
+    BOOST_LOG_TRIVIAL(debug) << "Channel " << this << " - tx seq " << txseq << " missed";
 }
 
 void
 channel::expire(uint64_t txseq, int npackets)
 {
-    logger::debug() << "Channel " << this << " - tx seq " << txseq << " expired";
+    BOOST_LOG_TRIVIAL(debug) << "Channel " << this << " - tx seq " << txseq << " expired";
 }
 
 // Determine the full 64-bit packet sequence number
@@ -1149,7 +1149,7 @@ channel::derive_packet_seq(packet_seq_t tx_seq)
 
     if (seqdiff > 0) {
         if (pktseq < pimpl_->state_->rx_sequence_) {
-            logger::warning() << "Channel receive - 64-bit wraparound detected!";
+            BOOST_LOG_TRIVIAL(warning) << "Channel receive - 64-bit wraparound detected!";
             return 0;
         }
     }
@@ -1182,7 +1182,7 @@ channel::receive_decode(asio::const_buffer in, byte_array& out)
 
         out = unseal.unbox(msg.box.data);
     } catch (char const* err) {
-        logger::warning() << err;
+        BOOST_LOG_TRIVIAL(warning) << err;
         return false;
     }
     return true;
@@ -1191,14 +1191,14 @@ channel::receive_decode(asio::const_buffer in, byte_array& out)
 void
 channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
 {
-    logger::debug() << "Channel " << this << " - receive from " << src;
+    BOOST_LOG_TRIVIAL(debug) << "Channel " << this << " - receive from " << src;
 
     if (!is_active()) {
-        logger::warning() << "Channel receive - inactive channel";
+        BOOST_LOG_TRIVIAL(warning) << "Channel receive - inactive channel";
         return;
     }
     if (asio::buffer_size(pkt) < MIN_PACKET_SIZE) {
-        logger::warning() << "Channel receive - runt packet";
+        BOOST_LOG_TRIVIAL(warning) << "Channel receive - runt packet";
         runt_packet_received(src);
         return;
     }
@@ -1210,7 +1210,7 @@ channel::receive(asio::const_buffer pkt, uia::comm::socket_endpoint const& src)
 
     // Authenticate and decrypt the packet
     if (!receive_decode(pkt, msg)) {
-        logger::warning() << "Received packet auth failed";
+        BOOST_LOG_TRIVIAL(warning) << "Received packet auth failed";
         bad_auth_received(src);
         return;
     }

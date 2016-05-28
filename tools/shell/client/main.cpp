@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     }
 
     if (!verbose_debug) {
-        logger::set_verbosity(logger::verbosity::info);
+        logger::core::get()->set_filter(logging::trivial::severity >= logging::trivial::info);
     }
 
     // @todo Resolve host names...
@@ -89,11 +89,11 @@ int main(int argc, char **argv)
 
     if (eid.is_empty() and location_hints.empty())
     {
-        logger::fatal() << "Host nickname '" << nickname
+        BOOST_LOG_TRIVIAL(fatal) << "Host nickname '" << nickname
             << "' not known: please specify host's DNS name or IP address.";
     }
 
-    logger::info() << "Connecting to " << eid;
+    BOOST_LOG_TRIVIAL(info) << "Connecting to " << eid;
 
     // Connect to the shell service
     shell_client sc(host);
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     for (auto epstr : location_hints)
     {
         uia::comm::endpoint ep(boost::asio::ip::address::from_string(epstr), port);
-        logger::debug() << "Connecting at location hint " << ep;
+        BOOST_LOG_TRIVIAL(debug) << "Connecting at location hint " << ep;
         sc.connect_at(ep);
     }
 

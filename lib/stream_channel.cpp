@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "arsenal/logging.h"
+#include <boost/log/trivial.hpp>
 #include "arsenal/algorithm.h"
 #include "sss/channels/channel.h"
 #include "sss/internal/stream_peer.h"
@@ -51,7 +51,7 @@ stream_channel::stream_channel(shared_ptr<host> host,
 
 stream_channel::~stream_channel()
 {
-    logger::debug() << "Stream channel - destructing";
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - destructing";
     // on_link_status_changed
     // .disconnect(boost::bind(&stream_channel::got_link_status_changed, this, _1));
     stop();
@@ -65,7 +65,7 @@ stream_channel::got_ready_transmit()
         return;
     }
 
-    logger::debug() << "Stream channel - ready to transmit";
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - ready to transmit";
 
     // Round-robin between our streams for now.
     do {
@@ -83,7 +83,7 @@ stream_channel::got_ready_transmit()
 void
 stream_channel::got_link_status_changed(uia::comm::socket::status new_status)
 {
-    logger::debug() << "Stream channel - link status changed, new status "
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - link status changed, new status "
                     << uia::comm::socket::status_string(new_status);
 
     if (new_status != uia::comm::socket::status::down) {
@@ -97,7 +97,7 @@ stream_channel::got_link_status_changed(uia::comm::socket::status new_status)
     // If we were our target's primary channel, disconnect us.
     // if (peer->primary_channel_ == this)
     // {
-    //     logger::debug() << "Primary channel to host ID " << peer->remote_host_id()
+    //     BOOST_LOG_TRIVIAL(debug) << "Primary channel to host ID " << peer->remote_host_id()
     //         << " on endpoint " << remote_endpoint()
     //         << " failed";
     //     peer->clear_primary_channel();
@@ -116,7 +116,7 @@ stream_channel::allocate_transmit_sid()
         maxsearch     = min(maxsearch, max_sid_skip);
         do {
             if (maxsearch-- <= 0) {
-                logger::fatal() << "allocate_transmit_sid: no free SIDs";
+                BOOST_LOG_TRIVIAL(fatal) << "allocate_transmit_sid: no free SIDs";
                 // @fixme: do the actual detach
             }
         } while (contains(transmit_sids_, ++sid));
@@ -131,7 +131,7 @@ stream_channel::allocate_transmit_sid()
 void
 stream_channel::start(bool initiate)
 {
-    logger::debug() << "Stream channel - start as " << (initiate ? "initiator" : "responder");
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - start as " << (initiate ? "initiator" : "responder");
     super::start(initiate);
     assert(is_active());
 
@@ -148,7 +148,7 @@ stream_channel::start(bool initiate)
 void
 stream_channel::stop()
 {
-    logger::debug() << "Stream channel - stop";
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - stop";
     super::stop();
 
     // XXX clean up sending_streams_, waiting_ack_ -- detach_all() cleans up waiting_ack_
@@ -259,7 +259,7 @@ stream_channel::assemble_packet(asio::mutable_buffer out_packet)
 void
 stream_channel::enqueue_stream(base_stream* stream)
 {
-    logger::debug() << "Stream channel - enqueue stream " << stream;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - enqueue stream " << stream;
 
     // Find the correct position at which to enqueue this stream,
     // based on priority.
@@ -270,7 +270,7 @@ stream_channel::enqueue_stream(base_stream* stream)
                               return str->current_priority() >= prio;
                           });
 
-    logger::debug() << "Stream channel - enqueue stream at pos " << (it - sending_streams_.begin())
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - enqueue stream at pos " << (it - sending_streams_.begin())
                     << " of total " << sending_streams_.size() << " streams";
 
     sending_streams_.insert(it, stream);
@@ -279,7 +279,7 @@ stream_channel::enqueue_stream(base_stream* stream)
 void
 stream_channel::dequeue_stream(base_stream* stream)
 {
-    logger::debug() << "Stream channel - dequeue stream " << stream;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - dequeue stream " << stream;
     sending_streams_.erase(remove(sending_streams_.begin(), sending_streams_.end(), stream),
                            sending_streams_.end());
 }
@@ -302,7 +302,7 @@ stream_channel::detach_all()
     assert(transmit_sids_.empty());
 
     // Finally, send back all the waiting packets to their streams.
-    logger::debug() << "Returning " << ack_copy.size() << " channel packets for retransmission";
+    BOOST_LOG_TRIVIAL(debug) << "Returning " << ack_copy.size() << " channel packets for retransmission";
     for (auto v : ack_copy) {
         base_stream::tx_frame_t& p = v.second;
         assert(!p.is_null());
@@ -318,7 +318,7 @@ stream_channel::detach_all()
 bool
 stream_channel::transmit_ack(byte_array& pkt, packet_seq_t ackseq, int ack_count)
 {
-    logger::debug() << "Stream channel - transmit ACK " << ackseq;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - transmit ACK " << ackseq;
 
     // Pick a stream on which to send a window update -
     // for now, just the most recent stream on which we received a segment.
@@ -343,7 +343,7 @@ stream_channel::transmit_ack(byte_array& pkt, packet_seq_t ackseq, int ack_count
 void
 stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxackseq)
 {
-    logger::debug() << "Stream channel - ACKed seq " << txseq;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - ACKed seq " << txseq;
     for (; npackets > 0; txseq++, npackets--) {
         // find and remove the packet
         if (!contains(waiting_ack_, txseq))
@@ -352,7 +352,7 @@ stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxac
         base_stream::tx_frame_t p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
 
-        logger::debug() << "Stream channel - acknowledged packet " << txseq << " of size "
+        BOOST_LOG_TRIVIAL(debug) << "Stream channel - acknowledged packet " << txseq << " of size "
                         << p.payload_size();
         p.owner->acknowledged(this, p, rxackseq);
     }
@@ -361,17 +361,17 @@ stream_channel::acknowledged(packet_seq_t txseq, int npackets, packet_seq_t rxac
 void
 stream_channel::missed(packet_seq_t txseq, int npackets)
 {
-    logger::debug() << "Stream channel - missed seq " << txseq;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - missed seq " << txseq;
     for (; npackets > 0; txseq++, npackets--) {
         // find but don't remove (common case for missed packets)
         if (!contains(waiting_ack_, txseq)) {
-            logger::warning() << "Missed packet " << txseq << " but can't find it!";
+            BOOST_LOG_TRIVIAL(warning) << "Missed packet " << txseq << " but can't find it!";
             continue;
         }
 
         base_stream::tx_frame_t p = waiting_ack_[txseq];
 
-        logger::debug() << "Stream channel - missed packet " << txseq << " of size "
+        BOOST_LOG_TRIVIAL(debug) << "Stream channel - missed packet " << txseq << " of size "
                         << p.payload_size();
 
         if (!p.late) {
@@ -386,18 +386,18 @@ stream_channel::missed(packet_seq_t txseq, int npackets)
 void
 stream_channel::expire(packet_seq_t txseq, int npackets)
 {
-    logger::debug() << "Stream channel - expire seq " << txseq;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - expire seq " << txseq;
     for (; npackets > 0; txseq++, npackets--) {
         // find and unconditionally remove packet when it expires
         base_stream::tx_frame_t p = waiting_ack_[txseq];
         waiting_ack_.erase(txseq);
 
         if (p.is_null()) {
-            logger::debug() << "Expired packet " << txseq << " but can't find it!";
+            BOOST_LOG_TRIVIAL(debug) << "Expired packet " << txseq << " but can't find it!";
             continue;
         }
 
-        logger::debug() << "Stream channel - expired packet " << txseq << " of size "
+        BOOST_LOG_TRIVIAL(debug) << "Stream channel - expired packet " << txseq << " of size "
                         << p.payload_size();
 
         p.owner->expire(this, p);
@@ -407,7 +407,7 @@ stream_channel::expire(packet_seq_t txseq, int npackets)
 bool
 stream_channel::channel_receive(boost::asio::mutable_buffer pkt, packet_seq_t packet_seq)
 {
-    logger::debug() << "Stream channel - receive seq " << packet_seq;
+    BOOST_LOG_TRIVIAL(debug) << "Stream channel - receive seq " << packet_seq;
     return base_stream::receive(packet_seq, pkt, this);
 }
 

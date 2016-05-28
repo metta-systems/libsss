@@ -11,8 +11,8 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <boost/log/trivial.hpp>
 #include "shell_client.h"
-#include "arsenal/logging.h"
 #include "arsenal/byte_array_wrap.h"
 
 using namespace sss;
@@ -29,7 +29,7 @@ static void termiosRestore()
         return;
 
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &termiosSave) < 0)
-        logger::debug() << "Can't restore terminal settings: " << strerror(errno);
+        BOOST_LOG_TRIVIAL(debug) << "Can't restore terminal settings: " << strerror(errno);
 
     termiosChanged = false;
 }
@@ -49,7 +49,7 @@ shell_client::shell_client(shared_ptr<sss::host> host)
 
 void shell_client::setup_terminal(int fd)
 {
-    logger::debug() << "Shell client setup terminal on fd " << fd;
+    BOOST_LOG_TRIVIAL(debug) << "Shell client setup terminal on fd " << fd;
 
     // Get current terminal name
     string termname(getenv("TERM"));
@@ -57,7 +57,7 @@ void shell_client::setup_terminal(int fd)
     // Get current terminal settings
     struct termios tios;
     if (tcgetattr(fd, &tios) < 0)
-        logger::fatal() << "Can't get terminal settings: " << strerror(errno);
+        BOOST_LOG_TRIVIAL(fatal) << "Can't get terminal settings: " << strerror(errno);
 
     // Save the original terminal settings,
     // and install an atexit handler to restore them on exit.
@@ -72,7 +72,7 @@ void shell_client::setup_terminal(int fd)
     struct winsize ws;
     memset(&ws, 0, sizeof(ws));
     if (ioctl(fd, TIOCGWINSZ, &ws) < 0)
-        logger::warning() << "Can't get terminal window size: " << strerror(errno);
+        BOOST_LOG_TRIVIAL(warning) << "Can't get terminal window size: " << strerror(errno);
 
     // Build the pseudo-tty parameter control message
     byte_array msg;
@@ -90,18 +90,18 @@ void shell_client::setup_terminal(int fd)
     // Turn off terminal input processing
     tios.c_lflag &= ~(ICANON | ISIG | ECHO);
     if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
-        logger::fatal() << "Can't set terminal settings: " << strerror(errno);
+        BOOST_LOG_TRIVIAL(fatal) << "Can't set terminal settings: " << strerror(errno);
     }
 }
 
 void shell_client::run_shell(string const& cmd, int infd, int outfd)
 {
     if (!afin.open(infd, afin.Read)) {
-        logger::fatal() << "Error setting up input forwarding: " << afin.error_string();
+        BOOST_LOG_TRIVIAL(fatal) << "Error setting up input forwarding: " << afin.error_string();
     }
 
     if (!afout.open(outfd, afout.Write)) {
-        logger::fatal() << "Error setting up output forwarding: " << afout.error_string();
+        BOOST_LOG_TRIVIAL(fatal) << "Error setting up output forwarding: " << afout.error_string();
     }
 
     // Build the message to start the shell or command
@@ -118,20 +118,20 @@ void shell_client::run_shell(string const& cmd, int infd, int outfd)
 
 void shell_client::in_ready()
 {
-    logger::debug() << "Shell client in ready";
+    BOOST_LOG_TRIVIAL(debug) << "Shell client in ready";
     while (true) {
         // XX if (shs.bytesToWrite() >= shellBufferSize) return;
 
         char buf[4096];
         int act = afin.read(buf, sizeof(buf));
-        //logger::debug() << this << "got:" << byte_array(buf, act);
+        //BOOST_LOG_TRIVIAL(debug) << this << "got:" << byte_array(buf, act);
         if (act < 0) {
-            logger::fatal() << "Error reading input for remote shell: " << afin.error_string();
+            BOOST_LOG_TRIVIAL(fatal) << "Error reading input for remote shell: " << afin.error_string();
         }
 
         if (act == 0) {
             if (afin.at_end()) {
-                logger::debug() << "End of local input";
+                BOOST_LOG_TRIVIAL(debug) << "End of local input";
                 afin.close_read();
                 shs.stream()->shutdown(stream::shutdown_mode::write);
             }
@@ -143,7 +143,7 @@ void shell_client::in_ready()
 
 void shell_client::out_ready()
 {
-    logger::debug() << "Shell client out ready";
+    BOOST_LOG_TRIVIAL(debug) << "Shell client out ready";
     while (true) {
         if (afout.bytes_to_write() >= shellBufferSize)
             return; // Wait until the write buffer empties a bit
@@ -152,13 +152,13 @@ void shell_client::out_ready()
         switch (pkt.type) {
         case shell_stream::packet_type::Null:
             if (shs.at_end()) {
-                logger::debug() << "End of remote shell stream";
+                BOOST_LOG_TRIVIAL(debug) << "End of remote shell stream";
                 exit(0);
             }
             return; // Nothing more to receive for now
         case shell_stream::packet_type::Data:
             if (afout.write(pkt.data) < 0) {
-                logger::fatal() << "Error writing remote shell output: " << afout.error_string();
+                BOOST_LOG_TRIVIAL(fatal) << "Error writing remote shell output: " << afout.error_string();
             }
             break;
         case shell_stream::packet_type::Control:
@@ -170,7 +170,7 @@ void shell_client::out_ready()
 
 void shell_client::got_control_packet(byte_array const& msg)
 {
-    logger::debug() << "Shell client got control message, size " << dec << msg.size();
+    BOOST_LOG_TRIVIAL(debug) << "Shell client got control message, size " << dec << msg.size();
 
     byte_array_iwrap<flurry::iarchive> read(msg);
     int32_t cmd;
@@ -181,8 +181,8 @@ void shell_client::got_control_packet(byte_array const& msg)
         int32_t code;
         read.archive() >> code;
         // if (rxs.status() != rxs.Ok)
-            // logger::debug() << "invalid ExitStatus control message";
-        logger::debug() << "remote process exited with code " << code;
+            // BOOST_LOG_TRIVIAL(debug) << "invalid ExitStatus control message";
+        BOOST_LOG_TRIVIAL(debug) << "remote process exited with code " << code;
         exit(code);
         break;
     }
@@ -193,9 +193,9 @@ void shell_client::got_control_packet(byte_array const& msg)
         string signame, errmsg, langtag;
         read.archive() >> flags >> signame >> errmsg >> langtag;
         // if (rxs.status() != rxs.Ok)
-            // logger::debug() << "invalid ExitSignal control message";
+            // BOOST_LOG_TRIVIAL(debug) << "invalid ExitSignal control message";
 
-        logger::info() << "Remote process terminated by signal " << signame
+        BOOST_LOG_TRIVIAL(info) << "Remote process terminated by signal " << signame
             << ((flags & 1) ? " (core dumped)" : "");
 
         exit(1);
@@ -203,7 +203,7 @@ void shell_client::got_control_packet(byte_array const& msg)
     }
 
     default:
-        logger::debug() << "unknown control message type " << cmd;
+        BOOST_LOG_TRIVIAL(debug) << "unknown control message type " << cmd;
         break;      // just ignore the control message
     }
 }

@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <boost/log/trivial.hpp>
 #include "shell_stream.h"
-#include "arsenal/logging.h"
 
 shell_stream::shell_stream(std::shared_ptr<sss::stream> stream)
     : rstate(RecvNormal)
@@ -84,7 +84,7 @@ shell_stream::packet shell_stream::receive()
         switch (rstate) {
         case RecvNormal: {
             if (rx_data_[0] == ControlMarker) {
-                logger::debug() << "got control marker";
+                BOOST_LOG_TRIVIAL(debug) << "got control marker";
                 rstate = RecvLength;
                 ctl_len_ = 0;
                 rx_data_++, rx_amount_--;
@@ -116,7 +116,7 @@ shell_stream::packet shell_stream::receive()
                     // Just an escaped control marker.
                     return packet(packet_type::Data, {ControlMarker});
                 }
-                //logger::debug() << "control msg size" << ctl_len_;
+                //BOOST_LOG_TRIVIAL(debug) << "control msg size" << ctl_len_;
                 rstate = RecvMessage;
                 ctl_buffer_.resize(ctl_len_);
                 ctl_got_ = 0;

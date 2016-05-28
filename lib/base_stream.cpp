@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "arsenal/logging.h"
+#include <boost/log/trivial.hpp>
 #include "arsenal/flurry.h"
 #include "arsenal/algorithm.h"
 #include "arsenal/byte_array_wrap.h"
@@ -45,7 +45,7 @@ base_stream::base_stream(host_ptr host,
 {
     assert(!peer_id.is_null());
 
-    logger::debug() << "Constructing base stream " << this << " for peer " << peer_id;
+    BOOST_LOG_TRIVIAL(debug) << "Constructing base stream " << this << " for peer " << peer_id;
 
     // Initialize inherited parameters
     if (parent) {
@@ -69,7 +69,7 @@ base_stream::base_stream(host_ptr host,
 
 base_stream::~base_stream()
 {
-    logger::debug() << "Destructing base stream";
+    BOOST_LOG_TRIVIAL(debug) << "Destructing base stream";
     clear();
 }
 
@@ -119,7 +119,7 @@ base_stream::transmit_on(stream_channel* channel)
     assert(channel == tx_current_attachment_->channel_);
     assert(!tx_queue_.empty());
 
-    logger::debug() << "Base stream transmit_on channel " << channel;
+    BOOST_LOG_TRIVIAL(debug) << "Base stream transmit_on channel " << channel;
 
     tx_enqueued_channel_ = false; // Channel has just dequeued us.
 
@@ -150,7 +150,7 @@ base_stream::transmit_on(stream_channel* channel)
 
         // Throttle data transmission if channel window is full
         if (tx_inflight_ + seg_size > tx_window_) {
-            logger::debug() << "Transmit window full - need " << (tx_inflight_ + seg_size)
+            BOOST_LOG_TRIVIAL(debug) << "Transmit window full - need " << (tx_inflight_ + seg_size)
                             << " have " << tx_window_;
             // XXX query status if latest update is out-of-date!
             // XXXreturn;
@@ -164,7 +164,7 @@ base_stream::transmit_on(stream_channel* channel)
         // Register the segment as being in-flight.
         tx_inflight_ += seg_size;
 
-        logger::debug() << "Inflight data " << head_packet->tx_byte_seq_ << ", bytes in flight "
+        BOOST_LOG_TRIVIAL(debug) << "Inflight data " << head_packet->tx_byte_seq_ << ", bytes in flight "
                         << tx_inflight_;
 
         // Transmit the next segment in a regular Data packet.
@@ -174,7 +174,7 @@ base_stream::transmit_on(stream_channel* channel)
         // @todo packet_type->frame_type
         // assert(p.type() == packet_type::data);
 
-        logger::debug() << p;
+        BOOST_LOG_TRIVIAL(debug) << p;
 
         // auto header       = p.header<data_header>();
         // header->stream_id = tx_current_attachment_->stream_id_;
@@ -212,13 +212,13 @@ base_stream::transmit_on(stream_channel* channel)
             and usid_.half_channel_id_ == channel->tx_channel_id()
             and uint16_t(usid_.counter_) == tx_current_attachment_->stream_id_
             /* XXX  and parent->tx_inflight_ + seg_size <= parent->tx_window_*/) {
-            logger::debug() << "Sending optimized init packet with " << seg_size
+            BOOST_LOG_TRIVIAL(debug) << "Sending optimized init packet with " << seg_size
                             << " payload bytes";
 
             // Adjust the in-flight byte count for channel control.
             // Init packets get "charged" to the parent stream.
             parent->tx_inflight_ += seg_size;
-            logger::debug() << "Inflight init " << head_packet->tx_byte_seq_
+            BOOST_LOG_TRIVIAL(debug) << "Inflight init " << head_packet->tx_byte_seq_
                             << ", bytes in flight on parent " << parent->tx_inflight_;
 
             return tx_attach_data(frame_type::STREAM, parent->tx_current_attachment_->stream_id_);
@@ -229,11 +229,11 @@ base_stream::transmit_on(stream_channel* channel)
         if (tx_inflight_ + seg_size <= tx_window_) {
             for (int i = 0; i < max_attachments; ++i) {
                 if (rx_attachments_[i].channel_ == channel and rx_attachments_[i].is_active()) {
-                    logger::debug() << "Sending optimized reply packet";
+                    BOOST_LOG_TRIVIAL(debug) << "Sending optimized reply packet";
 
                     // Adjust the in-flight byte count.
                     tx_inflight_ += seg_size;
-                    logger::debug() << "Inflight reply " << head_packet->tx_byte_seq_
+                    BOOST_LOG_TRIVIAL(debug) << "Inflight reply " << head_packet->tx_byte_seq_
                                     << ", bytes in flight " << tx_inflight_;
 
                     /// @todo khustup.
@@ -254,7 +254,7 @@ base_stream::transmit_on(stream_channel* channel)
 void
 base_stream::recalculate_receive_window()
 {
-    logger::debug() << "Base stream recalculate receive window";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream recalculate receive window";
 
     assert(receive_buf_size_ > 0);
 
@@ -277,7 +277,7 @@ base_stream::recalculate_receive_window()
     }
     receive_window_byte_ = i;
 
-    logger::debug() << "Buffered " << dec << rx_available_ << "+"
+    BOOST_LOG_TRIVIAL(debug) << "Buffered " << dec << rx_available_ << "+"
                     << (rx_buffer_used_ - rx_available_) << ", new receive window " << rwin
                     << ", exp " << i;
 }
@@ -289,7 +289,7 @@ base_stream::recalculate_transmit_window(uint8_t window_byte)
 
     if (window_byte > 158) // Spec 4.10.1
     {
-        logger::warning() << "Received invalid window byte " << dec << window_byte;
+        BOOST_LOG_TRIVIAL(warning) << "Received invalid window byte " << dec << window_byte;
         window_byte = 158;
     }
 
@@ -297,7 +297,7 @@ base_stream::recalculate_transmit_window(uint8_t window_byte)
     int i      = window_byte & 0x1f;
     tx_window_ = (1 << i) - 1;
 
-    logger::debug() << "Transmit window change " << dec << old_window << "->" << tx_window_
+    BOOST_LOG_TRIVIAL(debug) << "Transmit window change " << dec << old_window << "->" << tx_window_
                     << ", in use " << tx_inflight_;
 
     if (tx_window_ > old_window) {
@@ -308,7 +308,7 @@ base_stream::recalculate_transmit_window(uint8_t window_byte)
 void
 base_stream::connect_to(string const& service, string const& protocol)
 {
-    logger::debug() << "Connecting base stream to " << service << ":" << protocol;
+    BOOST_LOG_TRIVIAL(debug) << "Connecting base stream to " << service << ":" << protocol;
 
     assert(!service.empty());
     assert(state_ == state::created);
@@ -361,7 +361,7 @@ base_stream::attach_for_transmit()
     // If we already have a transmit-attachment, nothing to do.
     if (tx_current_attachment_ != nullptr) {
         assert(tx_current_attachment_->is_in_use());
-        logger::debug() << "Base stream already has attached, doing nothing";
+        BOOST_LOG_TRIVIAL(debug) << "Base stream already has attached, doing nothing";
         return;
     }
 
@@ -370,7 +370,7 @@ base_stream::attach_for_transmit()
         return;
     }
 
-    logger::debug() << "Base stream attaching for transmission";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream attaching for transmission";
 
     // --- connect channel ---
 
@@ -379,7 +379,7 @@ base_stream::attach_for_transmit()
     if (!peer_->primary_channel_) {
         // Get the channel setup process for this host ID underway.
         // XXX provide an initial packet to avoid an extra RTT!
-        logger::debug() << "Waiting for channel";
+        BOOST_LOG_TRIVIAL(debug) << "Waiting for channel";
         peer_->on_channel_connected.connect([this]() { channel_connected(); });
         return peer_->connect_channel();
     }
@@ -409,7 +409,7 @@ base_stream::attach_for_transmit()
         // Parent itself doesn't have an USID yet - we have to wait until it does.
         if (parent_usid_.is_empty())
         {
-            logger::debug() << "Parent of " << this << " has no USID yet - waiting";
+            BOOST_LOG_TRIVIAL(debug) << "Parent of " << this << " has no USID yet - waiting";
             parent->on_attached.connect([this]() { parent_attached(); });
             return parent->attach_for_transmit();
         }
@@ -428,7 +428,7 @@ base_stream::attach_for_transmit()
     while (tx_attachments_[slot].is_in_use())
     {
         if (++slot == max_attachments) {
-            logger::fatal() << "Base stream attach_for_transmit - all slots are in use.";
+            BOOST_LOG_TRIVIAL(fatal) << "Base stream attach_for_transmit - all slots are in use.";
             // @todo: Free up some slot.
         }
     }
@@ -441,7 +441,7 @@ base_stream::attach_for_transmit()
     if (usid_.is_empty())
     {
         set_usid(unique_stream_id_t(sid, channel->tx_channel_id()));
-        logger::debug() << "Creating stream " << usid_;
+        BOOST_LOG_TRIVIAL(debug) << "Creating stream " << usid_;
     }
 
     // Get us in line to transmit on the channel.
@@ -463,7 +463,7 @@ base_stream::set_usid(unique_stream_id_t new_usid)
     assert(!new_usid.is_empty());
 
     if (contains(peer_->usid_streams_, new_usid)) {
-        logger::warning() << "Base stream set_usid passed a duplicate stream USID " << new_usid;
+        BOOST_LOG_TRIVIAL(warning) << "Base stream set_usid passed a duplicate stream USID " << new_usid;
     }
 
     usid_ = new_usid;
@@ -607,7 +607,7 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
             size = total_size;
         }
 
-        logger::debug() << "Transmit segment at [byteseq " << tx_byte_seq_ << "], size " << size
+        BOOST_LOG_TRIVIAL(debug) << "Transmit segment at [byteseq " << tx_byte_seq_ << "], size " << size
                         << " bytes";
 
         // Build the appropriate packet header.
@@ -636,7 +636,7 @@ base_stream::write_data(char const* data, ssize_t total_size, uint8_t endflags)
         tx_waiting_ack_.insert(p.tx_byte_seq_);
         tx_waiting_size_ += size;
 
-        logger::debug() << "write_data inserted [byteseq " << p.tx_byte_seq_
+        BOOST_LOG_TRIVIAL(debug) << "write_data inserted [byteseq " << p.tx_byte_seq_
                         << "] into waiting ack, size " << size << ", new count "
                         << tx_waiting_ack_.size() << ", twaitsize " << tx_waiting_size_;
 
@@ -703,13 +703,13 @@ base_stream::read_datagram(ssize_t max_size)
 ssize_t
 base_stream::write_datagram(const char* data, ssize_t total_size, stream::datagram_type is_reliable)
 {
-    logger::debug() << "Sending datagram, size " << total_size << ", "
+    BOOST_LOG_TRIVIAL(debug) << "Sending datagram, size " << total_size << ", "
                     << (is_reliable == stream::datagram_type::reliable ? "reliable" : "unreliable");
     if (is_reliable == stream::datagram_type::reliable
         /*or total_size > (ssize_t)max_stateless_datagram_size*/) {
         // Datagram too large to send using the stateless optimization:
         // just send it as a regular substream.
-        logger::debug() << "Sending large datagram, size " << total_size;
+        BOOST_LOG_TRIVIAL(debug) << "Sending large datagram, size " << total_size;
         auto sub = open_substream();
         if (sub == nullptr)
             return -1;
@@ -797,7 +797,7 @@ base_stream::set_priority(priority_t priority)
 abstract_stream_ptr
 base_stream::open_substream()
 {
-    logger::debug() << "Base stream open substream";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream open substream";
 
     // Create a new sub-stream.
     // Note that the parent doesn't have to be attached yet:
@@ -815,7 +815,7 @@ base_stream::open_substream()
 abstract_stream_ptr
 base_stream::accept_substream()
 {
-    logger::debug() << "Base stream accept substream";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream accept substream";
 
     if (received_substreams_.empty())
         return nullptr;
@@ -834,10 +834,10 @@ void
 base_stream::set_receive_buffer_size(size_t size)
 {
     if (size < min_receive_buffer_size) {
-        logger::warning() << "Child receive buffer size " << dec << size << " too small";
+        BOOST_LOG_TRIVIAL(warning) << "Child receive buffer size " << dec << size << " too small";
         size = min_receive_buffer_size;
     }
-    logger::debug() << "Setting base stream receive buffer size " << dec << size << " bytes";
+    BOOST_LOG_TRIVIAL(debug) << "Setting base stream receive buffer size " << dec << size << " bytes";
     receive_buf_size_ = size;
 }
 
@@ -845,17 +845,17 @@ void
 base_stream::set_child_receive_buffer_size(size_t size)
 {
     if (size < min_receive_buffer_size) {
-        logger::warning() << "Child receive buffer size " << dec << size << " too small";
+        BOOST_LOG_TRIVIAL(warning) << "Child receive buffer size " << dec << size << " too small";
         size = min_receive_buffer_size;
     }
-    logger::debug() << "Setting base stream child receive buffer size " << dec << size << " bytes";
+    BOOST_LOG_TRIVIAL(debug) << "Setting base stream child receive buffer size " << dec << size << " bytes";
     child_receive_buf_size_ = size;
 }
 
 void
 base_stream::shutdown(stream::shutdown_mode mode)
 {
-    logger::debug() << "Shutting down base stream " << this;
+    BOOST_LOG_TRIVIAL(debug) << "Shutting down base stream " << this;
 
     // @todo self-destruct when done, if appropriate
 
@@ -885,7 +885,7 @@ base_stream::shutdown(stream::shutdown_mode mode)
 void
 base_stream::disconnect()
 {
-    logger::debug() << "Disconnecting base stream";
+    BOOST_LOG_TRIVIAL(debug) << "Disconnecting base stream";
     state_ = state::disconnected;
     // @todo bring down the connection - clear()
 
@@ -900,13 +900,13 @@ base_stream::fail(string const& error)
 {
     disconnect();
     set_error(error);
-    logger::warning() << error;
+    BOOST_LOG_TRIVIAL(warning) << error;
 }
 
 void
 base_stream::dump()
 {
-    logger::debug() << "Base stream " << this << " state " << int(state_) << " TSN " << tx_byte_seq_
+    BOOST_LOG_TRIVIAL(debug) << "Base stream " << this << " state " << int(state_) << " TSN " << tx_byte_seq_
                     << " RSN " << rx_byte_seq_ << " rx_avail " << rx_available_ << " readahead "
                     << readahead_.size() << " rx_segs " << rx_segments_.size() << " rx_rec_avail "
                     << rx_record_available_ << " rx_recs " << rx_record_sizes_.size();
@@ -965,7 +965,7 @@ base_stream::tx_enqueue_channel(bool tx_immediately)
 void
 base_stream::tx_attach()
 {
-    logger::debug() << "Base stream tx_attach";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream tx_attach";
 
     stream_channel* chan = tx_current_attachment_->channel_;
     unsigned slot = tx_current_attachment_ - tx_attachments_; // either 0 or 1
@@ -1026,7 +1026,7 @@ base_stream::tx_attach_data(frame_type type, local_stream_id_t ref_sid)
     // header->new_stream_id = ref_sid;
     // header->tx_seq_no     = p.tx_byte_seq; // Note: 16-bit TSN
 
-    logger::debug() << p;
+    BOOST_LOG_TRIVIAL(debug) << p;
 
     // Transmit
     return tx_data(p);
@@ -1041,7 +1041,7 @@ base_stream::tx_data(tx_frame_t& p)
     packet_seq_t pktseq;
     channel->channel_transmit(p.payload_, pktseq);
 
-    logger::debug() << "tx_data " << pktseq << " pos " << p.tx_byte_seq_ << " size "
+    BOOST_LOG_TRIVIAL(debug) << "tx_data " << pktseq << " pos " << p.tx_byte_seq_ << " size "
                     << boost::asio::buffer_size(p.payload_);
 
     // Save the data packet in the channel's ackwait hash.
@@ -1061,7 +1061,7 @@ base_stream::tx_data(tx_frame_t& p)
 void
 base_stream::tx_datagram()
 {
-    logger::debug() << "Base stream tx_datagram";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream tx_datagram";
 
     // Transmit the whole datagram immediately,
     // so that all fragments get consecutive packet sequence numbers.
@@ -1098,7 +1098,7 @@ base_stream::tx_datagram()
 void
 base_stream::tx_reset(stream_channel* channel, local_stream_id_t sid, uint8_t flags)
 {
-    logger::warning() << "Base stream tx_reset";
+    BOOST_LOG_TRIVIAL(warning) << "Base stream tx_reset";
 
     // Build the Reset packet header
     // tx_frame_t p(nullptr, packet_type::reset);
@@ -1120,7 +1120,7 @@ base_stream::tx_reset(stream_channel* channel, local_stream_id_t sid, uint8_t fl
     //     channel->waiting_ack_.insert(make_pair(pktseq, p));
     // }
 
-    logger::debug() << "Reset packet sent, garbage collecting the stream!";
+    BOOST_LOG_TRIVIAL(debug) << "Reset packet sent, garbage collecting the stream!";
 
     // shutdown(stream::shutdown_mode::reset);
     // if (auto stream = owner_.lock()) {
@@ -1150,7 +1150,7 @@ base_stream::tx_reset(stream_channel* channel, local_stream_id_t sid, uint8_t fl
 void
 base_stream::acknowledged(stream_channel* channel, tx_frame_t const& pkt, packet_seq_t rx_seq)
 {
-    logger::debug() << "Base stream ACKed packet of size " << dec << pkt.payload_size();
+    BOOST_LOG_TRIVIAL(debug) << "Base stream ACKed packet of size " << dec << pkt.payload_size();
 
     switch (pkt.type()) {
         case frame_type::EMPTY:
@@ -1178,7 +1178,7 @@ base_stream::acknowledged(stream_channel* channel, tx_frame_t const& pkt, packet
                     tx_waiting_ack_.erase(pkt.tx_byte_seq);
                     tx_waiting_size_ -= pkt.payload_size();
 
-                    logger::debug() << "tx_waiting_ack remove " << pkt.tx_byte_seq
+                    BOOST_LOG_TRIVIAL(debug) << "tx_waiting_ack remove " << pkt.tx_byte_seq
                              << ", size " << pkt.payload_size()
                              << ", new wait count " << tx_waiting_ack_.size()
                              << ", waiting to ack " << tx_waiting_size_
@@ -1198,7 +1198,7 @@ base_stream::acknowledged(stream_channel* channel, tx_frame_t const& pkt, packet
                 {
                     // We've gotten our first ack for a new attachment.
                     // Save the rxseq the ack came in on as the attachment's reference pktseq.
-                    logger::debug() << "Got attach ack " << rx_seq;
+                    BOOST_LOG_TRIVIAL(debug) << "Got attach ack " << rx_seq;
                     tx_current_attachment_->set_active(rx_seq);
                     init_ = false;
 
@@ -1226,7 +1226,7 @@ base_stream::acknowledged(stream_channel* channel, tx_frame_t const& pkt, packet
             case packet_type::detach:
             case packet_type::reset:
             default:
-                logger::warning() << "Got ACK for unknown packet type " << int(pkt.type());
+                BOOST_LOG_TRIVIAL(warning) << "Got ACK for unknown packet type " << int(pkt.type());
                 break;
             */
     }
@@ -1237,12 +1237,12 @@ base_stream::missed(stream_channel* channel, tx_frame_t const& pkt)
 {
     assert(pkt.late);
 
-    logger::debug() << "Base stream missed seq " << pkt.tx_byte_seq_ << " of size "
+    BOOST_LOG_TRIVIAL(debug) << "Base stream missed seq " << pkt.tx_byte_seq_ << " of size "
                     << pkt.payload_size();
 
     switch (pkt.type()) {
         case frame_type::EMPTY: {
-            logger::debug() << "Retransmit seq " << pkt.tx_byte_seq_ << " of size "
+            BOOST_LOG_TRIVIAL(debug) << "Retransmit seq " << pkt.tx_byte_seq_ << " of size "
                             << pkt.payload_size();
             // Mark the segment no longer "in flight".
             end_flight(pkt);
@@ -1253,12 +1253,12 @@ base_stream::missed(stream_channel* channel, tx_frame_t const& pkt)
         }
 
         case frame_type::STREAM:
-            logger::debug() << "Attach packet lost: trying again to attach";
+            BOOST_LOG_TRIVIAL(debug) << "Attach packet lost: trying again to attach";
             tx_enqueue_channel();
             return true;
 
         case frame_type::ACK:
-            logger::debug() << "Datagram packet lost: oops, gone for good";
+            BOOST_LOG_TRIVIAL(debug) << "Datagram packet lost: oops, gone for good";
 
             // Mark the segment no longer "in flight".
             // We know we'll only do this once per DatagramPacket
@@ -1273,7 +1273,7 @@ base_stream::missed(stream_channel* channel, tx_frame_t const& pkt)
         case frame_type::RESET:
         case frame_type::CLOSE:
         default:
-            logger::warning() << "Missed unknown packet type " << int(pkt.type());
+            BOOST_LOG_TRIVIAL(warning) << "Missed unknown packet type " << int(pkt.type());
             return false;
     }
 }
@@ -1295,13 +1295,13 @@ base_stream::end_flight(tx_frame_t const& pkt)
     // if (type_from_header(header) == packet_type::init) {
     //     if (auto parent = parent_.lock()) {
     //         parent->tx_inflight_ -= pkt.payload_size();
-    //         logger::debug() << "Endflight " << pkt.tx_byte_seq << ", bytes in flight on parent "
+    //         BOOST_LOG_TRIVIAL(debug) << "Endflight " << pkt.tx_byte_seq << ", bytes in flight on parent "
     //                         << parent->tx_inflight_;
     //         assert(parent->tx_inflight_ >= 0);
     //     }
     // } else { // Reply or Data packet
     //     tx_inflight_ -= pkt.payload_size();
-    //     logger::debug() << "Endflight " << pkt.tx_byte_seq << ", bytes in flight " <<
+    //     BOOST_LOG_TRIVIAL(debug) << "Endflight " << pkt.tx_byte_seq << ", bytes in flight " <<
     //     tx_inflight_;
     //     assert(tx_inflight_ >= 0);
     // }
@@ -1326,7 +1326,7 @@ bool
 base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < header_len_min) {
-    //     logger::warning() << "Base stream - received runt packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Base stream - received runt packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
@@ -1342,7 +1342,7 @@ base_stream::receive(packet_seq_t pktseq, byte_array const& pkt, stream_channel*
     //     case packet_type::attach: return rx_attach_packet(pktseq, pkt, channel);
     //     case packet_type::detach: return rx_detach_packet(pktseq, pkt, channel);
     //     default:
-    //         logger::warning() << "Unknown packet type " << hex << int(type_from_header(header));
+    //         BOOST_LOG_TRIVIAL(warning) << "Unknown packet type " << hex << int(type_from_header(header));
     //         return false; // @fixme Protocol error, close channel?
     // }
     return false;
@@ -1352,17 +1352,17 @@ bool
 base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < init_header_len_min) {
-    //     logger::warning() << "Received runt init packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt init packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
-    // logger::debug() << "Base stream rx_init_packet";
+    // BOOST_LOG_TRIVIAL(debug) << "Base stream rx_init_packet";
     // auto header = as_header<init_header>(pkt);
 
     // // Look up the stream - if it already exists,
     // // just dispatch it directly as if it were a data packet.
     // if (contains(channel->receive_sids_, header->stream_id)) {
-    //     logger::debug() << "rx_init_packet: stream exists, dispatch data only";
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_init_packet: stream exists, dispatch data only";
     //     stream_attachment* attach = channel->receive_sids_[header->stream_id];
     //     if (pktseq < attach->sid_seq_) // earlier init packet; that's OK.
     //         attach->sid_seq_ = pktseq;
@@ -1377,16 +1377,16 @@ base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_c
     // if (!contains(channel->receive_sids_, header->new_stream_id)) {
     //     // The parent SID is in error, so reset that SID.
     //     // Ack the pktseq first so peer won't ignore the reset!
-    //     logger::warning() << "rx_init_packet: unknown parent stream ID";
+    //     BOOST_LOG_TRIVIAL(warning) << "rx_init_packet: unknown parent stream ID";
     //     channel->acknowledge(pktseq, false);
     //     tx_reset(channel, header->new_stream_id, flags::reset_remote_sid);
     //     return false;
     // }
 
     // stream_attachment* parent_attach = channel->receive_sids_[header->new_stream_id];
-    // logger::debug() << "rx_init_packet: found parent stream attach " << parent_attach;
+    // BOOST_LOG_TRIVIAL(debug) << "rx_init_packet: found parent stream attach " << parent_attach;
     // if (pktseq < parent_attach->sid_seq_) {
-    //     logger::warning() << "rx_init_packet: stale wrt parent SID sequence";
+    //     BOOST_LOG_TRIVIAL(warning) << "rx_init_packet: stale wrt parent SID sequence";
     //     return false; // silently drop stale packet
     // }
 
@@ -1396,7 +1396,7 @@ base_stream::rx_init_packet(packet_seq_t pktseq, byte_array const& pkt, stream_c
     //                 + (int16_t)(header->stream_id - (int16_t)channel->received_sid_counter_);
     // unique_stream_id_t usid(ctr, channel->rx_channel_id());
 
-    // logger::debug() << "rx_init_packet: parent attach stream " << parent_attach->stream_;
+    // BOOST_LOG_TRIVIAL(debug) << "rx_init_packet: parent attach stream " << parent_attach->stream_;
 
     // // Create the new substream.
     // auto new_stream =
@@ -1418,17 +1418,17 @@ bool
 base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < reply_header_len_min) {
-    //     logger::warning() << "Received runt reply packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt reply packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
-    // logger::debug() << "Base stream rx_reply_packet";
+    // BOOST_LOG_TRIVIAL(debug) << "Base stream rx_reply_packet";
     // auto header = as_header<reply_header>(pkt);
 
     // // Look up the stream - if it already exists,
     // // just dispatch it directly as if it were a data packet.
     // if (contains(channel->receive_sids_, header->stream_id)) {
-    //     logger::debug() << "rx_reply_packet: stream exists, dispatch data only";
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_reply_packet: stream exists, dispatch data only";
     //     stream_attachment* attach = channel->receive_sids_[header->stream_id];
     //     if (pktseq < attach->sid_seq_) { // earlier reply packet; that's OK.
     //         attach->sid_seq_ = pktseq;
@@ -1445,7 +1445,7 @@ base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_
     //     // The reference SID supposedly in our own space is invalid!
     //     // Respond with a reset indicating that SID in our space.
     //     // Ack the pktseq first so peer won't ignore the reset!
-    //     logger::debug() << "rx_reply_packet: unknown reference stream ID";
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_reply_packet: unknown reference stream ID";
     //     channel->acknowledge(pktseq, false);
     //     tx_reset(channel, header->new_stream_id, 0);
     //     return false;
@@ -1454,14 +1454,14 @@ base_stream::rx_reply_packet(packet_seq_t pktseq, byte_array const& pkt, stream_
     // stream_attachment* attach = channel->transmit_sids_[header->new_stream_id];
 
     // if (pktseq < attach->sid_seq_) {
-    //     logger::debug() << "rx_reply_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_reply_packet: stale packet - pktseq " << pktseq << " sidseq "
     //                     << attach->sid_seq_;
     //     return false; // silently drop stale packet
     // }
 
     // base_stream* stream = attach->stream_;
 
-    // logger::debug() << stream << " Accepting reply " << stream->usid_;
+    // BOOST_LOG_TRIVIAL(debug) << stream << " Accepting reply " << stream->usid_;
 
     // // OK, we have the stream - just create the receive-side attachment.
     // stream->rx_attachments_[0].set_active(channel, header->stream_id, pktseq);
@@ -1479,17 +1479,17 @@ bool
 base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < data_header_len_min) {
-    //     logger::warning() << "Received runt data packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt data packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
-    // logger::debug() << "Base stream rx_data_packet";
+    // BOOST_LOG_TRIVIAL(debug) << "Base stream rx_data_packet";
     // auto header = as_header<data_header>(pkt);
 
     // if (!contains(channel->receive_sids_, header->stream_id)) {
     //     // Respond with a reset for the unknown stream ID.
     //     // Ack the pktseq first so peer won't ignore the reset!
-    //     logger::debug() << "rx_data_packet: unknown stream ID " << header->stream_id;
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_data_packet: unknown stream ID " << header->stream_id;
     //     channel->acknowledge(pktseq, false);
     //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
     //     return false;
@@ -1497,7 +1497,7 @@ base_stream::rx_data_packet(packet_seq_t pktseq, byte_array const& pkt, stream_c
 
     // stream_attachment* attach = channel->receive_sids_[header->stream_id];
     // if (pktseq < attach->sid_seq_) {
-    //     logger::debug() << "rx_data_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_data_packet: stale packet - pktseq " << pktseq << " sidseq "
     //                     << attach->sid_seq_;
     //     return false; // silently drop stale packet
     // }
@@ -1514,18 +1514,18 @@ bool
 base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < datagram_header_len_min) {
-    //     logger::warning() << "Received runt datagram packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt datagram packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
-    // logger::debug() << "Base stream rx_datagram_packet";
+    // BOOST_LOG_TRIVIAL(debug) << "Base stream rx_datagram_packet";
     // auto header = as_header<datagram_header>(pkt);
 
     // // Look up the stream for which the datagram is a substream.
     // if (!contains(channel->receive_sids_, header->stream_id)) {
     //     // Respond with a reset for the unknown stream ID.
     //     // Ack the pktseq first so peer won't ignore the reset!
-    //     logger::warning() << "rx_datagram_packet: unknown stream ID " << header->stream_id;
+    //     BOOST_LOG_TRIVIAL(warning) << "rx_datagram_packet: unknown stream ID " << header->stream_id;
     //     channel->acknowledge(pktseq, false);
     //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
     //     return false;
@@ -1536,7 +1536,7 @@ base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stre
     // channel->ack_sid_ = header->stream_id; // @fixme Why do we update ack_sid here?
 
     // if (pktseq < attach->sid_seq_) {
-    //     logger::debug() << "rx_datagram_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_datagram_packet: stale packet - pktseq " << pktseq << " sidseq "
     //                     << attach->sid_seq_;
     //     return false; // silently drop stale packet
     // }
@@ -1554,7 +1554,7 @@ base_stream::rx_datagram_packet(packet_seq_t pktseq, byte_array const& pkt, stre
 
     // if (!(flags & flags::datagram_begin) or !(flags & flags::datagram_end)) {
     //     // @todo Fix datagram reassembly.
-    //     logger::fatal() << "OOPS, don't yet know how to reassemble datagrams";
+    //     BOOST_LOG_TRIVIAL(fatal) << "OOPS, don't yet know how to reassemble datagrams";
     //     return false;
     // }
 
@@ -1576,7 +1576,7 @@ bool
 base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < ack_header_len_min) {
-    //     logger::warning() << "Received runt ack packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt ack packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
@@ -1584,7 +1584,7 @@ base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_ch
     // // but do NOT send another ack just to ack this ack!
     // channel->acknowledge(pktseq, false);
 
-    // logger::debug() << "Base stream rx_ack_packet";
+    // BOOST_LOG_TRIVIAL(debug) << "Base stream rx_ack_packet";
     // auto header = as_header<ack_header>(pkt);
 
     // // Look up the stream the data packet belongs to.
@@ -1594,7 +1594,7 @@ base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_ch
     //     // The reference SID supposedly in our own space is invalid!
     //     // Respond with a reset indicating that SID in our space.
     //     // Ack the pktseq first so peer won't ignore the reset!
-    //     logger::debug() << "rx_ack_packet: unknown stream ID " << header->stream_id;
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_ack_packet: unknown stream ID " << header->stream_id;
     //     channel->acknowledge(pktseq, false);
     //     tx_reset(channel, header->stream_id, flags::reset_remote_sid);
     //     return false;
@@ -1603,7 +1603,7 @@ base_stream::rx_ack_packet(packet_seq_t pktseq, byte_array const& pkt, stream_ch
     // stream_attachment* attach = channel->transmit_sids_[header->stream_id];
 
     // if (pktseq < attach->sid_seq_) {
-    //     logger::debug() << "rx_ack_packet: stale packet - pktseq " << pktseq << " sidseq "
+    //     BOOST_LOG_TRIVIAL(debug) << "rx_ack_packet: stale packet - pktseq " << pktseq << " sidseq "
     //                     << attach->sid_seq_;
     //     return false; // silently drop stale packet
     // }
@@ -1626,11 +1626,11 @@ bool
 base_stream::rx_reset_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < reset_header_len_min) {
-    //     logger::warning() << "Received runt reset packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt reset packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
-    // logger::warning() << "Base stream rx_reset_packet UNIMPLEMENTED.";
+    // BOOST_LOG_TRIVIAL(warning) << "Base stream rx_reset_packet UNIMPLEMENTED.";
     // // auto header = as_header<reset_header>(pkt);
     // // bool local_sid = hdr->type & flags::reset_remote_sid;
     // //
@@ -1646,7 +1646,7 @@ bool
 base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream_channel* channel)
 {
     // if (pkt.size() < attach_header_len_min) {
-    //     logger::warning() << "Received runt attach packet";
+    //     BOOST_LOG_TRIVIAL(warning) << "Received runt attach packet";
     //     return false; // @fixme Protocol error, close channel?
     // }
 
@@ -1659,7 +1659,7 @@ base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream
 
     // unique_stream_id_t usid, parent_usid;
 
-    // logger::debug() << "Base stream received attach packet, " << (init ? "init" : "non-init")
+    // BOOST_LOG_TRIVIAL(debug) << "Base stream received attach packet, " << (init ? "init" : "non-init")
     //                 << " attach on slot " << slot;
 
     // byte_array_iwrap<flurry::iarchive> read(pkt);
@@ -1672,7 +1672,7 @@ base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream
     // }
 
     // if (usid.is_empty() or (init and parent_usid.is_empty())) {
-    //     logger::warning() << "Invalid attach packet received";
+    //     BOOST_LOG_TRIVIAL(warning) << "Invalid attach packet received";
     //     return false; // @fixme Protocol error, shutdown channel?
     // }
 
@@ -1680,25 +1680,25 @@ base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream
     //     // Found it: the stream already exists, just attach it.
     //     base_stream* stream = channel->peer_->usid_streams_[usid];
 
-    //     logger::debug() << "Found USID in existing streams";
+    //     BOOST_LOG_TRIVIAL(debug) << "Found USID in existing streams";
     //     channel->ack_sid_           = header->stream_id;
     //     stream_rx_attachment& rslot = stream->rx_attachments_[slot];
     //     if (rslot.is_active()) {
     //         if (rslot.channel_ == channel and rslot.stream_id_ == header->stream_id) {
-    //             logger::debug() << stream << " redundant attach " << stream->usid_;
+    //             BOOST_LOG_TRIVIAL(debug) << stream << " redundant attach " << stream->usid_;
     //             rslot.sid_seq_ = min(rslot.sid_seq_, pktseq);
     //             return true;
     //         }
-    //         logger::debug() << stream << " replacing attach slot " << slot;
+    //         BOOST_LOG_TRIVIAL(debug) << stream << " replacing attach slot " << slot;
     //         rslot.clear();
     //     }
-    //     logger::debug() << stream << " accepting attach " << stream->usid_;
+    //     BOOST_LOG_TRIVIAL(debug) << stream << " accepting attach " << stream->usid_;
     //     rslot.set_active(channel, header->stream_id, pktseq);
     //     return true;
     // }
 
     // for (auto x : channel->peer_->usid_streams_) {
-    //     logger::debug() << "known usid " << x.first;
+    //     BOOST_LOG_TRIVIAL(debug) << "known usid " << x.first;
     // }
 
     // // Stream doesn't exist - lookup parent if it's an init-attach.
@@ -1717,7 +1717,7 @@ base_stream::rx_attach_packet(packet_seq_t pktseq, byte_array const& pkt, stream
     // }
 
     // // No way to attach the stream - just reset it.
-    // logger::debug() << "rx_attach_packet: unknown stream " << usid;
+    // BOOST_LOG_TRIVIAL(debug) << "rx_attach_packet: unknown stream " << usid;
     // channel->acknowledge(pktseq, false);
     // tx_reset(channel, header->stream_id, flags::reset_remote_sid);
     // return false;
@@ -1739,7 +1739,7 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     // if (end_read_) {
     //     // Ignore anything we receive past end of stream
     //     // (which we may have forced from our end via close()).
-    //     logger::warning() << "Ignoring segment received after end-of-stream";
+    //     BOOST_LOG_TRIVIAL(warning) << "Ignoring segment received after end-of-stream";
     //     assert(readahead_.empty());
     //     assert(rx_segments_.empty());
     //     return;
@@ -1748,7 +1748,7 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     // rx_segment_t rseg(pkt, byte_seq, channel::header_len + sizeof(data_header));
     // int seg_size = rseg.segment_size();
 
-    // logger::debug() << "rx_data " << byte_seq << " payload size " << seg_size << " flags "
+    // BOOST_LOG_TRIVIAL(debug) << "rx_data " << byte_seq << " payload size " << seg_size << " flags "
     //                 << int(rseg.flags()) << " stream rx_seq " << rx_byte_seq_;
 
     // // See where this packet fits in
@@ -1762,12 +1762,12 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     //     if (act_size < 0 or (act_size == 0 and !rseg.has_flags())) {
     //         // The packet is way out of date -
     //         // its end doesn't even come up to our current RSN.
-    //         logger::debug() << "Duplicate segment at rx_seq " << rseg.rx_byte_seq << " size "
+    //         BOOST_LOG_TRIVIAL(debug) << "Duplicate segment at rx_seq " << rseg.rx_byte_seq << " size "
     //                         << seg_size;
     //         return recalculate_receive_window();
     //     }
     //     rseg.header_len -= rx_seq_diff; // Merge useless data into "headers"
-    //     logger::debug() << "actual_size " << act_size << " flags " << int(rseg.flags());
+    //     BOOST_LOG_TRIVIAL(debug) << "actual_size " << act_size << " flags " << int(rseg.flags());
 
     //     // It gives us exactly the data we want next - very good!
     //     bool was_empty   = !has_bytes_available();
@@ -1790,7 +1790,7 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     //         // below we'll re-add whatever part of it we use.
     //         rx_buffer_used_ -= seg_size;
 
-    //         logger::debug() << "Pull readahead segment at " << read_seg.rx_byte_seq << " of size
+    //         BOOST_LOG_TRIVIAL(debug) << "Pull readahead segment at " << read_seg.rx_byte_seq << " of size
     //         "
     //                         << seg_size << " from reorder buffer";
 
@@ -1846,7 +1846,7 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     //     // It's out of order beyond our current receive sequence -
     //     // stash it in a re-order buffer, sorted by rx_seq.
 
-    //     logger::debug() << "Received out-of-order segment at " << rseg.rx_byte_seq << " size "
+    //     BOOST_LOG_TRIVIAL(debug) << "Received out-of-order segment at " << rseg.rx_byte_seq << " size "
     //                     << seg_size;
 
     //     // Binary search for the correct position.
@@ -1863,7 +1863,7 @@ base_stream::rx_data(byte_array const& pkt, uint32_t byte_seq)
     //     if (it != readahead_.end() and (*it).rx_byte_seq == rseg.rx_byte_seq
     //         and seg_size <= (*it).segment_size()
     //         and rseg.flags() == (*it).flags()) {
-    //         logger::debug() << "rxseg duplicate out-of-order segment - rx_seq " <<
+    //         BOOST_LOG_TRIVIAL(debug) << "rxseg duplicate out-of-order segment - rx_seq " <<
     //         rseg.rx_byte_seq;
     //         return recalculate_receive_window();
     //     }
@@ -1887,7 +1887,7 @@ base_stream::rx_substream(packet_seq_t pktseq,
     if (!is_listening()) {
         // The parent SID is not in error, so just reset the new child.
         // Ack the pktseq first so peer won't ignore the reset!
-        logger::warning() << "Other side trying to create substream, but we're not listening.";
+        BOOST_LOG_TRIVIAL(warning) << "Other side trying to create substream, but we're not listening.";
         channel->acknowledge(pktseq, false);
         // tx_reset(channel, sid, flags::reset_remote_sid);
         return nullptr;
@@ -1903,7 +1903,7 @@ base_stream::rx_substream(packet_seq_t pktseq,
     new_stream->self_ = new_stream; // UGH :(
 
     // We'll accept the new stream: this is the point of no return.
-    logger::debug() << "Accepting sub-stream " << usid << " as " << new_stream;
+    BOOST_LOG_TRIVIAL(debug) << "Accepting sub-stream " << usid << " as " << new_stream;
 
     // Extrapolate the sender's stream counter from the new SID it sent.
     counter_t ctr =
@@ -1948,7 +1948,7 @@ base_stream::rx_enqueue_segment(rx_segment_t const& seg, size_t actual_size, boo
     if (/*(seg.flags() bitand (flags::data_record | flags::data_close))
         and*/ (rx_record_available_
                                                                          > 0)) {
-        logger::debug() << "Received complete record";
+        BOOST_LOG_TRIVIAL(debug) << "Received complete record";
         rx_record_sizes_.push_back(rx_record_available_);
         rx_record_available_ = 0;
     }
@@ -1973,7 +1973,7 @@ base_stream::got_service_request()
     assert(state_ == state::accepting);
 
     byte_array rec = read_record(max_service_record_size);
-    logger::debug() << "Received record " << rec;
+    BOOST_LOG_TRIVIAL(debug) << "Received record " << rec;
     byte_array_iwrap<flurry::iarchive> read(rec);
     uint32_t code;
     string service, protocol;
@@ -1981,7 +1981,7 @@ base_stream::got_service_request()
     if (code != service_code::connect_request)
         return fail("Bad service request");
 
-    logger::debug() << "got_service_request service '" << service << "' protocol '" << protocol
+    BOOST_LOG_TRIVIAL(debug) << "got_service_request service '" << service << "' protocol '" << protocol
                     << "'";
 
     // Lookup the requested service
@@ -2010,7 +2010,7 @@ base_stream::got_service_reply()
     assert(tx_current_attachment_);
 
     byte_array rec = read_record(max_service_record_size);
-    logger::debug() << "Received record " << rec;
+    BOOST_LOG_TRIVIAL(debug) << "Received record " << rec;
 
     byte_array_iwrap<flurry::iarchive> read(rec);
     uint32_t code, status;
@@ -2023,7 +2023,7 @@ base_stream::got_service_reply()
         return fail(oss.str());
     }
 
-    logger::debug() << "got_service_reply code '" << code << "' status '" << status << "' message '"
+    BOOST_LOG_TRIVIAL(debug) << "got_service_reply code '" << code << "' status '" << status << "' message '"
                     << message << "'";
 
     state_ = state::connected;
@@ -2038,7 +2038,7 @@ base_stream::got_service_reply()
 void
 base_stream::channel_connected()
 {
-    logger::debug() << "Base stream - channel has connected.";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream - channel has connected.";
     if (peer_) {
         peer_->on_channel_connected.disconnect(boost::bind(&base_stream::channel_connected, this));
     }
@@ -2050,7 +2050,7 @@ base_stream::channel_connected()
 void
 base_stream::parent_attached()
 {
-    logger::debug() << "Base stream - parent stream has attached, we can now attach.";
+    BOOST_LOG_TRIVIAL(debug) << "Base stream - parent stream has attached, we can now attach.";
     if (auto parent = parent_.lock()) {
         parent->on_attached.disconnect(boost::bind(&base_stream::parent_attached, this));
     }
@@ -2085,7 +2085,7 @@ stream_tx_attachment::set_attaching(stream_channel* channel, local_stream_id_t s
 {
     assert(!is_in_use());
 
-    logger::debug() << "Stream transmit attachment going active on channel " << channel;
+    BOOST_LOG_TRIVIAL(debug) << "Stream transmit attachment going active on channel " << channel;
 
     channel_   = channel;
     stream_id_ = sid;
@@ -2094,7 +2094,7 @@ stream_tx_attachment::set_attaching(stream_channel* channel, local_stream_id_t s
 
     assert(!contains(channel_->transmit_sids_, stream_id_));
     channel_->transmit_sids_.insert(make_pair(stream_id_, this));
-    logger::debug() << "Stream transmit attachment sid " << stream_id_ << " activated";
+    BOOST_LOG_TRIVIAL(debug) << "Stream transmit attachment sid " << stream_id_ << " activated";
 }
 
 void
@@ -2110,7 +2110,7 @@ stream_tx_attachment::clear()
     assert(contains(channel->transmit_sids_, stream_id_));
     assert(channel->transmit_sids_[stream_id_] == this);
 
-    logger::debug() << "Clearing tx attachment for sid " << stream_id_;
+    BOOST_LOG_TRIVIAL(debug) << "Clearing tx attachment for sid " << stream_id_;
     channel->transmit_sids_.erase(stream_id_);
     channel_ = nullptr;
     active_  = false;
@@ -2120,7 +2120,7 @@ stream_tx_attachment::clear()
     stream_->tx_enqueued_channel_ = false;
 
     // Clear out packets for this stream from channel's ackwait table
-    logger::debug() << "waiting ack size " << channel->waiting_ack_.size();
+    BOOST_LOG_TRIVIAL(debug) << "waiting ack size " << channel->waiting_ack_.size();
 
     auto ack_copy = channel->waiting_ack_;
     for (auto ackw : ack_copy) {
@@ -2139,7 +2139,7 @@ stream_tx_attachment::clear()
         }
 
         channel->waiting_ack_.erase(ackw.first);
-        logger::debug() << "Cleared packet";
+        BOOST_LOG_TRIVIAL(debug) << "Cleared packet";
     }
 }
 
@@ -2153,7 +2153,7 @@ stream_rx_attachment::set_active(stream_channel* channel, local_stream_id_t sid,
 {
     assert(!is_active());
 
-    logger::debug() << "Stream receive attachment going active on channel " << channel;
+    BOOST_LOG_TRIVIAL(debug) << "Stream receive attachment going active on channel " << channel;
 
     channel_   = channel;
     stream_id_ = sid;
@@ -2166,7 +2166,7 @@ stream_rx_attachment::set_active(stream_channel* channel, local_stream_id_t sid,
 void
 stream_rx_attachment::clear()
 {
-    logger::debug() << "Stream receive attachment going inactive";
+    BOOST_LOG_TRIVIAL(debug) << "Stream receive attachment going inactive";
     if (channel_) {
         assert(contains(channel_->receive_sids_, stream_id_));
         assert(channel_->receive_sids_[stream_id_] == this);

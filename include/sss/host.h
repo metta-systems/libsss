@@ -9,7 +9,6 @@
 #pragma once
 
 #include "uia/host.h"
-#include "arsenal/logging.h"
 #include "sss/internal/stream_host_state.h"
 #include "sss/internal/routing_host_state.h"
 #include "sss/forward_ptrs.h"

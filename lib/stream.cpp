@@ -8,7 +8,7 @@
 //
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/copy.hpp>
-#include "arsenal/logging.h"
+#include <boost/log/trivial.hpp>
 #include "arsenal/algorithm.h"
 #include "uia/peer_identity.h"
 #include "sss/stream.h"
@@ -131,7 +131,7 @@ stream::connect_to(uia::peer_identity const& destination,
 
     disconnect();
 
-    logger::debug() << "Connecting to peer with id " << eid;
+    BOOST_LOG_TRIVIAL(debug) << "Connecting to peer with id " << eid;
 
     // Create a top-level application stream object for this connection.
     auto base    = base_stream::create(host_, eid.as_string(), nullptr);
@@ -389,7 +389,7 @@ void
 stream::dump()
 {
     if (!stream_) {
-        logger::debug() << this << " is a detached user stream";
+        BOOST_LOG_TRIVIAL(debug) << this << " is a detached user stream";
         return;
     }
     stream_->dump();

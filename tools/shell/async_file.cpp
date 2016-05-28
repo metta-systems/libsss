@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <boost/log/trivial.hpp>
 #include "async_file.h"
-#include "arsenal/logging.h"
 
 async_file::async_file(boost::asio::io_service& service)
     : sd(service)
@@ -24,18 +24,18 @@ async_file::~async_file()
 
 bool async_file::open(OpenMode)
 {
-    logger::fatal() << "Do not call async_file::open(OpenMode).";
+    BOOST_LOG_TRIVIAL(fatal) << "Do not call async_file::open(OpenMode).";
     return false;
 }
 
 bool async_file::open(int fd, OpenMode mode)
 {
-    logger::debug() << "Open fd " << fd << " mode " << mode;
+    BOOST_LOG_TRIVIAL(debug) << "Open fd " << fd << " mode " << mode;
     assert(mode & ReadWrite);
 
     if (sd.is_open()) {
         set_error("async_file already open");
-        logger::debug() << error_string();
+        BOOST_LOG_TRIVIAL(debug) << error_string();
         return false;
     }
 
@@ -110,7 +110,7 @@ void async_file::write_some(
 //         if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
 //         {
 //             set_error(strerror(errno));
-//             logger::debug() << error_string();
+//             BOOST_LOG_TRIVIAL(debug) << error_string();
 //             return -1;  // a real error occurred
 //         }
 //         else
@@ -140,7 +140,7 @@ bool async_file::at_end() const
 //             if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
 //             {
 //                 set_error(strerror(errno));
-//                 logger::debug() << error_string();
+//                 BOOST_LOG_TRIVIAL(debug) << error_string();
 //                 return -1;  // a real error occurred
 //             }
 //             act = 0;    // nothing serious
@@ -169,7 +169,7 @@ bool async_file::at_end() const
 //             {
 //                 // A real error: empty the output buffer
 //                 set_error(strerror(errno));
-//                 logger::debug() << error_string();
+//                 BOOST_LOG_TRIVIAL(debug) << error_string();
 //                 outq.clear();
 //                 return;
 //             }

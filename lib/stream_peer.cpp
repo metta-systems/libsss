@@ -41,7 +41,7 @@ stream_peer::stream_peer(shared_ptr<host> const& host,
 
 stream_peer::~stream_peer()
 {
-    logger::debug() << this << " ~stream_peer";
+    BOOST_LOG_TRIVIAL(debug) << this << " ~stream_peer";
     // Clear the state of all streams associated with this peer.
     auto streams_copy = all_streams_;
     for (auto v : streams_copy) {
@@ -90,27 +90,27 @@ stream_peer::lookup_done(ur::client* rc,
                          ur::client_profile const& peer_profile)
 {
     if (target_peer != remote_id_) {
-        logger::debug() << "Got lookup_done for wrong id " << target_peer << " expecting "
+        BOOST_LOG_TRIVIAL(debug) << "Got lookup_done for wrong id " << target_peer << " expecting "
                         << remote_id_ << " (harmless, ignored)";
         return; // ignore responses for other lookup requests
     }
 
     // Mark this outstanding lookup as completed.
     if (!contains(coord_.lookups_, rc)) {
-        logger::debug() << "Stream peer - unexpected lookup_done signal";
+        BOOST_LOG_TRIVIAL(debug) << "Stream peer - unexpected lookup_done signal";
         return; // ignore duplicates caused by concurrent requests
     }
     coord_.lookups_.erase(rc);
 
     // If the lookup failed, notify waiting streams as appropriate.
     if (peer_endpoint.address().is_unspecified()) {
-        logger::debug() << "Lookup on " << target_peer << " failed";
+        BOOST_LOG_TRIVIAL(debug) << "Lookup on " << target_peer << " failed";
         if (!coord_.lookups_.empty() or !key_exchanges_initiated_.empty())
             return; // There's still hope
         return on_channel_failed();
     }
 
-    logger::debug() << "Stream peer - lookup found primary " << peer_endpoint
+    BOOST_LOG_TRIVIAL(debug) << "Stream peer - lookup found primary " << peer_endpoint
                     << ", num secondaries " << peer_profile.endpoints().size();
 
 // @todo
@@ -154,7 +154,7 @@ stream_peer::lookup_done(ur::client* rc,
     // Filter and sort endpoints array.
     for (auto& ep : peer_endpoints)
     {
-        logger::debug() << "Stream peer - secondary " << ep;
+        BOOST_LOG_TRIVIAL(debug) << "Stream peer - secondary " << ep;
         // Ignore ep if it's a loopback.
         if (ep.address().is_loopback() or ep.address().is_unspecified()) {
             continue;
@@ -165,7 +165,7 @@ stream_peer::lookup_done(ur::client* rc,
 
     for (auto& ep : output_endpoints
     {
-        logger::debug() << "Stream peer - secondary " << ep;
+        BOOST_LOG_TRIVIAL(debug) << "Stream peer - secondary " << ep;
         // Ignore ep if it's a loopback.
         if (ep.address().is_loopback() or ep.address().is_unspecified()) {
             continue;
@@ -180,7 +180,7 @@ stream_peer::lookup_done(ur::client* rc,
 void
 stream_peer::regclient_destroyed(ur::client* rc)
 {
-    logger::debug() << "Stream peer - regclient destroyed before lookup done";
+    BOOST_LOG_TRIVIAL(debug) << "Stream peer - regclient destroyed before lookup done";
 
     coord_.lookups_.erase(rc);
     coord_.connected_routing_clients_.erase(rc);

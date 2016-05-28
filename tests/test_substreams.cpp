@@ -107,7 +107,7 @@ BOOST_FIXTURE_TEST_CASE(multiple_substreams, substreams_fixture)
     simulator->run();
 
     for (auto b : received) {
-        logger::debug() << b.as_string();
+        BOOST_LOG_TRIVIAL(debug) << b.as_string();
     }
 
     BOOST_CHECK(received.size() == 6);

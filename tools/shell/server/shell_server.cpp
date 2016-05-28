@@ -16,12 +16,12 @@ shell_server::shell_server(std::shared_ptr<sss::host> host)
 
     if (!srv.listen(service_name, "Secure Remote Shell",
         protocol_name, "MettaNode Remote Shell Protocol"))
-        logger::fatal() << "Can't register Shell service";
+        BOOST_LOG_TRIVIAL(fatal) << "Can't register Shell service";
 }
 
 void shell_server::got_connection()
 {
-    logger::debug() << "Incoming shell server connection";
+    BOOST_LOG_TRIVIAL(debug) << "Incoming shell server connection";
     while (auto stream = srv.accept())
     {
         new shell_session(stream);
